@@ -1,0 +1,67 @@
+# REQ 템플릿 — .harness/reqs/<slug>.yaml로 복사해서 사용
+# REQUIRED 표시 슬롯이 비어 있으면 ready_for_routing 승격 불가
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: ""                    # REQUIRED — 소문자-하이픈 slug, 파일명과 동일
+  title: ""                     # REQUIRED
+  status: needs_intake          # needs_intake | needs_clarification | ready_for_routing | verified
+  priority: ""                  # P0 | P1 | P2
+  owner: ""
+  intake_started: ""            # REQUIRED — YYYY-MM-DD (마찰 데이터 수집용)
+  promoted_at: null             # ready_for_routing 승격 시 YYYY-MM-DD
+  source_doc: ""
+
+source:
+  raw_user_prompt: ""           # REQUIRED — 사용자 원문 그대로, 편집 금지
+  user_language: ko
+  repo: ""
+
+classification:
+  category: ""                  # REQUIRED — feature | fix | refactor | config | docs | investigation
+                                # (프로젝트 AGENTS.md가 enum을 확장할 수 있다)
+  confidence: ""                # high | medium | low — low면 route가 확인 질문을 한다
+  reason: ""
+
+clarification:                  # needs_clarification일 때만 사용
+  next_question: ""             # 정확히 1개 — 두 번째 질문은 다음 턴에
+  options:                      # 2~4개
+    - id: a
+      label: ""
+      impact: ""
+  recommended_option: ""        # REQUIRED (질문 시) — 반드시 1개 지정
+
+requirement:
+  user_intent: ""               # REQUIRED
+  actor: ""
+  desired_outcome: ""
+  confirmed_facts: []           # 사용자 답변·실측으로 확정된 것만
+  assumptions: []               # [{id, statement, confidence, status: unverified|confirmed|rejected, reason}]
+  rejected_assumptions: []
+
+functional_contract:
+  acceptance_criteria:          # REQUIRED — P0 항목 최소 1개 없으면 승격 불가
+    - id: AC1
+      priority: P0
+      statement: ""
+      verification: ""          # REQUIRED — 실행 가능한 명령 또는 관측 가능한 술어
+      passes: null              # verified 종결 시 true/false로 채운다
+
+code_mapping:
+  code_areas: {}                # { <영역>: {paths: [], reason: ""} }
+  boundary_rules: []
+
+verification:
+  commands: []                  # adapt가 감지한 게이트 명령이 기본값
+  verify_gate_required: false
+  verify_gate_reason: ""
+  escalate_after: 3             # 연속 실패 N회 시 사람 에스컬레이션
+  evidence: []                  # AC별 {criterion_id, check, result, exit_code, source_state, artifact}
+                               # result: passed | failed | not_run | unknown; 관측은 exit_code: null
+                               # source_state: HEAD + dirty diff/file hash. artifact는 scrub한 원본 근거 경로
+  attempts: []                  # {gate, failure_kind, blocker, evidence, changed_input}; 새 근거 없는 재시도 금지
+
+audit:
+  must_not_implement: []        # 이 REQ에서 만들면 안 되는 것 — route가 시작 전에 읽는다
+  completion_report_should_include: []

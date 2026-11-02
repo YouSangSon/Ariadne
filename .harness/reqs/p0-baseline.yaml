@@ -1,0 +1,97 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: p0-baseline
+  title: P0 — CLI 베이스라인 확정 및 권한/훅 실측
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-07-19
+  promoted_at: 2026-07-19
+  source_doc: DESIGN.md §6 P0
+
+source:
+  raw_user_prompt: "구현 착수 — P0 권한 실측부터"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: config
+  confidence: high
+  reason: 설계 가정의 실물 검증. 코드 변경 없이 환경 측정과 문서화만 수행
+
+requirement:
+  user_intent: 설계서가 가정한 CLI 동작을 실물로 확인해 P1 착수 전 가정 오류를 제거한다
+  actor: 하네스 개발자(팀 배포 준비자)
+  desired_outcome: 팀 표준 최소 버전과 권한 계층의 실제 동작이 문서에 기록됨
+  confirmed_facts:
+    - Claude Code 2.1.215 / codex-cli 0.144.6 (이 머신 실측)
+    - codex features list — hooks stable, multi_agent stable, skill_mcp_dependency_install stable
+    - 설계 §0.2 강제 계층은 CI를 최종 강제선으로 규정
+  assumptions:
+    - id: A1
+      statement: deny 규칙은 npx/docker exec 등 래퍼 경유를 막지 못한다
+      confidence: high
+      status: confirmed
+      reason: npx·docker 존재 확인, 문서상 미스트립 대상. OPERATIONS.md A1 참조
+    - id: A2
+      statement: Codex workspace-write에서 approval_policy가 무시될 수 있다
+      confidence: medium
+      status: unverified
+      reason: 프로필 중복 정의로 격리 검증 불가. P4에서 클린 프로필 재측정
+  rejected_assumptions:
+    - 훅이 항상 발화한다 (claude-code#74942로 이미 반증됨 — 검증 대상 아님)
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 두 CLI의 팀 표준 최소 버전이 docs/ONBOARDING.md에 기재된다
+      verification: grep으로 버전 문자열 확인
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: deny 규칙의 래퍼 우회 가능성이 실물 확인되고 결과가 기록된다
+      verification: 샌드박스에서 우회 경로 실행 후 결과 문서화
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 훅 등록·발화 관측 수단(/hooks, --debug)이 실물 확인된다
+      verification: 훅 1개 설치 후 발화 로그 확인
+      passes: true
+    - id: AC4
+      priority: P1
+      statement: Codex approval_policy 동작이 확인되거나 미확인으로 명시된다
+      verification: config 설정 후 동작 관찰 또는 미확인 사유 기록
+      passes: true
+      note: 미확인으로 판정하고 사유를 OPERATIONS.md A2/A4에 기록 — AC 문언 충족
+
+code_mapping:
+  code_areas:
+    docs:
+      paths: [docs/ONBOARDING.md, docs/OPERATIONS.md]
+      reason: 측정 결과의 착지점
+    harness_state:
+      paths: [.harness/reqs/]
+      reason: REQ 기록
+  boundary_rules:
+    - 이 REQ는 코드를 만들지 않는다. 측정과 문서화만 수행
+    - 글로벌 설정(~/.claude, ~/.codex)을 수정하지 않는다 (D3)
+
+verification:
+  commands:
+    - "claude --version"
+    - "codex --version"
+    - "codex features list"
+  verify_gate_required: false
+  verify_gate_reason: verify 게이트는 P4에서 구축됨. P0는 측정 단계
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - 스킬/훅/게이트 구현 (P1~P4 소관)
+    - 글로벌 환경 변경 (D3 — 사용자가 채택 결정)
+  completion_report_should_include:
+    - 측정된 버전과 기능 플래그
+    - 각 가정의 검증/반증/미확인 판정

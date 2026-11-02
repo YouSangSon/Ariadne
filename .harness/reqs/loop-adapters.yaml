@@ -1,0 +1,116 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: loop-adapters
+  title: 제한된 모델 API 전송과 네이티브 수동 인계
+  status: ready_for_routing
+  priority: P0
+  owner: Codex
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+  source_doc: 통합 실행 구현의 API transport 위임 계약
+
+source:
+  raw_user_prompt: |
+    Implement concrete bounded OpenAI-compatible chat-completions HTTP transport/tool loop building blocks in local-adapter-worktree branch feat/ariadne-api HEAD3cdac8d. Read applicable AGENTS first. Main owns scheduler/filetools/CLI. Own ONLY modules/loop/api.mjs, modules/loop/native.mjs, tests/loop-api.test.mjs, tests/loop-native.test.mjs, .harness/reqs/loop-adapters.yaml. Failure-first focused tests then implementation commit with REQ: loop-adapters; no external paid calls/authconfig/push. API frozen interface export async requestCompletion(executor,messages,{signal,maxOutputTokens}={}) -> {message,usage:{inputTokens,outputTokens}|null,requestId}; executor {endpoint,model,keyEnv}, resolve key process.env[keyEnv] only at request time no persistence; exact full endpoint URL validated HTTPS for public, HTTP allowed only explicit loopback endpoint approval by caller, reject credentials/query/fragment, redirect:error, timeout signal, response bounded1MiB, validate toolcalls type/name/json arguments. Standard tool defs `read_file({path}), list_files({}), write_file({path,content,expectedSha})` export FILE_TOOLS; allow function toolcalls only those names; root executes tools after per-effect guard. Do not allow arbitrary shell/model URL changes. API transport counts no loop itself root controls per-call reservation. response message suitable replay in messages array. Error classification export class AdapterError with kind rate_limit/unavailable/rejected/unknown; unknown if ambiguous network/timeout after send, all errors redacted no key/text body leak. External 4xx considered definite rejected except timeout/408 ambiguous; 429 rate_limit definite no replay until root gate. Do not claim finite moneycap from token limits. tests own exact local HTTP server, positive tool request/result, malformed, redirect (no redirected hit), oversized/error, missing usage. For native adapters implement ONLY safe handoff builders, no unattended exec: export nativeHandoff(executor,packet)->{provider,instructions,packet,unattended:false}; allow kinds codex,claude,gemini with friendly exact manual invocation instructions rather than exec/unsafe flags or whole home exposure; do not require other CLIs installed. unknownkindreject. Test actual generated packet contains task source/AC references from caller; never fake native permission qualification. Official docs verify protocol primary only if needed; Postman api-engineer already loaded by root and this dispatched task specific so no need workspace creation. No vault/resume writes, no main docs edits. Report contract changes before making.
+  user_language: ko
+  repo: ariadne
+
+classification:
+  category: feature
+  confidence: high
+  reason: 부모가 확정한 전송 인터페이스와 소유 파일만 구현한다.
+
+requirement:
+  user_intent: 승인한 모델 API의 한 번 호출과 기존 코딩 도구로의 수동 인계를 제공한다.
+  actor: 실행 루프와 수동으로 작업을 이어 가는 사용자
+  desired_outcome: 전송은 제한된 파일 도구만 반환하고 실행·예산·재호출 판단은 상위 루프에 남긴다.
+  confirmed_facts:
+    - endpoint는 전체 URL이며 임의 경로 추가와 모델 대체를 하지 않는다.
+    - HTTP는 executor.allowLoopbackHttp가 true인 localhost, 127.0.0.1, "[::1]"만 허용한다.
+    - keyEnv는 등록 때 이름만 검증하고 실제 환경변수 값은 요청 시점에만 읽는다.
+    - write_file의 expectedSha는 기존 파일 해시 문자열 또는 새 파일의 null이다.
+    - nativeHandoff는 codex, claude, gemini의 대화형 수동 안내만 생성한다.
+    - "OpenAI 공식 계약의 max_completion_tokens와 nullable tool_calls/function_call을 사용한다: https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create"
+  assumptions: []
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 전체 endpoint와 모델을 유지한 실제 로컬 HTTP 요청과 도구 결과 재전송을 제공한다.
+      verification: node --test tests/loop-api.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: URL·도구 인자를 검증하고 redirect·응답 1MiB 초과를 차단하며 모호한 결과와 누락 usage를 보존한다.
+      verification: node --test tests/loop-api.test.mjs
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 네이티브 인계는 전달받은 task source와 AC 참조를 유지하며 실행·권한 검증을 주장하지 않는다.
+      verification: node --test tests/loop-native.test.mjs
+      passes: true
+
+code_mapping:
+  code_areas:
+    adapters:
+      paths: [modules/loop/api.mjs, modules/loop/native.mjs]
+      reason: 단일 HTTP 호출과 수동 인계 경계
+    tests:
+      paths: [tests/loop-api.test.mjs, tests/loop-native.test.mjs]
+      reason: 실제 로컬 서버와 생성된 인계 패킷 검증
+  boundary_rules:
+    - 위 파일과 이 REQ만 수정하며 scheduler, file tools, CLI는 부모가 소유한다.
+    - API key, 원문 응답과 오류 body를 로그·상태·오류에 기록하지 않는다.
+    - 파일 효과와 호출별 예산 예약·재호출은 상위 루프가 담당한다.
+
+verification:
+  commands:
+    - node --test tests/loop-api.test.mjs tests/loop-native.test.mjs
+    - node --check modules/loop/api.mjs
+    - node --check modules/loop/native.mjs
+    - git diff --cached --check
+  verify_gate_required: true
+  verify_gate_reason: 전체 저장소 verify는 부모가 최종 통합 상태에서 실행한다.
+  escalate_after: 3
+  evidence:
+    - criterion_id: AC1
+      check: node --test tests/loop-api.test.mjs tests/loop-native.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: "base 3cdac8d97e8486188dd2a4cbea298501878008fa; adapter and test sha256 ca532d7416c4db8006a27f189de16f19c0f848143791c5a35313b7b35792a849; Node v24.22.2"
+      artifact: .harness/handoff/loop-adapters-20261102/focused-final.log
+    - criterion_id: AC2
+      check: node --test tests/loop-api.test.mjs tests/loop-native.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: .harness/handoff/loop-adapters-20261102/validation.json
+      artifact: .harness/handoff/loop-adapters-20261102/focused-final.log
+    - criterion_id: AC3
+      check: node --test tests/loop-api.test.mjs tests/loop-native.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: .harness/handoff/loop-adapters-20261102/validation.json
+      artifact: .harness/handoff/loop-adapters-20261102/focused-final.log
+  attempts:
+    - gate: adapter-contract
+      failure_kind: verification
+      blocker: 새 api와 native 모듈이 없어 두 테스트 파일이 ERR_MODULE_NOT_FOUND로 실패했다.
+      evidence: .harness/handoff/loop-adapters-20261102/failure-first.log
+      changed_input: 지정한 전송과 수동 인계 모듈을 추가했다.
+    - gate: nullable-fields-and-response-shape
+      failure_kind: verification
+      blocker: 공식 nullable 필드가 Invalid completion response로 거절됐고 잘못된 choices object가 Missing expected rejection으로 드러났다.
+      evidence: .harness/handoff/loop-adapters-20261102/nullable-failure.log
+      changed_input: null optional 도구 필드를 허용하고 choices가 배열인지 검증했다.
+
+audit:
+  must_not_implement:
+    - 외부 유료 호출, shell 도구, 자동 네이티브 실행, auth 설정 변경
+    - 토큰 제한에 근거한 엄격한 금액 상한 주장
+    - push, merge, 배포, vault 또는 resume 기록
+  completion_report_should_include:
+    - 실패 재현과 통과 검사, 소스 상태, 근거 경로, 커밋 SHA
+    - 실제 공급자 호환성과 네이티브 권한 qualification의 미검증 상태

@@ -1,0 +1,3 @@
+.harness/handoff/
+node_modules/
+*.log

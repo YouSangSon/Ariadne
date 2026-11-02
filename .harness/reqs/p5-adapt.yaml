@@ -1,0 +1,103 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: p5-adapt
+  title: P5 — adapt 스킬 + Generated 블록 스크립트 + 브라운필드 왕복
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-07-20
+  promoted_at: 2026-07-20
+  source_doc: DESIGN.md §6 P5, §4.8, §2.3
+
+source:
+  raw_user_prompt: "harness P5 시작. context 스킬로 맥락 로드 후 DESIGN.md §4.8 adapt 진행"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: feature
+  confidence: high
+  reason: 설계 §4.8 6단계 — 감지는 스킬(에이전트 판단), 생성·제거는 결정론 스크립트로 분할 (D12, context/pack 분할과 동형)
+
+requirement:
+  user_intent: 프로젝트 진입 시 하네스 파일을 안전하게 생성·갱신·제거하는 adapt를 만든다
+  actor: 프로젝트에 하네스를 까는 에이전트/개발자
+  desired_outcome: 브라운필드(기존 CLAUDE.md)에서 adapt→refresh→uninstall 왕복 후 트리가 원상이다
+  confirmed_facts:
+    - Parallax가 왕복 대상 — 기존 CLAUDE.md 있음, AGENTS.md 없음, 미커밋 0 (실측)
+    - atlas-code는 미커밋 6개라 대상 제외
+    - 캡 산정은 lib/caps.mjs 재사용 (P4), manifest 패턴은 install.mjs 재사용 (P2)
+  assumptions:
+    - id: A1
+      statement: 사용자 소유 영역 판정은 마커(<!-- harness:begin/end -->) 밖 전부다 — 마커 안만 재생성 대상
+      confidence: high
+      status: confirmed
+      reason: 설계 §4.8-3 리뷰 3-1 원문
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: adapt-apply가 AGENTS.md에 harness 마커 블록을 생성하고, 마커 밖 사용자 내용을 절대 보존한다
+      verification: "node --test — 기존 사용자 AGENTS.md 픽스처에서 블록 추가 후 사용자 텍스트 무손실 assert"
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 기존 CLAUDE.md는 백업 후 최상단에 "@AGENTS.md" 1줄 삽입, 없으면 신규 생성
+      verification: "node --test — 백업 파일 존재 + 1행 @AGENTS.md assert"
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: refresh 멱등 — 같은 인자 재실행 시 파일 변경 0
+      verification: "node --test — 2회 실행 후 내용 동일 assert"
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: adapt-remove가 manifest 기반으로 생성물을 제거하고 백업을 복원해 트리를 원상복구한다
+      verification: "node --test — 왕복 후 픽스처 디렉토리 내용이 초기와 동일"
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 실전 브라운필드 왕복 — Parallax에서 apply→refresh→remove 후 git status 미커밋 0
+      verification: "Parallax에서 실행 후 git status --porcelain 빈 출력"
+      passes: true
+    - id: AC6
+      priority: P0
+      statement: adapt SKILL.md가 §4.13 규약(자동이되 route 이후 경계 명시)으로 존재하고 verify green
+      verification: "node scripts/generate-mirrors.mjs && node scripts/verify.mjs"
+      passes: true
+
+code_mapping:
+  code_areas:
+    scripts:
+      paths: [scripts/adapt-apply.mjs, scripts/adapt-remove.mjs]
+      reason: 결정론 생성·제거 (마커/백업/manifest 정확성은 코드 소관)
+    skills:
+      paths: [skills/adapt/SKILL.md]
+      reason: 감지·검증명령 확정·충돌 보고는 에이전트 판단 소관 (D7)
+    tests:
+      paths: [tests/adapt.test.mjs]
+      reason: 픽스처 왕복 테스트
+  boundary_rules:
+    - Parallax 소스 코드 수정 금지 (§7) — adapt 생성물 추가·제거만, 왕복 후 원상 필수
+    - 글로벌 설정 수정 금지 (D3)
+    - 검증 명령 추측 생성 금지 (§4.8-2) — 기존 스크립트 채택 또는 사용자 확인
+
+verification:
+  commands:
+    - "node --test"
+    - "node scripts/verify.mjs"
+  verify_gate_required: true
+  verify_gate_reason: P4에서 verify 구축됨 — 이후 REQ는 verify green이 종결 조건
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - 옵션 모듈 설치 (akasha/parallax MCP — §4.9는 P6 문서로만)
+    - 글로벌 포인터 주입 (P6)
+    - CI 파일
+  completion_report_should_include:
+    - 픽스처·실전 왕복 각각의 증거
+    - Parallax git status 전후

@@ -1,0 +1,132 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: p1-core-rules
+  title: P1 — 코어 규칙 + req-capture/route 스킬 (RED→GREEN→측정)
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-07-19
+  promoted_at: 2026-07-19
+  source_doc: DESIGN.md §6 P1, §4.1~4.3, §4.13
+
+source:
+  raw_user_prompt: "진행해줘 그럼 (P1 착수 승인)"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: feature
+  confidence: high
+  reason: 하네스 첫 실물 — 배포 대상 코어 규칙 파일과 스킬 2개 저작
+
+requirement:
+  user_intent: 두 CLI에서 실제로 발동·준수되는 코어 규칙과 REQ 파이프라인 첫 두 스킬을 만든다
+  actor: 하네스 개발자(팀 배포 준비자)
+  desired_outcome: REQ 상태기계가 실작업 1개를 완주하고, 스킬 발동이 양 CLI에서 실측됨
+  confirmed_facts:
+    - Codex 스킬 description 하드 리밋 1024자, when_to_use 미사용 (§4.13.1)
+    - 지시형 description 오즈비 20.6, 훅 환경에서 수동형 37% 붕괴 (§4.13.2)
+    - 오토컴팩션 재부착 예산 스킬당 5k/총 25k 토큰 (§4.13.4)
+  assumptions:
+    - id: A1
+      statement: 베이스라인(스킬 없음)에서 모호 요구에 즉시 구현 또는 다중 질문이 관찰된다
+      confidence: high
+      status: confirmed
+      reason: RED 3/3 실패 관찰 (2026-07-19, haiku headless, 아래 red_baseline)
+
+red_baseline:
+  date: 2026-07-19
+  method: "claude -p --model haiku --max-turns 12, 3파일 데모 리포 3개 격리 실행"
+  observations:
+    - prompt: 로그인 실패 알림 기능 추가
+      observed: 질문 0개. 알림 채널 미확인 상태로 notify.js 생성·auth.js 수정 즉시 착수
+      failure_type: 필수 요소 누락(요구 확정 없음) → 템플릿 REQUIRED 슬롯으로 대응
+    - prompt: 결제 쪽 버그 고쳐줘
+      observed: 재현 확인 질문 없이 12턴 소진, 최종 응답 없음 (배회)
+      failure_type: 기본값 부재 → 질문 1개 + recommended_option 규칙으로 대응
+    - prompt: 설정 파일 구조 정리
+      observed: 옵션 나열 후 정지. 추천안·기록 없음
+      failure_type: 메뉴 제시 → recommended_option REQUIRED로 대응
+  note: 글로벌 CLAUDE.md 규칙(vault 언급)이 headless에도 로드됨 — §2.2 병존 오염 실측
+
+measurement:
+  date: 2026-07-20
+  scope: 스모크(trig 3/non 3, 셀당 n=3) — §4.13.7 전체 프로토콜(20쿼리×3회)은 P2 이후
+  claude:
+    - {env: 병존(스킬514) + haiku, trigger: 0/3, false_activation: 0/3}
+    - {env: 격리(project-only, 18) + haiku, trigger: 1/3, false_activation: 0/3}
+    - {env: 병존 + sonnet, trigger: 2/3}
+    - {env: 격리 + haiku + REFACTOR후, trigger: 2/3}
+  codex:
+    - {env: 병존(글로벌 스킬 327), note: 2% 예산 초과로 전 description 제거 — 메커니즘 발동 불가}
+    - {env: 병존·격리 공통, observed: 파일 탐색으로 SKILL.md 발견·낭독 후 절차 준수 3/3 — 메커니즘 발동과 구분}
+    - {false_activation: 0/6, note: non2 ACTIVATED는 판정 grep 오탐(설명 답변의 용어 언급)으로 정정}
+  refactor_applied: 대체행위 차단 문구를 "구현하지 마라"→"리포 탐색·파일 읽기부터 시작하지 마라"로 — 전조건 실패 trig2가 발동 전환
+  bugs_found:
+    - generated 마커를 frontmatter 앞에 삽입 → 양 CLI 로드 실패. 생성물 1행은 반드시 "---" (P2 생성기 테스트 1호)
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: RED 베이스라인 3프롬프트가 실행되고 관찰된 실패가 이 파일에 기록된다
+      verification: red_baseline 섹션 존재 + 스크립트 로그 파일
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: core/AGENTS.core.md가 150줄 이하 포인터 스타일로 존재한다
+      verification: "wc -l core/AGENTS.core.md ≤ 150"
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: req-capture·route SKILL.md가 §4.13 규약(지시형+트리거어휘+형제경계+대체행위차단, 내부단계 요약 금지, description ≤1024자)을 지킨다
+      verification: description 4요소 육안 검사 + 문자수 검사
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 발동 측정이 Claude Code와 Codex 양쪽에서 실행되고 수치가 기록된다
+      verification: 발동 대상/비대상 쿼리 headless 실행 로그 + 이 파일의 measurement 섹션
+      passes: true
+    - id: AC5
+      priority: P1
+      statement: 이 REQ 자체가 needs_intake→verified를 완주해 상태기계 실작업 1개 완주 조건을 충족한다
+      verification: metadata.status == verified + 타임스탬프 존재
+      passes: true
+
+code_mapping:
+  code_areas:
+    core:
+      paths: [core/AGENTS.core.md]
+      reason: 배포되는 공통 규칙 원본
+    skills:
+      paths: [skills/req-capture/SKILL.md, skills/route/SKILL.md]
+      reason: SSOT 스킬
+    templates:
+      paths: [templates/req.yaml]
+      reason: REQ 스키마 템플릿
+    dogfood:
+      paths: [.claude/skills/, .agents/skills/]
+      reason: 이 리포 자체 발동 측정용 미러(P2 생성기 전까지 수동 사본)
+  boundary_rules:
+    - 글로벌 설정(~/.claude, ~/.codex)을 수정하지 않는다 (D3)
+    - adapt/context/verify-plan/handoff/retro 스킬은 만들지 않는다 (P1 범위 밖)
+    - 훅·게이트 구현 금지 (P4 소관)
+
+verification:
+  commands:
+    - "wc -l core/AGENTS.core.md"
+    - "ls skills/req-capture/SKILL.md skills/route/SKILL.md templates/req.yaml"
+  verify_gate_required: false
+  verify_gate_reason: verify 게이트는 P4에서 구축. P1은 측정 로그가 증거
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - 나머지 스킬 5개 (P1 범위 밖)
+    - wrapper 생성기 (P2)
+    - 글로벌 환경 변경 (D3)
+  completion_report_should_include:
+    - RED 베이스라인 관찰 기록
+    - 발동 측정 수치 (양 CLI 각각)
