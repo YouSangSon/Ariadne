@@ -1,0 +1,137 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: harness-enforcement-design
+  title: 실제 실패에 연결한 완료·반출·복구·재시도 집행 설계
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+  source_doc: docs/unified-execution-design.md
+source:
+  raw_user_prompt: 그럼 반영해서 설계해줘
+  user_language: ko
+  repo: ariadne
+classification:
+  category: docs
+  confidence: high
+  reason: 승인된 작업 연속성 설계에 글의 원리와 실제 미공개 초안의 결함을 최소 경계로 반영한다.
+requirement:
+  user_intent: 완료 판정·권한/반출·안전한 복구·근거 있는 재시도를 구현 전에 구체화한다.
+  actor: Ariadne를 사용하는 개인 개발자와 다음 구현자
+  desired_outcome: 기존 정본에서 책임·스케치·정상/거절 사례·단계·적용 한계를 찾는다.
+  confirmed_facts:
+    - 이번 요청은 설계이며 중지한 runtime 구현·설치·실행·외부 게시를 재개하지 않는다.
+    - Task 전체 승인과 예산, 최대 실행 2개, 같은 공간 writer 1개, native qualification과 unknown 보존은 유지한다.
+    - 현재 미공개 초안에서 최신 실패보다 과거 성공 선택, 필수 gate 누락, 수집 완료 전 예약 해제, raw AC 반출 우회, PID 잠금 복구 경쟁, packet 준비 예외 경계를 정적으로 확인했다.
+    - 위 결함은 실행 재현이나 수정 완료로 보고하지 않는다.
+    - 공개 checkpoint 59945ca와 활성 worktree의 미공개 초안 및 원래 사용자 변경을 구분한다.
+    - SQLite 연결 잠금 실험은 library 전제만 확인하며 dispatcher/native의 제품 qualification이 아니다.
+    - 후속 민감정보 질문에 따라 실제 ignore와 공개 추적 파일을 읽기 전용으로 확인했다. 실제 키는 발견하지 못했지만 ignore 예방 규칙이 부족하므로 설정·게시 검사 경계를 설계한다.
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 최신 시작 시도와 모든 AC/필수 gate, source/환경/scope, 수집·완료 경합, status의 동일 판정을 정의한다.
+      verification: 설계 10절과 UES-COMPLETE-LATEST/GATE-COVERAGE/CHECK-FINALIZE/CHECK-SCOPE 대조
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 최종 전체 패킷과 후속 messages의 반출 경계 및 준비 실패의 예산/예약/예외 결과를 정의한다.
+      verification: 설계 11.2절과 UES-PACKET-BOUNDARY/PREPARE-FAILURE 대조
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: PID/TTL 탈취 없는 단일 owner와 epoch, 동시 복구·미확정 예약·legacy 이전 및 책임 한계를 정의한다.
+      verification: 설계 7.1/10.2절과 UES-OWNER-RECOVERY/OWNER-FENCE/LEGACY-UPGRADE 대조
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 실패 분류·관련 진전·현재 Task 예산의 재시도 계약과 최소 회귀 구현 순서를 연결한다.
+      verification: 설계 12.1/13.2절의 정책 및 E1~E4 대조
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 기존 구조와 대안을 비교하고 최소 스케치·새 설계의 적용 미완료·과거 REQ 보존을 명시한다.
+      verification: 두 독립 설계 후보 및 독립 중요 설계 리뷰와 현재 코드 대조
+      passes: true
+    - id: AC6
+      priority: P0
+      statement: API key·민감 파일의 ignore 예방과 실제 추적/ref 검사 및 합성 fixture 분류를 구분하고 실제 설정 미변경을 밝힌다.
+      verification: 설계 11.3절·UES-GIT-SECRETS 및 읽기 전용 ignore/게시 파일 확인 기록 대조
+      passes: true
+    - id: AC7
+      priority: P0
+      statement: 이번 소유 문서만 검증·커밋하고 기존 사용자/미공개 runtime 변경과 설정을 보존한다.
+      verification: baseline/staged scope·문서 파싱/링크·고립된 snapshot 게이트 대조
+      passes: true
+code_mapping:
+  code_areas:
+    policy:
+      paths: [docs/execution-policy.md, docs/unified-execution-design.md]
+      reason: 독자용 정책과 구현 책임·인수 기준의 정본을 갱신한다.
+    trace:
+      paths: [.harness/reqs/harness-enforcement-design.yaml]
+      reason: 새 설계 범위·관측과 검증 근거를 기존 verified REQ를 바꾸지 않고 연결한다.
+  boundary_rules:
+    - runtime·CLI·기존 테스트·schema·gitignore·credentials·외부 저장소는 수정하지 않는다.
+    - 기존 dirty 파일과 다른 작업의 staged 변경을 보존하며 지정한 세 파일만 commit한다.
+    - 문서 검증과 SQLite 전제 실험을 runtime 수정/실행 qualification으로 확대하지 않는다.
+verification:
+  commands:
+    - git diff --cached --check
+    - node scripts/verify.mjs
+  verify_gate_required: true
+  verify_gate_reason: 문서 의미 검토와 독립 중요 설계 리뷰를 수행하고 최종 staged snapshot의 저장소 게이트를 확인한다.
+  escalate_after: 3
+  evidence:
+    - criterion_id: AC1
+      check: Document trace and independent completion/scope design review
+      result: passed
+      exit_code: null
+      source_state: .harness/handoff/harness-contract-design-20261102/document-checks.json
+      artifact: .harness/handoff/harness-contract-design-20261102/independent-review.json
+    - criterion_id: AC2
+      check: Final packet and transport credential boundary design review
+      result: passed
+      exit_code: null
+      source_state: .harness/handoff/harness-contract-design-20261102/document-checks.json
+      artifact: .harness/handoff/harness-contract-design-20261102/independent-review.json
+    - criterion_id: AC3
+      check: Independent owner/recovery/legacy design review and SQLite library premise experiment
+      result: passed
+      exit_code: null
+      source_state: .harness/handoff/harness-contract-design-20261102/document-checks.json
+      artifact: .harness/handoff/harness-contract-design-20261102/sqlite-owner-experiment.log
+    - criterion_id: AC4
+      check: Retry policy, scenario coverage and E1-E4 responsibility comparison
+      result: passed
+      exit_code: null
+      source_state: .harness/handoff/harness-contract-design-20261102/document-checks.json
+      artifact: .harness/handoff/harness-contract-design-20261102/independent-review.json
+    - criterion_id: AC5
+      check: Compare direct observations and event reducer designs; preserve original verified REQs
+      result: passed
+      exit_code: null
+      source_state: .harness/handoff/harness-contract-design-20261102/baseline.json
+      artifact: .harness/handoff/harness-contract-design-20261102/independent-review.json
+    - criterion_id: AC6
+      check: Read-only ignore and published commit audit; document configuration remains unchanged
+      result: passed
+      exit_code: 0
+      source_state: public checkpoint 59945ca76902e520ab31456b052811356df64bc1
+      artifact: .harness/handoff/harness-contract-design-20261102/publication-audit.json
+    - criterion_id: AC7
+      check: node scripts/verify.mjs in isolated staged snapshot plus preserved work hashes
+      result: passed
+      exit_code: 0
+      source_state: .harness/handoff/harness-contract-design-20261102/verify-result.json
+      artifact: .harness/handoff/harness-contract-design-20261102/verify.log
+  attempts: []
+audit:
+  must_not_implement:
+    - 중지된 runtime 구현과 실제 공급자/유료 API 실행
+    - GitHub/Notion 게시 또는 보안/과금 설정 변경
+    - 기존 verified REQ의 재인증과 사용자 변경의 포함
