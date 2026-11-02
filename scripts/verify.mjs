@@ -1,5 +1,6 @@
 // 로컬 결정론 게이트 (§4.6) — 밀폐: 글로벌 설치본 없이 성립. 실패 시 즉사(fail-fast)
 import { spawnSync } from 'node:child_process'
+import { readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { repoRootFromArgs } from './mirror-lib.mjs'
@@ -28,7 +29,9 @@ function run(command, args) {
 }
 
 step('tests', () => {
-  return run(process.execPath, ['--test'])
+  const tests = readdirSync(join(root, 'tests')).filter((name) => name.endsWith('.test.mjs')).sort()
+  if (!tests.length) return 'core tests가 없다'
+  return run(process.execPath, ['--test', ...tests.map((name) => join(root, 'tests', name))])
 })
 
 step('check-mirror', () => {
