@@ -2,16 +2,16 @@
 
 Ariadne combines requirements, bounded context, durable memory, code impact and
 wiki relationships in one checkout. Install with `npm run setup`, verify with
-`npm run verify`, and use `node bin/ariadne.mjs` from any target repository.
+`npm run verify`, and use `node bin/Ariadne.mjs` from any target repository.
 No sibling checkout, global package installation or model subscription is required
 for the local harness and code graph.
 
 | Former project | Current owner | Entry point |
 | --- | --- | --- |
-| Akasha | `packages/memory` | `ariadne memory …` |
-| Context-forge | Already renamed into Akasha; context-pack implementation is in memory and core | `ariadne context …`, `ariadne memory pack …` |
-| Parallax | `packages/code` | `ariadne code …` |
-| Ontology | Generic wiki relationship index in `modules/llm-wiki`; original enterprise design retained privately | `ariadne knowledge index …` |
+| Akasha | `packages/memory` | `Ariadne memory …` |
+| Context-forge | Already renamed into Akasha; context-pack implementation is in memory and core | `Ariadne context …`, `Ariadne memory pack …` |
+| Parallax | `packages/code` | `Ariadne code …` |
+| Ontology | Generic wiki relationship index in `modules/llm-wiki`; original enterprise design retained privately | `Ariadne knowledge index …` |
 
 Ontology was a design collection, not an implemented enterprise service. The wiki
 index resolves relationships and reports unresolved links; it does not implement
@@ -22,7 +22,7 @@ enterprise documents and unfinished source changes are not public imports.
 
 ```sh
 npm run setup
-node bin/ariadne.mjs --help
+node bin/Ariadne.mjs --help
 npm run verify
 ```
 
@@ -37,7 +37,7 @@ Review the [memory configuration](../packages/memory/docs/configuration.md), the
 pass that file explicitly using Node:
 
 ```sh
-node --env-file=.env bin/ariadne.mjs memory serve
+node --env-file=.env bin/Ariadne.mjs memory serve
 ```
 
 `DATABASE_URL`, vector backend, organization authorization and embedding identity
@@ -60,8 +60,8 @@ the target workspace for relative source reads. Credentials are read at runtime;
 their values are not embedded in generated client configuration.
 
 ```sh
-node /path/to/ariadne/bin/ariadne.mjs code install-agent --dry-run
-node /path/to/ariadne/bin/ariadne.mjs memory init --project my-project --organization-id personal
+node /path/to/Ariadne/bin/Ariadne.mjs code install-agent --dry-run
+node /path/to/Ariadne/bin/Ariadne.mjs memory init --project my-project --organization-id personal
 ```
 
 `code install-agent` and `code install-hook` use an internal executable adapter
@@ -70,8 +70,8 @@ string. Both run the same Ariadne entry point with `code` as an argv element.
 Explicit `--command` and `--name` still override those generated defaults.
 
 MCP clients can register two entries pointing at the same Ariadne installation:
-`node /path/to/ariadne/bin/ariadne.mjs code mcp serve` and
-`node --env-file=/path/to/ariadne/.env /path/to/ariadne/bin/ariadne.mjs memory mcp`.
+`node /path/to/Ariadne/bin/Ariadne.mjs code mcp serve` and
+`node --env-file=/path/to/Ariadne/.env /path/to/Ariadne/bin/Ariadne.mjs memory mcp`.
 Keep the code MCP cwd at the target repository. Existing tool names and
 authorization remain intact. Installation never edits global agent credentials.
 

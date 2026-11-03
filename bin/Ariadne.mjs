@@ -9,20 +9,20 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const memory = join(root, 'packages/memory')
 const code = join(root, 'packages/code')
 const [command, ...args] = process.argv.slice(2)
-const help = `Ariadne — one harness, one checkout
+const help = `Ariadne — integrated agent harness
 
-  ariadne setup                       Install locked internal dependencies and build
-  ariadne verify                      Core + memory + code verification
-  ariadne context [--root path] [--req slug] [--budget brief|standard|deep]
-  ariadne code <command>               Code impact, local facts, MCP and UI (--help)
-  ariadne memory init|pack|remember|reindex <options>
-  ariadne memory serve|worker|mcp|migrate
-  ariadne memory backup-create|backup-verify|restore-smoke
-  ariadne knowledge promote|index --vault path --project name
-  ariadne install-rules [--prefix path] [--global-pointer]
+  Ariadne setup                       Install locked internal dependencies and build
+  Ariadne verify                      Core + memory + code verification
+  Ariadne context [--root path] [--req slug] [--budget brief|standard|deep]
+  Ariadne code <command>               Code impact, local facts, MCP and UI (--help)
+  Ariadne memory init|pack|remember|reindex <options>
+  Ariadne memory serve|worker|mcp|migrate
+  Ariadne memory backup-create|backup-verify|restore-smoke
+  Ariadne knowledge promote|index --vault path --project name
+  Ariadne install-rules [--prefix path] [--global-pointer]
 
 Run from your target project. No external model is selected by this launcher.
-Memory configuration: node --env-file=/path/to/ariadne/.env /path/to/ariadne/bin/ariadne.mjs memory ...
+Memory configuration: node --env-file=/path/to/Ariadne/.env /path/to/Ariadne/bin/Ariadne.mjs memory ...
 `
 
 function built(path) {
@@ -69,4 +69,4 @@ async function main() {
 }
 
 try { process.exitCode = await main() }
-catch (error) { console.error(`ariadne: ${scrub(error.message).text}`); process.exitCode = 2 }
+catch (error) { console.error(`Ariadne: ${scrub(error.message).text}`); process.exitCode = 2 }

@@ -32,7 +32,7 @@ codex features list | grep -E "hooks|multi_agent|skill"
 ## 3. 설치
 
 ```bash
-git clone <ariadne-repo> ariadne && cd ariadne
+git clone <Ariadne-repo> Ariadne && cd Ariadne
 node --test && node scripts/verify.mjs   # 받은 것이 green인지 먼저 확인
 node scripts/install.mjs                 # ~/.harness에 core/skills/templates 설치 (멱등)
 ```
