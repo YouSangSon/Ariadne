@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -249,6 +249,53 @@ test('CLI import-session imports a claude transcript', async () => {
   const parsed = JSON.parse(result.stdout) as Awaited<ReturnType<typeof importSession>>;
   assert.equal(parsed.format, 'claude');
   assert.deepEqual(parsed.referencedFiles, ['docs/policy.md']);
+});
+
+test('CLI import-session handles hostile path tokens and preserves reference matching', async (t) => {
+  const repoRoot = await makeRepo();
+  const externalDir = await mkdtemp(path.join(tmpdir(), 'parallax-session-outside-'));
+  t.after(async () => {
+    await Promise.all([rm(repoRoot, { recursive: true, force: true }), rm(externalDir, { recursive: true, force: true })]);
+  });
+  for (const file of [
+    '.config.js', 'Makefile', '.env', 'no-extension',
+    'src/quoted.ts', 'src/backtick.ts', 'src/paren.ts', 'src/bracket.ts', 'src/brace.ts',
+    'src/name+@_-.d.ts', 'src/dotted../file.ts', 'src/left.ts', 'src/right.ts', 'src/empty.ts',
+    'node_modules/ignored.ts', 'src/node_modules/ignored.ts', '.parallax/ignored.ts', 'src/.parallax/ignored.ts'
+  ]) {
+    await mkdir(path.dirname(path.join(repoRoot, file)), { recursive: true });
+    await writeFile(path.join(repoRoot, file), 'fixture\n');
+  }
+  const externalFile = path.join(externalDir, 'outside.ts');
+  await writeFile(externalFile, 'outside\n');
+  await symlink(externalFile, path.join(repoRoot, 'src/outside.ts'));
+  await symlink(path.join(repoRoot, 'src/a.ts'), path.join(repoRoot, 'src/alias.ts'));
+  await mkdir(path.join(repoRoot, 'docs/directory.md'));
+  await writeFile(path.join(repoRoot, 'sessions/hostile.txt'), [
+    '.config.js Makefile.. .env no-extension.',
+    '"src/quoted.ts" `src/backtick.ts` (src/paren.ts) [src/bracket.ts] {src/brace.ts}',
+    'src/name+@_-.d.ts src/dotted../file.ts docs/policy.md, ./src/a.ts... src/alias.ts;',
+    ':src/left.ts src/right.ts! src//empty.ts docs/directory.md',
+    'node_modules/ignored.ts src/node_modules/ignored.ts .parallax/ignored.ts src/.parallax/ignored.ts',
+    `../outside.ts ${externalFile} src/outside.ts`,
+    `${'.+/'.repeat(40)}no-extension`,
+    `${'+.'.repeat(20_000)}/`,
+    `a${'.'.repeat(120_000)}a.js`
+  ].join('\n'));
+
+  const result = spawnSync(
+    process.execPath,
+    ['--import', tsxLoaderPath, path.resolve('src/cli.ts'), 'import-session', '--file', 'sessions/hostile.txt', '--format', 'codex'],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 5_000 }
+  );
+
+  assert.equal(result.status, 0, result.error?.message ?? result.stderr);
+  const parsed = JSON.parse(result.stdout) as Awaited<ReturnType<typeof importSession>>;
+  assert.deepEqual(parsed.referencedFiles, [
+    '.config.js', 'Makefile', 'docs/policy.md', 'src/a.ts', 'src/backtick.ts', 'src/brace.ts',
+    'src/bracket.ts', 'src/dotted../file.ts', 'src/name+@_-.d.ts', 'src/paren.ts', 'src/quoted.ts'
+  ]);
+  assert.equal(parsed.referenceFactIds.length, parsed.referencedFiles.length);
 });
 
 test('CLI import-session validates required file and format', async () => {

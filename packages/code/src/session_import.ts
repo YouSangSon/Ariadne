@@ -218,9 +218,15 @@ function looksLikeToolUse(value: unknown): boolean {
 function extractReferencedRepoFiles(repoRoot: string, text: string): string[] {
   const candidates = new Set<string>();
   const pattern =
-    /(?:^|[\s"'`([{])((?:\.?[A-Za-z0-9_@+.-]+\/)*\.?[A-Za-z0-9_@+.-]+\.[A-Za-z0-9_@+.-]+)(?=$|[\s"'`)\]},:;])/g;
+    /(?:^|[\s"'`([{])([A-Za-z0-9_@+./-]+)(?=$|[\s"'`)\]},:;])/g;
   for (const match of text.matchAll(pattern)) {
-    const candidate = match[1]?.replace(/[.,;:]+$/, '');
+    const token = match[1]!;
+    const segments = token.split('/');
+    const fileName = segments[segments.length - 1]!;
+    if (segments.some((segment) => segment.length === 0) || !fileName.slice(1, -1).includes('.')) continue;
+    let end = token.length;
+    while (token[end - 1] === '.') end--;
+    const candidate = token.slice(0, end);
     if (!candidate || candidate.includes('\0')) continue;
     if (candidate.startsWith('../') || candidate.startsWith('/') || candidate.includes('://')) continue;
     if (
