@@ -1,0 +1,459 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  buildRetrievedMemoryCandidate,
+  newestUpdatedAtFor,
+  rankCandidates,
+  rankResults,
+  scoreSearchResult,
+  type RetrievedMemoryCandidate,
+  type ScoreSearchResultOptions,
+} from "../../src/search/rank-results.js";
+import type { SearchMemoryResult } from "../../src/types.js";
+
+type ResultOverrides = Partial<Omit<SearchMemoryResult, "source">> & {
+  source?: Partial<SearchMemoryResult["source"]>;
+};
+
+function createResult(
+  overrides: ResultOverrides,
+): SearchMemoryResult {
+  const scopeType = overrides.scopeType ?? "project";
+  const scopeId = overrides.scopeId ?? "project-alpha";
+  const sourceScopeType = overrides.source?.scopeType ?? scopeType;
+  const sourceScopeId = overrides.source?.scopeId ?? scopeId;
+
+  return {
+    id: overrides.id ?? 1,
+    sourceId: overrides.sourceId ?? 1,
+    scopeType,
+    scopeId,
+    memoryType: overrides.memoryType ?? "summary",
+    content: overrides.content ?? "Captured note.",
+    createdAt: overrides.createdAt ?? "2026-03-20T10:00:00.000Z",
+    updatedAt: overrides.updatedAt ?? "2026-03-20T10:00:00.000Z",
+    source: {
+      id: overrides.source?.id ?? 1,
+      scopeType: sourceScopeType,
+      scopeId: sourceScopeId,
+      sourceType: overrides.source?.sourceType ?? "document",
+      externalId: overrides.source?.externalId ?? "memory-1",
+      title: overrides.source?.title ?? "Memory 1",
+      uri: overrides.source?.uri ?? "file:///tmp/memory-1.md",
+      createdAt:
+        overrides.source?.createdAt ?? "2026-03-20T10:00:00.000Z",
+    },
+  };
+}
+
+const callRankResults = (records: unknown) => () =>
+  rankResults(records as readonly SearchMemoryResult[]);
+
+const callNewestUpdatedAtFor = (records: unknown) => () =>
+  newestUpdatedAtFor(records as readonly SearchMemoryResult[]);
+
+const callScoreSearchResult = (record: unknown, options: unknown) => () =>
+  scoreSearchResult(
+    record as SearchMemoryResult,
+    options as ScoreSearchResultOptions,
+  );
+
+const callRankCandidates = (candidates: unknown) => () =>
+  rankCandidates(candidates as readonly RetrievedMemoryCandidate[]);
+
+describe("rankResults", () => {
+  it("allows a stronger user memory to outrank weaker project memories", () => {
+    const ranked = rankResults([
+      createResult({
+        id: 11,
+        memoryType: "summary",
+        content: "General notes from a coding session.",
+        updatedAt: "2026-03-28T09:00:00.000Z",
+        source: {
+          sourceType: "conversation",
+          externalId: "session-1",
+          title: "Session 1",
+          uri: "file:///tmp/session-1.md",
+        },
+      }),
+      createResult({
+        id: 12,
+        scopeType: "user",
+        scopeId: "alice",
+        memoryType: "decision",
+        content: "Decision: Use ripgrep for fast code search in local tools.",
+        updatedAt: "2026-03-28T11:00:00.000Z",
+        source: {
+          scopeType: "user",
+          scopeId: "alice",
+          sourceType: "decision",
+          externalId: "user-decision-1",
+          title: "CLI defaults",
+          uri: "file:///tmp/user-decision-1.md",
+        },
+      }),
+      createResult({
+        id: 13,
+        memoryType: "decision",
+        content: "Decision: Keep local-first storage for project memory.",
+        updatedAt: "2026-03-28T11:00:00.000Z",
+        source: {
+          sourceType: "decision",
+          externalId: "project-decision-1",
+          title: "Storage ADR",
+          uri: "file:///tmp/project-decision-1.md",
+        },
+      }),
+      createResult({
+        id: 14,
+        memoryType: "fact",
+        content: "README mentions setup steps for local development.",
+        updatedAt: "2026-03-29T08:30:00.000Z",
+        source: {
+          sourceType: "document",
+          externalId: "readme",
+          title: "README",
+          uri: "file:///tmp/readme.md",
+        },
+      }),
+    ]);
+
+    expect(ranked.map((record) => record.id)).toEqual([13, 12, 14, 11]);
+  });
+
+  it("keeps project scope first when relevance scores tie", () => {
+    const ranked = rankResults([
+      createResult({
+        id: 99,
+        scopeType: "user",
+        scopeId: "alice",
+        source: { scopeType: "user", scopeId: "alice" },
+      }),
+      createResult({ id: 1, scopeType: "project" }),
+    ]);
+
+    expect(ranked.map((record) => record.id)).toEqual([1, 99]);
+  });
+
+  it("keeps a recent project summary ahead of an older project summary", () => {
+    const ranked = rankResults([
+      createResult({
+        id: 21,
+        memoryType: "summary",
+        content: "Project summary from last month.",
+        updatedAt: "2026-02-01T10:00:00.000Z",
+      }),
+      createResult({
+        id: 22,
+        memoryType: "summary",
+        content: "Updated project summary after the ingestion rewrite.",
+        updatedAt: "2026-03-28T10:00:00.000Z",
+      }),
+    ]);
+
+    expect(ranked.map((record) => record.id)).toEqual([22, 21]);
+  });
+
+  it("parses each updatedAt once while ranking records", () => {
+    const records = [
+      createResult({
+        id: 31,
+        updatedAt: "2026-03-26T10:00:00.000Z",
+      }),
+      createResult({
+        id: 32,
+        updatedAt: "2026-03-27T10:00:00.000Z",
+      }),
+      createResult({
+        id: 33,
+        updatedAt: "2026-03-28T10:00:00.000Z",
+      }),
+    ];
+    const parseSpy = vi.spyOn(Date, "parse");
+
+    try {
+      rankResults(records);
+      expect(parseSpy).toHaveBeenCalledTimes(records.length);
+    } finally {
+      parseSpy.mockRestore();
+    }
+  });
+
+  it.each([
+    "not-a-date",
+    "2026-02-30T00:00:00.000Z",
+    "2026-03-28T10:00:00Z",
+    123 as unknown as string,
+  ])("rejects invalid updatedAt before ranking: %s", (updatedAt) => {
+    expect(() => rankResults([createResult({ updatedAt })])).toThrow(
+      /record\.updatedAt is not a canonical ISO 8601 timestamp/,
+    );
+  });
+
+  it("exposes deterministic internal score components", () => {
+    const record = createResult({
+      id: 31,
+      memoryType: "decision",
+      content: "Decision: keep deterministic ranking helpers.",
+      updatedAt: "2026-03-28T10:00:00.000Z",
+      source: { sourceType: "decision" },
+    });
+
+    const candidate = scoreSearchResult(record, {
+      newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+      vectorScore: 0.4,
+      source: "vector",
+    });
+
+    expect(candidate.source).toBe("vector");
+    expect(candidate.scores.vector).toBeCloseTo(40);
+    expect(candidate.scores.scope).toBe(0);
+    expect(candidate.scores.metadata).toBe(150);
+    expect(candidate.scores.recency).toBe(25);
+    expect(candidate.scores.total).toBeCloseTo(215);
+    expect(candidate.reasons).toEqual(
+      expect.arrayContaining([
+        "scope:project",
+        "memoryType:decision",
+        "sourceType:decision",
+        "recency:25",
+        "vector:40",
+      ]),
+    );
+  });
+
+  it("rejects non-finite newestUpdatedAt before scoring", () => {
+    expect(() =>
+      scoreSearchResult(createResult({}), {
+        newestUpdatedAt: Number.NaN,
+      }),
+    ).toThrow("newestUpdatedAt must be a finite timestamp");
+  });
+
+  it("uses vector score to order records when metadata ties", () => {
+    const lowerVector = buildRetrievedMemoryCandidate(
+      createResult({
+        id: 42,
+        memoryType: "summary",
+        content: "Project retrieval summary A.",
+        updatedAt: "2026-03-28T10:00:00.000Z",
+      }),
+      { source: "vector", vectorScore: 0.2 },
+    );
+    const higherVector = buildRetrievedMemoryCandidate(
+      createResult({
+        id: 41,
+        memoryType: "summary",
+        content: "Project retrieval summary B.",
+        updatedAt: "2026-03-28T10:00:00.000Z",
+      }),
+      { source: "vector", vectorScore: 0.9 },
+    );
+
+    const ranked = rankCandidates([lowerVector, higherVector]);
+
+    expect(ranked.map((candidate) => candidate.record.id)).toEqual([41, 42]);
+  });
+
+  it("lets strong hybrid relevance outrank unrelated decision metadata", () => {
+    const newestUpdatedAt = Date.parse("2026-03-28T10:00:00.000Z");
+    const relevantFact = scoreSearchResult(
+      createResult({
+        id: 61,
+        scopeType: "user",
+        scopeId: "alice",
+        memoryType: "fact",
+        content: "Alice formats TypeScript with tabs, not spaces.",
+        source: {
+          scopeType: "user",
+          scopeId: "alice",
+          sourceType: "document",
+        },
+      }),
+      {
+        newestUpdatedAt,
+        source: "hybrid",
+        vectorScore: 0.8,
+        lexicalScore: 0.65,
+      },
+    );
+    const unrelatedDecision = scoreSearchResult(
+      createResult({
+        id: 62,
+        memoryType: "decision",
+        source: { sourceType: "decision" },
+      }),
+      {
+        newestUpdatedAt,
+        source: "hybrid",
+        vectorScore: 0.05,
+        lexicalScore: 0.3,
+      },
+    );
+
+    expect(
+      rankCandidates([unrelatedDecision, relevantFact]).map(
+        (candidate) => candidate.record.id,
+      ),
+    ).toEqual([61, 62]);
+  });
+
+  it("rejects invalid candidate updatedAt before tie-break sorting", () => {
+    const candidate = buildRetrievedMemoryCandidate(
+      createResult({
+        id: 51,
+        updatedAt: "2026-03-28T10:00:00.000Z",
+      }),
+    );
+    const invalidCandidate = {
+      ...candidate,
+      record: createResult({
+        id: 52,
+        updatedAt: "not-a-date",
+      }),
+    };
+
+    expect(() => rankCandidates([candidate, invalidCandidate])).toThrow(
+      /record\.updatedAt is not a canonical ISO 8601 timestamp/,
+    );
+  });
+
+  it("finds the newest canonical updatedAt timestamp", () => {
+    expect(
+      newestUpdatedAtFor([
+        createResult({ updatedAt: "2026-03-27T10:00:00.000Z" }),
+        createResult({ updatedAt: "2026-03-29T10:00:00.000Z" }),
+      ]),
+    ).toBe(Date.parse("2026-03-29T10:00:00.000Z"));
+  });
+
+  it("rejects empty input when deriving the newest updatedAt", () => {
+    expect(() => newestUpdatedAtFor([])).toThrow(
+      "records must contain at least one record",
+    );
+  });
+
+  it("rejects non-array record collections before ranking", () => {
+    expect(callRankResults({})).toThrow("records must be an array");
+    expect(callNewestUpdatedAtFor({})).toThrow("records must be an array");
+  });
+
+  it.each([
+    [null, "records[0] must be an object"],
+    [
+      { id: 0 },
+      "records[0].id must be a positive safe integer",
+    ],
+    [
+      { scopeType: "workspace" },
+      'records[0].scopeType must be "project" or "user"',
+    ],
+    [
+      { memoryType: "task" },
+      'records[0].memoryType must be "decision", "summary", or "fact"',
+    ],
+    [{ content: null }, "records[0].content must be a string"],
+    [{ source: null }, "records[0].source must be an object"],
+    [
+      {
+        source: {
+          ...createResult({}).source,
+          sourceType: "ticket",
+        },
+      },
+      'records[0].source.sourceType must be "decision", "document", or "conversation"',
+    ],
+  ])("rejects invalid rank record field", (overrides, message) => {
+    const record =
+      overrides === null
+        ? null
+        : ({
+            ...createResult({}),
+            ...(overrides as Record<string, unknown>),
+          } as SearchMemoryResult);
+
+    expect(callRankResults([record])).toThrow(message);
+  });
+
+  it("rejects invalid scoreSearchResult options", () => {
+    expect(callScoreSearchResult(createResult({}), null)).toThrow(
+      "scoreSearchResult options must be an object",
+    );
+    expect(
+      callScoreSearchResult(createResult({}), {
+        newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+        source: "manual",
+      }),
+    ).toThrow('source must be "vector", "lexical", or "hybrid"');
+    expect(
+      callScoreSearchResult(createResult({}), {
+        newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+        vectorScore: "0.5",
+      }),
+    ).toThrow("vectorScore must be a finite number");
+    expect(
+      callScoreSearchResult(createResult({}), {
+        newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+        lexicalScore: Number.POSITIVE_INFINITY,
+      }),
+    ).toThrow("lexicalScore must be a finite number");
+    expect(
+      callScoreSearchResult(createResult({}), {
+        newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+        vectorScore: -0.1,
+      }),
+    ).toThrow("vectorScore must be between 0 and 1");
+    expect(
+      callScoreSearchResult(createResult({}), {
+        newestUpdatedAt: Date.parse("2026-03-28T10:00:00.000Z"),
+        lexicalScore: 1.1,
+      }),
+    ).toThrow("lexicalScore must be between 0 and 1");
+  });
+
+  it("rejects invalid rank candidate input before sorting", () => {
+    const validCandidate = buildRetrievedMemoryCandidate(createResult({}));
+
+    expect(callRankCandidates({})).toThrow("candidates must be an array");
+    expect(callRankCandidates([null])).toThrow(
+      "candidates[0] must be an object",
+    );
+    expect(callRankCandidates([{ ...validCandidate, scores: null }])).toThrow(
+      "candidates[0].scores must be an object",
+    );
+    expect(
+      callRankCandidates([{ ...validCandidate, source: "manual" }]),
+    ).toThrow('candidates[0].source must be "vector", "lexical", or "hybrid"');
+    expect(
+      callRankCandidates([
+        {
+          ...validCandidate,
+          scores: { ...validCandidate.scores, total: Number.NaN },
+        },
+      ]),
+    ).toThrow("candidates[0].scores.total must be a finite number");
+    expect(
+      callRankCandidates([
+        {
+          ...validCandidate,
+          scores: { ...validCandidate.scores, scope: undefined },
+        },
+      ]),
+    ).toThrow("candidates[0].scores.scope must be a finite number");
+    expect(
+      callRankCandidates([
+        {
+          ...validCandidate,
+          scores: { ...validCandidate.scores, vector: Number.NaN },
+        },
+      ]),
+    ).toThrow("candidates[0].scores.vector must be a finite number");
+    expect(
+      callRankCandidates([
+        {
+          ...validCandidate,
+          reasons: ["scope:project", null],
+        },
+      ]),
+    ).toThrow("candidates[0].reasons[1] must be a string");
+  });
+});

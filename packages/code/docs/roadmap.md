@@ -1,0 +1,134 @@
+# Roadmap
+
+**English** · [한국어](roadmap.ko.md) · [中文](roadmap.zh.md)
+
+> Organize upcoming work thematically. Progress tracking stays at the git log and PR level.
+
+This document records only the *direction we can move on without friction right now*. Big decisions are made without breaking [invariants.md](invariants.md).
+
+---
+
+## 1. Accuracy
+
+The biggest gap right now is that there is no way for a person to know *when* regex/declaration-line based evidence is wrong.
+
+- [ ] Full symbol/call span based on TS/JS Tree-sitter or the TypeScript parser
+  - Progress (parser-backed via the TypeScript compiler):
+    - Imports, declarations, and class/interface heritage type relations across the same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix
+    - Call dispatch: imported call-sites, local identifier calls, method-reference alias calls, same-class `this.method()`, same-file `super.method()`, same-file class-extends inherited instance/static methods, and static `ClassName.method()`
+    - Factory return-type instance method calls across the same-file / direct-new-or-const-alias-inferred / namespace-constructor-inferred / factory-wrapper-inferred / direct-factory-call-receiver / named-import / direct-named-re-export / star-re-export / namespace-import / namespace-re-export / default-import / direct-default-re-export / awaited matrix
+    - Interface/type-literal method, function-property, and function-type-alias signatures, plus interface/type-literal typed receiver method calls across the same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix
+    - Type-relation receivers: interface-extends, alias-backed interface-extends, type-reference alias, simple-generic and generic-constraint references, intersection (alias and direct), and simple-union typed receivers
+    - Collections: local/class-scoped array, `Array<T>`, `ReadonlyArray<T>`, `readonly T[]`, numeric tuple element, indexed collection alias, direct collection-binding alias, explicitly typed array/tuple destructuring, and destructuring from typed local collection bindings
+    - Object bindings: typed local object property receivers, direct object-binding aliases, and destructuring from typed local object bindings
+    - Members & instances: declared typed local/class-field receivers, typed local variables, typed/destructured/named-object parameters, assertion-wrapped/non-null/parenthesized receivers, string-literal element access, private members, constructor parameter-property and constructor-assigned fields, object-literal callable declarations and receivers, class-field arrow methods (instance and static), typed and plain class fields, same-file `new ClassName()` instances, and direct `new ClassName().method()` calls
+  - Remaining: wider dynamic dispatch and advanced type relations
+- [ ] Promote JVM/Spring Boot endpoint/DI/persistence relations to a parser-based approach
+- [ ] Extend Python/Go/Rust call/import resolution from declaration-only to parser-backed
+- [x] State the confidence label and known-gap in the report for each adapter run
+- [x] Resolve NodeNext/ESM `.js` extension local imports to the TypeScript source (`.ts`) — fixed the issue where the internal import dependency graph was entirely falling through to `external_entity`
+- [x] Sort the impact report's `affected` by confidence (proven > inferred > heuristic) → depth → path — fixed the issue where proven code impact was buried below heuristic document mentions (this also automatically improves the UI's first-glance target)
+- [x] Heuristic git co-change relations (`CO_CHANGES`) to recover couplings the static graph structurally misses (config↔code, test↔impl) — derived from commit history above coupling/count thresholds, emitted at heuristic confidence as its own adapter run with an honest knownGaps disclosure, and only when git history yields couplings
+
+## 2. Workspace / Contract
+
+Cross-repo impact is at a v0 state. It works only among the local repos the user has registered.
+
+- [ ] Stabilize OpenAPI / GraphQL / Protobuf / AsyncAPI contract diff down to the *nested schema* level
+- [ ] Take the generated-client / event topology resolver beyond heuristics
+- [x] Have the workspace catalog recognize npm/pnpm sub-packages and Nx project configs inside a monorepo as first-class package/project members
+- [ ] Revisit additional Nx inferred-project or Turborepo task metadata only if a parseable source adds catalog value beyond package-manager workspace manifests
+- [x] Surface persisted cross-repo breaking contract links in primary analyze reports, graph exports, MCP payloads, and the UI workbench
+- [x] Keep cross-repo links queryable in both directions and verify malformed, stale, or orphan workspace rows
+
+## 3. Package / Build resolution
+
+The package resolver covers manifest graphs across common ecosystems and npm, Cargo, and Poetry lockfile transitive dependencies. Other lockfile ecosystems and semver impact are still open.
+
+- [x] npm `package-lock.json` v2/v3 transitive dependency graph
+  - Current gate: transitive package entries are indexed as lockfile-derived `DEPENDS_ON` package relations with locked versions and evidence spans.
+- [x] `Cargo.lock` transitive dependency graph (sourced packages → proven `lockfile:transitive` deps, mirroring the npm lockfile path)
+- [x] `poetry.lock` transitive dependency graph (resolved packages → proven `lockfile:transitive` deps; local `directory`/`file` sources skipped)
+- [ ] Extend lockfile-based transitive dependency graph to pip (requirements/uv), go, maven, and gradle lockfiles
+- [ ] Infer the affected version range from semver/range information
+- [ ] Standardize dumping the dependency graph without running build scripts
+
+## 4. Agent surface
+
+MCP has stabilized as read-only. Next is the stage of looking deeply at agent usability.
+
+- [x] GitHub-native agent package: generate Copilot repository instructions, MCP setup snippets, and a least-privilege "run Parallax first" workflow for PR work
+- [x] SARIF / code-scanning export for affected-file impact findings, plus a composite GitHub Action that generates the SARIF file for explicit upload
+- [x] PR action wrapper runs `init` → `index` → `pr triage`, supports changed-file or base/head diff discovery, writes SARIF, and appends a step summary while leaving SARIF upload explicit
+- [x] Emit cross-repo contract-break warnings as SARIF results anchored to provider contracts
+- [x] Emit index coverage-gap warnings as SARIF results anchored to changed files
+- [x] Emit recommended verification actions as SARIF note results
+- [x] Emit adapter known-gap notes as SARIF note results anchored to changed files
+- [x] Token-budgeted repo map / context card exposed as `parallax repo-map` and MCP `parallax_repo_map`, ranking changed roots, affected files, tests/docs/config/work artifacts, evidence refs, verification actions, resources, confidence, provenance, known gaps, and omitted counts
+- [x] Dependency/PR triage dogfood lane: `parallax pr triage` wraps local diff analysis, SARIF output, `--fail-on`, and repo-map context without GitHub writes
+- [x] Local Git hook installer: `parallax install-hook` writes managed `pre-commit` / `pre-push` impact gates, respects `core.hooksPath`, and skips existing non-Parallax hooks unless forced
+- [x] Deep-linkable UI/export: workbench URLs preserve selected impact path, filter text, and report-delta policy preset; toolbar exports JSON, affected-path CSV, and PNG/SVG impact maps
+- [x] SCIP import/export: `parallax scip import --file <index.scip or index.scip.json>` augments the latest completed index with SCIP definition/reference edges, and `parallax scip export --file <index.scip.json>` emits SCIP-compatible JSON
+- [ ] Validate the budget tuning (brief/standard/deep) of `context_for_change` with usage telemetry
+- [ ] A harness to measure the hit/miss of context pack results
+- [ ] Consider introducing a write surface separated into its own permission model (compliant with [invariants.md](invariants.md) I-8)
+- [x] Read-only graph query surface: a deterministic Cypher subset exposed as the `parallax_query` MCP tool and `parallax query` CLI (single-hop and bounded multi-hop traversal, forward and reverse clauses, labels, `WHERE` =/`CONTAINS`, projection, `LIMIT`; write/procedure clauses rejected)
+- [x] MCP workflow prompts: `impact_workflow` and `triage_change` teach the intended analyze → context → query/co-change → remember flow
+- [x] First write surface kept off the read-only MCP (I-8): `parallax ingest-traces` promotes relations confirmed by runtime traces to proven confidence
+
+## 5. UI Explorer
+
+The UI right now is at the level of a first explorer that reads saved reports and graphs.
+
+- [x] Validate a single screen for the changed → affected → evidence → action flow
+- [x] Make work-artifact lanes such as policy / decision / PRD / requirement / proposal first-class panels
+- [x] Jump to the original file/line in one click from an evidence resource
+- [x] Expand the inspector to drill down more deeply into the relation/evidence/action of a selected impact
+- [x] Comparison between saved reports and a regression delta UI
+- [x] Wire the report delta's added paths directly to the source viewer and the inspector/verification action, and wire removed paths to the source viewer
+- [x] Make the wider/narrower judgment criteria for the report delta configurable as team policy
+- [x] Make report delta policy presets comparable in the UI
+- [x] Strengthen first glance by adding a primary flow summary, direction arrows, and stage bands to the impact map
+- [x] Export the policy selected in a report delta preset as a config patch
+- [x] Raise the impact map to the primary surface of the first viewport so the change → impact flow is immediately visible
+- [x] Display the impact map's fallback edges as displayed paths too, removing states that are misread like "0 graph links"
+- [x] Align the impact summary to the displayed path basis as well, removing the terminology mismatch between the summary and the map
+- [x] Add a changed root → affected targets → next verification triage strip on the first screen
+- [x] Clicking a top affected/verification target in the triage strip connects to the inspector/evidence selection
+- [x] Highlight impact map edges/labels together with the selected target to strengthen graph readability
+- [x] Unify the initial primary flow/inspector to the action-first selected target
+- [x] Sync the map legend row with the selected target too, and show the selected state starting from server rendering
+- [x] Add an Analysis Trust summary to the Impact Summary that bundles coverage, adapter confidence, and known gap
+- [x] Keep the workbench language switcher honest by localizing client-updated map, inspector, copy, source, and empty-state labels
+- [x] Preserve selected report and language query state together across language and report navigation
+- [x] Add a selected-impact verdict card that combines lane, confidence, evidence count, and verification readiness
+
+## 6. Retrospective and measurement
+
+Without regression signals, there is no guarantee that every change works.
+
+- [x] A deterministic bench harness based on multi-language fixtures
+  - Current gate: `bench/impact-bench.ts` builds a fixed TypeScript/JavaScript, JVM/Spring Boot, Python, Go, Rust, OpenAPI, and build-manifest fixture; scores relation recall/precision, affected-file recall, evidence/span coverage, adapter attribution, context-pack readiness, and retrieval quality; and is run by `npm run bench`, `npm test`, and the CI `npm run verify` gate.
+  - Current cross-repo gate: the bench includes a two-repo contract-impact fixture that verifies W1 primary cross-repo consumer impact and report graph edges remain visible.
+  - Current contract-diff gate: the bench includes paired OpenAPI v1/v2 quality cases for removed response required properties, removed response optional properties, added request required properties, request enum-value removals, request format additions, response property type changes, response nullable additions, response format changes, and response enum-value removals, plus JSON Schema root-object and Avro top-level record required-property removal cases, reported as `contractDiffQuality` so CI summaries can track deltas.
+  - Current co-change gate: the bench includes a tiny git-history fixture where `src/alpha.ts` and `src/beta.ts` repeatedly change together, reported as `coChangeQuality` so CI summaries can track partner and affected-file deltas.
+  - Current trace-promotion gate: the bench ingests a runtime-observed `src/beta.ts -> src/alpha.ts` edge and reports `tracePromotionQuality`, so CI summaries can track promotion and proven-impact deltas.
+- [x] A separate scale/perf bench that reports full index, no-op incremental index, edited-file reindex, and analyze phases without pretending exact timings are deterministic
+  - Current tool: `npm run bench:perf` measures those phases, their scan timings, and `observed_peak_rss_mb` on the synthetic-repo generator outside `npm run verify`, so timing and RSS remain advisory rather than a byte-for-byte CI contract. The standard large-repo baseline command is `npm run bench:perf -- --scales 10000,50000`; the current local baseline in `docs/verification.md` records 1k/2k rows and a 10k timeout limit instead of a green 10k/50k claim.
+- [x] Recall quality regression detection when crossing embedding models / LLM providers
+  - Current gate: the deterministic bench now includes a semantic model matrix with per-model recall@1 and cross-model isolation checks. It is deliberately offline and catches embedding model namespace regressions without depending on live provider calls; LLM provider network quality remains outside CI, while provider contracts stay covered by offline tests.
+- [x] Automatically report the bench delta on every PR in CI
+  - Current gate: CI prepares a base-SHA bench report for pull requests, runs the canonical `npm run verify` gate on the head, then appends `npm run bench:report` Markdown to the GitHub Step Summary with score, relation, affected-file, retrieval, and semantic recall deltas.
+- [x] Commit indexing graph/current-state writes in one explicit transaction so a crashed run cannot strand a partial current graph cohort
+- [x] Make saved reports / exported artifacts explicitly immutable snapshots across later incremental re-index runs
+
+---
+
+## If we had to pick just the next slice
+
+`PLAN.md` is the live queue. The dependency-audit exception has been removed;
+current verification is recorded in `GATES.md`. The next S1 slice must define and enforce
+emitted-row ownership separately from `fileContentScope`; changed bodies remain
+on full extraction until that contract and deterministic read counts exist. The
+accuracy and agent-surface items above remain thematic follow-ons, not competing
+live instructions.

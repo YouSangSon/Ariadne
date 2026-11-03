@@ -1,0 +1,32 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: project-consolidation
+  title: 하나의 Ariadne로 개인 프로젝트 통합
+  status: ready_for_routing
+requirement:
+  user_intent: Akasha·Context-forge·Parallax·Ontology를 Ariadne에서 관리한다.
+  desired_outcome: 단일 설치와 CLI로 기능을 사용하고 원본·이력·데이터 보존 후 이전 로컬 경로를 정리한다.
+  confirmed_facts:
+    - 이전 원격은 삭제하지 않고 private로 전환하며 Ariadne는 공개 상태를 유지한다.
+    - Context-forge는 Akasha로 연결되고 Ontology는 설계 폴더다.
+    - 기존 미완료 작업과 private Git 이력은 공개 소스와 분리해 보존한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: 독립 체크아웃 없이 root 설치·빌드·검증·CLI에서 core·memory·code·knowledge를 사용한다.
+    - id: AC2
+      statement: 기존 데이터·권한·도구 계약과 생성된 MCP·hook의 실행 경로를 보존한다.
+    - id: AC3
+      statement: 모든 원본 ref·working tree·로컬 데이터 보존을 검증한 뒤 지정 경로만 삭제한다.
+    - id: AC4
+      statement: GitHub의 두 기존 저장소는 private로 확인하고 공개 Ariadne에서 필수 CI와 병합을 확인한다.
+verification:
+  commands:
+    - npm run verify
+    - 실제 CLI·MCP·메모리 쓰기/조회와 원본 archive/bundle 검증
+audit:
+  must_not_implement:
+    - 외부 DB의 추정 이전이나 삭제
+    - 비공개 원본 이력·enterprise 문서 게시
+    - 미완료 dispatcher와 FTS를 구현 완료로 표기

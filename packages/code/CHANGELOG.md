@@ -1,0 +1,55 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Variable-length paths in the `query` Cypher subset (`parallax query` and the `parallax_query` MCP tool): `MATCH (a)-[r:DEPENDS_ON*1..3]->(b)` traverses the transitive closure of a relationship kind (forms `*`, `*N`, `*min..max`, `*..max`; max capped at 8) via a deterministic recursive CTE, enabling blast-radius queries like "everything reachable from X". The relationship variable is not projectable in a variable-length path.
+- Confidence-aware impact gate: `parallax analyze --fail-on=<proven|inferred|heuristic|any|none>` controls the exit code so CI can fail a change only when an affected dependent meets a confidence threshold (default behavior — any affected file fails — is unchanged). The pure `failsImpactGate` primitive is the basis for a future GitHub Action / pre-commit hook.
+- Cargo.lock transitive dependency graph: the build-system adapter now parses `Cargo.lock` and merges external (sourced) packages into the owning crate as proven `lockfile:transitive` `DEPENDS_ON` relations, mirroring the npm package-lock graph. Local workspace members (no `source`) are left for first-class package resolution.
+- poetry.lock transitive dependency graph: `poetry.lock` is parsed and its resolved packages are merged into the owning `pyproject.toml` project as proven `lockfile:transitive` deps; local `directory`/`file` sources are skipped so path deps stay first-class.
+- Opt-in agent setup: a `parallax install-agent [--config .mcp.json] [--name parallax] [--dry-run]` command (and `installParallaxMcp` / `addParallaxMcpServer` APIs) that registers Parallax's read-only-first MCP server in a client's standard `mcpServers` config, merging immutably (existing servers and keys preserved) and idempotently. It never runs automatically and `--dry-run` previews the merged config without writing.
+- Read-only graph query surface: a `parallax query "<cypher>"` command, a `parallax_query` MCP tool (`readOnlyHint: true`), and an `executeGraphQuery` API running a small, deterministic Cypher subset over the canonical entities/relations graph — a single optional relationship hop in either direction (`->` or `<-`, e.g. "what depends on X"), node labels, `WHERE` equality/`CONTAINS`, projection, and `LIMIT` — translated to parameterized SQL. Write, procedure, projection (`WITH`/`UNWIND`), and bidirectional clauses are rejected with clear errors before any database access.
+- Trace-driven confidence promotion: a `parallax ingest-traces --file <traces.json>` command (and `ingestTraces` API) that takes observed runtime `source -> target` edges and upgrades matching relations to `proven`, recording trace evidence. Runtime observation only ever raises confidence, never lowers it, reinforcing the confidence-first model; it pairs naturally with heuristic git co-change edges. Ingestion is a write surface kept off the read-only MCP (invariant I-8).
+- Supply-chain and security CI hardening: CodeQL (security-extended) SAST, OpenSSF Scorecard, a gitleaks secret scan plus a `npm audit` high-severity gate, Dependabot for npm and GitHub Actions, and a tag-triggered release workflow that runs the full verify gate, emits an SPDX SBOM (`npm sbom`), attests SLSA build provenance and the SBOM via GitHub OIDC, and publishes to npm with provenance (publish is `--dry-run` until npm trusted publishing or an `NPM_TOKEN` is configured).
+- Heuristic git co-change relations: an indexing pass derives `CO_CHANGES` couplings from commit history (files that repeatedly change together, above coupling/count thresholds, ignoring sweeping commits) so blast-radius analysis recovers config↔code / test↔impl links the static graph misses. Emitted at `heuristic` confidence as its own adapter run with a knownGaps disclosure (coupling is correlational, not a proven dependency), and absent outside a git work tree.
+- Dogfood guard test that runs Parallax against its own internal dependency graph, plus a NodeNext `.js`-extension benchmark fixture.
+- CI workflow running lint, build, test, dogfood, and benchmark on push and pull request.
+- Shared `src/confidence.ts` module with a single `asConfidence` guard, and an adapter-registry safety net that documents and asserts the catch-all adapter stays registered last.
+- MCP, CLI, and adapter-authoring reference docs, plus a `docs/` index, in English, Korean, and Chinese.
+
+### Changed
+
+- `docs-lint` now verifies local image targets exist — both Markdown images (`![](path)`) and HTML `<img src="path">` (which READMEs use and the Markdown link-target check skipped) — so a broken screenshot/diagram reference fails the gate instead of slipping through. External (`http(s)`/protocol-relative) and `data:` URIs are ignored.
+- Indexing performance: the write-mode database now opens with `synchronous = NORMAL` (durable-enough for a rebuildable derived index under WAL), a 16 MiB page cache, and 256 MiB mmap, cutting per-write fsync and page I/O during indexing. Deterministic — affects speed, not results.
+- Corrected MCP / CLI / SKILL / schema documentation drift so docs match the source (tool tables, command and flag names, tool counts).
+- Hardened `docs-lint` to enforce trilingual parity, language-switcher headers, and same-language internal links, and to ignore fenced code examples while still scanning them for secrets.
+- Extracted the static CSS and client JavaScript out of `src/ui.ts` into dedicated `src/ui/styles.ts` and `src/ui/client.ts` modules (rendered HTML byte-for-byte unchanged), reducing `ui.ts` from ~5090 to ~3056 lines.
+- Extracted the context-pack pipeline (build, reuse-persistence reference, work-artifact freshness, evidence compaction) out of `src/mcp.ts` into a dedicated `src/context_pack.ts` module (tool output byte-for-byte unchanged), reducing `mcp.ts` from ~4068 to ~3583 lines.
+- Split `src/contract_diff.ts` into per-format modules under `src/contract_diff/` (OpenAPI, AsyncAPI, Protobuf, GraphQL) plus shared types and helpers (`analyzeContractDiff` output unchanged), reducing `contract_diff.ts` from ~2279 to ~937 lines.
+- Split the build-system package adapter into per-ecosystem modules under `src/adapters/build-system/` (npm, Maven, Gradle, Go, Cargo, Python) plus shared helpers/types (emitted index events unchanged, adapter version unchanged), reducing `build-system-package.ts` from ~1777 to ~402 lines.
+- Extracted the MCP search subsystem (keyword/FTS/semantic/graph-proximity ranking and row queries) out of `src/mcp.ts` into `src/mcp_search.ts`, with the DB helpers shared by both surfaces in `src/mcp_shared.ts` (search-tool output unchanged), reducing `mcp.ts` from ~3583 to ~2263 lines.
+- Extracted the MCP resource-serving and explain-entity handlers out of `src/mcp.ts` into `src/mcp_resources.ts` (sharing the error/JSON helpers via `src/mcp_shared.ts`), reducing `mcp.ts` to ~1338 lines (from ~4068 before the context-pack/search/resource extractions).
+- Extracted the impact-map and report-delta-policy rendering out of `src/ui.ts` into `src/ui/impact_map.ts`, `src/ui/report_delta.ts`, and `src/ui/shared.ts` (rendered HTML byte-for-byte unchanged), reducing `ui.ts` from ~3056 to ~2237 lines.
+- Extracted the top-panel renderers (impact summary, analysis trust, triage, action and path rows) out of `src/ui.ts` into `src/ui/panels.ts` (rendered HTML byte-for-byte unchanged), reducing `ui.ts` from ~2167 to ~1824 lines.
+- Extracted the UI data-access layer (row→preview converters and DB readers) out of `src/ui.ts` into `src/ui/data.ts` (rendered HTML and JSON API output byte-for-byte unchanged), reducing `ui.ts` from ~1824 to ~1303 lines.
+- Consolidated the work-artifact freshness helpers that `src/ui.ts` and `src/context_pack.ts` each duplicated into a shared `src/work_artifacts.ts` (only byte-identical helpers merged; drifted copies left in place; behavior unchanged).
+- Split `src/cross_repo_resolver.ts` into per-protocol consumer-matcher modules under `src/cross_repo/` (HTTP/Spring, GraphQL, Protobuf, AsyncAPI) plus shared helpers/types (`resolveCrossRepoContracts` output unchanged), reducing `cross_repo_resolver.ts` from ~1401 to ~534 lines.
+
+### Fixed
+
+- Removed a nonexistent `--confidence` flag and other code-to-doc drift from the documentation set.
+- Made the impact-graph builder's node upgrade immutable: `upsertRowNode` now rebuilds nodes instead of mutating them in place.
+
+## Earlier milestones
+
+Seeded from the project history:
+
+- **Impact accuracy** — rank impact by confidence before path; resolve NodeNext `.js`-extension local imports to TypeScript source; resolve array-element typed, awaited-factory, and optional-chaining receiver calls.
+- **Internationalization** — trilingual README and docs (English canonical, Korean, Chinese) and a runtime language switcher in the UI.
+- **UI explorer** — first-glance impact triage, ranked impact route cards, selectable impact map with labeled nodes, and surfaced analysis trust and verification.

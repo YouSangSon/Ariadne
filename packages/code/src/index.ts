@@ -1,0 +1,206 @@
+export { createBranch, factLifecycle, mergeBranches, recall, recallOnRepo, recallSemantic, reembedFacts, reindexVec, reindexVecOnRepo, remember, rememberOnRepo, trace, withAgentMemoryDb } from './agent_memory.js';
+export type { ReindexVecOptions, ReindexVecResult } from './agent_memory.js';
+export type {
+  BranchInput,
+  BranchResult,
+  MergeBranchInput,
+  MergeBranchResult,
+  RecallInput,
+  RecallResult,
+  RecalledFact,
+  ReembedOptions,
+  ReembedResult,
+  RememberInput,
+  RememberResult,
+  RememberValue,
+  TraceEdge,
+  TraceInput,
+  TraceResult
+} from './agent_memory.js';
+export { analyzeDiff } from './analyzer.js';
+export { analyzeContractDiff } from './contract_diff.js';
+export type {
+  AnalyzeContractDiffOptions,
+  AnalyzeContractDiffResult,
+  ContractDiffChange,
+  ContractDiffChangeKind,
+  ContractDiffClassification,
+  ContractDiffContract,
+  ContractDiffProvider,
+  ImpactedContractConsumer
+} from './contract_diff.js';
+export {
+  consumersOf,
+  providersFor,
+  verifyCrossRepoLinks
+} from './cross_repo_links.js';
+export type {
+  CrossRepoConsumer,
+  CrossRepoConsumersOptions,
+  CrossRepoConsumersResult,
+  CrossRepoDiagnostic,
+  CrossRepoLinkRecord,
+  CrossRepoLinkVerifyOptions,
+  CrossRepoLinkVerifyResult,
+  CrossRepoProvider,
+  CrossRepoProvidersOptions,
+  CrossRepoProvidersResult
+} from './cross_repo_links.js';
+export { resolveCrossRepoContracts } from './cross_repo_resolver.js';
+export type {
+  CrossRepoContractLink,
+  ResolveCrossRepoContractsOptions,
+  ResolveCrossRepoContractsResult
+} from './cross_repo_resolver.js';
+export { exportImpactGraph } from './graph.js';
+export { indexProject } from './indexer.js';
+export { initProject } from './init.js';
+export { doctorProject, hasDoctorErrors, redactDoctorReportForMcp, REQUIRED_SCHEMA_VERSION } from './doctor.js';
+export type { DoctorFinding, DoctorOptions, DoctorReport } from './doctor.js';
+export { importSession } from './session_import.js';
+export type { SessionImportFormat, SessionImportOptions, SessionImportResult } from './session_import.js';
+export { ingestTraces, parseTraceInput } from './trace_promotion.js';
+export type { ObservedEdge, TraceIngestSummary } from './trace_promotion.js';
+export { executeGraphQuery, parseGraphQuery } from './graph_query.js';
+export type { GraphQueryResult, ParsedGraphQuery } from './graph_query.js';
+export { queryCoChanges } from './co_change_query.js';
+export type { CoChangePartner, CoChangeQueryOptions, CoChangeQueryResult } from './co_change_query.js';
+export { buildRepoMap, estimateRepoMapTokens } from './repo_map.js';
+export {
+  addParallaxMcpServer,
+  installCopilotAgentPackage,
+  installParallaxMcp,
+  planCopilotAgentPackage
+} from './agent_config.js';
+export type {
+  CopilotAgentPackageOptions,
+  CopilotAgentPackagePlan,
+  CopilotPackageFileAction,
+  InstallResult,
+  McpClientConfig,
+  ParallaxMcpOptions,
+  PlannedCopilotPackageFile
+} from './agent_config.js';
+export {
+  installParallaxGitHooks,
+  planParallaxGitHooks
+} from './git_hooks.js';
+export type {
+  ParallaxGitHookAction,
+  ParallaxGitHookName,
+  ParallaxGitHookOptions,
+  ParallaxGitHookPlan,
+  PlannedParallaxGitHook
+} from './git_hooks.js';
+export {
+  addWorkspaceRepo,
+  discoverWorkspacePackages,
+  initWorkspace,
+  listWorkspaces,
+  loadWorkspaceCatalog,
+  syncWorkspaceCatalog,
+  workspaceCatalogPath
+} from './workspace.js';
+export type {
+  AddWorkspaceRepoOptions,
+  DiscoveredWorkspacePackage,
+  DiscoverWorkspacePackagesOptions,
+  DiscoverWorkspacePackagesResult,
+  InitWorkspaceOptions,
+  InitWorkspaceResult,
+  ListWorkspacesOptions,
+  ListWorkspacesResult,
+  SyncWorkspaceCatalogOptions,
+  SyncWorkspaceCatalogResult,
+  WorkspaceCatalog,
+  WorkspaceCatalogRepo,
+  WorkspaceRepoSummary,
+  WorkspaceSummary,
+  WorkspaceTrustPolicy
+} from './workspace.js';
+export {
+  workspaceContractsResourceUri,
+  workspaceCrossRepoLinksResourceUri,
+  workspaceResourceUri,
+  workspaceResources
+} from './workspace_resources.js';
+export type { WorkspaceResourceUris } from './workspace_resources.js';
+export { createMcpServer, serveMcp } from './mcp.js';
+export { buildUiSnapshot, renderUiHtml, startUiServer } from './ui.js';
+export type { UiContextPackSummary, UiCoverageSnapshot, UiGraphPreview, UiReportPreview, UiReportSummary, UiServerOptions, UiSnapshot } from './ui.js';
+export { computeEmbedding, computeEmbeddingSync, STUB_MODEL_NAME } from './embeddings.js';
+export type { EmbeddingResult } from './embeddings.js';
+export { summarize, STUB_LLM_MODEL } from './llm.js';
+export type { ReflectionResult, SummarizeInput } from './llm.js';
+export { reflectFacts, repairReflections } from './reflection.js';
+export type {
+  ReflectOptions,
+  ReflectResult,
+  ReflectedEntity,
+  RepairOptions,
+  RepairResult,
+  OrphanReflection
+} from './reflection.js';
+export { impactReportToSarif } from './sarif.js';
+export type { SarifLog, SarifOptions } from './sarif.js';
+export { exportScipJson, importScipJson } from './scip.js';
+export type { ScipExportOptions, ScipExportResult, ScipImportOptions, ScipImportResult } from './scip.js';
+export { abandonBranch, gcBranches, restoreBranch } from './branch_gc.js';
+export { profileEntity } from './profile.js';
+export type { ProfileOptions, ProfileResult } from './profile.js';
+export type {
+  AbandonBranchInput,
+  AbandonBranchResult,
+  GcBranchesOptions,
+  GcBranchesResult,
+  GcBranchSummary,
+  RestoreBranchInput,
+  RestoreBranchResult
+} from './branch_gc.js';
+export { redactSecrets, resolveInsideRoot } from './security.js';
+export {
+  ensureVecTable,
+  hasVecTable,
+  isVectorExtensionLoaded,
+  loadVectorExtension,
+  vecTableName
+} from './store.js';
+export type {
+  AffectedFile,
+  AdapterUsage,
+  AnalyzeOptions,
+  ContextBudget,
+  ContextForChangeOptions,
+  ContextPack,
+  ContextPackChangedEntity,
+  ContextPackEvidence,
+  ContextPackItem,
+  CrossRepoImpact,
+  EntityKind,
+  EntityRef,
+  Evidence,
+  GraphEdge,
+  GraphExport,
+  GraphExportFormat,
+  GraphExportOptions,
+  GraphNode,
+  ImpactAction,
+  ImpactTarget,
+  ImpactReport,
+  IndexCoverage,
+  IndexCoverageItem,
+  IndexOptions,
+  IndexResult,
+  IndexScanReads,
+  InitOptions,
+  InitResult,
+  Lifecycle,
+  RepoMap,
+  RepoMapEvidenceRef,
+  RepoMapOptions,
+  RepoMapPathItem,
+  RepoMapQueryMatch,
+  RepoMapVerificationPlan,
+  RepoMapVerificationPlanGroup
+} from './types.js';
+export type { McpContext } from './mcp.js';

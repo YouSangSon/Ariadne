@@ -10,11 +10,12 @@ function fixture(t, mirror) {
   t.after(() => rmSync(root, { recursive: true, force: true }))
   mkdirSync(join(root, 'scripts'))
   mkdirSync(join(root, 'lib'))
+  mkdirSync(join(root, 'tests'))
   copyFileSync(new URL('../scripts/verify.mjs', import.meta.url), join(root, 'scripts/verify.mjs'))
   copyFileSync(new URL('../lib/scrub.mjs', import.meta.url), join(root, 'lib/scrub.mjs'))
   writeFileSync(join(root, 'scripts/mirror-lib.mjs'), 'export const repoRootFromArgs = () => process.cwd()\n')
   writeFileSync(join(root, 'scripts/check-mirror.mjs'), mirror)
-  writeFileSync(join(root, 'smoke.test.mjs'), "import { test } from 'node:test'; test('fixture', () => {})\n")
+  writeFileSync(join(root, 'tests/smoke.test.mjs'), "import { test } from 'node:test'; test('fixture', () => {})\n")
   const git = (args) => {
     const r = spawnSync('git', args, { cwd: root, encoding: 'utf8' })
     assert.equal(r.status, 0, r.stderr)
@@ -45,7 +46,7 @@ test('verify reports a terminated check as failure', (t) => {
 
 test('verify preserves the actual failing test output', (t) => {
   const root = fixture(t, '')
-  writeFileSync(join(root, 'smoke.test.mjs'), "import { test } from 'node:test'; test('fixture', () => { throw new Error('actual failure detail') })\n")
+  writeFileSync(join(root, 'tests/smoke.test.mjs'), "import { test } from 'node:test'; test('fixture', () => { throw new Error('actual failure detail') })\n")
   const r = run(root)
   assert.notEqual(r.status, 0)
   assert.match(r.stdout + r.stderr, /actual failure detail/)
@@ -55,6 +56,14 @@ test('verify succeeds only when every command exits zero', (t) => {
   const r = run(fixture(t, ''))
   assert.equal(r.status, 0, r.stdout + r.stderr)
   assert.match(r.stdout, /verify: green/)
+})
+
+test('core verification leaves internal package tests to their owning runners', (t) => {
+  const root = fixture(t, '')
+  mkdirSync(join(root, 'packages/code/tests'), { recursive: true })
+  writeFileSync(join(root, 'packages/code/tests/other.test.mjs'), "throw new Error('wrong test runner')\n")
+  const result = run(root)
+  assert.equal(result.status, 0, result.stdout + result.stderr)
 })
 
 test('verify keeps stdout-only failure details and redacts secrets', (t) => {

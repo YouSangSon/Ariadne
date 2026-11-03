@@ -1,3 +1,5 @@
+> 2026-11-02 제품 경계 갱신: 독립 Akasha·Parallax 설치 가정은 [단일 Ariadne 통합](docs/consolidation.md)으로 대체했다. 아래 기존 설계의 메커니즘·보장과 자동 실행 미완료 경계는 별도로 유지한다.
+
 # Ariadne — 통합 코딩 에이전트 하네스 설계서
 
 > Parallax · akasha · atlas-code 세 프로젝트의 검증된 메커니즘을 합쳐,
