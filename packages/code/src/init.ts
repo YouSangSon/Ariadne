@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { PACKAGE_NAME } from './branding.js';
@@ -10,8 +10,8 @@ export async function initProject(options: InitOptions): Promise<InitResult> {
   const repoRoot = normalizeRepoRoot(options.repoRoot);
   const dir = ensureImpactDir(repoRoot);
   const configPath = path.join(dir, 'config.json');
-  const created = !existsSync(configPath);
-  if (created) {
+  let created = true;
+  try {
     writeFileSync(
       configPath,
       `${JSON.stringify(
@@ -24,8 +24,11 @@ export async function initProject(options: InitOptions): Promise<InitResult> {
         null,
         2
       )}\n`,
-      'utf8'
+      { encoding: 'utf8', flag: 'wx' }
     );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    created = false;
   }
   const db = openDatabase(repoRoot);
   try {
