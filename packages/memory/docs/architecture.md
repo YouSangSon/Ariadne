@@ -1,0 +1,395 @@
+> **English** | [한국어](architecture.ko.md)
+
+# Architecture
+
+This document explains how Akasha is structured and how data flows
+through it. For per-tool API details see [api-reference.md](api-reference.md);
+for env-var setup see [configuration.md](configuration.md).
+
+## Layers
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│ Clients                                                         │
+│   • Claude Code / Codex CLI  (MCP stdio)                        │
+│   • MCP HTTP clients         (MCP Streamable HTTP)               │
+│   • curl / app code          (JSON HTTP)                         │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│ Transports                                                      │
+│   src/mcp/server.ts          → MCP SDK stdio                    │
+│   src/app/mcp-http.ts        → MCP Streamable HTTP at /mcp       │
+│   src/app/routes/memory.ts   → JSON HTTP under /v1/*             │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│ Tool descriptors + registry                                     │
+│   src/mcp/tool-schemas.ts     → shared zod schemas + routes     │
+│   src/mcp/service-tools.ts    → MCP service tool registration   │
+│   src/mcp/context-tools.ts    → MCP-only context tools          │
+│   src/mcp/resources.ts        → MCP resource templates          │
+│   src/mcp/prompts.ts          → MCP prompt templates            │
+│   src/mcp/tool-registry.ts    → registry assembly               │
+│   src/mcp/tool-registry-instrumentation.ts → audit wrappers     │
+│   src/mcp/tool-repository-access.ts → handler repo access        │
+│   src/mcp/tool-handlers.ts    → tool implementations            │
+│   src/audit/tool-handlers.ts  → audit-log read adapter          │
+│   src/compact/tool-handlers.ts → compaction tool adapters        │
+│   src/goal-run/tool-handlers.ts → goal-run tool adapter          │
+│   src/store/tool-handlers.ts  → canonical reindex adapter       │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│ Domain orchestrators                                            │
+│   src/compact/compact-memory.ts        plan builder             │
+│   src/compact/apply-compaction.ts      destructive apply path   │
+│   src/compact/unarchive-compaction.ts  recovery flow            │
+│   src/compact/outbox-sweeper.ts        Qdrant cleanup retry     │
+│   src/compact/sweeper-loop.ts          background scheduler     │
+│   src/app/background-workers.ts        shared worker lifecycle  │
+│   src/app/worker.ts                    dedicated worker process │
+│   src/context-pack/build-context-pack.ts  pack assembler        │
+│   src/goal-run/build-goal-context.ts      goal context pack     │
+│   src/goal-run/find-repeat-attempts.ts    retry loop detector   │
+│   src/search/retrieve-memory.ts        vector + PG hydrate       │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│ Repositories                                                    │
+│   src/store/memory-repository.ts          memory_records, sources│
+│   src/store/canonical-indexing.ts         memory_chunks + vector │
+│   src/store/memory-archive-repository.ts  compaction_runs +     │
+│                                           memory_archive        │
+│   src/jobs/ingest-job-repository.ts       ingest_jobs           │
+│   src/audit/audit-log-repository.ts       audit_log             │
+└────────────────┬────────────────────────────────────────────────┘
+                 │
+┌────────────────▼────────────────────────────────────────────────┐
+│ Persistence                                                     │
+│   Postgres 16  (compose container or external)                  │
+│   Qdrant or pgvector  (active vector backend)                   │
+│   Embeddings   (transformers local ONNX [default] / openai /   │
+│                 local deterministic)                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+MCP service tools are registered from `src/mcp/service-tools.ts`, using the
+shared descriptors in `src/mcp/tool-schemas.ts` and dispatching through the
+same registry used by JSON HTTP.
+
+## Data flow: write
+
+```
+Client          Tool                Orchestrator       Repos                Stores
+──────          ────                ────────────       ─────                ──────
+add_memory  →  add_memory tool  →  writeCanonical  →  memory-repo      →  Postgres (sources, memory_records, entity graph)
+                                   Memory             canonical-       →  Postgres (memory_chunks)
+                                                      indexing
+                                                      ingestJobs       →  Postgres (ingest_jobs: write-ahead pending)
+                                                      embeddings.embed →  transformers / openai / local
+                                                      vectorIndex      →  Qdrant or pgvector (chunk vectors)
+                                                      ingestJobs       →  Postgres (ingest_jobs: mark completed)
+```
+
+MCP transports also expose capability-gated context helpers. `list_workspace_roots`
+uses the client's `roots/list` capability when advertised; `add_memory_interactive`
+uses MCP form elicitation to collect user-confirmed memory details, then routes
+accepted input through the same `add_memory` write path above.
+`classify_memory_candidate` uses client sampling to suggest a memory kind and
+summary for candidate text without storing it.
+Those MCP-only context tools are registered from `src/mcp/context-tools.ts`.
+MCP resource templates are registered from `src/mcp/resources.ts`; they expose
+read-only recent memory and context-pack views backed by the same registry
+methods as the service tools.
+MCP prompts are registered from `src/mcp/prompts.ts`; they render context-pack
+startup and store-memory prompt templates without changing tool contracts.
+
+Write-ahead outbox: after chunks are committed to Postgres,
+`writeCanonicalMemory` calls `markQdrantPending` to record a scheduled
+`qdrant_next_retry_at` before touching Qdrant. If the process crashes between
+that point and `markQdrantCompleted`, the job row is left with
+`qdrant_status='pending'` and a non-null retry timestamp so the ingest sweeper
+(`src/compact/ingest-sweeper.ts`, opt-in via `INGEST_SWEEP_ENABLED`) can
+re-index the already-committed chunks. In-process failures still go through the
+catch block (option-A delete: CASCADE removes record + chunks + job + no orphan),
+so `add_memory` success/failure semantics are unchanged.
+
+Pre-write: `assertNoSecrets(content)` runs in
+`src/store/secret-scrub.ts` — refuses to persist content matching provider
+API key, PEM, bearer/JWT, or credentialed database URL patterns. The check
+happens in `writeCanonicalMemory` before any store touch, so a positive
+detection short-circuits with no side effects.
+
+## Data flow: read
+
+```
+search_memory  →  search tool  →  retrieveMemory  →  embeddings.embed  →  transformers / openai / local
+                                  (active vector)   vectorIndex.query → Qdrant or pgvector (scope-filtered similarity)
+                                  (lexical)         repository.searchMemory → Postgres scoped keyword/entity candidates
+                                                    repository.getMemoryRecordsByIds → Postgres hydrate vector ids
+                                                    rankCandidates → hybrid in-memory ranking
+```
+
+Org filter is applied at both the active vector backend query layer and
+the Postgres lexical/hydration layers (defense-in-depth — if the vector backend
+returned a cross-org point id, the PG join filters it out). Lexical candidates
+use the same org and scope inputs as vector retrieval. Postgres lexical search
+uses a generated `search_vector` column with a GIN index and `ts_rank_cd`, while
+retaining substring fallback clauses for exact paths, env vars, and short code
+tokens that full-text tokenization may miss.
+
+The lexical scorer also extracts deterministic entity mentions (code symbols,
+paths, URLs, dates, and proper nouns) so exact operational identifiers such as
+`QDRANT_SNAPSHOT_TIMEOUT` or `docs/operations.md` can rescue otherwise weak
+semantic matches. Those mentions are persisted at write time in `entities` and
+`memory_entity_mentions`; same-record co-mentions and date contexts are stored
+in `entity_relationships`. Lexical retrieval uses the persisted entity graph as
+an exact-match rescue/boost path alongside FTS and substring matching.
+
+## Data flow: compact apply
+
+```
+compact_memory dryRun=false
+  ↓
+applyCompaction (src/compact/apply-compaction.ts)
+  ├─ rate-limit check        (countRecentApplyRuns, 1/h/org default)
+  ├─ createCompactionRun     (UUID idempotency_key, ON CONFLICT DO NOTHING)
+  ├─ for each archive candidate:
+  │    ├─ applyCompactionRecord    (single CTE: DELETE memory_records
+  │    │                            + INSERT memory_archive, TOCTOU-guarded
+  │    │                            by updated_at <= planGeneratedAt)
+  │    ├─ qdrantClient.deletePoints
+  │    └─ markQdrantStatus('deleted')
+  │       (or 'pending' on Qdrant failure → sweeper picks up)
+  └─ completeCompactionRun
+```
+
+Cross-store consistency: PG-first means a crash after PG commit but before
+Qdrant delete leaves an orphan vector in Qdrant. The sweeper
+(`src/compact/sweeper-loop.ts`, opt-in) reconciles. Reverse order would
+leave a live `memory_records` row pointing at a deleted Qdrant point — a
+user-visible "search hit vanishes" bug.
+
+The cleanup sweeper claims pending archive rows with a single
+`UPDATE memory_archive SET qdrant_next_retry_at = claim_until
+WHERE id IN (SELECT id FROM memory_archive FOR UPDATE SKIP LOCKED)
+RETURNING id, organization_id, qdrant_point_ids, qdrant_attempt_count`
+statement and pushes `qdrant_next_retry_at` into a short visibility window.
+If a worker crashes after claim, the row becomes due again after that window.
+Operators can run these loops inside one HTTP replica or in a dedicated
+`npm run start:worker` process; both paths use the same sweeper lifecycle.
+
+## Data flow: unarchive
+
+```
+unarchive_memory
+  ↓
+unarchiveCompaction (src/compact/unarchive-compaction.ts)
+  ├─ findArchiveByIds         (org-scoped)
+  ├─ for each archive row:
+  │    ├─ skip if already_unarchived / org mismatch / missing source_id
+  │    ├─ restoreToCanonical  (INSERT memory_records preserving original
+  │    │                       timestamps + source_id; new BIGSERIAL id)
+  │    ├─ chunkText + insertChunks
+  │    ├─ embeddings.embedBatch (per restored archive)
+  │    ├─ qdrantClient.upsert (new point ids)
+  │    ├─ chunkRepository.updatePointIds
+  │    └─ markUnarchived (set unarchived_at = NOW())
+```
+
+The restore path guards provider consistency: `embedBatch` must return one
+vector per stored chunk, or that archive is reported as a failed outcome.
+
+Per-archive failure isolation: one bad restore doesn't kill the batch;
+the response carries per-archive `outcomes[]` so callers see exactly
+what succeeded and what didn't.
+
+## Schema
+
+```
+sources                memory_records          memory_chunks
+─────────              ──────────────          ─────────────
+id PK                  id PK                   id PK
+organization_id        organization_id         organization_id
+scope_type             scope_type              memory_record_id FK
+scope_id               scope_id                chunk_index
+source_type            project_key             content
+source_ref             kind                    qdrant_point_id (→ Qdrant)
+captured_at            content                 embedding_provider
+                       summary                 embedding_dimensions
+                       durability              embedding_version
+                       importance              created_at
+                       source_id FK
+                       created_at
+                       updated_at
+
+ingest_jobs            relationships           audit_log
+───────────            ─────────────           ─────────
+id PK                  id PK                   id PK
+memory_record_id FK    from_memory_record_id   organization_id
+organization_id        to_memory_record_id     actor / tool
+status                 relation_type           outcome / error_message
+attempts               created_at              duration_ms / request_id
+last_error                                      metadata JSONB
+qdrant_status                                   created_at
+qdrant_attempts
+qdrant_next_retry_at
+qdrant_last_error
+
+compaction_runs        memory_archive
+───────────────        ──────────────
+id PK                  id PK
+organization_id        compaction_run_id FK
+actor                  organization_id
+scope_type/id          source_record_id (former memory_records.id)
+dry_run                source_id (loose ref to sources)
+status                 archive_reason ('duplicate'|'decay')
+archived/duplicate/    qdrant_point_ids TEXT[]
+  decay/qdrant_failed  qdrant_status ('pending'|'deleted'|'failed')
+                       qdrant_attempt_count
+plan_generated_at      qdrant_cleaned_at
+started_at             original_created_at / original_updated_at
+completed_at           archived_at / unarchived_at
+idempotency_key UUID   UNIQUE (compaction_run_id, source_record_id)
+
+entities              memory_entity_mentions  entity_relationships
+────────              ──────────────────────  ────────────────────
+id PK                 memory_record_id FK      id PK
+organization_id       entity_id FK             organization_id
+kind                  organization_id          from_entity_id FK
+normalized            mention_text             to_entity_id FK
+display_text          created_at               relation_type
+first_seen_at                                  evidence_memory_record_id FK
+last_seen_at                                   valid_from / valid_to
+                                               confidence / created_at
+
+memory_tags           goal_runs                goal_run_iterations
+───────────           ─────────                ───────────────────
+memory_record_id FK   id PK                    id PK
+organization_id       organization_id          goal_run_id FK
+tag                   scope_type/id            organization_id
+created_at            project_key              iteration_index
+updated_at            goal                     attempt
+                      termination_criteria     outcome
+memory_records        status                   summary / error
+goal_run_id FK        iteration_count          created_at
+                      close_note
+                      created_at / updated_at
+                      closed_at
+```
+
+Migrations live in `src/db/migrations/`. The current range is `001-015`;
+the runner applies `001` through `015` on bootstrap (each is idempotent,
+`CREATE … IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
+The source of truth is `MIGRATION_FILES` plus the mirrored
+`embeddedPostgresMigrationSql` fallback in `src/db/migrate.ts`; the older
+`src/db/schema.sql` is a historical SQLite/FTS artifact, not the active
+Postgres schema.
+`009_memory_archive_qdrant_retry.sql` supplies archive Qdrant retry metadata,
+including `qdrant_next_retry_at` and the pending-retry index used by the
+background archive cleanup sweeper. `010_postgres_full_text_search.sql` adds
+the generated `search_vector` column and GIN index used by lexical retrieval.
+`011_entity_temporal_graph.sql` adds persistent entity mention and temporal
+relationship tables used by graph-backed lexical rescue.
+`012_memory_governance_tags.sql` adds org-scoped `memory_tags` for governance
+filtering and vector payload metadata refreshes. `013_add_goal_runs.sql` adds
+first-class goal runs, ordered iterations, and `memory_records.goal_run_id`
+pinning for active-run compaction protection. `014_add_goal_run_close_note.sql`
+stores the resolution/reason note used when a goal run is completed or
+abandoned. `015_background_queue_metrics_indexes.sql` adds partial indexes that
+keep `/metrics` background queue backlog gauges from scanning historical
+`ingest_jobs` and `memory_archive` rows.
+
+## Multi-tenancy
+
+Every record-bearing table has `organization_id TEXT NOT NULL`. SQL queries
+include `WHERE organization_id = $org` in every read and write path. Bearer
+tokens in `MEMORY_API_TOKENS` may bind to an org with `:org` syntax — when
+present, the token's org overrides body / header values; mismatch is 403.
+
+**Org enforcement on all read paths.** `retrieveMemory` (search),
+`listMemory` (used by `compact_memory`), and `getMemoryRecordsByIds`
+(vector-hydration step) all throw when `organizationId` is undefined and
+the operator has not set `LEGACY_ANONYMOUS_SEARCH=true`. This means an
+unbound token (no `:org` in `MEMORY_API_TOKENS`, no `x-organization-id`
+header, no body org) cannot silently read across tenants — it receives a
+clear operational error describing all three remediation paths. The shared
+`assertOrganizationId` helper (`src/store/assert-organization-id.ts`)
+enforces this consistently across all three entry points.
+
+The `organization_id` written into `memory_archive` during apply is read
+from the canonical record itself (RETURNING from the DELETE), not from
+the caller token — defense-in-depth against the unlikely case where a
+token's bound org disagrees with a record's org.
+
+## Audit trail
+
+Every tool invocation produces an `audit_log` row via the `instrument()`
+wrapper in `src/mcp/tool-registry-instrumentation.ts`. The row captures org,
+actor, tool name, project key, outcome (`ok`/`error`), error message, duration
+ms, request id, and (for destructive operations) `metadata` JSONB with
+structured detail (archived ids, run ids, etc.).
+
+Reads via `list_audit_log` are org-scoped — entries from other orgs never
+leak. Writes are best-effort (failures don't block the user request) but
+logged at error level so ops can detect audit-stream issues.
+
+## Vector backend pluggability
+
+`src/mcp/canonical-services.ts` selects the vector backend via
+`VECTOR_BACKEND` (default: `qdrant`):
+
+- `qdrant` **(default)** → `src/vector/qdrant-index.ts`, wraps
+  `@qdrant/js-client-rest`. Requires `QDRANT_URL` + `QDRANT_API_KEY`.
+- `pgvector` → `src/vector/pgvector-index.ts`, stores embeddings in
+  Postgres using the `vector` extension. Reuses the existing PG pool —
+  **no second service needed**. Qdrant credentials are not required.
+  `ensureCollection(dims)` verifies the `vector` extension is already
+  installed, then creates the table and HNSW/BTree indexes at bootstrap;
+  subsequent restarts are no-ops (`CREATE … IF NOT EXISTS`).
+
+Both adapters implement the `VectorIndex` interface
+(`src/vector/vector-index.ts`): `ensureCollection`, `upsert`, `query`,
+`delete`. Filter translation (`VectorFilter` → Qdrant `must` / SQL
+`WHERE`) is encapsulated inside each adapter so no Qdrant or pgvector
+SQL dialect leaks into orchestration code.
+
+`buildVectorPoint` assigns every chunk a deterministic UUIDv8-shaped point ID,
+injectively derived from its positive safe-integer chunk ID. The literal ID is
+shared by Qdrant and pgvector and is stable across retries and reindexing; no
+SQL migration is required. Reindexing converges legacy point IDs.
+
+### Postgres-only deploy
+
+Set `VECTOR_BACKEND=pgvector` to run Akasha on a single Postgres
+instance with no Qdrant service. The local compose override
+`compose.pgvector.yaml` swaps in `pgvector/pgvector:pg16`:
+
+```bash
+docker compose -f compose.yaml -f compose.pgvector.yaml up -d
+```
+
+**Switching backends requires a reindex** (`reindex_memory` tool) —
+vector dimensions and content topology differ between backends.
+
+## Embedding pluggability
+
+`src/embedding/embedding-factory.ts` selects the provider via
+`EMBEDDING_PROVIDER` (default: `transformers`):
+
+- `transformers` **(default)** → `src/embedding/transformers-embedding.ts`,
+  free local ONNX inference via the installed `@huggingface/transformers`
+  package.
+  Default model `Xenova/all-MiniLM-L6-v2`, 384-dim. First call downloads
+  ~22 MB to the HF cache; subsequent calls are fully offline. No API key
+  required.
+- `openai` → `src/embedding/openai-embeddings.ts`,
+  `text-embedding-3-small`, 1536-dim. Requires `OPENAI_API_KEY`.
+- `local` → `src/embedding/local-embedding.ts`, deterministic SHA-256
+  hashing into 384-dim vectors. No external calls; intended for CI /
+  air-gapped / offline use where semantic search is not needed.
+
+The provider is selected at bootstrap and held in `services.embeddings`
+for the process lifetime. Changing provider requires a reindex
+(`reindex_memory` tool) because dimensions and content semantics differ.

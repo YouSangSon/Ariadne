@@ -1,0 +1,127 @@
+title = "Ariadne synthetic test and local example credentials"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "curl-auth-header"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Q.github/workflows/memory.yml\\E\\z"]
+regexes = ["\\A\\Qlocal-qdrant-key\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/.github/workflows/ci.yml\\E\\z"]
+regexes = ["\\A\\Qlocal-qdrant-key\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/docs/api-reference.ko.md\\E\\z"]
+regexes = ["\\A\\Qdev-token\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/docs/api-reference.md\\E\\z"]
+regexes = ["\\A\\Qdev-token\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/tests/eval/run-default-stack.sh\\E\\z"]
+regexes = ["\\A\\Qlocal-qdrant-key\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
+regexes = ["\\A\\Qabcdefghijklmnopqrstuvwxyz0123456789\\E\\z"]
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/code/tests/parallax.test.ts\\E\\z"]
+regexes = ["\\A\\Qsk-test-secret-1234567890\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/code/tests/scip.test.ts\\E\\z"]
+regexes = ["\\A\\Qsk-abcdefghijklmnopqrstuvwxyz123456\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
+regexes = ["\\A\\QeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\\E\\z"]
+
+[[rules]]
+id = "github-pat"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
+regexes = ["\\A\\Qghp_AAAA1111BBBB2222CCCC3333DDDD4444EEEE\\E\\z"]
+
+[[rules]]
+id = "jwt"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
+regexes = ["\\A\\QeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\\E\\z"]
+
+[[rules]]
+id = "private-key"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/code/tests/docs_lint.test.ts\\E\\z"]
+regexes = ["\\A\\Q-----BEGIN OPENSSH PRIVATE KEY-----\\nsecret\\n-----END OPENSSH PRIVATE KEY-----'\n  },\n  {\n    name: 'EC private key',\n    docsLabel: 'private key',\n    sample: '-----BEGIN EC PRIVATE KEY-----\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qpackages/code/tests/docs_lint.test.ts\\E\\z"]
+regexes = ["\\A\\Q-----BEGIN PRIVATE KEY-----\\nsecret\\n-----END PRIVATE KEY-----'\n  },\n  {\n    name: 'RSA private key',\n    docsLabel: 'private key',\n    sample: '-----BEGIN RSA PRIVATE KEY-----\\E\\z"]
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qtests/context-pack.test.mjs\\E\\z"]
+regexes = ["\\A\\Q-----BEGIN PRIVATE KEY-----\\n' + 'sensitive-key-material\\n'.repeat(30) + '-----END PRIVATE KEY-----\\E\\z"]
+
+[[rules]]
+id = "slack-bot-token"
+
+[[rules.allowlists]]
+description = "Exact synthetic fixture or local example credential"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qtests/scrub.test.mjs\\E\\z"]
+regexes = ["\\A\\Qxoxb-1111111111-2222222222-abcdefghij\\E\\z"]

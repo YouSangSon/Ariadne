@@ -1,0 +1,20 @@
+# Verified synthetic tests and local example credentials in the recorded public commits.
+# Historical fingerprints apply only to the original public commits.
+# Current fixtures use exact path and secret exceptions in .gitleaks.toml.
+f4b51a9541252768c5a639f9cfea2744c25e64e9:.github/workflows/memory.yml:curl-auth-header:197
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/.github/workflows/ci.yml:curl-auth-header:201
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/docs/api-reference.ko.md:curl-auth-header:51
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/docs/api-reference.ko.md:curl-auth-header:164
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/code/tests/docs_lint.test.ts:private-key:63
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/code/tests/docs_lint.test.ts:private-key:73
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/docs/api-reference.md:curl-auth-header:52
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/docs/api-reference.md:curl-auth-header:165
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/code/tests/parallax.test.ts:generic-api-key:47
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/code/tests/parallax.test.ts:generic-api-key:2881
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/tests/eval/run-default-stack.sh:curl-auth-header:61
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/tests/store/secret-scrub.test.ts:github-pat:31
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/tests/store/secret-scrub.test.ts:github-pat:150
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/tests/store/secret-scrub.test.ts:github-pat:161
+f4b51a9541252768c5a639f9cfea2744c25e64e9:packages/memory/tests/store/secret-scrub.test.ts:jwt:56
+59945ca76902e520ab31456b052811356df64bc1:tests/context-pack.test.mjs:private-key:169
+59945ca76902e520ab31456b052811356df64bc1:tests/scrub.test.mjs:slack-bot-token:11

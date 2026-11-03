@@ -1,0 +1,94 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: llm-wiki-ontology
+  title: llm-wiki·온톨로지 연동 — 하네스 메모리 레이어 확장
+  status: verified
+  priority: P1
+  owner: YouSangSon
+  intake_started: 2026-07-20
+  promoted_at: 2026-07-20
+  source_doc: 사용자 신규 요청 (D5 메모리 레이어 확장 후보)
+
+source:
+  raw_user_prompt: "llm-wiki, 온톨리지도 쓰는 하네스면 좋겠는데"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: feature
+  confidence: medium
+  reason: D5(파일 기반 코어 + 옵션 모듈)의 세 번째 옵션 모듈 후보 — 범위 미확정
+
+clarification:
+  next_question: "'쓴다'의 1차 대상이 무엇인가요? 하나를 고르면 그것부터 옵션 모듈로 설계합니다"
+  options:
+    - id: a
+      label: Obsidian llm-wiki 볼트 연동
+      impact: handoff/decisions/gotcha가 Projects/<proj>/Long/llm-wiki로 자동 승격 — 기존 obsidian-memory 관행과 정합, MCP 불필요(파일 직쓰기)
+    - id: b
+      label: MCP 지식그래프(온톨로지)
+      impact: 엔티티·관계(uses/depends_on/decided)를 memory MCP에 적재 — 세션 간 구조화 질의 가능, MCP 서버 의존 추가
+    - id: c
+      label: 둘 다 (볼트 = 본문, 그래프 = 인덱스)
+      impact: 가장 강력하나 이중 기록 일관성 문제(§0.2 반증3 — stale 오염)를 설계로 풀어야 함
+  recommended_option: a
+
+requirement:
+  user_intent: 하네스가 세션 지식을 llm-wiki/온톨로지 형태로 축적·재사용하게 한다
+  actor: 하네스 사용자(개인) — 팀 배포 시 옵션
+  desired_outcome: 볼트=단일 진실 본문, 온톨로지 인덱스=매 실행 전체 재생성 파생물 (stale 구조적 불가)
+  confirmed_facts:
+    - "사용자 답변(2026-07-20): (c) 둘 다 — 볼트=본문, 그래프=인덱스"
+    - "stale 해소 구조: 그래프는 볼트에서 매 실행 전체 재생성되는 파생물 — 이중 기록 없음, 단일 진실은 볼트"
+    - "볼트 규약(실측): Projects/<proj>/Long/llm-wiki, filename==H1==위키링크, aliases 미사용"
+    - 이 볼트에는 이미 프로젝트별 llm-wiki 구조(entities/concepts/sources/graphs)와 filename==H1==링크 규약이 있다
+    - D5는 파일 기반 코어를 확정 — 이 요청은 코어 교체가 아니라 옵션 모듈 추가로 해석된다
+    - 내장 auto-memory와 병행 금지 원칙(§0.2 반증3) — 기록 경로가 늘수록 stale 오염 위험
+  assumptions: []
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: promote — .harness(decisions·verified REQ·handoff)가 볼트 sources 페이지로 승격되고 재실행이 멱등하다
+      verification: "node --test — 픽스처 볼트에서 생성+2회차 변경 0"
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: graph-index — 위키링크에서 엔티티·관계를 추출해 온톨로지 인덱스 페이지를 전체 재생성한다 (파생 — 미해결 링크 목록 포함)
+      verification: "node --test — 픽스처 위키에서 관계·미해결 추출 assert"
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 볼트로 가는 모든 텍스트에 scrub이 적용된다
+      verification: "node --test — 시크릿 포함 decisions가 카테고리로 치환되어 저장"
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 코어 무변경 — modules/llm-wiki/ 아래만 추가되고 verify green
+      verification: "git diff --stat core/ lib/ 비어 있음 + node scripts/verify.mjs"
+      passes: true
+    - id: AC5
+      priority: P1
+      statement: 실전 1회 — harness 프로젝트에서 실행해 실제 볼트에 페이지가 생기고 기존 위키 규약(filename==H1==링크)을 지킨다
+      verification: "실행 후 볼트 파일 존재 + 미해결 링크 0 확인"
+      passes: true
+
+code_mapping:
+  code_areas: {}
+  boundary_rules:
+    - 코어(D5 파일 기반)를 건드리지 않는다 — modules/ 아래 옵션으로
+    - 글로벌 설정 수정 금지 (D3)
+
+verification:
+  commands: []
+  verify_gate_required: false
+  verify_gate_reason: 미승격 — clarification 대기
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - clarification 답변 전 구현 착수 (REQ-first)
+  completion_report_should_include: []

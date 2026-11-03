@@ -1,0 +1,99 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: p8-instrument-controls
+  title: P8 준비용 무과금 평가 도구 제어군
+  status: verified
+  priority: P0
+  owner: ""
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+  source_doc: evaluation/README.md
+source:
+  raw_user_prompt: 계속 진행해
+  user_language: ko
+  repo: ariadne
+classification:
+  category: feature
+  confidence: high
+  reason: 유료 실행과 독립적으로 정답·오답 및 실행 오류를 구별하는 로컬 검사 도구를 준비한다
+requirement:
+  user_intent: 완료한 Atlas 적용 이후 Ariadne의 다음 미완료 작업을 진행한다
+  desired_outcome: 고정 입력과 기준 답안을 사용해 평가 장치가 의도한 차이를 검출하는지 재현한다
+  confirmed_facts:
+    - 기존 P8은 needs_clarification이며 유료 모델 호출과 provider 선택은 아직 승인·확정되지 않았다
+    - 사용자는 현재 Codex를 사용 중임을 명확히 했다. 현재 Codex 설정·모델을 유지하고 다른 공급자 선택은 이번 작업에서 요구하지 않는다
+    - 이 제어군은 P8의 P1 원문 Stage 0 과제와 별개이며 대체하지 않는다
+    - 기존 Model Portfolio·adapt 미커밋 변경은 이번 커밋에 포함하지 않는다
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 세 제어군의 프롬프트·파일·기준 답안·검사 입력과 예상 실패 ID를 고정하고 내용 hash를 검사한다
+      verification: node --test tests/evaluation.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: baseline은 지정한 결과 비교만 실패하고 reference는 전체 검사를 통과한다
+      verification: node scripts/verify-evaluation.mjs
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 변조·잘못된 경로·실행 오류·시간 초과·잘못된 기준 답안을 정상 제어군으로 인증하지 않고 임시 자원을 정리한다
+      verification: node --test tests/evaluation.test.mjs
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 기존 전체 게이트를 유지하고 유료 실행·모델 품질·P8 Stage 0 완료로 보고하지 않는다
+      verification: node scripts/verify.mjs 및 문서 검토
+      passes: true
+code_mapping:
+  code_areas:
+    instrument:
+      paths: [evaluation/suite.json, evaluation/suite.sha256, scripts/verify-evaluation.mjs, tests/evaluation.test.mjs]
+      reason: 신뢰하는 fixture의 양성·음성 제어군과 결정론 검증
+  boundary_rules:
+    - P8 Stage 0·on/off·양방향 handoff 평가와 P7 자율 루프를 실행하거나 구현하지 않는다
+    - LLM CLI의 모델 실행·외부 API 호출, 글로벌 설정 변경과 기존 미커밋 변경의 stage·commit을 하지 않는다
+    - 실행은 저장소 소유 제어군에 한정하며 비신뢰 코드 sandbox나 일반 agent grader로 제공하지 않는다
+verification:
+  commands:
+    - node --test tests/evaluation.test.mjs
+    - node scripts/verify-evaluation.mjs
+    - node scripts/verify.mjs
+  verify_gate_required: true
+  verify_gate_reason: 새로운 결정론 검사 장치를 추가한다
+  escalate_after: 3
+  evidence:
+    - criterion_id: AC1
+      check: "node scripts/verify.mjs (includes tests/evaluation.test.mjs)"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/p8-foundation-20261102/final-validation.json (code hashes and staged tree)"
+      artifact: ".harness/handoff/p8-foundation-20261102/final-live.log"
+    - criterion_id: AC2
+      check: "node scripts/verify-evaluation.mjs"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/p8-foundation-20261102/final-validation.json (code hashes and staged tree)"
+      artifact: ".harness/handoff/p8-foundation-20261102/final-controls-cli.json"
+    - criterion_id: AC3
+      check: "node scripts/verify.mjs (includes timeout, exact failures and task-owned unsafe-path checks)"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/p8-foundation-20261102/final-validation.json (code hashes and staged tree)"
+      artifact: ".harness/handoff/p8-foundation-20261102/final-live.log"
+    - criterion_id: AC4
+      check: "node scripts/verify.mjs in live and isolated staged trees; review instrument-only scope"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/p8-foundation-20261102/final-validation.json (code hashes and staged tree)"
+      artifact: ".harness/handoff/p8-foundation-20261102/final-validation.json"
+audit:
+  must_not_implement:
+    - 유료 실행기·provider 연결·새 model routing·P7 루프
+    - 실제 P8 결과·토큰 사용량·품질 판정의 합성 또는 fixture 통과로 대체
+  completion_report_should_include:
+    - 의도한 실패와 실행 오류를 구별한 근거
+    - 실제 검사 범위와 P8 전체에서 남은 단계

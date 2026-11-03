@@ -1,0 +1,99 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: p3-memory-context
+  title: P3 — scrub·context-pack·budget 라이브러리 + context/handoff 스킬
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-07-20
+  promoted_at: 2026-07-20
+  source_doc: DESIGN.md §6 P3, §4.4, §4.5
+
+source:
+  raw_user_prompt: "이어서 진행해"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: feature
+  confidence: high
+  reason: 설계 §6 P3 범위 그대로 — 원본 두 프로젝트의 검증된 패턴 합집합 이식
+
+requirement:
+  user_intent: 시크릿 방어와 컨텍스트 팩 조립을 결정론 라이브러리로 만들고 스킬 2개를 잇는다
+  actor: 하네스 사용 에이전트(세션 시작/종료 시)
+  desired_outcome: scrub이 전 패턴을 카테고리로만 보고하고, 팩이 5섹션·예산 상한을 지켜 조립된다
+  confirmed_facts:
+    - Parallax 13패턴 + akasha 12패턴 원본 확인 — 합집합 13카테고리 (순서 ant→openai, JWT→Bearer)
+    - akasha 5섹션 상한 — project_summary 2, recent_decisions 5, constraints 5, open_questions 5, relevant_notes 5 + 신뢰경계 공지
+    - Parallax snippetChars — brief 300 / standard 800 / deep 1500
+  assumptions:
+    - id: A1
+      statement: 팩 조립을 서브에이전트(§4.4) 대신 결정론 스크립트로 수행해도 목적(본 세션 토큰 보호)이 달성된다
+      confidence: high
+      status: confirmed
+      reason: D12 비용 사다리 1계층(결정론)이 4계층(서브에이전트)보다 싸다 — 조립 입력이 로컬 파일뿐이라 LLM 판단 불필요. 설계 §4.4의 위임 목적을 더 싼 수단으로 충족
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: scrub이 13카테고리 전 패턴을 검출·치환하고 시크릿 값을 절대 반환하지 않는다 (전수 유닛테스트)
+      verification: "node --test — 카테고리별 검출 + 출력에 원본 값 부재 assert"
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 오탐 치환 경로 — 유사 무해 문자열은 통과하고, 검출 시 거부가 아니라 치환+advisory를 반환한다
+      verification: 오탐 케이스 테스트 + scrub 반환 {text, detections} 구조 assert
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: context-pack이 .harness 파일에서 5섹션·개수 상한·snippetChars 상한을 지켜 결정론 조립된다
+      verification: "node --test — 상한 초과 입력 절단 + 동일 입력 동일 출력"
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: context/handoff SKILL.md가 §4.13 규약으로 존재하고 미러 재생성 후 check-mirror가 green이다
+      verification: "node scripts/generate-mirrors.mjs && node scripts/check-mirror.mjs"
+      passes: true
+    - id: AC5
+      priority: P1
+      statement: 팩 조립이 본 세션의 원본 파일 직독 없이 스크립트 1회 호출로 완료된다 (A1 — 서브에이전트 위임의 결정론 대체)
+      verification: "node lib/context-pack.mjs --budget brief 1회 실행으로 팩 출력"
+      passes: true
+
+code_mapping:
+  code_areas:
+    lib:
+      paths: [lib/scrub.mjs, lib/context-pack.mjs, lib/budget.mjs]
+      reason: P3 본체 — 원본 패턴 합집합 이식
+    skills:
+      paths: [skills/context/SKILL.md, skills/handoff/SKILL.md]
+      reason: SSOT 스킬 (context 자동 / handoff 수동 전용 — §4.13.2 판정)
+    tests:
+      paths: [tests/scrub.test.mjs, tests/context-pack.test.mjs]
+      reason: 전수 패턴·상한·결정론 테스트
+  boundary_rules:
+    - Parallax/akasha 원본 코드 수정 금지 (§7) — 읽기·이식만
+    - 글로벌 설정 수정 금지 (D3)
+    - 훅·게이트 구현 금지 (P4 소관)
+
+verification:
+  commands:
+    - "node --test"
+    - "node scripts/generate-mirrors.mjs && node scripts/check-mirror.mjs"
+    - "node lib/context-pack.mjs --budget brief"
+  verify_gate_required: false
+  verify_gate_reason: P4 전 — 자체 테스트가 증거
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - akasha MCP 연동 (옵션 모듈 — 코어 아님)
+    - 내장 auto-memory 조작 (§0.2 반증3 — 병행 금지 원칙만 문서화)
+    - retro/adapt/verify-plan 스킬 (P4~P5 소관)
+  completion_report_should_include:
+    - 패턴별 테스트 통과 목록
+    - 팩 샘플 출력 1회

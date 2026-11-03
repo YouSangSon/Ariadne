@@ -1,0 +1,432 @@
+> [English](operations.md) | **한국어**
+
+# 운영 runbook
+
+Akasha production 운영을 위한 day-2 절차. 초기 배포는
+[deployment.ko.md](deployment.ko.md) 참고.
+
+## 백업
+
+```bash
+npm run backup:create
+```
+
+`VECTOR_BACKEND=qdrant` 에서는 `npm run backup:create` 가 Postgres
+(`pg_dump` 를 gzip으로 압축) 와 Qdrant snapshot data를 `BACKUP_DIR` 로
+캡처하고 checksum manifest를 씁니다. 파일명:
+`postgres-YYYYMMDD-HHMM.sql.gz`, `qdrant-YYYYMMDD-HHMM.snapshot`,
+`qdrant-memory_chunks_v1-YYYYMMDD-HHMM.json` (metadata sidecar),
+`manifest-YYYYMMDD-HHMM.json`.
+
+`VECTOR_BACKEND=pgvector` 에서는 벡터가 Postgres 안에 있으므로 Qdrant 스냅샷
+데이터는 논리 데이터 경로의 일부가 아닙니다. `npm run backup:create` 는 pgvector
+manifest에서 `scripts/snapshot-qdrant.sh` 를 건너뛰므로 pgvector backup에는
+`DATABASE_URL`, `BACKUP_DIR` 만 필요하고 `QDRANT_URL` 은 필요하지 않습니다.
+환경 기본값과 무관하게 backend를 고정하려면 `npm run backup:create:qdrant` 또는
+`npm run backup:create:pgvector` 를 사용하세요.
+
+### 스케줄
+
+cron 예시 (매일 03:00):
+
+```cron
+0 3 * * * cd /opt/akasha && /usr/bin/npm run backup:create >>/var/log/akasha-backup.log 2>&1
+```
+
+systemd timer 대안 — 동작하는 unit 파일은
+[docs/self-hosted-operations.ko.md](self-hosted-operations.ko.md) 참고.
+
+### 오프-호스트 복제
+
+`.env` 에 `BACKUP_TARGET_HOST=user@host` 설정 시 로컬 스냅샷 완료 후 scp
+copy. 대상 백업 디렉토리에 scope 된 SSH key (passphrase 없음) 필요.
+
+### Retention
+
+스크립트는 오래된 백업 자동 prune **안 함**. 별도 cron 으로 관리:
+
+```cron
+# 30일 보관
+0 4 * * * find /var/lib/developer-memory-os/backups -mtime +30 -delete
+```
+
+### 검증
+
+`npm run backup:verify` 는 최신 manifest가 24시간 미만인지, 로컬 artifact
+checksum이 맞는지, `BACKUP_TARGET_HOST` 의 off-host 복사본도 같은 checksum인지
+검증합니다. 매 백업 사이클 끝에 실행:
+
+```cron
+5 3 * * * cd /opt/akasha && /usr/bin/npm run backup:verify
+```
+
+## 복원
+
+### Smoke 테스트 (주간 권장)
+
+```bash
+npm run restore:smoke
+```
+
+격리된 compose 스택 (`compose.restore-smoke.yaml`) 을 띄워 최신 백업을
+복원하고 데이터 검증 실행. **Production을 건드리지 않음.** 실패는 critical
+경고로 처리 — 백업이 신뢰 불가. Qdrant manifest는 `RESTORE_QDRANT_URL` 과
+`RESTORE_SMOKE_QDRANT_RESTORE_CMD` 를 요구합니다. pgvector manifest는 Qdrant
+복원 단계를 건너뛰고 `VECTOR_BACKEND=pgvector` 로 검증합니다.
+
+### Production 복원
+
+```bash
+# 1. 망가진 인스턴스 트래픽 중단.
+docker compose stop app
+
+# 2. Postgres 데이터 디렉토리 drop + gzip SQL dump 복원.
+docker compose down -v postgres
+docker compose up -d postgres
+gunzip -c /var/lib/developer-memory-os/backups/postgres-YYYYMMDD-HHMM.sql.gz \
+  | docker compose exec -T postgres psql -U memory -d memory_os
+
+# 3. VECTOR_BACKEND=qdrant 인 경우 Qdrant 스냅샷 복원.
+QDRANT_COLLECTION_NAME=${QDRANT_COLLECTION_NAME:-memory_chunks_v1}
+curl -X POST \
+  "http://127.0.0.1:6333/collections/${QDRANT_COLLECTION_NAME}/snapshots/upload?priority=snapshot" \
+  -F snapshot=@/var/lib/developer-memory-os/backups/qdrant-YYYYMMDD-HHMM.snapshot
+
+#    VECTOR_BACKEND=pgvector 에서는 벡터가 Postgres dump 안에 있으므로 이 단계 생략.
+
+# 4. 검증 + 트래픽 재개.
+docker compose start app
+curl http://localhost:8787/readyz
+```
+
+호스트 완전 손실 시 복구는 [deployment.ko.md §재해 복구](deployment.ko.md#재해-복구)
+참고.
+
+## Compaction
+
+2단계 모델: **dry-run 먼저, apply 나중.**
+
+### 일상 compaction (수동 검토)
+
+```bash
+# Dry-run 으로 archive 될 것 확인.
+curl -X POST http://localhost:8787/v1/memory/compact \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"projectKey": "my-project"}' | jq
+
+# duplicateGroups + decayCandidates 검토...
+
+# 만족 시 apply.
+curl -X POST http://localhost:8787/v1/memory/compact \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"projectKey": "my-project", "dryRun": false}' | jq
+```
+
+기본 rate limit: 1 apply / hour / org. 필요 시 커스텀 오케스트레이터 deps로
+조정.
+
+### Sweeper 백로그
+
+Apply 후 Qdrant 실패 시 `applyStats.qdrantPointsPending` 가 백로그 카운트.
+Sweeper 활성화로 drain:
+
+```bash
+COMPACTION_SWEEP_ENABLED=true
+COMPACTION_SWEEP_INTERVAL_MS=30000
+npm run start:worker
+```
+
+같은 env var를 HTTP replica 하나에 설정해도 됩니다. 다중 replica 배포에서는 전용
+worker 프로세스 하나를 선호하고 request-serving replica에서는 이 flag를 끄세요.
+
+각 tick은 pending archive row를 atomic 하게 claim하고
+`qdrant_next_retry_at` 을 짧은 visibility window 로 밀어둡니다. claim 이후
+worker 가 크래시되면 window 만료 후 해당 row가 다시 due 상태가 됩니다.
+
+pino log와 metrics는 sweeper가 어디서 도는지에 맞춰 확인합니다. Sweeper loop는
+audit-log row가 아니라 process log event를 남깁니다. HTTP replica에서
+sweeper를 실행한다면 app log를 확인하세요:
+
+```bash
+docker compose logs --no-log-prefix --since 10m app \
+  | jq 'select(.event=="compact.sweep_tick" or .event=="compact.sweep_tick_failed")'
+```
+
+HTTP 프로세스 내 sweeper tick metrics는 그 HTTP 프로세스가 sweeper를 실행할 때만
+해당 프로세스의 `/metrics` endpoint에 나타납니다:
+
+```bash
+curl -s http://localhost:8787/metrics \
+  | grep '^akasha_sweeper_.*worker="compaction"'
+```
+
+Dedicated worker mode는 다릅니다. `npm run start:worker`의 tick activity는
+worker process log에서 보고, HTTP `/metrics` 는
+`akasha_background_queue_rows{queue="compaction",...}` 같은 backlog gauge
+확인에만 사용하세요. 해당 service가 worker가 아니라면 HTTP `app` service log를
+dedicated-worker source로 보지 마세요.
+
+### Stuck rows
+
+`qdrant_status='failed'` (5+ 시도) 인 행은 수동 검토 필요:
+
+```sql
+SELECT id, organization_id, qdrant_attempt_count, qdrant_last_error
+FROM memory_archive
+WHERE qdrant_status = 'failed'
+ORDER BY archived_at DESC;
+```
+
+흔한 원인: `QDRANT_COLLECTION_NAME` 변경 후 collection 이름 불일치, Qdrant
+영구 outage, 스키마 drift. 근본 원인 수정 후 수동
+`UPDATE memory_archive SET qdrant_status='pending'` 으로 re-enqueue.
+`failed` row는 백그라운드가 무한 재시도하는 상태가 아니라 운영자가 검토해야
+하는 큐로 취급하세요.
+
+## Ingest sweeper
+
+원본 생성, 검색 필드 수정, governance 보관, 복원은 레코드 변경과 pending ingest
+작업을 함께 커밋합니다. Sweeper는 메모리를 잠근 뒤 현재 작업과 원본을 다시 읽고,
+없거나 오래된 청크를 복구해 색인합니다. 보관된 레코드는 포인트 ID가 기록되지
+않았더라도 조직과 레코드 ID로 정리합니다. Provider·model·dimensions·version이
+다르면 명시적으로 `reindex_memory`를 실행해야 하며 재시도가 기존 벡터를 임의로
+다른 설정으로 해석하지 않습니다.
+
+업그레이드 후 기존 데이터가 있는 각 조직·프로젝트/사용자 scope에서
+`reindex_memory`를 실행하세요. 최초 레코드 ID 범위 안에서 처리하며 이후 생성된
+레코드는 자신의 쓰기 작업이 색인합니다. 정상 청크의 ID는 유지합니다.
+수정·재색인·compaction·goal-run pin 변경이 같은 레코드 잠금을 사용하며,
+복원은 아카이브 ID도 잠급니다.
+
+잠금과 짧은 SQL 트랜잭션, pgvector 작업은 같은 연결을 사용합니다. Qdrant 호출은
+pending 작업 커밋 후 실행합니다. 연결 오류가 확인되면 해당 작업 범위를
+무효화하고 새 DB·벡터 작업을 거부합니다. 분산 트랜잭션은 아니므로 DB 연결을 잃은 뒤
+이미 전송된 Qdrant 요청까지 차단하지는 못합니다. 연결 상실 사고가 있었다면
+정리 상태를 확인하고 영향받은 scope를 재색인하세요.
+
+지속 실행 replica 정확히 1개에서 활성화:
+
+```bash
+INGEST_SWEEP_ENABLED=true
+INGEST_SWEEP_INTERVAL_MS=30000
+npm run start:worker
+```
+
+공유 worker 프로세스에는 ingest와 compaction sweeper flag를 같은 환경에 함께
+설정할 수 있습니다. 기존 단일 프로세스 topology에서는 HTTP replica 하나에만
+설정하세요.
+
+실패한 ingest row 확인:
+
+```sql
+SELECT id, organization_id, memory_record_id, qdrant_attempts, qdrant_last_error
+FROM ingest_jobs
+WHERE qdrant_status = 'failed'
+ORDER BY updated_at DESC;
+```
+
+근본 원인을 고친 뒤 `qdrant_status='pending'`,
+`qdrant_next_retry_at=NOW()` 로 바꾸면 re-enqueue 됩니다. 기존 메시지가 더 이상
+유용하지 않으면 `qdrant_last_error` 도 비웁니다.
+
+## Memory governance
+
+정적 운영자 셸:
+
+```text
+http://localhost:8787/admin/memory
+```
+
+셸 자체는 인증이 없고 memory data나 token을 embed하지 않습니다. 페이지에서 API
+URL, bearer token, organization, scope를 입력하면 실제 list/edit/tag/archive
+동작은 인증이 필요한 `/v1/*` governance API 를 호출합니다. 토큰은 현재 브라우저
+런타임 메모리에만 유지됩니다.
+
+CLI 대응 명령:
+
+```bash
+# 레코드 검토. tag 또는 archived 상태로 필터 가능.
+curl -X POST http://localhost:8787/v1/memory/list \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"projectKey": "my-project", "tag": "ops", "limit": 50}' | jq
+
+# content 또는 metadata 수정. entity와 vector 상태를 갱신.
+curl -X POST http://localhost:8787/v1/memory/update \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"memoryId": 42, "summary": "Updated operational summary"}' | jq
+
+# governance tag 교체.
+curl -X POST http://localhost:8787/v1/memory/tag \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"memoryId": 42, "tags": ["ops", "reviewed"]}' | jq
+
+# 복구 가능한 archive 경로로 레코드 1개 보관.
+curl -X POST http://localhost:8787/v1/memory/delete \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -H "Content-Type: application/json" \
+  -d '{"memoryId": 42}' | jq
+```
+
+OAuth 기준 `list_memory`, `inspect_memory_graph` 는 read scope,
+`update_memory`, `delete_memory`, `tag_memory` 는 admin scope가 필요합니다.
+`delete_memory` 응답이 `indexCleanupPending: true`이거나
+`qdrantPointsPending > 0`이면 ingest sweeper를 활성화하고 `ingest_jobs`를
+점검하세요. Compaction 정리는 `memory_archive`와 compaction sweeper를 사용합니다.
+
+## Unarchive
+
+Apply 가 실수였을 때 archive 된 레코드 복원:
+
+```bash
+# 최근 archive 찾기:
+psql -c "SELECT id, source_record_id, archive_reason, archived_at
+         FROM memory_archive
+         WHERE organization_id='dev-team'
+           AND archived_at > NOW() - INTERVAL '1 hour'
+         ORDER BY archived_at DESC;"
+
+# 복원:
+curl -X POST http://localhost:8787/v1/memory/unarchive \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -d '{"archiveIds": [42, 43, 44]}' | jq
+```
+
+복원된 레코드는 새 BIGSERIAL id; 응답이 각각의 원래 `sourceRecordId` 와
+매핑 — 호출자가 레퍼런스 업데이트.
+
+## 모니터링
+
+### 프로세스 로그
+
+Akasha 는 pino JSON 을 **stderr** 로 출력. aggregator가 앱 컨테이너의
+stderr 수집:
+
+```bash
+docker compose logs --since 1h app | jq 'select(.level >= 40)'  # warn+
+```
+
+모니터링할 주요 이벤트:
+
+| 이벤트 | 심각도 | 액션 |
+|---|---|---|
+| `auth.disabled` | warn | dev에서만 정상. prod = 미스컨피그. |
+| `compact.qdrant_delete_failed` | warn | sweeper 가 재시도. |
+| `compact.sweep_giveup` | warn | 수동 조사 ("Stuck rows" 참고). |
+| `ingest.sweep_giveup` | warn | 수동 조사 (ingest failed rows 참고). |
+| `compact.unarchive_failed` | error | archive별 실패; 응답 outcome 확인. |
+| `http.unhandled` | error | HTTP 핸들러 예상 외 예외. |
+| `compact.sweep_tick_failed` | error | sweeper throw; 루프 계속. |
+| `ingest.sweep_tick_failed` | error | ingest sweeper throw; 루프 계속. |
+
+### Health probe
+
+- `GET /healthz` — 프로세스 살아 있음 (up 후 항상 200).
+- `GET /readyz` — readiness gate. Postgres는 항상 프로브합니다. 또한
+  `VECTOR_BACKEND=qdrant` 일 때 Qdrant, `EMBEDDING_PROVIDER=openai` 일 때
+  OpenAI를 프로브합니다. `VECTOR_BACKEND=pgvector` 배포는 readiness에 Qdrant가
+  필요하지 않습니다. 활성 프로브가 모두 통과하면 200, 하나라도 실패하면 503.
+
+### 메트릭
+
+`GET /metrics` 는 native Prometheus text exposition
+(`text/plain; version=0.0.4`) 을 제공하며 `/healthz`, `/readyz` 와 마찬가지로
+인증이 없습니다.
+
+주요 series:
+
+- `akasha_http_requests_total{method,route,status}`
+- `akasha_http_request_duration_seconds_count{method,route,status}`
+- `akasha_http_request_duration_seconds_sum{method,route,status}`
+- `akasha_sweeper_ticks_total{worker,status}`
+- `akasha_sweeper_tick_duration_seconds_count{worker,status}`
+- `akasha_sweeper_tick_duration_seconds_sum{worker,status}`
+- `akasha_sweeper_rows_total{worker,outcome}`
+- `akasha_background_queue_collect_success`
+- `akasha_background_queue_rows{queue,state}`
+- `akasha_dependency_up{name="postgres"}`
+- `akasha_dependency_check_duration_seconds{name="postgres"}`
+
+HTTP label은 low-cardinality와 privacy-safe를 기준으로 제한합니다. `route` 는
+`/v1/memory/search`, `/mcp`, `/admin/memory`, `/healthz`, `/readyz`, `/metrics`,
+`unknown` 같은 static route 이름이며 raw URL이나 query string이 아닙니다.
+Metrics에는 bearer token, organization ID, request body, search query, memory
+content를 넣지 않습니다.
+
+Sweeper metrics는 HTTP 프로세스 안에서 loop tick이 실제로 돈 뒤에만
+생성됩니다. `worker` 는 `compaction` 또는 `ingest`, `status` 는 `success`
+또는 `error`, `outcome` 은 `scanned`, `cleaned`, `completed`, `retried`,
+`failed` 같은 제한된 row 결과입니다. 두 sweeper가 모두 비활성화되어 있으면
+이 series는 비어 있습니다.
+
+전용 `npm run start:worker` 프로세스에는 현재 HTTP metrics listener가 없습니다.
+Prometheus scrape config는 설정된 target만 scrape하므로 HTTP listener가 없는
+프로세스는 scrape target이 아닙니다. Prometheus가 그 프로세스의 per-worker tick
+counter를 scrape해야 할 때만 worker-local metrics endpoint 또는 sidecar를
+추가하세요.
+
+Background queue gauge는 `/metrics` scrape마다 Postgres에서 수집합니다.
+`queue` 는 `ingest` 또는 `compaction`, `state` 는 `pending`, `due`,
+`failed` 입니다. `due` 는 다음 sweeper claim 대상이 될 수 있는 work를
+의미합니다. 수집이 실패하면 `akasha_background_queue_collect_success` 는 `0`
+이고, metrics body에는 error detail 없이 scrape는 200으로 유지됩니다.
+
+Dependency gauge는 가장 최근 `/readyz` report를 사용합니다. 아직 `/readyz` 가
+실행되지 않았다면 dependency metrics는 생략됩니다. `/metrics` 는 Postgres,
+Qdrant, OpenAI readiness probe를 호출하지 않지만, background queue gauge를
+위해 read-only Postgres backlog count query는 실행합니다.
+
+## 스키마 마이그레이션
+
+모든 마이그레이션은 idempotent 이고 부트스트랩 시 적용. 현재 마이그레이션은
+`001-015` 범위이며, 새 마이그레이션은 그 뒤의 다음 미사용 번호를 붙입니다.
+새 마이그레이션 추가:
+
+1. `src/db/migrations/NNN_description.sql` 생성 (다음 일련 번호, 현재 `016_*.sql`).
+2. `src/db/migrate.ts` 의 `MIGRATION_FILES` 에 파일명 추가.
+3. 같은 파일의 `embeddedPostgresMigrationSql` 에 SQL 추가
+   (production fallback — SQL 파일이 디스크에 없을 때).
+4. `CREATE … IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS` 사용.
+
+dev DB에 영향 없이 로컬 검증:
+
+```bash
+docker compose exec postgres psql -U memory -d memory_os -c "\d memory_archive"
+```
+
+## 흔한 runbook
+
+### "Apply 했는데 Qdrant가 stale"
+
+응답에서 `qdrantPointsPending` 확인. > 0 이면 sweeper가 drain (활성화 안
+했으면 활성화). 확인:
+
+```sql
+SELECT qdrant_status, COUNT(*) FROM memory_archive GROUP BY 1;
+```
+
+### "마이그레이션 후 검색이 비어 있음"
+
+`EMBEDDING_PROVIDER` 또는 `OPENAI_EMBEDDING_MODEL` 변경 후 reindex 안 한
+경우. 실행:
+
+```bash
+curl -X POST http://localhost:8787/v1/memory/reindex \
+  -H "Authorization: Bearer $MEMORY_API_TOKENS" \
+  -d '{"organizationId": "default", "projectKey": "my-project"}' | jq
+```
+
+### "서버가 'fail-closed' 에러로 시작 거부"
+
+`MEMORY_API_TOKENS` 설정 (production) 또는 loopback 바인드
+(`HOST=127.0.0.1`, dev). `src/app/server.ts` 의 `assertSafeAuthConfig`
+참고.
+
+### "MEMORY_API_TOKENS 분실 — 복구 방법?"
+
+토큰은 `.env` 에. .env 분실 시 새로 생성 (`uuidgen` × N) 하고 `.env` + 모든
+클라이언트에 업데이트. 새 `.env` 로드 (서버 재시작) 순간 옛 토큰 무효화.

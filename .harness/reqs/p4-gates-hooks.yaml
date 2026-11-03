@@ -1,0 +1,109 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: p4-gates-hooks
+  title: P4 — verify 게이트 + 브라운필드 캡 산정 + 훅 3종 (opt-in)
+  status: verified
+  priority: P0
+  owner: YouSangSon
+  intake_started: 2026-07-20
+  promoted_at: 2026-07-20
+  source_doc: DESIGN.md §6 P4, §4.3.1, §4.6, §4.7, §4.12.2
+
+source:
+  raw_user_prompt: "이어서 진행해"
+  user_language: ko
+  repo: harness
+
+classification:
+  category: feature
+  confidence: high
+  reason: 설계 §6 P4 범위 — 결정론 앵커(훅 조기경보 + verify 로컬 결정론) 구축
+
+requirement:
+  user_intent: 커밋 불변식과 캡을 기계 검사로 만들고, 훅은 조기경보로만(D15) 단다
+  actor: 하네스 사용 에이전트 + verify를 도는 개발자
+  desired_outcome: 이 리포에서 verify가 green이고, 훅이 감사 로그를 남기며, opt-in 원칙이 지켜진다
+  confirmed_facts:
+    - 훅은 강제선이 아니다(D15) — 모든 검사는 verify에도 존재해야 한다
+    - 훅 설정은 samples/에만(§4.7 opt-in 3중 명시), Stop 훅은 stop_hook_active 체크 의무(§0.2)
+    - REQ 탈출구 — "REQ: none (<사유>)" 허용(§4.3.1), 커밋 형식 conventional 10타입+70자
+  assumptions:
+    - id: A1
+      statement: Codex 훅 포맷 어댑터는 로직 공유+어댑터 분리로 두되, Codex 실환경 발화 검증은 이 REQ 범위 밖이다
+      confidence: high
+      status: confirmed
+      reason: 이중 포맷 원칙(§4.7)은 구조 요구 — Codex 실발화는 P6 배포 검증에서
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: verify가 이 리포에서 exit 0 (dogfood green) — 테스트·check-mirror·커밋 REQ 불변식·core 캡을 한 진입점으로 검사
+      verification: "node scripts/verify.mjs → exit 0"
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: commit-message 검사 — conventional 타입+제목 70자+REQ 참조(탈출구 포함)를 판정하고, 위반과 --no-verify를 차단 신호로 반환
+      verification: "node --test — 유효/위반/탈출구/우회 케이스"
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: Stop 훅(handoff-check)이 stop_hook_active에서 즉시 통과해 무한루프를 만들지 않는다
+      verification: "node --test — stop_hook_active=true 입력 시 exit 0"
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 모든 훅이 발화 시 .harness/audit.jsonl에 1줄 append한다 (조용한 미발화 감사)
+      verification: "node --test — 훅 실행 후 audit 라인 존재"
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 브라운필드 캡 산정 — 기존 파일 줄수 분위수 측정 → 현행 최대+여유 캡 산출 시뮬레이션
+      verification: "node --test — 고정 픽스처에서 산출 캡 assert"
+      passes: true
+    - id: AC6
+      priority: P0
+      statement: opt-in — 훅 설정 파일은 samples/에만 존재하고 리포의 .claude/settings.json에 훅이 없다
+      verification: "ls samples/ + grep -L hooks .claude/settings.json (파일 부재 포함)"
+      passes: true
+
+code_mapping:
+  code_areas:
+    scripts:
+      paths: [scripts/verify.mjs]
+      reason: 로컬 결정론 게이트 (밀폐 — 글로벌 설치본 무의존)
+    hooks:
+      paths: [hooks/commit-message.mjs, hooks/handoff-check.mjs, hooks/session-start.mjs, hooks/hook-io.mjs]
+      reason: 조기경보 3종 + 공용 stdin/감사 IO
+    lib:
+      paths: [lib/caps.mjs]
+      reason: 브라운필드 캡 산정 (adapt가 P5에서 소비)
+    samples:
+      paths: [samples/settings.claude.json, samples/hooks.codex.toml]
+      reason: opt-in 설정 견본 — 자동 활성화 금지
+    tests:
+      paths: [tests/hooks.test.mjs, tests/caps.test.mjs]
+      reason: 훅 판정·감사·캡 테스트
+  boundary_rules:
+    - 글로벌 설정 수정 금지 (D3) — 훅 활성화는 사용자 선택
+    - 이 리포 .claude/settings.json에 훅 자동 등록 금지 (opt-in 3중 명시)
+    - CI 워크플로 생성 금지 (리모트 없음 — 훅·verify는 조기경보/로컬 계층)
+
+verification:
+  commands:
+    - "node --test"
+    - "node scripts/verify.mjs"
+  verify_gate_required: true
+  verify_gate_reason: 이 REQ부터 verify 자체가 존재 — 이후 REQ는 verify green이 종결 조건
+  escalate_after: 3
+
+audit:
+  must_not_implement:
+    - OS sandbox 설정 자동화 (문서 안내만 — 환경별 차이 큼)
+    - adapt 스킬 (P5)
+    - 원격 CI 파일
+  completion_report_should_include:
+    - verify 실행 출력 (dogfood)
+    - 캡 산정 시뮬레이션 수치

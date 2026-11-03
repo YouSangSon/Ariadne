@@ -1,0 +1,133 @@
+# Roadmap
+
+[English](roadmap.md) · [한국어](roadmap.ko.md) · **中文**
+
+> 以 thematic 方式整理接下来需要做的事。进度追踪通过 git log 和 PR 维度来维护。
+
+本文档只记录*当前可以无阻碍推进的方向*。重大决策都在不破坏 [invariants.zh.md](invariants.zh.md) 的前提下进行。
+
+---
+
+## 1. 准确度 (Accuracy)
+
+当前最大的空白在于：基于 regex/declaration-line 的 evidence *什么时候会出错*，人无法得知。
+
+- [ ] 基于 TS/JS Tree-sitter 或 TypeScript parser 的 full symbol/call span
+  - 进行中（基于 TypeScript compiler 的 parser-backed）：
+    - import、declaration、class/interface heritage type relation —— 覆盖 same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix
+    - Call dispatch：imported call-site、local identifier call、method-reference alias call、same-class `this.method()`、same-file `super.method()`、same-file class extends inherited instance/static method、static `ClassName.method()`
+    - Factory return type instance method call —— 覆盖 same-file / direct-new-or-const-alias-inferred / namespace-constructor-inferred / factory-wrapper-inferred / direct-factory-call-receiver / named-import / direct-named-re-export / star-re-export / namespace-import / namespace-re-export / default-import / direct-default-re-export / awaited matrix
+    - interface/type-literal method、function-property、function-type-alias signature，以及 interface/type-literal typed receiver method call —— 覆盖 same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix
+    - Type-relation receiver：interface-extends、alias-backed interface-extends、type reference alias、simple-generic·generic-constraint reference、intersection（alias·direct）、simple-union typed receiver
+    - Collection：local/class-scoped array、`Array<T>`、`ReadonlyArray<T>`、`readonly T[]`、numeric tuple element、indexed collection alias、direct collection-binding alias、explicitly typed array/tuple destructuring、来自 typed local collection binding 的 destructuring
+    - Object binding：typed local object property receiver、direct object-binding alias、来自 typed local object binding 的 destructuring
+    - Member·instance：declared typed local/class field receiver、typed local variable、typed/destructured/named-object parameter、assertion-wrapped/non-null/parenthesized receiver、string-literal element access、private member、constructor parameter-property·constructor-assigned field、object-literal callable declaration·receiver、class-field arrow method（instance·static）、typed·plain class field、same-file `new ClassName()` instance、direct `new ClassName().method()` call
+  - 仍待完成：更广泛的 dynamic dispatch 和 advanced type relation
+- [ ] 将 JVM/Spring Boot 的 endpoint·DI·persistence relation 升级为基于 parser 的实现
+- [ ] 把 Python/Go/Rust 的 call/import resolution 从 declaration-only 扩展为 parser-backed
+- [x] 每次 adapter run 都在 report 中明示 confidence label 与 known-gap
+- [x] 将 NodeNext/ESM 的 `.js` 扩展名 local import 解析到 TypeScript source(`.ts`) —— 修复内部 import 依赖图全部漏成 `external_entity` 的问题
+- [x] 将 impact report 的 `affected` 按 confidence(proven > inferred > heuristic) → depth → path 的顺序排序 —— 修复 proven 代码影响被埋在 heuristic 文档 mention 之下的问题（UI 的 first-glance target 也随之自动改善）
+- [x] 启发式 git 共同变更关系（`CO_CHANGES`），用于恢复 static 图在结构上遗漏的耦合（config↔code、test↔impl）—— 从 commit 历史中按 coupling/count 阈值导出，以 heuristic confidence 作为独立 adapter run 记录并附带诚实的 knownGaps 声明，仅在 git 历史产生耦合时生成
+
+## 2. Workspace / Contract
+
+cross-repo impact 还处于 v0 状态。仅在用户注册的 local repo 之间生效。
+
+- [ ] 将 OpenAPI / GraphQL / Protobuf / AsyncAPI 的 contract diff 稳定到 *nested schema* 粒度
+- [ ] 让 generated-client / event topology resolver 超越 heuristic
+- [x] 让 workspace catalog 把 monorepo 内部的 npm/pnpm sub-package 与 Nx project config 当作 first-class package/project member 来识别
+- [ ] 只有当可解析 source 能提供 package-manager workspace manifest 之外的 catalog 价值时，才重新评估额外 Nx inferred-project 或 Turborepo task metadata
+- [x] 在 primary analyze report、graph export、MCP payload 和 UI workbench 中呈现已持久化的 cross-repo breaking contract link
+- [x] 让 cross-repo link 可双向查询，并验证 malformed、stale 或 orphan workspace row
+
+## 3. Package / Build 解析度
+
+package resolver 已覆盖常见生态的 manifest graph，以及 npm、Cargo、Poetry lockfile 的传递依赖。其他锁文件生态和 semver 影响仍未完成。
+
+- [x] npm `package-lock.json` v2/v3 transitive 依赖图
+  - 当前 gate：transitive package entry 会被索引为带 locked version 与 evidence span 的 lockfile-derived `DEPENDS_ON` package relation。
+- [x] `Cargo.lock` transitive 依赖图（有 source 的外部包 → proven `lockfile:transitive` 依赖，镜像 npm lockfile 路径）
+- [x] `poetry.lock` transitive 依赖图（resolved 包 → proven `lockfile:transitive` 依赖；跳过本地 `directory`/`file` source）
+- [ ] 将 lockfile-based transitive 依赖图扩展到 pip (requirements/uv)、go、maven、gradle lockfile
+- [ ] 用 semver/range 信息推断受影响的版本范围
+- [ ] 标准化在不执行 build script 的情况下 dump dependency 图
+
+## 4. Agent surface
+
+MCP 已稳定为 read-only。接下来是深入审视 agent 可用性的阶段。
+
+- [x] GitHub-native agent package：生成 Copilot repository instructions、MCP 配置片段，以及用于 PR 工作的 least-privilege "先运行 Parallax" workflow
+- [x] 面向 affected-file impact finding 的 SARIF / code-scanning export，以及生成 SARIF 文件的 composite GitHub Action
+- [x] PR action wrapper 运行 `init` → `index` → `pr triage`，支持 changed-file 或 base/head diff discovery，写出 SARIF 并追加 step summary，同时让 SARIF upload 保持显式
+- [x] 将 cross-repo contract-break warning 作为锚定到 provider contract 的 SARIF result 输出
+- [x] 将 index coverage-gap warning 作为锚定到 changed file 的 SARIF result 输出
+- [x] 将 recommended verification action 作为 SARIF note result 输出
+- [x] 将 adapter known-gap note 作为锚定到 changed file 的 SARIF note result 输出
+- [x] 通过 `parallax repo-map` 和 MCP `parallax_repo_map` 暴露 token-budgeted repo map / context card，对 changed root、affected file、test/docs/config/work artifact、evidence ref、verification action、resource、confidence、provenance、known gap 与 omitted count 排序
+- [x] Dependency/PR triage dogfood lane：`parallax pr triage` 在不写 GitHub 的前提下串起本地 diff 分析、SARIF 输出、`--fail-on` 与 repo-map context
+- [x] 本地 Git hook installer：`parallax install-hook` 写入托管的 `pre-commit` / `pre-push` impact gate，尊重 `core.hooksPath`，且没有 `--force` 时跳过已有的非 Parallax hook
+- [x] Deep-linkable UI/export：workbench URL 保留选中的影响路径、筛选文本与 report-delta 策略预设，toolbar 可导出 JSON、affected-path CSV 与 PNG/SVG 影响图
+- [x] SCIP import/export：`parallax scip import --file <index.scip or index.scip.json>` 将外部 indexer 的 SCIP definition/reference edge 增强到最新完成的 index，`parallax scip export --file <index.scip.json>` 输出 SCIP 兼容 JSON
+- [ ] 用使用 telemetry 验证 `context_for_change` 的 budget tuning (brief/standard/deep)
+- [ ] 用于测量 context pack 结果 hit/miss 的 harness
+- [ ] 研究将 write surface 拆分为独立权限模型后引入（遵循 [invariants.zh.md](invariants.zh.md) I-8）
+- [x] 只读图查询面：将确定性 Cypher 子集作为 `parallax_query` MCP 工具和 `parallax query` CLI 暴露（单 hop 与有界 multi-hop traversal、正反向子句、label、`WHERE` =/`CONTAINS`、投影、`LIMIT`；拒绝 write/procedure 子句）
+- [x] MCP workflow prompt：`impact_workflow` 与 `triage_change` 教会 agent 按 analyze → context → query/co-change → remember 的流程使用工具
+- [x] 与只读 MCP 分离的首个写入面（I-8）：`parallax ingest-traces` 将运行时 trace 确认的关系提升为 proven 置信度
+
+## 5. UI Explorer
+
+当前 UI 还停留在读取已保存 report 与 graph 的首个 explorer 水平。
+
+- [x] changed → affected → evidence → action 流程的单屏验证
+- [x] 把 policy / decision / PRD / requirement / proposal 这类 work-artifact lane 作为 first-class panel
+- [x] 一键将 evidence resource jump 到原始文件/行
+- [x] 扩展 inspector，对 selected impact 的 relation/evidence/action 做更深的 drill-down
+- [x] saved report 之间的比较与 regression delta UI
+- [x] 将 report delta 的 added path 直接连接到 source viewer 与 inspector/verification action，并将 removed path 连接到 source viewer
+- [x] 让 report delta 的 wider/narrower 判定标准可通过 team policy 配置
+- [x] 让 report delta policy preset 可在 UI 中比较
+- [x] 在 impact map 中加入 primary flow summary、方向箭头、stage band，强化 first glance
+- [x] 将 report delta preset 中选定的 policy 导出为 config patch
+- [x] 把 impact map 提升为首个 viewport 的 primary surface，让变更 → 影响流程一眼可见
+- [x] 将 impact map 的 fallback edge 也以 displayed path 表示，消除被误解为 "0 graph links" 的状态
+- [x] 让 impact summary 也以 displayed path 为基准对齐，消除 summary 与 map 之间的术语不一致
+- [x] 在首屏加入 changed root → affected targets → next verification 的 triage strip
+- [x] 点击 triage strip 中的 top affected/verification target 时连接到 inspector/evidence 的选中
+- [x] 让 impact map 的 edge/label 与 selected target 一同高亮，增强图的可解读性
+- [x] 将初始 primary flow/inspector 统一为以 action-first selected target 为基准
+- [x] 让 map legend row 也与 selected target 同步，并从服务端渲染起就显示 selected state
+- [x] 在 Impact Summary 中加入将 coverage、adapter confidence、known gap 汇总的 Analysis Trust 概要
+- [x] 将 client-updated map、inspector、copy、source、empty-state label 也本地化，让 workbench language switcher 保持可信
+- [x] 在 language/report navigation 中同时保留 selected report 与 language query state
+- [x] 增加所选 impact 的判定卡片，合并 lane、confidence、evidence 数量与验证就绪状态
+
+## 6. 回顾与测量
+
+没有回归信号，就无法保证所有变更都正常工作。
+
+- [x] 基于多语言 fixture 的 deterministic bench harness
+  - 当前 gate：`bench/impact-bench.ts` 会构建固定的 TypeScript/JavaScript、JVM/Spring Boot、Python、Go、Rust、OpenAPI、build manifest fixture，并评分 relation recall/precision、affected-file recall、evidence/span coverage、adapter attribution、context-pack readiness 与 retrieval 质量。它由 `npm run bench`、`npm test` 以及 CI 的 `npm run verify` gate 执行。
+  - 当前 cross-repo gate：bench 包含 two-repo contract-impact fixture，用来验证 W1 primary cross-repo consumer impact 与 report graph edge 仍然可见。
+  - 当前 contract-diff gate：bench 包含 removed response required property、removed response optional property、added request required property、request enum-value removal、request format addition、response property type change、response nullable addition、response format change、response enum-value removal 的 paired OpenAPI v1/v2 quality case，以及 JSON Schema root-object 和 Avro top-level record required-property removal case，并通过 `contractDiffQuality` 报告，方便 CI summary 跟踪 delta。
+  - 当前 co-change gate：bench 包含一个小型 git-history fixture，其中 `src/alpha.ts` 与 `src/beta.ts` 反复共同变更，并通过 `coChangeQuality` 报告，方便 CI summary 跟踪 partner 与 affected-file delta。
+  - 当前 trace-promotion gate：bench 会 ingest 一个运行时观测到的 `src/beta.ts -> src/alpha.ts` edge，并通过 `tracePromotionQuality` 报告，方便 CI summary 跟踪 promotion 与 proven-impact delta。
+- [x] 独立的 scale/perf bench，可分别报告 full index、no-op incremental index、edited-file reindex 与 analyze phases，而不把精确耗时伪装成确定性契约
+  - 当前工具：`npm run bench:perf` 在 synthetic-repo generator 上测量这些阶段、各 scan timing 和 `observed_peak_rss_mb`，并保持在 `npm run verify` 之外，因此 timing/RSS 是建议性的，而不是逐字节 CI 合同。标准 large-repo baseline command 是 `npm run bench:perf -- --scales 10000,50000`；`docs/verification.zh.md` 的当前 local baseline 记录了 1k/2k row 和 10k timeout limit，而不是 green 10k/50k claim。
+- [x] 在 embedding 模型 / LLM provider 交叉时对 recall 质量的回归 detection
+  - 当前 gate：deterministic bench 现在包含 semantic model matrix，检查每个模型的 recall@1 与 cross-model isolation。它是一个不依赖 live provider 调用的 offline gate，用来捕捉 embedding 模型 namespace 回归；LLM provider 的网络质量评估仍放在 CI 之外，而 provider contract 继续由 offline test 覆盖。
+- [x] 在 CI 中每个 PR 自动报告 bench delta
+  - 当前 gate：CI 会在 pull request 中准备 base SHA 的 bench report，在 head 上运行 canonical `npm run verify` gate，然后把 `npm run bench:report` Markdown append 到 GitHub Step Summary，展示 score、relation、affected-file、retrieval 与 semantic recall delta。
+- [x] 用一个显式 transaction 提交 indexing graph/current-state 写入，让 crashed run 无法留下 partial current graph cohort
+- [x] 让 saved report / exported artifact 在后续 incremental re-index 之后仍是明确不可变的 snapshot
+
+---
+
+## 如果只挑下一个切片
+
+实时执行顺序由 `PLAN.md` 管理。Dependency-audit 例外已移除，
+当前验证依据见 `GATES.md`。下一个 S1 切片必须在 `fileContentScope` 之外单独定义
+并强制 emitted-row ownership；在该 contract 与 deterministic read count 完成前，
+changed body 继续使用 full extraction。上面的准确度和 agent-surface 项目仍是
+后续主题，不与当前执行指令竞争。

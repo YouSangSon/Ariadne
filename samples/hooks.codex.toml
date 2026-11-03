@@ -1,0 +1,10 @@
+# opt-in 견본 — Codex 훅 (.codex/config.toml 또는 hooks.json에 수동 반영)
+# 검사 로직은 hooks/*.mjs 공유 — 이 파일은 등록 어댑터일 뿐 (§4.7 이중 포맷 원칙)
+# 주의: Codex 실환경 발화 검증은 P6에서 수행 (REQ p4-gates-hooks A1)
+
+[[hooks.pre_tool_use]]
+command = ["node", "hooks/commit-message.mjs", "--root", "."]
+match_tools = ["shell"]
+
+[[hooks.session_start]]
+command = ["node", "hooks/session-start.mjs", "--root", "."]

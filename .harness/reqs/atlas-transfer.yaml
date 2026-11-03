@@ -1,0 +1,147 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: atlas-transfer
+  title: Atlas 런타임과 앱에서 공통 하네스의 검증·연속성 원리 적용
+  status: verified
+  priority: P0
+  owner: ""
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+  source_doc: docs/atlas-transfer.md
+
+source:
+  raw_user_prompt: |-
+    private-reference/private-runtime-reference
+    private-reference/private-ui-reference
+
+    을 보고 내 개인 프로젝트 하네스 엔지리어닝, 루프 엔지니어링에 적용할만한 것들을 완벽하게 찾아서 적용해줘
+  user_language: ko
+  repo: ariadne
+
+classification:
+  category: feature
+  confidence: high
+  reason: 현재 소스에서 확인한 원리를 공통 하네스의 결정론 게이트와 실행 규율에 적용한다
+
+requirement:
+  user_intent: Atlas 두 저장소에서 개인 프로젝트에 유효한 원리를 찾아 공통 하네스에 적용한다
+  actor: 개인 프로젝트에서 Claude Code와 Codex를 사용하는 개발자
+  desired_outcome: 실패한 게이트를 성공으로 보고하지 않고 세션 전환 시 필수 제약과 미확정 실행을 보존한다
+  confirmed_facts:
+    - 사용자는 적용 범위를 harness 공통 개선까지로 선택했다
+    - 사용자는 프로젝트 새 이름으로 Ariadne를 선택했다. 폴더·문서 표기는 ariadne로 바꾸고 기존 설치 경로·schema 식별자는 유지한다
+    - 2026-11-02 사용자 추가 요청에 따라 기존 harness 디렉터리 호환 별칭을 제거하고 ariadne 경로만 사용한다
+    - 기존 미커밋 Model Portfolio와 adapt 변경은 이 작업의 소유가 아니다
+    - P8 평가 전 P7 자율 루프를 추가하지 않는 기존 경계를 유지한다
+    - Atlas 런타임 기준은 609a1a6bb880686a408d0aaee972f254d94d7b47이다
+    - Atlas 앱 기준은 54ceeccc5e5b536361496cb1fc309199f12c35f6이다
+    - 실제 임시 설치 스모크에서 경로 별칭으로 실행한 context CLI가 exit 0과 빈 출력으로 끝나는 문제를 재현했다
+  assumptions: []
+  rejected_assumptions: []
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 검증 프로세스의 실패와 실행 오류를 출력 유무와 무관하게 실패로 판정하고 실제 실패 출력을 보존한다
+      verification: node --test tests/verify.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 실제 handoff 형식의 제약·막힘을 보존하고 입력 경계와 전체 문자 예산을 검사하며 절단 전에 시크릿을 제거한다
+      verification: node --test tests/context-pack.test.mjs
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 완료·대기·취소·불명확한 실행과 반복 실패의 처리 규율을 공통 원본과 생성 미러에 일관되게 반영한다
+      verification: node scripts/check-mirror.mjs 및 core·route·handoff·context 원본 검토
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 현재 소스와 테스트에 근거한 적용·기존 충족·보류 항목과 검증 한계를 추적할 수 있다
+      verification: docs/atlas-transfer.md의 두 source SHA·경로·도입 판단 검토
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 전체 저장소 게이트가 통과하고 다른 작업의 변경을 보존한다
+      verification: node scripts/verify.mjs 및 작업 전 파일 hash 대조
+      passes: true
+    - id: AC6
+      priority: P0
+      statement: Ariadne 이름을 진입 문서·코어·설계 제목·생성 프로젝트 제목에 반영하고 기존 설치 식별자는 유지한다
+      verification: README.md·core/AGENTS.core.md·DESIGN.md·scripts/adapt-apply.mjs 검토 및 기존 adapt 왕복 검사
+      passes: true
+
+code_mapping:
+  code_areas:
+    gates:
+      paths: [scripts/verify.mjs, tests/verify.test.mjs]
+      reason: authoritative exit status와 실패 원인 출력
+    context:
+      paths: [lib/context-pack.mjs, lib/budget.mjs, tests/context-pack.test.mjs]
+      reason: 입력 검증·전체 예산·시크릿 경계·의미 기반 handoff 조립
+    workflow:
+      paths: [core/AGENTS.core.md, skills/route/SKILL.md, skills/handoff/SKILL.md, skills/context/SKILL.md, templates/req.yaml]
+      reason: 완료 근거·재시도·복구·인수인계 계약
+  boundary_rules:
+    - Atlas 두 저장소는 읽기 전용이며 회사 소스와 계약을 복사하지 않는다
+    - 기존 사용자 변경과 Model Portfolio 배정을 보존한다
+    - P7 자율 실행 엔진·스케줄러·provider·글로벌 설치·다른 개인 프로젝트는 변경하지 않는다
+
+verification:
+  commands:
+    - node --test tests/verify.test.mjs tests/context-pack.test.mjs
+    - node scripts/check-mirror.mjs
+    - node scripts/verify.mjs
+  verify_gate_required: true
+  verify_gate_reason: 게이트와 세션 연속성 경계를 바꾸는 공통 하네스 변경이다
+  escalate_after: 3
+  evidence:
+    - criterion_id: AC1
+      check: "node --test tests/context-pack.test.mjs tests/verify.test.mjs"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/atlas-transfer-20261102/final-validation.json (live code hashes and staged tree)"
+      artifact: ".harness/handoff/atlas-transfer-20261102/installed-boundaries-focused.log"
+    - criterion_id: AC2
+      check: "node --test tests/context-pack.test.mjs tests/verify.test.mjs; isolated installed context CLI smoke"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/atlas-transfer-20261102/final-validation.json (live code hashes and staged tree)"
+      artifact: ".harness/handoff/atlas-transfer-20261102/installed-smoke.json"
+    - criterion_id: AC3
+      check: "node scripts/check-mirror.mjs; source and skill frontmatter inspection"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/atlas-transfer-20261102/final-validation.json (live code hashes and staged tree)"
+      artifact: ".harness/handoff/atlas-transfer-20261102/final-ariadne-working.log"
+    - criterion_id: AC4
+      check: "Verify 28 pinned source path and line references; inspect adoption boundaries"
+      result: passed
+      exit_code: null
+      source_state: ".harness/handoff/atlas-transfer-20261102/final-validation.json (live code hashes and staged tree)"
+      artifact: ".harness/handoff/atlas-transfer-20261102/source-references.json"
+    - criterion_id: AC5
+      check: "node scripts/verify.mjs in live tree and isolated staged snapshot; preserve 32 baseline files"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/atlas-transfer-20261102/final-validation.json (live code hashes and staged tree)"
+      artifact: ".harness/handoff/atlas-transfer-20261102/final-validation.json"
+    - criterion_id: AC6
+      check: "Inspect Ariadne names across repository docs and directory; no legacy directory alias; preserve installation IDs"
+      result: passed
+      exit_code: null
+      source_state: "2026-11-02 current filesystem and README observation"
+      artifact: ".harness/handoff/atlas-transfer-20261102/alias-removal.json"
+
+audit:
+  must_not_implement:
+    - 유료 모델 호출과 외부 서비스 변경
+    - source runtime의 제품 전용 API·DB·SSE·승인 엔진
+    - 기존 작업의 stage·commit 또는 되돌리기
+  completion_report_should_include:
+    - 적용한 원리와 보류 이유
+    - 실제 실행한 로컬 검증과 미관측 CI·runtime·성능 범위
+    - 작업 소유 커밋과 기존 변경 보존 여부

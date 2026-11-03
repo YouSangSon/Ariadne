@@ -1,0 +1,133 @@
+# Roadmap
+
+[English](roadmap.md) · **한국어** · [中文](roadmap.zh.md)
+
+> 앞으로 해야 할 일을 thematic으로 정리한다. 진행 상황 추적은 git log 와 PR 단위로 유지한다.
+
+이 문서는 *지금 막힘없이 갈 방향*만 적는다. 큰 결정은 [invariants.ko.md](invariants.ko.md)를 깨지 않는 선에서 한다.
+
+---
+
+## 1. 정확도 (Accuracy)
+
+지금 가장 큰 빈칸은 regex/declaration-line 기반 evidence가 *언제 틀리는지*를 사람이 알 수 없다는 것이다.
+
+- [ ] TS/JS Tree-sitter 또는 TypeScript parser 기반 full symbol/call span
+  - 진행 (TypeScript compiler 기반 parser-backed):
+    - import, declaration, class/interface heritage type relation — same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix 전반
+    - Call dispatch: imported call-site, local identifier call, method-reference alias call, same-class `this.method()`, same-file `super.method()`, same-file class extends inherited instance/static method, static `ClassName.method()`
+    - Factory return type instance method call — same-file / direct-new-or-const-alias-inferred / namespace-constructor-inferred / factory-wrapper-inferred / direct-factory-call-receiver / named-import / direct-named-re-export / star-re-export / namespace-import / namespace-re-export / default-import / direct-default-re-export / awaited matrix 전반
+    - interface/type-literal method, function-property, function-type-alias signature, 그리고 interface/type-literal typed receiver method call — same-file / named-import / direct-named-re-export / star-re-export / namespace-re-export / default-import / direct-default-re-export / namespace-import matrix 전반
+    - Type-relation receiver: interface-extends, alias-backed interface-extends, type reference alias, simple-generic·generic-constraint reference, intersection (alias·direct), simple-union typed receiver
+    - Collection: local/class-scoped array, `Array<T>`, `ReadonlyArray<T>`, `readonly T[]`, numeric tuple element, indexed collection alias, direct collection-binding alias, explicitly typed array/tuple destructuring, typed local collection binding에서 이어지는 destructuring
+    - Object binding: typed local object property receiver, direct object-binding alias, typed local object binding에서 이어지는 destructuring
+    - Member·instance: declared typed local/class field receiver, typed local variable, typed/destructured/named-object parameter, assertion-wrapped/non-null/parenthesized receiver, string-literal element access, private member, constructor parameter-property·constructor-assigned field, object-literal callable declaration·receiver, class-field arrow method (instance·static), typed·plain class field, same-file `new ClassName()` instance, direct `new ClassName().method()` call
+  - 남음: 더 넓은 dynamic dispatch와 advanced type relation
+- [ ] JVM/Spring Boot endpoint·DI·persistence relation을 parser 기반으로 승격
+- [ ] Python/Go/Rust call/import resolution을 declaration-only에서 parser-backed로 확장
+- [x] adapter run마다 confidence label과 known-gap을 report에 명시
+- [x] NodeNext/ESM `.js` 확장자 local import을 TypeScript source(`.ts`)로 resolve — 내부 import 의존성 그래프가 전부 `external_entity`로 빠지던 문제 수정
+- [x] impact report의 `affected`를 confidence(proven > inferred > heuristic) → depth → path 순으로 정렬 — proven 코드 영향이 heuristic 문서 mention 아래 묻히던 문제 수정 (UI의 first-glance target도 자동 개선)
+- [x] static 그래프가 구조적으로 놓치는 결합(config↔code, test↔impl)을 복원하는 heuristic git 공동변경 관계(`CO_CHANGES`) — commit 히스토리에서 coupling/count 임계값 이상으로 도출, heuristic confidence로 자체 adapter run에 정직한 knownGaps 면책과 함께 기록, git 히스토리에서 결합이 나올 때만 생성
+
+## 2. Workspace / Contract
+
+cross-repo impact가 v0 상태. 사용자가 등록한 local repo 사이에서만 동작.
+
+- [ ] OpenAPI / GraphQL / Protobuf / AsyncAPI contract diff를 *nested schema* 단위까지 안정화
+- [ ] generated-client / event topology resolver를 heuristic 너머로
+- [x] workspace catalog가 monorepo 내부 npm/pnpm sub-package와 Nx project config를 first-class package/project member로 인식
+- [ ] package-manager workspace manifest를 넘어 catalog 가치가 있는 parseable source가 확인될 때만 추가 Nx inferred-project 또는 Turborepo task metadata 재검토
+- [x] 저장된 cross-repo breaking contract link를 primary analyze report, graph export, MCP payload, UI workbench에 표면화
+- [x] cross-repo link를 양방향으로 query할 수 있고 malformed, stale, orphan workspace row를 검증
+
+## 3. Package / Build 해상도
+
+package resolver는 주요 ecosystem의 manifest graph와 npm, Cargo, Poetry lockfile의 전이 의존성을 다룬다. 다른 lockfile ecosystem과 semver 영향 분석은 아직 남아 있다.
+
+- [x] npm `package-lock.json` v2/v3 transitive 의존성 그래프
+  - 현재 gate: transitive package entry를 locked version과 evidence span이 있는 lockfile-derived `DEPENDS_ON` package relation으로 index한다.
+- [x] `Cargo.lock` transitive 의존성 그래프 (source 있는 외부 패키지 → proven `lockfile:transitive` 의존성, npm lockfile 경로 미러)
+- [x] `poetry.lock` transitive 의존성 그래프 (resolved 패키지 → proven `lockfile:transitive` 의존성; 로컬 `directory`/`file` source 제외)
+- [ ] pip (requirements/uv), go, maven, gradle lockfile로 lockfile 기반 transitive 의존성 그래프 확장
+- [ ] semver/range 정보로 영향받는 버전 범위 추론
+- [ ] build script 실행 없이 dependency 그래프 dump 표준화
+
+## 4. Agent surface
+
+MCP는 read-only로 안정화됐다. 다음은 agent 사용성을 깊게 보는 단계.
+
+- [x] GitHub-native agent package: Copilot repository instruction, MCP 설정 snippet, PR 작업용 least-privilege "먼저 Parallax 실행" workflow 생성
+- [x] affected-file impact finding용 SARIF / code-scanning export와 SARIF 파일 생성을 담당하는 composite GitHub Action
+- [x] PR action wrapper가 `init` → `index` → `pr triage`를 실행하고, changed-file 또는 base/head diff discovery를 지원하며, SARIF 작성과 step summary append를 처리하되 SARIF upload는 명시적으로 남김
+- [x] cross-repo contract-break warning을 provider contract에 anchor한 SARIF result로 출력
+- [x] index coverage-gap warning을 changed file에 anchor한 SARIF result로 출력
+- [x] recommended verification action을 SARIF note result로 출력
+- [x] adapter known-gap note를 changed file에 anchor한 SARIF note result로 출력
+- [x] `parallax repo-map`과 MCP `parallax_repo_map`으로 노출되는 token-budgeted repo map / context card. changed root, affected file, test/docs/config/work artifact, evidence ref, verification action, resource, confidence, provenance, known gap, omitted count를 rank한다
+- [x] Dependency/PR triage dogfood lane: `parallax pr triage`가 GitHub write 없이 로컬 diff 분석, SARIF 출력, `--fail-on`, repo-map context를 묶는다
+- [x] 로컬 Git hook installer: `parallax install-hook`이 관리형 `pre-commit` / `pre-push` impact gate를 쓰고, `core.hooksPath`를 존중하며, `--force`가 없으면 기존 non-Parallax hook을 건너뛴다
+- [x] Deep-linkable UI/export: workbench URL이 선택한 영향 경로, 필터 텍스트, report-delta 정책 프리셋을 유지하고 toolbar가 JSON, affected-path CSV, PNG/SVG 영향 맵을 내보낸다
+- [x] SCIP import/export: `parallax scip import --file <index.scip or index.scip.json>`가 외부 indexer의 SCIP definition/reference edge를 최신 완료 index에 보강하고, `parallax scip export --file <index.scip.json>`가 SCIP 호환 JSON을 출력한다
+- [ ] `context_for_change`의 budget tuning (brief/standard/deep)을 사용 텔레메트리로 검증
+- [ ] context pack 결과의 hit/miss 측정 harness
+- [ ] write surface를 별도 권한 모델로 분리해 도입 검토 ([invariants.ko.md](invariants.ko.md) I-8 준수)
+- [x] 읽기전용 그래프 질의 표면: 결정론적 Cypher 서브셋을 `parallax_query` MCP 툴과 `parallax query` CLI로 노출 (단일 hop과 bounded multi-hop traversal, 정/역방향 구문, label, `WHERE` =/`CONTAINS`, 투영, `LIMIT`; write/procedure 구문 거부)
+- [x] MCP workflow prompt: `impact_workflow`, `triage_change`가 analyze → context → query/co-change → remember 흐름을 가르침
+- [x] 읽기전용 MCP에서 분리된 첫 write 표면 (I-8): `parallax ingest-traces`가 런타임 트레이스로 확인된 관계를 proven 신뢰도로 승격
+
+## 5. UI Explorer
+
+지금 UI는 저장된 report와 graph를 읽는 첫 explorer 수준.
+
+- [x] changed → affected → evidence → action 흐름의 단일 화면 검증
+- [x] policy / decision / PRD / requirement / proposal 같은 work-artifact lane을 first-class panel로
+- [x] evidence resource를 클릭 한 번에 원본 파일/라인으로 jump
+- [x] selected impact의 relation/evidence/action을 더 깊게 drill-down하는 inspector 확장
+- [x] saved report 간 비교와 regression delta UI
+- [x] report delta의 added path를 source viewer와 inspector/verification action에 직접 연결하고 removed path는 source viewer로 연결
+- [x] report delta의 wider/narrower 판단 기준을 team policy로 설정 가능하게 만들기
+- [x] report delta policy preset을 UI에서 비교할 수 있게 만들기
+- [x] impact map에 primary flow summary, 방향 화살표, stage band를 추가해 first glance 강화
+- [x] report delta preset에서 선택한 policy를 config patch로 내보내기
+- [x] impact map을 첫 viewport의 primary surface로 올려 변경 → 영향 흐름을 바로 보이게 만들기
+- [x] impact map의 fallback edge도 displayed path로 표시해 "0 graph links"처럼 오해되는 상태 제거
+- [x] impact summary도 displayed path 기준으로 맞춰 summary와 map의 용어 불일치 제거
+- [x] 첫 화면에 changed root → affected targets → next verification triage strip 추가
+- [x] triage strip에서 top affected/verification target을 클릭하면 inspector/evidence 선택으로 연결
+- [x] impact map edge/label도 selected target과 함께 강조해 그래프 해석성 강화
+- [x] 초기 primary flow/inspector를 action-first selected target 기준으로 통일
+- [x] map legend row도 selected target과 동기화하고 서버 렌더링부터 selected state 표시
+- [x] Impact Summary에 coverage, adapter confidence, known gap을 묶은 Analysis Trust 요약 추가
+- [x] client-updated map, inspector, copy, source, empty-state label까지 localize해 workbench language switcher를 정직하게 유지
+- [x] language/report navigation에서 selected report와 language query state를 함께 보존
+- [x] 선택된 impact의 lane, confidence, evidence 수, 검증 준비 상태를 합친 판정 카드 추가
+
+## 6. 회고와 측정
+
+회귀 신호 없이 모든 변경이 작동한다는 보장이 없다.
+
+- [x] 다언어 fixture 기반 deterministic bench harness
+  - 현재 gate: `bench/impact-bench.ts`가 TypeScript/JavaScript, JVM/Spring Boot, Python, Go, Rust, OpenAPI, build manifest 고정 fixture를 만들고 relation recall/precision, affected-file recall, evidence/span coverage, adapter attribution, context-pack readiness, retrieval 품질을 채점한다. `npm run bench`, `npm test`, CI의 `npm run verify` gate에서 실행된다.
+  - 현재 cross-repo gate: bench에는 W1 primary cross-repo consumer impact와 report graph edge가 계속 보이는지 확인하는 two-repo contract-impact fixture가 포함된다.
+  - 현재 contract-diff gate: bench에는 removed response required property, removed response optional property, added request required property, request enum-value removal, request format addition, response property type change, response nullable addition, response format change, response enum-value removal에 대한 paired OpenAPI v1/v2 quality case와 JSON Schema root-object 및 Avro top-level record required-property removal case가 포함되며, CI summary가 delta를 추적할 수 있도록 `contractDiffQuality`로 보고된다.
+  - 현재 co-change gate: bench에는 `src/alpha.ts`와 `src/beta.ts`가 반복해서 함께 바뀌는 작은 git-history fixture가 포함되며, CI summary가 partner와 affected-file delta를 추적할 수 있도록 `coChangeQuality`로 보고된다.
+  - 현재 trace-promotion gate: bench가 runtime에서 관측된 `src/beta.ts -> src/alpha.ts` edge를 ingest하고 `tracePromotionQuality`로 보고하므로, CI summary가 promotion과 proven-impact delta를 추적할 수 있다.
+- [x] full index, no-op incremental index, edited-file reindex, analyze phase를 분리해 보여주는 별도 scale/perf bench
+  - 현재 도구: `npm run bench:perf`가 synthetic-repo generator 위에서 이 단계들, 각 scan timing, `observed_peak_rss_mb`를 측정하며, timing/RSS를 byte-for-byte CI 계약으로 만들지 않기 위해 `npm run verify` 밖에서 유지된다. 표준 large-repo baseline command는 `npm run bench:perf -- --scales 10000,50000`이며, `docs/verification.ko.md`의 현재 local baseline은 green 10k/50k claim 대신 1k/2k row와 10k timeout limit를 기록한다.
+- [x] embedding 모델 / LLM provider 교차 시 recall 품질 회귀 detection
+  - 현재 gate: deterministic bench가 모델별 recall@1과 cross-model isolation을 확인하는 semantic model matrix를 포함한다. live provider 호출에 의존하지 않고 embedding 모델 namespace 회귀를 잡는 offline gate이며, LLM provider의 네트워크 품질 평가는 CI 밖에 두고 provider contract는 offline test가 계속 검증한다.
+- [x] CI에서 매 PR마다 bench delta를 자동 리포트
+  - 현재 gate: CI가 pull request에서 base SHA의 bench report를 준비하고, head에서 canonical `npm run verify` gate를 실행한 뒤, `npm run bench:report` Markdown을 GitHub Step Summary에 append해 score, relation, affected-file, retrieval, semantic recall delta를 표시한다.
+- [x] indexing graph/current-state write를 하나의 explicit transaction으로 commit해 crashed run이 partial current graph cohort를 남기지 못하게 만들기
+- [x] 나중 incremental re-index가 돌아도 saved report / exported artifact를 immutable snapshot으로 보존하기
+
+---
+
+## 다음 한 슬라이스만 고른다면
+
+실시간 작업 순서는 `PLAN.md`가 관리한다. Dependency-audit 예외는 제거했으며
+현재 검증 근거는 `GATES.md`에 기록한다. 다음 S1 slice는 `fileContentScope`와 별도로
+emitted-row ownership을 정의하고 강제해야 한다. 그 contract와 deterministic
+read count가 생기기 전까지 changed body는 full extraction을 유지한다. 위 정확도와
+agent-surface 항목은 후속 주제이며 현재 실행 지시와 경쟁하지 않는다.

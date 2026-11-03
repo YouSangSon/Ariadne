@@ -1,0 +1,150 @@
+import { readFileSync } from "node:fs";
+import { describe, expect, it, vi } from "vitest";
+import { createToolHandlers } from "../../src/mcp/tool-handlers.js";
+import { createToolRegistry } from "../../src/mcp/tool-registry.js";
+
+describe("createToolRegistry", () => {
+  it.each([
+    {
+      input: null,
+      message: "tool registry options must be an object",
+    },
+    {
+      input: [],
+      message: "tool registry options must be an object",
+    },
+    {
+      input: { cwd: 42 },
+      message: "cwd must be a string",
+    },
+    {
+      input: { cwd: " \n\t " },
+      message: "cwd must contain non-whitespace text",
+    },
+    {
+      input: { defaultUserScopeId: false },
+      message: "defaultUserScopeId must be a string",
+    },
+    {
+      input: { defaultActor: "" },
+      message: "defaultActor must contain non-whitespace text",
+    },
+    {
+      input: { repository: null },
+      message: "repository must be an object",
+    },
+    {
+      input: { logger: "logger" },
+      message: "logger must be an object",
+    },
+    {
+      input: { resolveRepository: null },
+      message: "resolveRepository must be a function",
+    },
+    {
+      input: { withCanonicalServices: {} },
+      message: "withCanonicalServices must be a function",
+    },
+  ])("rejects malformed registry options %#", ({ input, message }) => {
+    expect(() => createToolRegistry(input as never)).toThrow(message);
+  });
+
+  it("still builds the registry with default options", () => {
+    expect(createToolRegistry()).toEqual(
+      expect.objectContaining({
+        add_memory: expect.any(Function),
+        search_memory: expect.any(Function),
+        build_context_pack: expect.any(Function),
+      }),
+    );
+  });
+});
+
+describe("createToolHandlers", () => {
+  const withCanonicalServices = async () => {
+    throw new Error("not used");
+  };
+
+  it.each([
+    {
+      input: null,
+      message: "tool handlers input must be an object",
+    },
+    {
+      input: {
+        options: null,
+        cwd: process.cwd(),
+        withCanonicalServices,
+      },
+      message: "tool registry options must be an object",
+    },
+    {
+      input: {
+        options: {},
+        cwd: 42,
+        withCanonicalServices,
+      },
+      message: "cwd must be a string",
+    },
+    {
+      input: {
+        options: {},
+        cwd: " \n\t ",
+        withCanonicalServices,
+      },
+      message: "cwd must contain non-whitespace text",
+    },
+    {
+      input: {
+        options: {},
+        cwd: process.cwd(),
+      },
+      message: "withCanonicalServices must be a function",
+    },
+    {
+      input: {
+        options: {},
+        cwd: process.cwd(),
+        withCanonicalServices: null,
+      },
+      message: "withCanonicalServices must be a function",
+    },
+  ])("rejects malformed handler construction input %#", ({ input, message }) => {
+    expect(() => createToolHandlers(input as never)).toThrow(message);
+  });
+
+  it("trims direct search_memory queries before resolving records", async () => {
+    const retrieveMemory = vi.fn().mockResolvedValue([]);
+    const handlers = createToolHandlers({
+      options: { retrieveMemory },
+      cwd: process.cwd(),
+      withCanonicalServices,
+    });
+
+    const result = await handlers.search_memory({
+      organizationId: " org-a ",
+      projectKey: "project-alpha",
+      query: " timeout retry ",
+      includeUser: false,
+    });
+
+    expect(retrieveMemory).toHaveBeenCalledWith({
+      organizationId: "org-a",
+      projectKey: "project-alpha",
+      userScopeId: undefined,
+      query: "timeout retry",
+      limit: 10,
+    });
+    expect(result.query).toBe("timeout retry");
+  });
+
+  it("does not pass raw toolInput organization IDs across handler boundaries", () => {
+    const source = readFileSync(
+      new URL("../../src/mcp/tool-handlers.ts", import.meta.url),
+      "utf8",
+    );
+
+    expect(source).not.toMatch(/organizationId:\s*toolInput\.organizationId\s*[,}]/);
+    expect(source).not.toMatch(/toolInput\.organizationId\s*\?\?\s*"default"/);
+  });
+});

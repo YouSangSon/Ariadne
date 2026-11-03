@@ -1,0 +1,974 @@
+> [English](api-reference.md) | **한국어**
+
+# API 레퍼런스
+
+Akasha는 동일한 core service tool surface를 세 가지 접근 경로로 노출합니다:
+
+- **MCP stdio** — Claude Code, Codex CLI 같은 AI 클라이언트용.
+  진입점: `dist/src/mcp/server.js`. 20 service tools 모두와 MCP 전용
+  client-context helper가 등록됩니다.
+- **MCP Streamable HTTP** — HTTP로 연결하는 MCP 클라이언트용.
+  기본 문서화 대상 엔드포인트는 JSON-RPC 요청용 `POST /mcp` 입니다. SDK
+  transport는 같은 `/mcp` 엔드포인트에서 GET, DELETE 도 지원합니다.
+- **JSON HTTP** — `/v1/*` 아래의 비-MCP 클라이언트용.
+  진입점: `src/app/server.ts`, 기본 바인드 `127.0.0.1:8787`.
+
+세 가지 접근 경로 모두 `src/mcp/tool-schemas.ts` 와 `src/mcp/tool-registry.ts`
+의 같은 descriptor/schema/registry 경로를 공유한 뒤
+`src/mcp/tool-handlers.ts` 의 service tool 구현으로 dispatch합니다. Goal-run tool
+adapter는 `src/goal-run/tool-handlers.ts`, audit-log read adapter는
+`src/audit/tool-handlers.ts` 에 있습니다. Compaction adapter는
+`src/compact/tool-handlers.ts`, canonical reindex adapter는
+`src/store/tool-handlers.ts` 에 있습니다. Service tool 입출력은 동일하고
+wire 포맷만 다릅니다.
+
+HTTP와 MCP tool call은 같은 zod 기반 공유 tool schema 정의를 공유합니다.
+HTTP 요청은 bearer token의 organization 해석 이후, registry dispatch 이전에
+검증됩니다. 잘못된 tool body는 400을 반환하며 tool handler를 호출하지 않습니다.
+
+MCP는 `/v1/*` route가 없는 context-aware tool 3개도 추가 등록합니다.
+`list_workspace_roots` 는 클라이언트가 광고한 `roots/list` capability를 호출하고,
+`add_memory_interactive` 는 MCP form elicitation으로 memory detail을 수집한 뒤
+`add_memory` 로 저장합니다. `classify_memory_candidate` 는 MCP sampling으로
+candidate text의 memory `kind` 와 짧은 `summary` 를 제안하며 저장은 하지
+않습니다.
+
+## 인증 (HTTP 전용)
+
+`MEMORY_API_TOKENS` 또는 OAuth token validation이 설정되어 있으면 모든
+`/mcp`, `/v1/*` 라우트에 bearer 토큰이 필요합니다. Static token은
+`MEMORY_API_TOKENS` 로 설정합니다. OAuth/OIDC JWT access token은
+`MCP_OAUTH_AUTHORIZATION_SERVERS` 와 `MCP_OAUTH_RESOURCE_URL` 이 설정되어 있고
+issuer JWKS, audience, expiry, scope 검증을 통과할 때 허용됩니다.
+`/healthz`, `/readyz`, `/metrics`, 정적 `/admin/memory` 셸은 인증이 없습니다.
+`/admin/memory` 는 데이터나 토큰을 embed하지 않으며, 브라우저 쪽 JSON 호출은
+계속 인증이 필요한 `/v1/*` API 를 대상으로 합니다. 로컬 개발에서만 토큰 목록이
+비어 있어도 loopback (`127.0.0.1`, `localhost`, `::1`) 바인딩이면 허용됩니다.
+static token 또는 OAuth token validation 없이 non-loopback host에 바인딩하면
+startup에서 실패합니다.
+
+```bash
+curl -H "Authorization: Bearer dev-token" http://localhost:8787/v1/memory/search ...
+```
+
+실패 케이스:
+
+| 상태 | 이유 |
+|---|---|
+| 401 | `Authorization` 헤더 누락 / 알 수 없음 / 잘못된 형식 |
+| 403 | 토큰이 다른 org에 바인딩됨 (body / 헤더와 불일치), 또는 OAuth token에 필요한 scope 없음 (`insufficient_scope`) |
+| 429 | 토큰별 rate limit 소진 |
+| 503 | `/readyz` 가 의존성 outage 감지 (아래 health 섹션 참조) |
+
+## 응답 shape
+
+모든 HTTP 응답은 일관된 envelope을 사용합니다:
+
+```ts
+// 성공:
+{ "success": true,  "data": <ToolResult> }
+
+// 실패:
+{ "success": false, "error": { "message": "<사람이 읽을 메시지>" } }
+```
+
+MCP 응답은 SDK 네이티브 shape을 사용 — envelope 없음.
+
+도구 결과는 MCP 클라이언트에 다음 두 형태로도 노출됩니다:
+
+- `structuredContent` — 도구 결과의 JSON 객체 형태.
+- `content` — 도구 출력을 텍스트로 읽는 클라이언트를 위한 one serialized JSON
+  text content item.
+
+두 필드는 동일한 정보를 담고 있습니다.
+
+## MCP 리소스와 프롬프트
+
+리소스:
+
+- `akasha://memory/recent/{projectKey}` — JSON 검색 결과. 쿼리 파라미터:
+  `organizationId`, `query`, `limit`.
+- `akasha://context-pack/{projectKey}/{task}` — markdown 컨텍스트 팩. 쿼리
+  파라미터: `organizationId`, `limit`.
+
+프롬프트:
+
+- `akasha_session_start` — 새 에이전트 세션용 컨텍스트 팩을 생성합니다.
+- `akasha_store_memory` — 에이전트가 durable memory를 저장하도록 요청하는 템플릿.
+
+## MCP 전용 context tool
+
+이 도구들은 server-to-client MCP capability를 사용하므로 MCP transport에만
+등록됩니다. 연결된 클라이언트가 필요한 capability를 광고하지 않으면
+`supported: false` 를 반환합니다.
+
+```ts
+type ListWorkspaceRootsResult = {
+  ok: true;
+  supported: boolean;
+  roots: { uri: string; name?: string }[];
+  message?: string;
+};
+
+type AddMemoryInteractiveResult = {
+  ok: true;
+  action: "accept" | "decline" | "cancel" | "unsupported";
+  stored: boolean;
+  memoryId?: string;
+  summary?: string;
+};
+
+type ClassifyMemoryCandidateResult = {
+  ok: true;
+  supported: boolean;
+  classification?: {
+    kind: "decision" | "summary" | "fact";
+    summary: string;
+    confidence?: number;
+  };
+  model?: string;
+  rawText?: string;
+};
+```
+
+- `list_workspace_roots` — client `roots/list` 호출 (`akasha:read`).
+- `add_memory_interactive` — form elicitation을 사용하고, 사용자가 accept하면
+  `add_memory` 호출 (`akasha:write`).
+- `classify_memory_candidate` — 저장 없이 client sampling으로 candidate text를
+  분류 (`akasha:read`).
+
+## 도구
+
+### add_memory — 메모리 저장
+
+```ts
+type AddMemoryInput = {
+  organizationId?: string;       // 토큰 바인딩이 있으면 덮어씀
+  projectKey?: string;           // project scope 시 필수
+  scope?: "project" | "user";    // 기본 "project"
+  userScopeId?: string;          // user scope 시 필수
+  kind: "decision" | "summary" | "fact"; // decision | summary | fact
+  content: string;               // 자유 텍스트; 쓰기 시 secret-scrub 적용
+};
+
+type AddMemoryResult = {
+  ok: true;
+  memoryId: string;              // "project:<key>:<id>" 또는 "user:<scopeId>:<id>"
+  summary: string;
+};
+```
+
+HTTP: `POST /v1/memory`
+
+```bash
+curl -X POST http://localhost:8787/v1/memory \
+  -H "Authorization: Bearer dev-token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectKey": "my-project",
+    "kind": "decision",
+    "content": "We decided to use Postgres for canonical persistence"
+  }'
+```
+
+에러: 컨텐츠에 스크럽 패턴 (provider API key, PEM 블록, bearer/JWT 토큰,
+자격증명이 포함된 데이터베이스 URL) 포함 시 `SecretDetectedError` (400).
+
+---
+
+### search_memory — 시맨틱 + lexical 하이브리드 검색
+
+```ts
+type SearchMemoryInput = {
+  organizationId?: string;
+  projectKey: string;            // 필수
+  query: string;
+  userScopeId?: string;          // user-scope 결과 포함
+  includeUser?: boolean;         // 기본 true; false로 설정 시 user-scope 결과 제외
+  limit?: number;                // 기본 10
+};
+
+type SearchMemoryResult = {
+  id: number;
+  organizationId?: string;
+  sourceId: number;
+  projectKey?: string | null;
+  scopeType: "project" | "user";
+  scopeId: string;
+  memoryType: "decision" | "summary" | "fact";
+  title?: string | null;
+  content: string;
+  summary?: string | null;
+  durability?: "ephemeral" | "durable" | "archived";
+  importance?: number;
+  createdAt: string;
+  updatedAt: string;
+  source: {
+    id: number;
+    organizationId?: string;
+    scopeType: "project" | "user";
+    scopeId: string;
+    sourceType: "decision" | "document" | "conversation";
+    externalId?: string;
+    sourceRef?: string;
+    title: string | null;
+    uri: string | null;
+    createdAt: string;
+  };
+};
+
+type SearchMemoryResponse = {
+  ok: true;
+  projectKey: string;
+  query: string;
+  results: SearchMemoryResult[];
+};
+```
+
+HTTP: `POST /v1/memory/search`
+
+동작: 쿼리를 임베딩해 활성 vector backend 유사도 검색 (org + scope 필터)을
+수행하고, 동시에 scope가 적용된 Postgres lexical 후보 검색을 실행. Lexical
+retrieval은 generated `tsvector` GIN index와 `ts_rank_cd`를 사용하고, 정확한
+path / env var / 짧은 code token을 위해 substring fallback도 유지합니다. Query의
+entity mention(code symbol, path, URL, date, proper noun)은 persistent entity
+graph와도 매칭되어 exact rescue/boost 경로로 사용됩니다. vector와 lexical 후보를
+merge하고 필요한 경우 Postgres에서 hydrate한 뒤, reciprocal-rank source boost와
+metadata/recency signal로 채점, 랭킹, `limit` slice 후 반환. 동점인 경우
+project-scope 결과가 user-scope 결과보다 안정적으로 앞에 옴.
+
+---
+
+### build_context_pack — 세션 priming용 팩 생성
+
+```ts
+type BuildContextPackInput = {
+  organizationId?: string;
+  projectKey: string;
+  task: string;                  // 필수; 랭킹용 작업 설명
+  userScopeId?: string;
+  includeUser?: boolean;         // 기본 true; false로 설정 시 user-scope 결과 제외
+  limit?: number;
+  maxOutputBytes?: number;
+};
+
+type ContextPackSelectionRationale = {
+  memoryId: string;
+  recordId: number;
+  section: "project_summary" | "recent_decisions" | "constraints" | "open_questions" | "relevant_notes";
+  reason: "project-summary" | "decision-memory-or-source" | "constraint-prefix" | "open-question-prefix" | "fallback-relevant-note";
+  inputRank: number;             // section cap 적용 전 1-based rank
+  scopeType: "project" | "user";
+  scopeId: string;
+  sourceType: "decision" | "document" | "conversation";
+  sourceTitle: string | null;
+};
+
+type BuildContextPackResult = {
+  ok: true;
+  projectKey: string;
+  packMarkdown: string;          // 새 세션에 붙여넣을 준비된 텍스트
+  selectedMemoryIds: string[];   // section cap 이후 실제 포함된 memory
+  sections: {
+    project_summary: SearchMemoryResult[];
+    recent_decisions: SearchMemoryResult[];
+    constraints: SearchMemoryResult[];
+    open_questions: SearchMemoryResult[];
+    relevant_notes: SearchMemoryResult[];
+  };
+  selectionRationale: ContextPackSelectionRationale[];
+  budget?: { maxOutputBytes: number; omittedCount: number };
+};
+```
+
+HTTP: `POST /v1/memory/context-pack`
+
+`packMarkdown` 은 task 라인이 맨 아래 (구분자 뒤) 에 렌더링됩니다 — 안정적인
+body가 LLM 프롬프트의 cache-eligible prefix에 위치하도록. 본문은
+trust-boundary notice로 시작합니다. 검색된 memory는 untrusted context로 취급하며,
+prompt-injection 유사 excerpt에는 warning label이 붙습니다. `selectionRationale` 은
+포함된 각 memory가 어떤 이유로 해당 section에 들어갔는지 설명하며, section cap으로
+제외된 검색 결과는 포함하지 않습니다.
+
+선택 입력 `maxOutputBytes`는 양의 안전 정수이며, `JSON.stringify(result)`의 UTF-8
+바이트 상한이다. Markdown·task·sections·선택 ID·선택 근거·`budget`을 포함한
+공유 도구 데이터 객체 전체에 적용한다. 모델 토큰 수, JSON HTTP envelope,
+MCP 전송·텍스트 fallback 크기는 포함하지 않는다. CLI는 `pack --max-output-bytes 8192`로
+같은 데이터 객체를 제한하며 출력은 기존처럼 Markdown만 반환한다.
+
+옵션을 생략하면 기존 응답과 선택이 유지된다. 지정하면 `budget.omittedCount`는
+기존 섹션별 개수 제한을 통과한 항목 중 바이트 예산 때문에 제외된 수를 나타낸다.
+선택된 `recent_decisions`·`constraints`와 신뢰 경계 안내·task를 보존한 뒤,
+원래 순위대로 선택적인 기록 전체가 들어가는지 확인한다. 필수 부분조차 들어가지 않으면
+HTTP 400으로 실패하고 context-pack 실행 기록을 만들지 않는다. 기존 실패 감사는 유지한다.
+본문을 잘라내거나 원본 기억을 변경하지 않는다. 바이트 감소를 모델 토큰 절감이나 답변 품질
+개선으로 해석하지 않는다.
+
+---
+
+### reindex_memory — Postgres chunks에서 활성 vector index 재구축
+
+```ts
+type ReindexMemoryInput = {
+  organizationId: string;        // 필수; 없으면 throw (데이터 격리 가드)
+  projectKey: string;            // 필수
+  userScopeId?: string;
+};
+
+type ReindexMemoryResult = {
+  ok: true;
+  projectKey: string;
+  scopes: string[];              // 예: ["project:my-project", "user:abc123"]
+  chunkCount: number;
+};
+```
+
+HTTP: `POST /v1/memory/reindex`
+MCP stdio: `reindex_memory`
+
+기존 chunk의 임베딩을 재계산해서 설정된 vector backend (`qdrant` 또는
+`pgvector`) 에 upsert. `EMBEDDING_PROVIDER` 또는 `OPENAI_EMBEDDING_MODEL`
+변경 후 사용.
+
+저장된 chunk가 있는 범위 내 레코드는 보관 여부와 관계없이 기존 vector를
+정리합니다. 활성 chunk만 다시 임베딩하고 `chunkCount`에 포함합니다.
+보관 레코드만 있는 범위는 정리 후 0을 반환합니다.
+
+---
+
+### list_memory — governance 목록 조회
+
+```ts
+type ListMemoryInput = {
+  organizationId?: string;
+  projectKey?: string;           // project scope 시 필수
+  scope?: "project" | "user";    // 기본 "project"
+  userScopeId?: string;          // user scope 시 필수
+  includeArchived?: boolean;
+  tag?: string;
+  limit?: number;                // 최대 5000
+};
+
+type MemoryRecord = SearchMemoryResult & {
+  tags: string[];
+};
+
+type ListMemoryResult = {
+  ok: true;
+  scopeType: "project" | "user";
+  scopeId: string;
+  memories: Array<MemoryRecord>;
+};
+```
+
+HTTP: `POST /v1/memory/list`
+MCP stdio: `list_memory`
+
+읽기 전용 governance 검토 도구입니다. Tag 필터는 `memory_tags` 를 사용하며,
+`includeArchived` 가 true일 때만 archived row를 포함합니다.
+
+---
+
+### inspect_memory_graph — scoped entity graph 조회
+
+```ts
+type EntityKind = "code_symbol" | "path" | "url" | "date" | "proper_noun";
+
+type InspectMemoryGraphInput = {
+  organizationId?: string;
+  projectKey?: string;           // project scope 시 필수
+  scope?: "project" | "user";    // 기본 "project"
+  userScopeId?: string;          // user scope 시 필수
+  kind?: EntityKind;
+  query?: string;                // normalized/display text 필터
+  includeArchived?: boolean;
+  limit?: number;                // 최대 5000
+  relationshipLimit?: number;    // 최대 5000
+};
+
+type MemoryGraphEntity = {
+  id: number;
+  kind: EntityKind;
+  normalized: string;
+  displayText: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  mentionCount: number;
+  memoryIds: number[];
+};
+
+type MemoryGraphEntityRef = {
+  id: number;
+  kind: EntityKind;
+  normalized: string;
+  displayText: string;
+};
+
+type MemoryGraphRelationship = {
+  id: number;
+  fromEntityId: number;
+  toEntityId: number;
+  fromEntity: MemoryGraphEntityRef;
+  toEntity: MemoryGraphEntityRef;
+  relationType: string;          // "co_mentions" 또는 "temporal_context"
+  evidenceMemoryRecordId: number;
+  validFrom: string | null;
+  validTo: string | null;
+  confidence: number;
+  createdAt: string;
+};
+
+type InspectMemoryGraphResult = {
+  ok: true;
+  scopeType: "project" | "user";
+  scopeId: string;
+  entities: MemoryGraphEntity[];
+  relationships: MemoryGraphRelationship[];
+};
+```
+
+HTTP: `POST /v1/memory/graph`
+MCP stdio: `inspect_memory_graph`
+
+쓰기 시점에 저장된 entity graph를 읽기 전용으로 조회합니다. Symbol, path, URL,
+date, named concept 중 어떤 항목이 entity-backed lexical rescue/boost 동작에
+영향을 주는지 감사할 때 사용합니다.
+
+---
+
+### update_memory — canonical 레코드 1개 수정
+
+```ts
+type UpdateMemoryInput = {
+  organizationId?: string;
+  memoryId: number;
+  kind?: "decision" | "summary" | "fact";
+  title?: string | null;
+  content?: string;
+  summary?: string | null;
+  importance?: number;
+  durability?: "ephemeral" | "durable" | "archived";
+  tags?: string[];
+};
+
+type UpdateMemoryResult = {
+  ok: true;
+  updated: boolean;
+  memory?: MemoryRecord;
+};
+```
+
+HTTP: `POST /v1/memory/update`
+MCP stdio: `update_memory`
+
+원본 Postgres 레코드를 수정하고, 전달된 태그를 교체하며 entity mention을
+갱신합니다. 운영 경로는 예약된 DB 연결에서 같은 레코드의 쓰기를 직렬화합니다.
+검색 필드 수정은 원본 변경과 pending ingest 작업을 함께 커밋한 뒤 청크와
+벡터를 갱신합니다. 색인 실패는 오류를 반환하지만 원본 변경과 재시도 기록은
+유지합니다.
+
+보관된 레코드는 임베딩 없이 조직과 레코드 ID로 벡터를 정리합니다.
+Durability를 `durable` 또는 `ephemeral`로 되돌리면 최신 본문을 색인합니다.
+Ingest sweeper도 같은 잠금 안에서 현재 상태를 다시 읽습니다. DB 연결 상실
+시의 한계는 [인덱스 복구](operations.ko.md#ingest-sweeper)를 참고하세요.
+
+---
+
+### delete_memory — 레코드 1개 governance archive
+
+```ts
+type DeleteMemoryInput = {
+  organizationId?: string;
+  memoryId: number;
+};
+
+type DeleteMemoryResult = {
+  ok: true;
+  archived: boolean;
+  qdrantPointsDeleted: number;
+  qdrantPointsPending: number;
+  indexCleanupPending?: boolean;
+};
+```
+
+HTTP: `POST /v1/memory/delete`
+MCP stdio: `delete_memory`
+
+원본 레코드의 durability를 `archived`로 바꾸고 정리 작업을 같은 트랜잭션에
+저장합니다. 이어서 조직과 레코드 ID로 모든 벡터를 정리하며, 실패하면 ingest
+sweeper가 재시도합니다. `indexCleanupPending: true`이면 아직 정리가 끝나지
+않았습니다. 포인트 매핑이 기록되지 않았다면 이때도 `qdrantPointsPending`은
+0일 수 있습니다. 두 포인트 카운터는 알려진 매핑 수이며 실제 Qdrant 삭제 건수
+측정값이 아닙니다. Compaction은 별도의 archive outbox를 사용합니다.
+
+---
+
+### tag_memory — governance tag 교체
+
+```ts
+type TagMemoryInput = {
+  organizationId?: string;
+  memoryId: number;
+  tags: string[];
+};
+
+type TagMemoryResult = {
+  ok: true;
+  updated: boolean;
+  memory?: MemoryRecord;
+};
+```
+
+HTTP: `POST /v1/memory/tag`
+MCP stdio: `tag_memory`
+
+레코드의 governance tag를 정규화해 교체한 뒤, tag-aware inspection이 최신 값을
+보도록 vector payload metadata를 갱신합니다.
+
+---
+
+### compact_memory — 중복 + decay (기본 dry-run)
+
+```ts
+type CompactMemoryInput = {
+  organizationId?: string;
+  projectKey?: string;
+  scope?: "project" | "user";
+  userScopeId?: string;
+  dryRun?: boolean;              // 기본 true; STRICT boolean 체크
+  limit?: number;
+  decayThreshold?: number;       // 기본 0.5
+  halfLifeDays?: number;         // 기본 30
+  semanticDedupThreshold?: number; // (0, 1]; 설정 시 exact-match 대체
+};
+
+type CompactMemoryResult = {
+  ok: true;
+  projectKey: string;
+  dryRun: boolean;
+  archivedIds: string[];         // dry-run 시 비어있음
+  mergedIds: string[];           // duplicateGroups 로 표현된 record id
+  duplicateGroups: Array<{ keepId: string; archiveIds: string[] }>;
+  decayCandidates: Array<{ id: string; score: number }>;
+  promotionCandidates: string[];
+  summary: string;
+  // dryRun=false 일 때:
+  compactionRunId?: string;
+  applyStats?: {
+    archived: number;
+    skipped: number;
+    qdrantPointsDeleted: number;
+    qdrantPointsPending: number;
+    durationMs: number;
+  };
+};
+```
+
+HTTP: `POST /v1/memory/compact`
+MCP stdio: `compact_memory`
+
+`dryRun=false` 시 apply 경로 실행:
+1. 계획은 dry-run과 동일한 로직으로 계산.
+2. 레코드별: PG CTE가 archive + 삭제 (TOCTOU 가드), 활성 vector backend 삭제.
+3. 실패는 레코드별 격리; 부분 실패는 `qdrantPointsPending` 카운터에
+   반영되어 sweeper가 처리.
+
+Idempotent: 같은 UUID로 replay 시 prior outcome 반환 (재실행하지 않음).
+기본 org당 1회/시간으로 rate-limit; 한도 초과 시 HTTP **429** + `Retry-After` 헤더 반환.
+
+---
+
+### unarchive_memory — `memory_archive` 에서 복원
+
+```ts
+type UnarchiveMemoryInput = {
+  organizationId?: string;
+  archiveIds: number[];
+};
+
+type UnarchiveMemoryResult = {
+  ok: true;
+  outcomes: Array<
+    | { archiveId: number; status: "restored"; restoredRecordId: number; sourceRecordId: number; chunkCount: number; indexPending?: boolean }
+    | { archiveId: number; status: "skipped"; reason: string }
+    | { archiveId: number; status: "failed"; error: string }
+  >;
+  restoredCount: number;
+  skippedCount: number;
+  failedCount: number;
+};
+```
+
+HTTP: `POST /v1/memory/unarchive`
+MCP stdio: `unarchive_memory`
+
+Skip 사유:
+- `archive_not_found_or_org_mismatch` — id 없음 또는 org 범위 밖
+- `already_unarchived` — `unarchived_at` 이미 set (idempotent)
+- `pre_p19.1_archive_missing_source_id` — source_id 캡처 이전 archive;
+  manual recovery 필요
+
+복원된 레코드는 새 BIGSERIAL id를 받으며, 응답의 `sourceRecordId` 가 원래
+id와 매핑됩니다. 복원 레코드·재시도 작업·아카이브의 복원 표시를 함께 커밋하며,
+동시 요청은 잠금 안에서 아카이브를 다시 읽어 한 번만 복원합니다. 이후 색인이
+실패하면 원본을 유지하고 `indexPending: true`를 반환합니다. 이때 완료된 색인
+수를 확정하지 못했으므로 `chunkCount: 0`이며, ingest sweeper가 재시도합니다.
+같은 아카이브에 대한 복원 재요청은 이미 복원된 항목으로 건너뜁니다.
+
+---
+
+### list_audit_log — 감사 로그 읽기
+
+```ts
+type ListAuditLogInput = {
+  organizationId?: string;
+  limit?: number;                // 기본 100
+};
+
+type ListAuditLogResult = {
+  ok: true;
+  organizationId: string;
+  entries: Array<{
+    id: string;
+    organizationId: string;
+    actor: string;
+    tool: string;
+    projectKey: string | null;
+    outcome: "ok" | "error";
+    errorMessage: string | null;
+    durationMs: number;
+    requestId: string | null;
+    createdAt: string;
+  }>;
+};
+```
+
+HTTP: `POST /v1/audit/list`
+
+읽기 전용. 토큰 바인딩으로 org-scope; 다른 org의 entry는 누출되지 않음.
+
+---
+
+### start_goal_run — persistent objective 시작
+
+```ts
+type StartGoalRunInput = {
+  organizationId?: string;
+  scope?: "project" | "user";    // 기본 "project"
+  projectKey?: string;           // project scope 시 필수
+  userScopeId?: string;          // memory user-scope tool과 같은 방식으로 resolve
+  goal: string;                  // secret-scrubbed
+  terminationCriteria?: string | null; // 있으면 secret-scrubbed
+};
+
+type GoalRun = {
+  id: number;
+  organizationId: string;
+  scopeType: "project" | "user";
+  scopeId: string;
+  projectKey: string | null;
+  goal: string;
+  terminationCriteria: string | null;
+  status: "active" | "completed" | "abandoned";
+  iterationCount: number;
+  createdAt: string;
+  updatedAt: string;
+  closedAt: string | null;
+  closeNote: string | null;
+};
+
+type StartGoalRunResult = {
+  ok: true;
+  goalRun: GoalRun;
+};
+```
+
+HTTP: `POST /v1/goal-run/start`
+MCP stdio: `start_goal_run`
+
+긴 작업 목표를 memory 안의 first-class run으로 만듭니다. run이 active인 동안
+`record_iteration.memoryIds` 로 연결된 memory는 compaction 대상에서 pin 됩니다.
+
+---
+
+### record_iteration — goal-run attempt 추가
+
+```ts
+type RecordIterationInput = {
+  organizationId?: string;
+  goalRunId: number;
+  attempt: string;               // secret-scrubbed
+  outcome: "success" | "failure" | "partial";
+  summary?: string | null;       // 있으면 secret-scrubbed
+  error?: string | null;         // 있으면 secret-scrubbed
+  memoryIds?: number[];          // 이 run에 pin할 org-scoped record
+};
+
+type GoalRunIteration = {
+  id: number;
+  goalRunId: number;
+  organizationId: string;
+  iterationIndex: number;
+  attempt: string;
+  outcome: "success" | "failure" | "partial";
+  summary: string | null;
+  error: string | null;
+  createdAt: string;
+};
+
+type RecordIterationResult = {
+  ok: true;
+  iteration: GoalRunIteration;
+};
+```
+
+HTTP: `POST /v1/goal-run/iteration`
+MCP stdio: `record_iteration`
+
+repository가 `iterationCount` 증가, ordered iteration insert, 같은 org의
+`memoryIds` 를 `memory_records.goal_run_id` 에 연결하는 작업을 transaction으로
+처리합니다. 닫힌 run 또는 다른 org의 run에는 새 iteration을 추가하지 않습니다.
+
+---
+
+### get_goal_run — run 1개와 iteration 조회
+
+```ts
+type GetGoalRunInput = {
+  organizationId?: string;
+  goalRunId: number;
+};
+
+type GoalRunWithIterations = GoalRun & {
+  iterations: GoalRunIteration[];
+};
+
+type GetGoalRunResult = {
+  ok: true;
+  goalRun: GoalRunWithIterations | null;
+};
+```
+
+HTTP: `POST /v1/goal-run/get`
+MCP stdio: `get_goal_run`
+
+run이 없거나 caller organization 밖이면 `null` 을 반환합니다.
+
+---
+
+### list_goal_runs — scoped run 목록
+
+```ts
+type ListGoalRunsInput = {
+  organizationId?: string;
+  scope?: "project" | "user";    // 기본 "project"
+  projectKey?: string;           // project scope 시 필수
+  userScopeId?: string;          // memory user-scope tool과 같은 방식으로 resolve
+  status?: "active" | "completed" | "abandoned";
+};
+
+type ListGoalRunsResult = {
+  ok: true;
+  goalRuns: GoalRun[];
+};
+```
+
+HTTP: `POST /v1/goal-run/list`
+MCP stdio: `list_goal_runs`
+
+세션 시작 시 project/user scope의 active 또는 최근 closed run을 찾는 데 사용합니다.
+
+---
+
+### complete_goal_run — run 완료 처리
+
+```ts
+type CompleteGoalRunInput = {
+  organizationId?: string;
+  goalRunId: number;
+  resolution?: string | null;    // closeNote로 저장; secret-scrubbed
+};
+
+type CompleteGoalRunResult = {
+  ok: true;
+  goalRun: GoalRun;
+};
+```
+
+HTTP: `POST /v1/goal-run/complete`
+MCP stdio: `complete_goal_run`
+
+active same-org run만 완료 처리할 수 있습니다. 닫힌 run에 연결된 memory는 이후
+compaction 후보가 될 수 있습니다.
+
+---
+
+### abandon_goal_run — run 포기 처리
+
+```ts
+type AbandonGoalRunInput = {
+  organizationId?: string;
+  goalRunId: number;
+  reason?: string | null;        // closeNote로 저장; secret-scrubbed
+};
+
+type AbandonGoalRunResult = {
+  ok: true;
+  goalRun: GoalRun;
+};
+```
+
+HTTP: `POST /v1/goal-run/abandon`
+MCP stdio: `abandon_goal_run`
+
+active same-org run만 abandoned 상태로 닫을 수 있습니다. 선택적 `reason` 은
+`goalRun.closeNote` 로 저장됩니다.
+
+---
+
+### build_goal_context — goal-focused continuation context 생성
+
+```ts
+type BuildGoalContextInput = {
+  organizationId?: string;
+  goalRunId: number;
+  limit?: number;                // 최대 200
+};
+
+type BuildGoalContextResult = {
+  ok: true;
+  found: boolean;
+  goalRunId: number;
+  packMarkdown: string;
+};
+```
+
+HTTP: `POST /v1/goal-run/context`
+MCP stdio: `build_goal_context`
+
+run이 있으면 goal, termination criteria, 최근 iteration, 마지막 error, scoped
+memory에서 만든 일반 context-pack section을 포함합니다. 없으면 `found: false` 와
+빈 `packMarkdown` 를 반환합니다.
+
+---
+
+### check_repeat_attempt — 실패한 attempt 반복 감지
+
+```ts
+type CheckRepeatAttemptInput = {
+  organizationId?: string;
+  goalRunId: number;
+  attempt: string;               // embedding 전 secret-scrubbed
+  threshold?: number;            // 기본 0.85, 범위 (0, 1]
+};
+
+type CheckRepeatAttemptResult = {
+  ok: true;
+  found: boolean;
+  repeat: boolean;
+  threshold: number;
+  matches: Array<{
+    iterationIndex: number;
+    attempt: string;
+    score: number;
+  }>;
+};
+```
+
+HTTP: `POST /v1/goal-run/check-repeat`
+MCP stdio: `check_repeat_attempt`
+
+candidate attempt를 embedding하고 같은 goal run의 이전 failed iteration과
+비교합니다. 같은 실패 전략을 반복하기 전에 호출해 agent loop를 줄입니다.
+
+---
+
+## Health와 metrics (HTTP 전용)
+
+### `GET /healthz` — liveness
+
+인증 없음. 프로세스가 살아 있으면 항상 200. 의존성 체크 없음.
+
+### `GET /readyz` — readiness
+
+인증 없음. 실제 의존성을 프로브하며 다음을 반환합니다:
+
+- **200** — 모든 프로브 통과 시 (각 상태 포함)
+- **503** — 의존성 하나라도 연결 불가 시 (load balancer drain 또는 Kubernetes
+  readiness 실패)
+
+내장 프로덕션 서버(`startOperatorServer`)는 다음 프로브를 자동으로 연결합니다:
+
+| 프로브 | 검사 내용 | 항상 활성? |
+|---|---|---|
+| `postgres` | `SELECT 1` | 예 |
+| `qdrant` | Qdrant 호스트 `GET /healthz` | `VECTOR_BACKEND=qdrant` 일 때만 |
+| `openai` | API 키로 `GET /v1/models` | `EMBEDDING_PROVIDER=openai` 일 때만 |
+
+OpenAI 프로브는 `transformers` 및 `local` 프로바이더에서는 생략됩니다 — 해당
+배포에는 API 키가 없어 readiness 실패를 일으켜서는 안 됩니다.
+`VECTOR_BACKEND=pgvector` 배포에서는 벡터가 Postgres에 있으므로 Qdrant 프로브도
+생략됩니다.
+
+Kubernetes readiness probe, Docker `HEALTHCHECK`, 외부 업타임 모니터에 사용하세요.
+`/healthz` 엔드포인트는 의존성 체크 없이 프로세스 생존만 확인하는 liveness
+체크로 유지됩니다.
+
+### `GET /metrics` — Prometheus text exposition
+
+인증 없음. Prometheus scrape용 `text/plain; version=0.0.4` 를 반환합니다.
+
+노출되는 HTTP metrics:
+
+- `akasha_http_requests_total{method,route,status}` — request counter.
+- `akasha_http_request_duration_seconds_count{method,route,status}` — request
+  duration sample count.
+- `akasha_http_request_duration_seconds_sum{method,route,status}` — 누적 request
+  duration.
+
+노출되는 background sweeper metrics (loop tick이 실제로 돈 뒤에만 생성):
+
+- `akasha_sweeper_ticks_total{worker,status}` — compaction/ingest sweeper tick
+  counter.
+- `akasha_sweeper_tick_duration_seconds_count{worker,status}` — sweeper tick
+  duration sample count.
+- `akasha_sweeper_tick_duration_seconds_sum{worker,status}` — 누적 sweeper tick
+  duration.
+- `akasha_sweeper_rows_total{worker,outcome}` — sweeper가 관찰한 row 수를 제한된
+  outcome별로 집계 (`scanned`, `cleaned`, `completed`, `retried`, `failed`).
+
+이 tick counter는 in-process 값입니다. 전용 `npm run start:worker` 프로세스에는
+현재 HTTP metrics listener가 없습니다. sweeper를 그 프로세스에서 실행한다면 tick
+활동은 worker process log에서 보고, HTTP `/metrics` 는 backlog gauge 확인에 사용하세요.
+Prometheus가 그 프로세스의 per-worker tick counter를 scrape해야 할 때만
+worker-local metrics endpoint 또는 sidecar를 추가하세요.
+
+노출되는 background queue backlog metrics:
+
+- `akasha_background_queue_collect_success` — scrape-time backlog 수집 성공 시
+  `1`, 실패 시 `0`.
+- `akasha_background_queue_rows{queue,state}` — `queue` 값 `ingest`,
+  `compaction` 과 `state` 값 `pending`, `due`, `failed` 별 현재 backlog count.
+
+Route label은 `/v1/memory/search`, `/mcp`, `/admin/memory`, `/healthz`,
+`/readyz`, `/metrics`, `unknown` 같은 static route 이름만 사용합니다. raw URL과
+query string은 노출하지 않습니다. label과 값에는 bearer token, organization ID,
+request body, search query, memory content를 넣지 않습니다.
+Sweeper label은 고정된 worker/status/outcome 이름만 사용하며 row id,
+organization id, error string을 넣지 않습니다.
+Background queue label도 고정된 queue/state 이름만 사용하며 row id,
+organization id, error string을 넣지 않습니다. Backlog 수집 실패 시에도
+`/metrics` 는 HTTP 200을 유지하고
+`akasha_background_queue_collect_success 0` 을 노출합니다.
+
+Readiness dependency metrics는 가장 최근 `/readyz` 결과에서만 생성됩니다:
+
+- `akasha_dependency_up{name="postgres"}` — 최신 check 통과 시 `1`, 실패 시
+  `0`.
+- `akasha_dependency_check_duration_seconds{name="postgres"}` — 최신 check
+  duration.
+
+아직 `/readyz` 가 실행되지 않았다면 dependency metrics는 생략됩니다. `/metrics` 는
+Postgres, Qdrant, OpenAI readiness probe를 호출하지 않지만, production 서버는
+background queue backlog gauge를 위해 read-only Postgres count query를
+실행합니다.

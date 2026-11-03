@@ -1,0 +1,120 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: loop-contract
+  title: REQ 계약과 프로젝트 파일 도구의 제한된 실행 경계
+  status: ready_for_routing
+  priority: P0
+  owner: Codex
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+
+source:
+  raw_user_prompt: |
+    Implement canonical REQ acceptance-criteria loading, deterministic source-state hashing,
+    and bounded project file tools with path, secret, and expected-SHA guards.
+  user_language: ko
+  repo: ariadne
+
+classification:
+  category: feature
+  confidence: high
+  reason: 부모가 고정한 함수 계약과 소유 파일 안에서 실행 경계만 구현한다.
+
+requirement:
+  user_intent: 실행기가 승인한 요구사항과 실제 소스 상태를 확인하고 모델의 파일 접근을 제한한다.
+  actor: 선택한 REQ를 실행하는 호스트
+  desired_outcome: 모호한 계약과 안전하지 않은 파일 접근은 거절하고 변경 전제는 해시로 확인한다.
+  confirmed_facts:
+    - lib/context-pack.mjs의 fieldBlock과 lib/scrub.mjs의 기존 검출기를 재사용한다.
+    - 계약 해시는 req_id, 모든 AC의 id, statement, verification 및 승인한 목표, 사실, 가정, 경계와 검증 정책 블록으로 계산한다.
+    - status, passes와 REQ evidence는 계약 해시를 바꾸지 않는다.
+  assumptions: []
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: canonical REQ의 모든 AC와 승인한 scope를 해시에 포함하고 가변 근거는 제외하며 중복, 누락, 모호한 형식과 ID 및 상태 오류를 거절한다.
+      verification: node --test tests/loop-contract.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 소스 해시는 Git의 추적 및 미추적 입력 경로, 종류, 모드, 내용을 포함하고 HEAD, 선택 REQ 및 런타임 handoff는 제외한다.
+      verification: node --test tests/loop-contract.test.mjs
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 파일 도구는 프로젝트 상대 경로만 허용하고 symlink, 제어 및 자격증명 경로를 차단하며 읽기 내용은 scrub한다.
+      verification: node --test tests/loop-files.test.mjs
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 1 MiB 이내의 텍스트 쓰기만 허용하고 시크릿과 expectedSha 불일치를 거절하며 임시 파일의 atomic rename, 모드 보존과 정리를 수행한다.
+      verification: node --test tests/loop-files.test.mjs
+      passes: true
+
+code_mapping:
+  code_areas:
+    contract:
+      paths: [modules/loop/contract.mjs, tests/loop-contract.test.mjs]
+      reason: REQ 계약과 소스 변경 전제
+    files:
+      paths: [modules/loop/files.mjs, tests/loop-files.test.mjs]
+      reason: 모델이 사용하는 파일 접근 경계
+  boundary_rules:
+    - 소유한 네 코드 및 테스트 파일과 이 REQ만 수정한다.
+    - 네트워크, provider, shell 모델 도구, push 및 외부 저장소 발행을 추가하지 않는다.
+    - 임의의 외부 작성자와 atomic CAS는 보장하지 않으며 호스트가 작업 공간의 단독 사용을 확보한다.
+
+verification:
+  commands:
+    - node --test tests/loop-contract.test.mjs tests/loop-files.test.mjs
+  verify_gate_required: true
+  verify_gate_reason: 집중 검증 후 부모가 통합 저장소 게이트를 실행한다.
+  escalate_after: 3
+  attempts:
+    - gate: focused
+      failure_kind: verification
+      blocker: 신규 테스트 실행 시 두 모듈이 없어 ERR_MODULE_NOT_FOUND로 종료 1을 확인했다.
+      evidence: 로컬 failure-first 로그의 두 import 실패
+      changed_input: 계약 및 파일 도구 모듈을 구현했다.
+    - gate: focused
+      failure_kind: verification
+      blocker: 첫 구현의 21개 테스트 중 symlink 목록 제외 계약 한 건이 실패했다.
+      evidence: 로컬 집중 검사 종료 1, 20 passed 및 1 failed
+      changed_input: 목록에서는 symlink를 건너뛰고 직접 읽기 및 쓰기 거절은 유지했다.
+  evidence:
+    - criterion_id: AC1
+      check: node --test tests/loop-contract.test.mjs tests/loop-files.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: 이 커밋의 계약 및 파일 도구 소스와 테스트, Node v24.22.2
+      artifact: null
+    - criterion_id: AC2
+      check: node --test tests/loop-contract.test.mjs tests/loop-files.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: 이 커밋의 계약 및 파일 도구 소스와 테스트, Node v24.22.2
+      artifact: null
+    - criterion_id: AC3
+      check: node --test tests/loop-contract.test.mjs tests/loop-files.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: 이 커밋의 계약 및 파일 도구 소스와 테스트, Node v24.22.2
+      artifact: null
+    - criterion_id: AC4
+      check: node --test tests/loop-contract.test.mjs tests/loop-files.test.mjs
+      result: passed
+      exit_code: 0
+      source_state: 이 커밋의 계약 및 파일 도구 소스와 테스트, Node v24.22.2
+      artifact: null
+
+audit:
+  must_not_implement:
+    - 일반 YAML parser와 새 dependency
+    - loop store, engine, CLI 및 adapter
+  completion_report_should_include:
+    - 커밋과 집중 테스트 종료 코드
+    - CAS와 외부 동시 쓰기의 제한 및 부모 통합 검증 상태

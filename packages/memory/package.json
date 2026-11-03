@@ -1,0 +1,109 @@
+{
+  "name": "akasha-mcp",
+  "version": "1.0.0",
+  "description": "A persistent-memory MCP server for AI coding agents. Postgres-backed with Qdrant or pgvector search.",
+  "license": "UNLICENSED",
+  "author": "YouSangSon",
+  "homepage": "https://github.com/YouSangSon/akasha#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YouSangSon/akasha.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YouSangSon/akasha/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "memory",
+    "agent-memory",
+    "vector-search",
+    "embeddings",
+    "rag",
+    "postgres",
+    "qdrant",
+    "pgvector",
+    "onnx",
+    "transformers",
+    "huggingface",
+    "claude",
+    "claude-code",
+    "codex",
+    "ai-agents",
+    "context",
+    "self-hosted",
+    "local-first"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist/",
+    "!dist/tests/",
+    "!dist/vitest.config.js",
+    "!dist/src/eval/",
+    "scripts/*.sh",
+    ".env.example",
+    "docs/",
+    "!docs/_internal/",
+    "!docs/skills/",
+    "!docs/superpowers/",
+    "README.md",
+    "README.ko.md",
+    "README.ja.md",
+    "README.zh-CN.md",
+    "CHANGELOG.md",
+    "CHANGELOG.ko.md",
+    "CODE_OF_CONDUCT.md",
+    "CODE_OF_CONDUCT.ko.md",
+    "CONTRIBUTING.md",
+    "CONTRIBUTING.ko.md",
+    "SECURITY.md",
+    "SECURITY.ko.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "audit:dependencies": "npm audit --audit-level=moderate",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "start:server": "node dist/src/app/server.js",
+    "start:worker": "node dist/src/app/worker.js",
+    "dev:server": "tsx src/app/server.ts",
+    "dev:worker": "tsx src/app/worker.ts",
+    "dev:mcp": "tsx src/mcp/server.ts",
+    "dev:cli": "tsx src/cli.ts",
+    "lifecycle:init": "node dist/src/cli.js init",
+    "db:migrate": "node dist/src/db/migrate.js",
+    "backup:create": "./scripts/create-backup.sh",
+    "backup:create:qdrant": "VECTOR_BACKEND=qdrant ./scripts/create-backup.sh",
+    "backup:create:pgvector": "VECTOR_BACKEND=pgvector ./scripts/create-backup.sh",
+    "backup:decrypt": "node dist/scripts/backup-encryption.js decrypt-file",
+    "backup:verify": "node dist/scripts/backup-verify.js",
+    "restore:smoke": "node dist/scripts/restore-smoke.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.1",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "@qdrant/js-client-rest": "~1.14.1",
+    "jose": "^6.2.3",
+    "openai": "^6.0.0",
+    "pg": "^8.0.0",
+    "pino": "^10.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.12"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
+  "private": true
+}

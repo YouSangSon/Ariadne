@@ -1,0 +1,349 @@
+> **Ariadne internal code package.** Install and run from the Ariadne root (`../../README.md`). The original standalone guide below documents internal protocols and storage; it is not a separate product or release.
+
+<div align="center">
+
+# 🛰️ Parallax
+
+**为编码智能体提供本地地图，了解改动可能影响什么。**
+
+一款影响力情报（impact intelligence）工具 —— 在 Claude Code、Codex、Cursor 等智能体改动代码之前，<br/>
+先在本地索引你的仓库，并以证据呈现某个被改文件可能波及的代码、测试、文档与契约。
+
+![status](https://img.shields.io/badge/status-MVP%20working-7c3aed)
+![node](https://img.shields.io/badge/node-%3E%3D24.0.0-339933)
+![storage](https://img.shields.io/badge/storage-SQLite%20%2B%20sqlite--vec-2563eb)
+![mcp](https://img.shields.io/badge/MCP-stdio-14b8a6)
+[![Source inspection only](https://img.shields.io/badge/License-Permission_required-lightgrey)](LICENSE)
+
+[한국어](README.ko.md) · [日本語](README.ja.md) · [English](README.md) · **中文**
+
+[🚀 快速开始](#-快速开始) · [✨ 主要功能](#-主要功能) · [🧱 核心概念](#-核心概念) · [🤖 MCP](#-mcp--agents) · [🔒 安全模型](#-安全模型) · [🗺️ Roadmap](#%EF%B8%8F-roadmap) · [📚 延伸阅读](#-延伸阅读)
+
+<img src="docs/assets/parallax-ui-demo.png" alt="Parallax Impact Workbench UI showing ranked impact route cards, a graph-first impact map, analysis trust signals, impact summary, verification action, affected paths, and evidence" width="100%">
+
+</div>
+
+---
+
+> **为什么需要它** —— AI 编码工具很快，但每次改动 `auth.ts` 中的一个函数时，它们都得靠猜：哪些测试、消费方、策略文档会随之变动。Parallax 把代码图谱和智能体记忆存储在仓库本地的 `.parallax/impact.db` 中，让智能体在改动*之前*就能以一个小巧的 context pack 确认“什么会受影响、为什么”。
+
+---
+
+**缓存验证：** 复用结果前会比较实际扫描输入、选定的 Git 历史和 Git clean 状态，不会省略正文读取。要明确设置 1 MB 上限，请使用 `parallax index --max-file-bytes 1000000`。[验证范围](docs/verification.zh.md)。
+
+## 🚀 快速开始
+
+### 环境要求
+
+| 项目 | 要求 | 备注 |
+| :--- | :--- | :--- |
+| **Node.js** | `>=24.0.0` | 使用内置的 `node:sqlite`，可能出现 experimental 警告 |
+| **npm** | 以 package-lock 为准 | 用 `npm ci` 搭建开发环境 |
+| **仓库权限** | 本地读写 | 创建 `.parallax/` 目录与 SQLite DB |
+| **外部服务** | 核心 impact 流程无需 | 基于模型/LLM 的记忆整理仅在显式调用时使用 |
+
+```bash
+# 1. 构建 Parallax
+git clone https://github.com/YouSangSon/Parallax.git
+cd Parallax
+npm ci
+npm run build
+
+# 2. 将当前 checkout 的 CLI 链接到 PATH
+npm link
+
+# 3. 在目标仓库中初始化并建立索引
+cd /path/to/target-repo
+parallax init
+parallax index
+```
+
+分析单个被改文件：
+
+```bash
+parallax analyze --changed src/auth/session.ts --depth 2
+```
+
+也可以直接分析一个 git diff 范围：
+
+```bash
+parallax analyze --base main --head HEAD
+```
+
+Markdown 报告保存在仓库本地路径：
+
+```text
+.parallax/reports/
+```
+
+需要仅输出机器可读 stdout 时使用 `--json`；JSON 输出不会持久化。
+
+用于 GitHub Code Scanning 时，写出 SARIF 并在 workflow 中上传：
+
+```yaml
+permissions:
+  contents: read
+  security-events: write
+steps:
+  - uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+  - uses: YouSangSon/Parallax@main
+    with:
+      base: ${{ github.event.pull_request.base.sha }}
+      head: ${{ github.event.pull_request.head.sha }}
+      sarif-output: parallax.sarif
+      sarif-category: parallax-pr
+      fail-on: none
+  - uses: github/codeql-action/upload-sarif@v3
+    with:
+      sarif_file: parallax.sarif
+      category: parallax-pr
+```
+
+该 action 会运行 `parallax init`、`parallax index` 和 `parallax pr triage`，写出 SARIF 文件，并把 triage 摘要追加到 GitHub step summary。SARIF upload 仍留在你的 workflow 中，从而让 `security-events: write` 权限保持显式。
+
+SARIF 生成步骤应保持不失败，这样存在 findings 时 upload step 仍会运行。如需在高置信 impact 时让 CI 失败，可将 action 的 `fail-on` 输入改为 `proven`，或增加单独的 `parallax analyze ... --fail-on proven` gate step。
+
+如果想在 commit 或 push 之前运行同样的 impact gate，可以安装本地 Git hook：
+
+```bash
+parallax install-hook --hook pre-commit --fail-on proven
+parallax install-hook --hook pre-push --fail-on proven
+parallax install-hook --hook all --dry-run
+```
+
+installer 只写入当前生效的 Git hooks 目录，尊重 `core.hooksPath`；没有 `--force` 时会跳过已有的非 Parallax hook。需要临时绕过时可用 `PARALLAX_SKIP_HOOK=1` 或 Git 的 `--no-verify`。
+
+用本地 UI 直接打开最新报告：
+
+```bash
+parallax ui
+parallax ui --report <report-id> --port 3717
+```
+
+UI 会把选中的影响路径、筛选词与策略预设保存在 URL 中。也可以在 toolbar 中将当前 workbench 导出为 JSON、affected-path CSV，或 PNG/SVG 影响图。
+
+运行 `parallax index` 后，可导入 SCIP indexer 生成的 `index.scip` 来补充 SCIP 精度层：
+
+```bash
+parallax scip import --file index.scip
+
+# 也可以导入官方 SCIP CLI 预先转换出的 JSON。
+scip print --json index.scip > index.scip.json
+parallax scip import --file index.scip.json
+
+# 将 Parallax 的最新完成 index 导出为 SCIP 兼容 JSON。
+parallax scip export --file index.scip.json
+```
+
+importer 会用 SCIP 的 definition/reference edge 增强最新完成的 Parallax index run。二进制 `index.scip` 导入会调用 `PATH` 中的官方 `scip` CLI；JSON 导入和 JSON 导出在运行时不需要 CLI。显式选择的 `--file` 可以是任意可信的本地文件。为了保留已有 indexed file metadata 并避免 live document-path race，document body 只来自 SCIP `Document.text` 或该 run 记录的 clean Git commit。最新 index 中已有的 textless document 仍会以 symbol-only evidence 导入；无法验证的 textless、unindexed document 会被跳过并给出警告。
+
+如果你想从 UI 继续走到 MCP 与 CI guardrail，可直接看 [`docs/getting-started.zh.md`](docs/getting-started.zh.md)。
+
+> 💡 当存在受影响文件时，`analyze` 会返回退出码 `1`。这是有意为之，便于 CI 或智能体护栏将“存在影响”作为信号。
+
+---
+
+## ✨ 主要功能
+
+### 🔎 影响分析（Impact analysis）
+
+| 功能 | 行为 |
+| :--- | :--- |
+| **本地索引** | 在 `.parallax/impact.db` 中存储文件、entity、relation、evidence、coverage |
+| **变更分析** | 通过有界的多跳图遍历分析 `--changed` 或 `--base/--head` 输入 |
+| **以证据为先的报告** | 以 JSON/Markdown 输出 `changed`、`affected`、`actions`、`evidence`、`adapterInsights`、`warnings` |
+| **相关测试推断** | 利用 import、文件名约定与 adapter 证据，推荐最可能受影响的测试 |
+| **Verification planning** | 将推荐 action 分组为 ranked repo-map command，并显示覆盖的 changed / affected / target path |
+| **图导出** | 将已保存的报告导出为 Mermaid、JSON 或 DOT |
+| **覆盖率告警** | 在报告中暴露 oversized 文件跳过、陈旧索引与 adapter 已知缺口 |
+
+### 🧭 适配器覆盖（Adapter coverage）
+
+| 领域 | 当前状态 |
+| :--- | :--- |
+| **TypeScript / JavaScript** | 正在扩展 parser 支撑的 import、declaration、class/interface 继承、调用点、typed/解构/具名对象 receiver、factory 返回、构造函数/字段调用 span |
+| **JVM / Spring Boot** | endpoint、declaration、config、test 证据 span v0 |
+| **Python / Go / Rust** | 以 declaration/test 关系为主的轻量适配器 |
+| **Markdown / 工作产物** | 将 policy、proposal、PRD、decision 文档归类为一等 artifact 并与代码关联 |
+| **Config / 基础设施** | 索引 system/config 候选：shell、YAML、JSON、TOML、Dockerfile、Makefile、Terraform、CODEOWNERS 等 |
+| **包清单与锁文件** | 为 `package.json`、`pom.xml`、`build.gradle(.kts)`、`go.mod`、`Cargo.toml`、`pyproject.toml` 构建 manifest 图，并索引 npm `package-lock.json`、`Cargo.lock`、`poetry.lock` 的传递依赖 |
+| **SCIP import/export** | `parallax scip import --file <index.scip or index.scip.json>` 将外部 indexer 的 SCIP definition/reference edge 增强到最新索引；`parallax scip export --file <index.scip.json>` 输出 SCIP 兼容 JSON |
+
+### 🌐 工作区与契约（Workspace & contracts）
+
+| 功能 | 说明 |
+| :--- | :--- |
+| **工作区目录** | 仅在 `.parallax/workspace.json` 中登记用户允许的本地仓库、显式 package 目录、已发现的 npm/pnpm workspace package，或 Nx project config。无 clone/网络 |
+| **跨仓库解析器** | 在已登记的仓库之间存储 provider endpoint ↔ consumer 文件链接 |
+| **契约 diff** | 将 OpenAPI、GraphQL、Protobuf、AsyncAPI、JSON Schema、Avro 的表层 diff 归类为 `breaking` / `non-breaking` / `unknown`，并检测 OpenAPI response optional property removal、response nullable addition、response format/enum change、request format addition/change、request enum-value removal、JSON Schema 根对象变更及 Avro 顶层 record 字段变更 |
+| **消费方影响** | 将 breaking endpoint/operation 删除、required 字段删除、类型/nullable/format/enum 变更、新增必填请求字段、request format addition/change、request enum-value removal 等与已知 consumer 关联 |
+| **事件拓扑提示** | 以紧凑载荷提供 AsyncAPI 生产者/消费者方向与 breaking 溯源 |
+
+```bash
+parallax workspace init --name platform --service api
+parallax workspace discover-packages --name platform --json
+parallax workspace add-repo ../web --name platform --service web
+parallax workspace resolve-contracts --name platform --json
+parallax workspace contract-diff --contract openapi.yaml --name platform --json
+```
+
+### 🧠 智能体记忆（Agent memory）
+
+在同一个 SQLite DB 上，将智能体的决策、观察与依据存储为内容寻址（content-addressable）的 fact。
+
+| 命令 | 作用 |
+| :--- | :--- |
+| `remember` | 存储关于某 entity 的决策/观察 fact；用 `--supersedes-fact-ids` 替换陈旧 fact |
+| `recall` | 按 entity、attribute、关键词或语义查询检索 fact |
+| `branch` / `merge` | 无需复制数据即可对多个 plan 进行 fork/merge |
+| `trace` | 沿 `fact_provenance` 边追溯某决策的推理链 |
+| `profile` | 一次性返回某 entity 的 static facts、dynamic facts 与 summary facts |
+| `reflect` | 用 LLM 概括陈旧 fact 并提升为 summary fact |
+
+```bash
+parallax remember --entity src/auth/session.ts \
+  --attribute decision --value "允许 JWT 60s 时钟偏移"
+parallax recall --entity src/auth/session.ts --json
+parallax profile --entity src/auth/session.ts
+```
+
+---
+
+## 🧱 核心概念
+
+| 概念 | 一句话说明 |
+| :--- | :--- |
+| **Impact graph** | 连接文件/符号/契约的有向图；通过有界遍历计算变更的波及 |
+| **Evidence** | 为每条关系附上其来源文件、行号与代码片段作为依据 |
+| **Confidence** | 以 proven / inferred / heuristic / unknown 标注证据可信度 |
+| **Context pack** | 将变更分析结果以便于智能体消费的小型 JSON 包交付 |
+| **Work artifact** | 将 policy、PRD、decision 等文档与代码关联的一等对象 |
+| **Adapter** | 按语言/格式划分的提取器，并报告自身的 confidence 与已知缺口 |
+
+---
+
+## 🤖 MCP & agents
+
+Parallax 提供一个 MCP stdio 服务器。
+
+```bash
+parallax mcp serve
+```
+
+| MCP 工具 | 作用 |
+| :--- | :--- |
+| `parallax_analyze_diff` | 接收被改文件，返回 impact 报告 |
+| `parallax_context_for_change` | 按 budget 返回某次变更的 context pack |
+| `parallax_search_context` | 按 keyword/path/symbol/relation/evidence 搜索最新 index |
+| `parallax_contract_diff` | 将 OpenAPI contract 与已索引的 workspace baseline 对比 |
+| `parallax_remember` / `parallax_recall` | 写入/读取智能体记忆 fact |
+| `parallax_profile` / `parallax_trace` | 查询 entity 画像与其推理链 |
+
+已注册的 tool 通过 MCP tool surface 暴露。图导出不是 tool 而是 MCP **resource**：读取 `parallax://reports/{reportId}/graph/{format}`（`mermaid`、`json` 或 `dot`）。
+
+> 在 Claude Code、Codex 等 MCP 客户端中将其登记为 stdio 服务器即可直接使用。
+
+---
+
+## 🔒 安全模型
+
+| 原则 | 内容 |
+| :--- | :--- |
+| **本地优先（Local-first）** | 核心 index/analyze 在仓库本地 `.parallax/` 存储数据。可选模型下载及配置的 reflection provider 可能使用网络 |
+| **显式工作区** | 跨仓库仅覆盖用户登记的本地仓库或 package 目录，无 clone/网络 |
+| **脱敏（Redaction）** | 类似密钥的字符串在存储前会被脱敏 |
+| **默认不改 source tree** | MCP 不会编辑 source file；analysis/search tool、context-pack 复用和 MCP resource read 可能在 `.parallax/impact.db` 中追加 context-pack 或 telemetry row，显式 memory 命令会写入 fact |
+| **可复现的核心** | 离线 fixture 验证静态影响结果；生成的 ID、时间戳及模型记忆不属于逐字节复现范围 |
+
+---
+
+## 🧪 开发
+
+```bash
+npm run build
+npm run check
+npm test
+npm run docs:lint
+```
+
+主要脚本：
+
+| 脚本 | 作用 |
+| :--- | :--- |
+| `npm run build` | 将 TypeScript 编译到 `dist/` |
+| `npm run check` | 仅类型检查，不产出文件 |
+| `npm test` | 通过 `tsx` 运行 Node test runner 套件 |
+| `npm run bench` | 基于多语言、Spring Boot、契约、co-change、trace、包清单 fixture 的确定性 bench |
+| `npm run docs:lint` | 检查 tracked/untracked Markdown 中的禁止内容、README 四语言与指南三语言对应、同语言链接及缺失的本地 `.md` target |
+| `npm run verify` | 在 source checkout 中运行完整 release gate |
+| `npm run test:mcp` | 验证 MCP impact/context/memory/telemetry/路径校验 |
+| `npm run test:security` | 验证路径包含约束与脱敏 |
+| `npm run test:ui` | 验证本地 UI 快照、服务器与 JSON 资源端点 |
+| `npm run test:dogfood` | 对 Parallax 自身建立索引并验证内部依赖图未坍缩（参见 [`docs/verification.zh.md`](docs/verification.zh.md)） |
+
+Source checkout 完整 release gate：
+
+```bash
+npm run verify
+```
+
+`npm run verify` 是 source checkout 中的 canonical pre-release command。它运行 lint、install smoke（唯一负责 build）、fast suite、dogfood、bench 和 high-level audit。
+
+---
+
+## 🗺️ Roadmap
+
+| 维度 | 下一目标 |
+| :--- | :--- |
+| **Accuracy** | 将 parser 支撑的 TS/JS span 扩展到更广的动态分发与高级类型关系 |
+| **JVM / Python / Go / Rust** | 把以 declaration 为主的适配器提升为 parser 支撑的调用/import 解析 |
+| **Workspace / Contract** | 稳定嵌套 schema diff；深化 generated-client/事件拓扑解析器 |
+| **Package / Build** | 将 npm/Cargo/Poetry 锁文件覆盖扩展到其他生态及 semver/range 影响 |
+| **Agent surface** | context pack 的 budget 调优与 hit/miss 度量工具 |
+| **UI Explorer** | 在单一界面更直接地探索 changed → affected → evidence → action 流程 |
+| **Measurement** | fixture bench 增量与召回质量回归检测 |
+
+详细 backlog 以 [`docs/roadmap.zh.md`](docs/roadmap.zh.md) 为准进行管理。
+
+---
+
+## ⚠️ 当前限制
+
+| 领域 | 状态 |
+| :--- | :--- |
+| **完整语义分析** | 并非对所有语言都做类型感知分析；需查看各 adapter 的 confidence 与已知缺口 |
+| **契约深度** | GraphQL/Protobuf/AsyncAPI 在 parser/LSP 级别的完整 generated-client 使用图，以及完整 Avro named-type/schema-registry 解析属于后续工作 |
+| **包解析** | 已索引 npm `package-lock.json`、`Cargo.lock`、`poetry.lock` 传递依赖；其他锁文件生态、semver 影响和基于执行的解析器仍为后续工作 |
+| **图数据库** | 不在默认产品范围内；如需可作为从 SQLite 投影的可选能力扩展 |
+| **外部写入** | Obsidian/GitHub/Jira 写同步尚未暴露在 MCP 接口上 |
+| **代码修改** | Parallax 不直接修改代码；它为智能体提供影响范围与证据 |
+
+---
+
+## 📚 延伸阅读
+
+| 文档 | 内容 |
+| :--- | :--- |
+| [`docs/vision.zh.md`](docs/vision.zh.md) | 项目愿景 |
+| [`docs/value-proposition.zh.md`](docs/value-proposition.zh.md) | 价值主张与差异化 |
+| [`docs/roadmap.zh.md`](docs/roadmap.zh.md) | 当前 backlog 与下一批切片 |
+| [`docs/invariants.zh.md`](docs/invariants.zh.md) | local-first、脱敏、权限模型等不变量 |
+| [`docs/glossary.zh.md`](docs/glossary.zh.md) | 术语表 |
+| [`docs/README.zh.md`](docs/README.zh.md) | 文档索引 |
+| [`docs/getting-started.zh.md`](docs/getting-started.zh.md) | 从 init 一直到 MCP 与 CI guardrail 的首次使用教程 |
+| [`docs/architecture.zh.md`](docs/architecture.zh.md) | Source-checkout runtime architecture 与扩展地图 |
+| [`docs/mcp.zh.md`](docs/mcp.zh.md) | MCP 服务器、tool 与 resource |
+| [`docs/cli-reference.zh.md`](docs/cli-reference.zh.md) | 每个 CLI 命令、标志与 exit code |
+| [`docs/report-schema.zh.md`](docs/report-schema.zh.md) | `analyze --json` 输出的已发布 JSON Schema |
+| [`docs/extending-adapters.zh.md`](docs/extending-adapters.zh.md) | 编写 semantic adapter |
+| [`docs/verification.zh.md`](docs/verification.zh.md) | 验证层、测试 script 与 dogfood guard |
+| [`docs/operations.zh.md`](docs/operations.zh.md) | Troubleshooting 与运维 runbook |
+| [`docs/release-checklist.zh.md`](docs/release-checklist.zh.md) | Source-checkout release、CI、audit 与 package smoke 检查清单 |
+
+---
+
+## License
+
+源代码公开供查阅。使用、复制、修改和再分发须事先获得著作权人的书面许可。适用法律、平台条款及先前许可证授予的权利，以及第三方许可证均不受影响。详见 [LICENSE](LICENSE)。

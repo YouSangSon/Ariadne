@@ -1,0 +1,21 @@
+{
+  "_readme": "opt-in 견본 — 프로젝트 .claude/settings.json에 직접 복사해 활성화한다. 자동 설치되지 않는다 (§4.7 opt-in 3중 명시). 훅은 조기경보다 — 최종 강제선은 verify+CI (D15)",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "node hooks/commit-message.mjs --root ." }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "node hooks/handoff-check.mjs --root ." }]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [{ "type": "command", "command": "node hooks/session-start.mjs --root ." }]
+      }
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { test } from 'node:test';
+
+import { runImpactBench } from '../bench/impact-bench.js';
+
+process.env.PARALLAX_EMBEDDING_MODEL = 'stub-sha256';
+
+test('ImpactBench runner writes deterministic report shape', async () => {
+  const workspaceRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-workspace-'));
+  const outputPath = path.join(workspaceRoot, '.parallax/bench/impact-bench-report.json');
+
+  try {
+    const report = await runImpactBench({ workspaceRoot, outputPath });
+    const savedReport = JSON.parse(await readFile(outputPath, 'utf8')) as unknown;
+    const secondReport = await runImpactBench({ workspaceRoot, outputPath });
+    const secondSavedReport = JSON.parse(await readFile(outputPath, 'utf8')) as unknown;
+    const serializedReport = JSON.stringify(report);
+
+    assert.deepEqual(savedReport, report);
+    assert.deepEqual(secondReport, report);
+    assert.deepEqual(secondSavedReport, report);
+    assert.equal(serializedReport.includes(workspaceRoot), false);
+    assert.equal(serializedReport.includes(tmpdir()), false);
+    assert.equal(serializedReport.includes('impact-bench-fixture-'), false);
+    assert.equal(serializedReport.includes('impact-bench-cross-repo-'), false);
+    assert.equal(serializedReport.includes('impact-bench-co-change-'), false);
+    assert.equal(serializedReport.includes('impact-bench-trace-promotion-'), false);
+    assert.equal(report.schemaVersion, 7);
+    assert.equal(report.fixtureId, 'phase6b-multilanguage-v0');
+    assert.equal(report.outputPath, '.parallax/bench/impact-bench-report.json');
+    assert.equal(report.summary.passed, true);
+    assert.equal(report.summary.expectedRelations, 78);
+    assert.equal(report.summary.expectedRelations, report.summary.matchedRelations);
+    assert.equal(report.summary.unexpectedRelations, 0);
+    assert.equal(report.scores.affectedFileRecall, 1);
+    assert.equal(report.scores.evidencePresence, 1);
+    assert.ok(report.scores.spanCompleteness >= 0.9);
+    assert.equal(report.scores.adapterAttribution, 1);
+    assert.equal(report.scores.contextPackReadiness, 1);
+    assert.ok(report.summary.score >= 0.9);
+    assert.equal(report.retrieval.fixtureId, 'search-context-retrieval-v0');
+    assert.deepEqual(
+      report.retrieval.queries.map((query) => query.id),
+      [...report.retrieval.queries.map((query) => query.id)].sort()
+    );
+    assert.equal(report.retrieval.summary.recallAt5, 1);
+    assert.equal(report.retrieval.summary.recallAt10, 1);
+    assert.equal(report.retrieval.summary.mrr, 1);
+    assert.equal(report.retrieval.summary.ndcgAt10, 1);
+    assert.ok(report.retrieval.summary.precisionAt5 > 0);
+    const semanticModels = report.retrieval.semanticModels;
+    assert.ok(semanticModels);
+    assert.equal(semanticModels.fixtureId, 'semantic-recall-model-regression-v0');
+    assert.equal(semanticModels.summary.passed, true);
+    assert.equal(semanticModels.summary.modelCount, 2);
+    assert.equal(semanticModels.summary.recallAt1, 1);
+    assert.equal(semanticModels.summary.isolation, 1);
+    assert.deepEqual(
+      semanticModels.models.map((model) => model.model),
+      ['bench-semantic-model-a', 'bench-semantic-model-b']
+    );
+    for (const model of semanticModels.models) {
+      assert.equal(model.recallAt1, 1);
+      assert.equal(model.isolated, true);
+      assert.equal(model.topFactId, model.expectedFactId);
+      assert.equal(model.returnedFactIds.includes(model.disallowedFactId), false);
+    }
+    assert.equal(report.crossRepoContracts.fixtureId, 'cross-repo-contract-impact-v0');
+    assert.equal(report.crossRepoContracts.summary.passed, true);
+    assert.equal(report.crossRepoContracts.summary.score, 1);
+    assert.equal(report.crossRepoContracts.summary.expectedImpacts, 1);
+    assert.equal(report.crossRepoContracts.summary.matchedImpacts, 1);
+    assert.equal(report.crossRepoContracts.summary.expectedGraphEdges, 1);
+    assert.equal(report.crossRepoContracts.summary.matchedGraphEdges, 1);
+    assert.deepEqual(report.crossRepoContracts.expectedConsumerPaths, ['web:src/client.ts']);
+    assert.deepEqual(report.crossRepoContracts.matchedConsumerPaths, ['web:src/client.ts']);
+    assert.deepEqual(report.crossRepoContracts.missingConsumerPaths, []);
+    assert.deepEqual(report.crossRepoContracts.expectedEvidenceKinds, ['BREAKS_COMPATIBILITY_WITH']);
+    assert.deepEqual(report.crossRepoContracts.matchedEvidenceKinds, ['BREAKS_COMPATIBILITY_WITH']);
+    assert.deepEqual(report.crossRepoContracts.graphEdges, { expected: 1, matched: 1 });
+    assert.equal(report.contractDiffQuality.fixtureId, 'contract-diff-quality-v0');
+    assert.equal(report.contractDiffQuality.summary.passed, true);
+    assert.equal(report.contractDiffQuality.summary.score, 1);
+    assert.equal(report.contractDiffQuality.summary.expectedCases, 11);
+    assert.equal(report.contractDiffQuality.summary.matchedCases, 11);
+    assert.equal(report.contractDiffQuality.summary.expectedChanges, 11);
+    assert.equal(report.contractDiffQuality.summary.matchedChanges, 11);
+    assert.deepEqual(report.contractDiffQuality.missingChanges, []);
+    assert.deepEqual(
+      report.contractDiffQuality.cases.map((item) => item.id),
+      [
+        'removed-response-required-property',
+        'json-schema-required-property-removal',
+        'avro-required-field-removal',
+        'removed-response-optional-property',
+        'added-request-required-property',
+        'removed-request-enum-value',
+        'added-request-format',
+        'changed-response-property-type',
+        'changed-response-property-format',
+        'added-response-property-nullable',
+        'removed-response-enum-value'
+      ]
+    );
+    assert.equal(report.coChangeQuality.fixtureId, 'co-change-quality-v0');
+    assert.equal(report.coChangeQuality.summary.passed, true);
+    assert.equal(report.coChangeQuality.summary.score, 1);
+    assert.equal(report.coChangeQuality.summary.expectedPartners, 1);
+    assert.equal(report.coChangeQuality.summary.matchedPartners, 1);
+    assert.equal(report.coChangeQuality.summary.expectedAffectedFiles, 1);
+    assert.equal(report.coChangeQuality.summary.matchedAffectedFiles, 1);
+    assert.deepEqual(report.coChangeQuality.expectedPartners, ['src/beta.ts']);
+    assert.deepEqual(report.coChangeQuality.matchedPartners, ['src/beta.ts']);
+    assert.deepEqual(report.coChangeQuality.missingPartners, []);
+    assert.deepEqual(report.coChangeQuality.expectedAffectedFiles, ['src/beta.ts']);
+    assert.deepEqual(report.coChangeQuality.matchedAffectedFiles, ['src/beta.ts']);
+    assert.deepEqual(report.coChangeQuality.missingAffectedFiles, []);
+    assert.equal(report.tracePromotionQuality.fixtureId, 'trace-promotion-quality-v0');
+    assert.equal(report.tracePromotionQuality.summary.passed, true);
+    assert.equal(report.tracePromotionQuality.summary.score, 1);
+    assert.equal(report.tracePromotionQuality.summary.expectedPromotions, 1);
+    assert.equal(report.tracePromotionQuality.summary.matchedPromotions, 1);
+    assert.equal(report.tracePromotionQuality.summary.expectedProvenAffectedFiles, 1);
+    assert.equal(report.tracePromotionQuality.summary.matchedProvenAffectedFiles, 1);
+    assert.equal(report.tracePromotionQuality.summary.unmatchedEdges, 0);
+    assert.deepEqual(report.tracePromotionQuality.expectedPromotedEdges, ['src/beta.ts->src/alpha.ts']);
+    assert.deepEqual(report.tracePromotionQuality.matchedPromotedEdges, ['src/beta.ts->src/alpha.ts']);
+    assert.deepEqual(report.tracePromotionQuality.missingPromotedEdges, []);
+    assert.deepEqual(report.tracePromotionQuality.expectedProvenAffectedFiles, ['src/beta.ts']);
+    assert.deepEqual(report.tracePromotionQuality.matchedProvenAffectedFiles, ['src/beta.ts']);
+    assert.deepEqual(report.tracePromotionQuality.missingProvenAffectedFiles, []);
+    assert.deepEqual(report.tracePromotionQuality.unmatchedEdges, []);
+    assert.ok(report.retrieval.budgets.brief.maxReturnedBytes <= 5_000);
+    assert.equal(report.retrieval.budgets.brief.budgetExceededCount, 0);
+    assert.ok(
+      report.retrieval.streamAblations.all.recallAt5
+        > report.retrieval.streamAblations.withoutEvidenceFts.recallAt5
+    );
+    assert.ok(
+      report.retrieval.streamAblations.all.recallAt5
+        > report.retrieval.streamAblations.withoutFactsFts.recallAt5
+    );
+    for (const query of report.retrieval.queries) {
+      assert.equal(query.returnedBytes <= 5_000, true);
+      for (const uri of query.resourceUris) {
+        assert.match(uri, /^parallax:\/\//);
+      }
+    }
+    assert.deepEqual(report.missingRelations, []);
+    assert.deepEqual(report.unexpectedRelations, []);
+    for (const requiredLabel of [
+      'TS type-only import reaches session',
+      'TS namespace import reaches session',
+      'TS namespace consumer calls session validator',
+      'TSX dynamic import reaches session',
+      'TSX static import reaches session',
+      'TSX static widget calls session validator',
+      'TS re-export barrel reaches session',
+      'TS NodeNext .js re-export barrel reaches session',
+      'TS path alias import reaches session',
+      'TS path alias consumer calls session validator',
+      'TS object literal method consumer calls guard validator',
+      'TS private route calls session validator',
+      'JS require consumer calls session validator',
+      'TS test calls session validator',
+      'Spring @ConfigurationProperties declares properties class',
+      'Spring application.properties references configuration properties',
+      'Spring Data repository imports entity',
+      'Spring @DataJpaTest verifies repository',
+      'Spring Feign @FeignClient declares client',
+      'Spring WebClient import declares client dependency',
+      'Spring RestTemplate import declares client dependency',
+      'OpenAPI contract declares users endpoint',
+      'OpenAPI contract references controller implementation',
+      'Spring controller implements OpenAPI contract',
+      'Maven property dependency depends on Spring Web package',
+      'Gradle version catalog alias depends on Spring Web package',
+      'Go workspace includes service module',
+      'Go workspace includes shared module',
+      'Go replace dependency depends on local shared module',
+      'Cargo workspace includes API crate',
+      'Cargo workspace includes core crate',
+      'Cargo path dependency depends on local core crate',
+      'Cargo workspace dependency depends on serde package',
+      'Python project dependency depends on FastAPI package',
+      'Python optional dependency depends on pytest package',
+      'Python dependency group depends on mypy package',
+      'Poetry dependency group depends on mkdocs package',
+      'npm lockfile transitive dependency depends on tslib package',
+      'Python class declares Helper',
+      'Python function declares helper',
+      'Go function declares Add',
+      'Rust function declares run',
+      'Go test verifies calc',
+      'Rust test verifies lib'
+    ]) {
+      assert.ok(
+        report.expectedRelationLabels.includes(requiredLabel),
+        `missing fixture coverage label: ${requiredLabel}`
+      );
+    }
+    assert.deepEqual(report.analyzeDiff.changedFiles, ['src/ts/session.ts']);
+    assert.ok(report.analyzeDiff.expectedAffectedFiles.includes('src/ts/private.ts'));
+    assert.ok(report.analyzeDiff.expectedAffectedFiles.includes('tests/session.test.ts'));
+    assert.deepEqual(
+      [...report.analyzeDiff.matchedAffectedFiles],
+      [...report.analyzeDiff.expectedAffectedFiles]
+    );
+  } finally {
+    await rm(workspaceRoot, { recursive: true, force: true });
+  }
+});

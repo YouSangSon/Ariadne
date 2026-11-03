@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "suite_id": "local-instrument-controls-v1",
+  "tasks": [
+    {
+      "id": "unread-count",
+      "prompt": "읽지 않은 메시지 개수를 반환하도록 unreadCount를 고쳐 주세요. read가 true인 메시지는 제외하고 빈 배열에는 0을 반환해야 합니다. 공개 함수 이름과 입력 형식은 유지해 주세요.",
+      "files": {
+        "README.md": "# Message helpers\n메시지 처리 유틸리티입니다.\n",
+        "src/messages.mjs": "export function unreadCount(messages) {\n  return messages.length\n}\n"
+      },
+      "reference": {
+        "src/messages.mjs": "export function unreadCount(messages) {\n  return messages.filter((message) => !message.read).length\n}\n"
+      },
+      "entry": "src/messages.mjs",
+      "export": "unreadCount",
+      "checks": [
+        {
+          "id": "empty",
+          "args": [
+            []
+          ],
+          "expected": 0
+        },
+        {
+          "id": "mixed",
+          "args": [
+            [
+              {
+                "read": true
+              },
+              {
+                "read": false
+              }
+            ]
+          ],
+          "expected": 1
+        },
+        {
+          "id": "all-read",
+          "args": [
+            [
+              {
+                "read": true
+              },
+              {
+                "read": true
+              }
+            ]
+          ],
+          "expected": 0
+        }
+      ],
+      "baseline_failures": [
+        "mixed",
+        "all-read"
+      ]
+    },
+    {
+      "id": "zero-limit",
+      "prompt": "resolveLimit에서 명시적으로 지정한 0이 기본값으로 바뀌는 문제를 고쳐 주세요. null과 생략한 값에는 기본값을 사용하고 다른 숫자는 그대로 반환해야 합니다. 기존 인자와 기본값은 유지해 주세요.",
+      "files": {
+        "README.md": "# Request limits\n요청별 제한 설정을 처리합니다.\n",
+        "src/limits.mjs": "export function resolveLimit(value, fallback = 10) {\n  return value || fallback\n}\n"
+      },
+      "reference": {
+        "src/limits.mjs": "export function resolveLimit(value, fallback = 10) {\n  return value ?? fallback\n}\n"
+      },
+      "entry": "src/limits.mjs",
+      "export": "resolveLimit",
+      "checks": [
+        {
+          "id": "missing",
+          "args": [],
+          "expected": 10
+        },
+        {
+          "id": "null",
+          "args": [
+            null,
+            4
+          ],
+          "expected": 4
+        },
+        {
+          "id": "zero",
+          "args": [
+            0,
+            4
+          ],
+          "expected": 0
+        },
+        {
+          "id": "number",
+          "args": [
+            2,
+            4
+          ],
+          "expected": 2
+        }
+      ],
+      "baseline_failures": [
+        "zero"
+      ]
+    },
+    {
+      "id": "label-catalog",
+      "prompt": "findIds가 영문 라벨의 대소문자와 양끝 공백을 무시하도록 고쳐 주세요. 일치하는 항목의 ID는 원본 배열 순서대로 반환하고 일치하지 않으면 빈 배열을 반환해야 합니다. 기존 normalizeLabel 함수와 findIds의 공개 이름은 유지해 주세요.",
+      "files": {
+        "README.md": "# Label catalog\n라벨로 항목을 찾는 작은 카탈로그입니다.\n",
+        "src/text.mjs": "export function normalizeLabel(label) {\n  return label.trim()\n}\n",
+        "src/catalog.mjs": "import { normalizeLabel } from './text.mjs'\n\nexport function findIds(items, label) {\n  const target = normalizeLabel(label)\n  return items.filter((item) => normalizeLabel(item.label) === target).map((item) => item.id)\n}\n"
+      },
+      "reference": {
+        "src/text.mjs": "export function normalizeLabel(label) {\n  return label.trim().toLowerCase()\n}\n"
+      },
+      "entry": "src/catalog.mjs",
+      "export": "findIds",
+      "checks": [
+        {
+          "id": "none",
+          "args": [
+            [
+              {
+                "id": "a",
+                "label": "other"
+              }
+            ],
+            "ready"
+          ],
+          "expected": []
+        },
+        {
+          "id": "padding",
+          "args": [
+            [
+              {
+                "id": "a",
+                "label": " ready "
+              }
+            ],
+            "ready"
+          ],
+          "expected": [
+            "a"
+          ]
+        },
+        {
+          "id": "case",
+          "args": [
+            [
+              {
+                "id": "a",
+                "label": "READY"
+              }
+            ],
+            "ready"
+          ],
+          "expected": [
+            "a"
+          ]
+        },
+        {
+          "id": "order",
+          "args": [
+            [
+              {
+                "id": "z",
+                "label": "Ready"
+              },
+              {
+                "id": "x",
+                "label": "other"
+              },
+              {
+                "id": "a",
+                "label": "READY"
+              }
+            ],
+            " ready "
+          ],
+          "expected": [
+            "z",
+            "a"
+          ]
+        }
+      ],
+      "baseline_failures": [
+        "case",
+        "order"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: product-direction
+  title: 사용자 목표와 토큰 낭비 감소를 중심으로 제품 방향 정립
+  status: ready_for_routing
+requirement:
+  user_intent: Ariadne를 코딩에 한정하지 않는 통합 에이전트 하네스로 정의한다.
+  desired_outcome: 사용자가 원하는 일을 완수하도록 문맥·도구·실행기를 연결하고 불필요한 모델 사용을 줄이는 방향을 문서에 일관되게 반영한다.
+  confirmed_facts:
+    - 이전 프로젝트의 기능 통합과 설치 이력은 README의 제품 소개가 아니다.
+    - 품질과 완료 조건을 보존하며 낭비를 줄이는 것이 목표이며 절감 효과는 아직 실측하지 않았다.
+    - 기존 통합과 검증된 기능은 유지하며 미완료 실행기를 구현 완료로 안내하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: README와 루트 메타데이터는 통합 에이전트 하네스의 사용자 가치로 제품을 소개한다.
+    - id: AC2
+      statement: 제품 방향의 정본이 작업 범위·책임·구현 우선순위·효율 측정 기준을 정의한다.
+    - id: AC3
+      statement: 기존 설계·정책은 제품 방향을 참조하고 현재 구현과 목표를 구분한다.
+verification:
+  commands:
+    - node scripts/verify.mjs
+    - 문서 링크·제품 설명·기존 사용자 변경 보존 및 diff 확인
+audit:
+  must_not_implement:
+    - 자동 실행·외부 도구·실제 공급자 연결의 기능 구현 또는 활성화
+    - 미측정 토큰 절감률이나 범용 작업 자동 완주 보장
+    - 기존 사용자 작업 덮어쓰기

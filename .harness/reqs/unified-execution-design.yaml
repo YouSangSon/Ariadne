@@ -1,0 +1,144 @@
+schema_version: 1
+kind: harness.requirement
+
+metadata:
+  req_id: unified-execution-design
+  title: 단일·복수 실행기와 모델 API를 연결하는 Ariadne 작업 연속성 설계
+  status: verified
+  priority: P0
+  owner: ""
+  intake_started: 2026-11-02
+  promoted_at: 2026-11-02
+  source_doc: docs/unified-execution-design.md
+
+source:
+  raw_user_prompt: 설계해줘
+  user_language: ko
+  repo: ariadne
+
+classification:
+  category: docs
+  confidence: high
+  reason: 사용자와 확인한 실행 풀·명시적 전환·공통 작업 기억을 구현 전에 검토 가능한 설계로 만든다
+
+requirement:
+  user_intent: 사용자가 가진 실행 도구 하나 또는 여러 개를 Ariadne에서 사용하고 작업 맥락을 이어 간다
+  actor: Codex·Claude Code·Gemini·Grok 중 사용 가능한 도구를 선택하는 개인 개발자
+  desired_outcome: 공통 작업 계약과 실행기별 책임·권한·복구·검증 범위를 정의한 설계 문서
+  confirmed_facts:
+    - 작업 기억과 재개가 첫 완료 기준이다
+    - 허용 범위 안의 조사·수정·테스트·로컬 커밋을 자동 진행하는 방향을 선택했다
+    - push·merge·배포·외부 발송 등은 별도 명시 승인을 유지한다
+    - 현재 Mac에서 먼저 검증하고 오프라인 뒤 복구하는 방향을 선택했다
+    - 기존 코딩 에이전트 연결과 모델 API 직접 호출을 공통 작업 관리 체계에 연결한다
+    - 특정 도구 조합은 필수가 아니다. 하나의 실행 도구만 있거나 여러 도구가 함께 있어도 사용한다
+    - 등록하고 허용한 도구 안에서 자동 배정·역할 분담·명시적 지정과 전환을 지원하는 설계를 원한다
+    - 이번 요청은 설계이며 실행 코드·설치·유료 호출을 승인한 것은 아니다
+    - Atlas 두 저장소의 조사 결과와 사용자가 제공한 Super-agent 원문을 근거로 사용한다
+    - 추가 Reddit 스크린샷의 작은 하네스·실패 근거·실행 가능한 가드·규칙과 문서 정리 원리도 반영한다
+    - 후속 일곱 정책 결정과 이전 기본값의 확정·시나리오 연결은 unified-execution-policy REQ가 소유한다. 기존 AC와 과거 검증 근거는 유지한다
+  assumptions:
+    - id: A1
+      statement: 기존 도구 화면을 우선하고 공통 제어용 CLI만 추가하며 웹 대시보드는 첫 범위에서 제외한다
+      confidence: medium
+      status: confirmed
+      reason: 후속 grilling Q1에서 기존 화면과 공통 CLI 추천안을 사용자가 수락했다. UEP-01 참조
+    - id: A2
+      statement: 새 외부 이벤트는 관측하고 기존에 맡긴 작업의 후속 처리부터 자동 실행한다
+      confidence: medium
+      status: confirmed
+      reason: 후속 grilling Q2에서 맡긴 작업의 후속 처리부터 자동화하는 추천안을 사용자가 수락했다. UEP-02 참조
+  rejected_assumptions:
+    - Codex와 Claude Code가 모두 있어야 Ariadne를 사용할 수 있다
+    - 공급자 한 곳을 고정한 뒤 수동 전환만 지원한다
+    - 로그인돼 있으면 모든 도구 실행과 API 과금이 자동으로 승인된다
+    - 공급자 사이에 원본 세션·숨은 상태·credential을 그대로 복사한다
+
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 사용자 확정 결정·제안 기본값·현 구현·미구현 기능을 구분한다
+      verification: 설계 문서 1·2·14절과 현재 소스·README 대조
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 실행기 하나·여러 개·native agent·model API의 공통 계약과 차이를 정의한다
+      verification: 설계 문서 3~6절 및 단독 실행·자동 배정·명시적 전환 시나리오 검토
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 작업·실행·승인·효과·근거의 상태와 동시성·중단·복구·완료 조건을 정의한다
+      verification: 설계 문서 7~11절과 실패 시나리오·독립 설계 리뷰
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: Atlas·Super-agent의 채택·보류 근거와 최소 구현 단계·검증 기준을 추적할 수 있다
+      verification: 설계 문서 12~16절·고정 source SHA·실제 원본 경로·공식 문서 링크와 스크린샷 반영 검토
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 설계만 커밋하고 기존 32개 변경과 실행 설정을 보존하며 저장소 게이트 결과를 남긴다
+      verification: baseline hash 비교·staged diff·고립된 staged snapshot에서 node scripts/verify.mjs
+      passes: true
+
+code_mapping:
+  code_areas:
+    design:
+      paths: [docs/unified-execution-design.md, README.md, .harness/reqs/unified-execution-design.yaml]
+      reason: 설계 원본·진입 링크·설계 완료 근거만 변경한다
+  boundary_rules:
+    - 회사 두 저장소는 읽기 전용이며 소스·credential·서비스 계약을 복사하지 않는다
+    - 기존 미커밋 Model Portfolio·adapt·DESIGN.md 변경을 stage·수정하지 않는다
+    - 문서에 계획한 파일·명령·어댑터를 현재 사용 가능하다고 표시하지 않는다
+    - 이번 설계는 기존 P7 보류 결정을 설계 범위에서 재검토하며 자동 실행을 활성화하지 않는다
+
+verification:
+  commands:
+    - git diff --cached --check
+    - node scripts/verify.mjs
+  verify_gate_required: true
+  verify_gate_reason: 최종 staged source를 기준으로 기존 전체 저장소 게이트를 한 번 확인한다
+  escalate_after: 3
+  evidence:
+    - criterion_id: AC1
+      check: "Parse canonical REQ; compare confirmed decisions, proposed defaults and existing source"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+      artifact: ".harness/handoff/super-agent-design-20261102/design-checks.json"
+    - criterion_id: AC2
+      check: "Independent architecture review of single and pooled native/API execution contracts"
+      result: passed
+      exit_code: null
+      source_state: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+      artifact: ".harness/handoff/super-agent-design-20261102/independent-review.json"
+    - criterion_id: AC3
+      check: "Independent review of control authority, lifecycle, revocation, unknown recovery and completion"
+      result: passed
+      exit_code: null
+      source_state: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+      artifact: ".harness/handoff/super-agent-design-20261102/independent-review.json"
+    - criterion_id: AC4
+      check: "Verify 13 pinned Atlas source paths, 16 design sections, 12 local links and screenshot maintenance scope"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+      artifact: ".harness/handoff/super-agent-design-20261102/design-checks.json"
+    - criterion_id: AC5
+      check: "node scripts/verify.mjs in isolated staged snapshot; compare all baseline and user image hashes"
+      result: passed
+      exit_code: 0
+      source_state: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+      artifact: ".harness/handoff/super-agent-design-20261102/final-validation.json"
+  attempts: []
+
+audit:
+  must_not_implement:
+    - 실행 코드·DB·daemon·provider adapter·모델 설정·credential·글로벌 설치 변경
+    - 유료 모델 호출·외부 게시·push·merge·배포
+    - 기존 다른 작업의 파일 stage·커밋 또는 되돌리기
+  completion_report_should_include:
+    - 단일·복수 실행기의 사용 방식과 첫 구현 범위
+    - 독립 설계 리뷰·문서·저장소 게이트의 검증 수준
+    - 미검증 실제 실행·인증·과금·성능과 제안 기본값
