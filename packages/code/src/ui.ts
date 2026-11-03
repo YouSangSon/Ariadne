@@ -1152,12 +1152,11 @@ async function renderSourceViewerHtml(repoRootInput: string, url: URL): Promise<
   const requestedLine = parseSourceLine(url.searchParams.get('line'));
   const absolutePath = resolveInsideRoot(repoRoot, requestedPath);
   const approved = lstatSync(absolutePath, { bigint: true });
-  if (!approved.isFile()) throw new Error('source path must be a file');
   const handle = await open(absolutePath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
   let content: string;
   try {
     const info = await handle.stat({ bigint: true });
-    if (!info.isFile()) throw new Error('source path must be a file');
+    if (!approved.isFile() || !info.isFile()) throw new Error('source path must be a file');
     if (info.dev !== approved.dev || info.ino !== approved.ino) throw new Error('source changed while opening');
     if (info.size > 1_000_000n) throw new Error('source file is too large for the UI preview');
     if (normalizeRepoRoot(repoRoot) !== repoRoot) throw new Error('source root changed while opening');
