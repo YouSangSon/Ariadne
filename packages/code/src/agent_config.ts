@@ -112,7 +112,7 @@ function mcpConfigTarget(configPath: string): string {
 function readMcpConfigSnapshot(configPath: string) {
   let fd: number;
   try {
-    fd = openSync(configPath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    fd = openSync(configPath, constants.O_RDONLY | constants.O_NOFOLLOW | (constants.O_NONBLOCK ?? 0));
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
     throw error;

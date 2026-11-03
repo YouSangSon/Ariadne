@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -7,6 +8,21 @@ import { test } from 'node:test';
 
 import { installParallaxMcp } from '../src/agent_config.js';
 import { initProject } from '../src/init.js';
+
+test('MCP installer rejects a named pipe without blocking', { skip: process.platform === 'win32' }, (t) => {
+  const dir = fs.mkdtempSync(path.join(tmpdir(), 'config-pipe-'));
+  t.after(() => fs.rmSync(dir, { recursive: true }));
+  const configPath = path.join(dir, 'client.json');
+  assert.equal(spawnSync('mkfifo', [configPath]).status, 0);
+  const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
+    import { installParallaxMcp } from './src/agent_config.ts';
+    installParallaxMcp(${JSON.stringify(configPath)});
+  `], { encoding: 'utf8', timeout: 5000 });
+  assert.equal(result.error, undefined, result.error?.message);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /existing MCP config is not a regular file/);
+  assert.deepEqual(fs.readdirSync(dir), ['client.json']);
+});
 
 test('initProject preserves a config created immediately before its write', async (t) => {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(tmpdir(), 'config-init-')));

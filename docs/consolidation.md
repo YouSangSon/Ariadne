@@ -80,7 +80,9 @@ authorization remain intact. Installation never edits global agent credentials.
 Committed imports start at memory `0bcf16f79d1917bd75cf370660a2ce6a9e444b35`
 and code `582d400b4a65b28a3512e643d2c99d314fb24e5a`. The code branch also contained an intentionally failing, unmerged FTS row-reuse
 requirement. That prototype is preserved privately; the active import uses the
-last merged main baseline with identical runtime source. License notices remain
+last merged main baseline with identical runtime source. The later security fixes cover parser termination and
+file/configuration races found by the integrated checks. Storage schemas remain
+unchanged. License notices remain
 with both source trees. Original Git ancestors are not joined to Ariadne's public
 history. Verified private archives preserve all refs, working files, ignored data
 and unfinished changes, including the extra memory evaluation worktree.
@@ -127,3 +129,24 @@ unqualified work. Source consolidation does not complete or activate them.
 A macOS fixture correction uses the existing canonical-root helper for direct
 SQLite repo lookups, matching production indexing (`/var` may resolve to
 `/private/var`). This changes test paths, not the persisted identity contract.
+
+## File and configuration concurrency
+
+Source previews open the approved file without following a replaced leaf symlink,
+compare its descriptor identity, and bound reads to one megabyte. Replaced
+ancestors and file growth are rejected in the tested interleavings. This portable
+Node implementation is not a filesystem sandbox against a malicious process
+changing ancestor directories during every validation step. Keep the local UI
+on a trusted workspace; stronger namespace isolation requires OS support.
+
+Project initialization uses exclusive config creation. MCP installers serialize
+on the canonical target, preserve ordinary symlinks and permission bits, and
+reject detected edits before an atomic replacement. A dangling symlink fails
+closed. Other writers must follow the same lock protocol for exclusion; a writer
+that ignores it can race the final check. Atomic replacement changes the inode
+and does not preserve hardlink aliases or platform ACL metadata.
+
+The root secret scan records exact historical fingerprints only for reviewed
+synthetic tests and example credentials. Import commits are retained when merging
+so those fingerprints remain valid. New findings and new commits remain subject
+to the scanner.

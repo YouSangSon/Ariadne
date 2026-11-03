@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { constants, existsSync, lstatSync, readFileSync } from 'node:fs';
+import { open, stat } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
@@ -1151,11 +1151,33 @@ async function renderSourceViewerHtml(repoRootInput: string, url: URL): Promise<
   const requestedPath = url.searchParams.get('path') ?? '';
   const requestedLine = parseSourceLine(url.searchParams.get('line'));
   const absolutePath = resolveInsideRoot(repoRoot, requestedPath);
-  const info = await stat(absolutePath);
-  if (!info.isFile()) throw new Error('source path must be a file');
-  if (info.size > 1_000_000) throw new Error('source file is too large for the UI preview');
-
-  const content = await readFile(absolutePath, 'utf8');
+  const approved = lstatSync(absolutePath, { bigint: true });
+  if (!approved.isFile()) throw new Error('source path must be a file');
+  const handle = await open(absolutePath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  let content: string;
+  try {
+    const info = await handle.stat({ bigint: true });
+    if (!info.isFile()) throw new Error('source path must be a file');
+    if (info.dev !== approved.dev || info.ino !== approved.ino) throw new Error('source changed while opening');
+    if (info.size > 1_000_000n) throw new Error('source file is too large for the UI preview');
+    if (normalizeRepoRoot(repoRoot) !== repoRoot) throw new Error('source root changed while opening');
+    const current = await stat(resolveInsideRoot(repoRoot, requestedPath), { bigint: true });
+    if (current.dev !== info.dev || current.ino !== info.ino) throw new Error('source changed while opening');
+    const buffer = Buffer.alloc(Number(info.size));
+    let offset = 0;
+    while (offset < buffer.length) {
+      const { bytesRead } = await handle.read(buffer, offset, buffer.length - offset, offset);
+      if (bytesRead === 0) break;
+      offset += bytesRead;
+    }
+    const after = await handle.stat({ bigint: true });
+    if (offset !== buffer.length || after.size !== info.size || after.mtimeNs !== info.mtimeNs || after.ctimeNs !== info.ctimeNs) {
+      throw new Error('source changed while reading');
+    }
+    content = buffer.toString('utf8');
+  } finally {
+    await handle.close();
+  }
   const lines = content.split(/\r?\n/);
   const targetLine = Math.min(requestedLine, Math.max(1, lines.length));
   const startLine = Math.max(1, targetLine - 12);
