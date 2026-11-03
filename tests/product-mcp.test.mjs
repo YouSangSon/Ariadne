@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const cli = join(root, 'bin/ariadne.mjs')
+const cli = join(root, 'bin/Ariadne.mjs')
 test('one installation serves actual code MCP and scoped persistent memory through generated wrappers', {
   skip: !process.env.ARIADNE_SMOKE_DATABASE_URL,
 }, async () => {

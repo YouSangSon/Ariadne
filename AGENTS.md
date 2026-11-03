@@ -7,7 +7,7 @@ One product and checkout; `packages/memory` and
 
 - Read `README.md` and `docs/consolidation.md` before cross-package changes.
 - Install/build: `npm run setup`. Full gate: `npm run verify`.
-- Root CLI: `node bin/ariadne.mjs --help`; runtime commands retain the caller cwd.
+- Root CLI: `node bin/Ariadne.mjs --help`; runtime commands retain the caller cwd.
 - Core-only gate: `node scripts/verify.mjs`. It does not replace package gates.
 - Memory schema, org authorization, HTTP/MCP tools and database guarantees belong
   to `packages/memory`; see its architecture/configuration docs before edits.

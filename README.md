@@ -8,7 +8,7 @@
 
 An integrated agent harness for goals, context, tools, and verified outcomes.
 
-[![Verify](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml/badge.svg)](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml)
+[![Verify](https://github.com/YouSangSon/Ariadne/actions/workflows/verify.yml/badge.svg)](https://github.com/YouSangSon/Ariadne/actions/workflows/verify.yml)
 ![Node.js 24.22+](https://img.shields.io/badge/Node.js-24.22%2B-43853d?logo=nodedotjs&logoColor=white)
 
 [제품 방향](docs/product-direction.md) · [현재 기능](#현재-사용할-수-있는-것) · [시작하기](#시작하기) · [실행 정책](docs/execution-policy.md)
@@ -58,27 +58,27 @@ Ariadne는 **사용자의 목표를 실행과 검증으로 잇는 통합 에이�
 전체 제품은 **Node.js 24.22.2 이상**에서 설치·실행합니다. 파일 기반 코어는 외부 DB 없이 사용할 수 있고, 영속 메모리 서비스는 PostgreSQL과 선택한 벡터 저장소가 필요합니다.
 
 ```sh
-git clone https://github.com/YouSangSon/ariadne.git
-cd ariadne
+git clone https://github.com/YouSangSon/Ariadne.git
+cd Ariadne
 npm run setup
 npm run verify
-node bin/ariadne.mjs --help
+node bin/Ariadne.mjs --help
 ```
 
 현재 제공하는 코드 분석과 문맥 명령은 작업할 저장소에서 실행합니다.
 
 ```sh
-node /path/to/ariadne/bin/ariadne.mjs code init
-node /path/to/ariadne/bin/ariadne.mjs code index
-node /path/to/ariadne/bin/ariadne.mjs code analyze --changed src/example.ts --fail-on none
-node /path/to/ariadne/bin/ariadne.mjs context --root . --req my-task
+node /path/to/Ariadne/bin/Ariadne.mjs code init
+node /path/to/Ariadne/bin/Ariadne.mjs code index
+node /path/to/Ariadne/bin/Ariadne.mjs code analyze --changed src/example.ts --fail-on none
+node /path/to/Ariadne/bin/Ariadne.mjs context --root . --req my-task
 ```
 
 메모리는 `packages/memory/.env.example`을 루트 `.env`로 복사하고 DB·벡터 설정을 확인한 뒤 사용합니다. 실제 값은 Git에서 제외합니다. 기본 transformer 모델은 로컬에서 실행하며 첫 실행에 가중치를 내려받을 수 있습니다. API 키나 유료 공급자는 자동 설정하지 않습니다.
 
 ```sh
-node --env-file=.env bin/ariadne.mjs memory serve
-node --env-file=.env bin/ariadne.mjs memory mcp
+node --env-file=.env bin/Ariadne.mjs memory serve
+node --env-file=.env bin/Ariadne.mjs memory mcp
 ```
 
 클라이언트 연결과 저장소 설정은 [설정·운영 안내](docs/consolidation.md#runtime-directories-and-agent-clients)를 따릅니다.
@@ -136,12 +136,12 @@ API 프로토콜 검사를 모델 품질·구독 절감률·실서비스 성능�
 | `.agents/`, `.claude/` | 도구별 생성 미러 |
 | `lib/`, `scripts/`, `tests/` | 결정론 검사와 회귀 근거 |
 | `packages/memory/`, `packages/code/` | 내부 구현·고정된 의존성·기존 계약과 테스트 |
-| `bin/ariadne.mjs` | 단일 설치·실행 진입점 |
+| `bin/Ariadne.mjs` | 단일 설치·실행 진입점 |
 | `modules/llm-wiki/` | 위키 승격과 관계 인덱스 |
 | `modules/loop/` | 계약·파일 도구·전송·수동 인수인계 기반 요소 |
 | `evaluation/` | 모델 호출 없는 평가 장치의 제어군 |
 
-프로젝트 이름과 저장소 경로는 **Ariadne / `ariadne`**입니다.
+프로젝트 이름과 저장소 경로는 **Ariadne / `Ariadne`**입니다.
 기존 설치 데이터 형식 `.harness/`, `~/.harness`, `harness-*` 식별자는 유지합니다.
 
 </details>

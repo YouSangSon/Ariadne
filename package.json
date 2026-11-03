@@ -5,9 +5,9 @@
   "type": "module",
   "description": "An integrated agent harness for user goals, context, tools and verified outcomes.",
   "engines": { "node": ">=24.22.2" },
-  "bin": { "ariadne": "bin/ariadne.mjs" },
+  "bin": { "Ariadne": "bin/Ariadne.mjs" },
   "scripts": {
-    "setup": "node bin/ariadne.mjs setup",
+    "setup": "node bin/Ariadne.mjs setup",
     "build": "node scripts/product.mjs build",
     "test": "node scripts/product.mjs test",
     "verify": "node scripts/product.mjs verify"
