@@ -27,7 +27,7 @@ import type {
 } from './types.js';
 
 export const MULTI_LANG_REGEX_ADAPTER_ID = 'multi-language-regex-mvp';
-export const MULTI_LANG_REGEX_ADAPTER_VERSION = '41';
+export const MULTI_LANG_REGEX_ADAPTER_VERSION = '42';
 export const TS_JS_SEMANTIC_ADAPTER_ID = 'typescript-javascript-semantic-v0';
 export const JVM_SPRING_SEMANTIC_ADAPTER_ID = 'jvm-spring-semantic-v0';
 export const PYTHON_SEMANTIC_ADAPTER_ID = 'python-semantic-v0';
@@ -1302,24 +1302,19 @@ function* extractSpringEndpoints(
 
 function extractSpringClasses(content: string): SpringClass[] {
   const classes: SpringClass[] = [];
-  const classPattern =
-    /^([ \t]*(?:@[A-Za-z_][\w.]*[ \t]*(?:\([^)]*\))?[ \t]*(?:\r?\n[ \t]*|[ \t]+))*)(?:(?:public|private|protected|internal|abstract|final|open|data|sealed|static)\s+)*(class|interface|enum|record|object)\s+([A-Za-z_]\w*)\b([^{;\n]*)/gm;
-  const matches = [...content.matchAll(classPattern)];
-  for (let index = 0; index < matches.length; index++) {
-    const match = matches[index]!;
-    const annotationBlock = match[1] ?? '';
-    const declaration = match[0]!;
-    const startIndex = match.index ?? 0;
-    const openBrace = content.indexOf('{', startIndex + declaration.length);
-    const bodyOffset = openBrace >= 0 ? openBrace + 1 : startIndex + declaration.length;
+  const lastOpenBrace = content.lastIndexOf('{');
+  for (const match of jvmClassDeclarations(content)) {
+    const { startIndex, endIndex, annotations } = match;
+    const declaration = content.slice(startIndex, endIndex);
+    const openBrace = endIndex <= lastOpenBrace ? content.indexOf('{', endIndex) : -1;
+    const bodyOffset = openBrace >= 0 ? openBrace + 1 : endIndex;
     const bodyEnd = openBrace >= 0 ? matchingBraceEnd(content, openBrace) : content.length;
-    const annotations = parseSpringAnnotations(annotationBlock, startIndex);
     const annotationStart = annotations.at(0)?.index;
-    const evidenceStart = annotationStart ?? firstNonWhitespaceIndex(content, startIndex);
-    const evidenceEnd = lineEndIndex(content, openBrace >= 0 ? openBrace + 1 : startIndex + declaration.length);
+    const evidenceStart = annotationStart ?? startIndex;
+    const evidenceEnd = lineEndIndex(content, openBrace >= 0 ? openBrace + 1 : endIndex);
     classes.push({
-      name: match[3]!,
-      kind: match[2]!,
+      name: match.name,
+      kind: match.kind,
       annotations,
       declaration,
       body: content.slice(bodyOffset, bodyEnd),
@@ -1400,20 +1395,96 @@ function matchingBraceEnd(content: string, openBrace: number): number {
   return content.length;
 }
 
-function parseSpringAnnotations(annotationBlock: string, offset: number): SpringAnnotation[] {
+function skipWhitespace(content: string, index: number): number {
+  while (index < content.length && /\s/.test(content[index]!)) index++;
+  return index;
+}
+
+function jvmAnnotationPrefix(content: string, startIndex: number, lastClosingParen: number): {
+  startIndex: number;
+  endIndex: number;
+  annotations: SpringAnnotation[];
+} {
+  const annotationPattern = /@([A-Za-z_][\w.]*)/y;
   const annotations: SpringAnnotation[] = [];
-  const annotationPattern = /@([A-Za-z_][\w.]*)(\s*\([^)]*\))?/g;
-  let match: RegExpExecArray | null;
-  while ((match = annotationPattern.exec(annotationBlock))) {
-    const text = match[0]!;
+  let index = skipWhitespace(content, startIndex);
+  startIndex = index;
+  while (content[index] === '@') {
+    annotationPattern.lastIndex = index;
+    const match = annotationPattern.exec(content);
+    if (!match) break;
+    let endIndex = annotationPattern.lastIndex;
+    const argsStart = skipWhitespace(content, endIndex);
+    let args = '';
+    if (content[argsStart] === '(') {
+      // No later closing delimiter means this malformed prefix cannot produce a declaration.
+      if (argsStart > lastClosingParen) return { startIndex, endIndex: content.length, annotations: [] };
+      endIndex = content.indexOf(')', argsStart + 1) + 1;
+      args = content.slice(argsStart, endIndex);
+    }
     annotations.push({
       name: simpleAnnotationName(match[1]!),
-      args: match[2]?.trim() ?? '',
-      index: offset + match.index,
-      text: text.trim()
+      args,
+      index,
+      text: content.slice(index, endIndex).trim()
     });
+    index = skipWhitespace(content, endIndex);
   }
-  return annotations;
+  return { startIndex, endIndex: index, annotations };
+}
+
+function* jvmClassDeclarations(content: string): Iterable<{
+  startIndex: number;
+  endIndex: number;
+  annotations: SpringAnnotation[];
+  kind: string;
+  name: string;
+}> {
+  const modifierPattern = /(?:public|private|protected|internal|abstract|final|open|data|sealed|static)\b/y;
+  const classPattern = /(class|interface|enum|record|object)\s+([A-Za-z_]\w*)\b[^{;\n]*/y;
+  const lastClosingParen = content.lastIndexOf(')');
+  let cursor = 0;
+  while (cursor < content.length) {
+    const prefix = jvmAnnotationPrefix(content, cursor, lastClosingParen);
+    let index = prefix.endIndex;
+    while (true) {
+      modifierPattern.lastIndex = index;
+      if (!modifierPattern.exec(content) || !/\s/.test(content[modifierPattern.lastIndex] ?? '')) break;
+      index = skipWhitespace(content, modifierPattern.lastIndex);
+    }
+    classPattern.lastIndex = index;
+    const match = classPattern.exec(content);
+    const endIndex = match ? classPattern.lastIndex : index;
+    if (match) yield { ...prefix, endIndex, kind: match[1]!, name: match[2]! };
+    // A failed annotation/modifier block must not be retried at each following line.
+    cursor = match ? lineEndIndex(content, endIndex) + 1 : nextDeclarationCandidate(content, prefix.startIndex, endIndex);
+  }
+}
+
+function jvmMethodSignature(content: string, startIndex: number): {
+  endIndex: number;
+  methodName?: string;
+  nameIndex?: number;
+} {
+  let endIndex = startIndex;
+  if (!/[A-Za-z_]/.test(content[startIndex] ?? '')) return { endIndex };
+  while (endIndex < content.length && /[\w$<>,.?[\]\s]/.test(content[endIndex]!)) endIndex++;
+  if (content[endIndex] !== '(') return { endIndex };
+  let nameEnd = endIndex;
+  while (nameEnd > startIndex && /\s/.test(content[nameEnd - 1]!)) nameEnd--;
+  let nameIndex = nameEnd;
+  while (nameIndex > startIndex && /\w/.test(content[nameIndex - 1]!)) nameIndex--;
+  if (
+    nameIndex === nameEnd || !/[A-Za-z_]/.test(content[nameIndex]!) ||
+    (nameIndex > startIndex && !/\s/.test(content[nameIndex - 1]!))
+  ) return { endIndex: endIndex + 1 };
+  return { endIndex: endIndex + 1, methodName: content.slice(nameIndex, nameEnd), nameIndex };
+}
+
+function nextDeclarationCandidate(content: string, startIndex: number, endIndex: number): number {
+  const lineStart = content.lastIndexOf('\n', endIndex - 1) + 1;
+  if (lineStart > startIndex && /^[ \t]*$/.test(content.slice(lineStart, endIndex))) return endIndex;
+  return lineEndIndex(content, endIndex) + 1;
 }
 
 function simpleAnnotationName(name: string): string {
@@ -1457,57 +1528,32 @@ function extractSpringMethodMappings(
     evidence: EvidenceSpan;
   }> = [];
   const mappingPattern =
-    /@([A-Za-z_][\w.]*Mapping)\s*(\([^)]*\))?/g;
+    /@([A-Za-z_][\w.]*Mapping)\b/g;
+  const lastClosingParen = springClass.body.lastIndexOf(')');
   let match: RegExpExecArray | null;
   while ((match = mappingPattern.exec(springClass.body))) {
     const annotationName = simpleAnnotationName(match[1]!);
     if (!springMappingMethods.has(annotationName)) continue;
 
-    const afterAnnotation = springClass.body.slice(match.index + match[0]!.length);
-    const signature = methodSignatureAfterSpringAnnotation(afterAnnotation);
-    if (!signature) continue;
+    const prefix = jvmAnnotationPrefix(springClass.body, match.index, lastClosingParen);
+    const signature = jvmMethodSignature(springClass.body, prefix.endIndex);
+    mappingPattern.lastIndex = Math.max(mappingPattern.lastIndex, signature.endIndex);
+    if (signature.methodName === undefined) continue;
 
-    const startIndex = springClass.bodyOffset + match.index;
-    const endIndex = springClass.bodyOffset + match.index + match[0]!.length + signature.endOffset;
-    const httpMethod =
-      springMappingMethods.get(annotationName) ?? httpMethodFromRequestMapping(match[2] ?? '');
-    mappings.push({
-      methodName: signature.methodName,
-      paths: routePathsFromAnnotationArgs(match[2] ?? ''),
-      evidence: evidenceSpanFromRange(content, startIndex, endIndex),
-      ...(httpMethod ? { httpMethod } : {})
-    });
+    for (const annotation of prefix.annotations) {
+      if (!springMappingMethods.has(annotation.name)) continue;
+      const startIndex = springClass.bodyOffset + annotation.index;
+      const endIndex = springClass.bodyOffset + lineEndIndex(springClass.body, signature.nameIndex!);
+      const httpMethod = springMappingMethods.get(annotation.name) ?? httpMethodFromRequestMapping(annotation.args);
+      mappings.push({
+        methodName: signature.methodName,
+        paths: routePathsFromAnnotationArgs(annotation.args),
+        evidence: evidenceSpanFromRange(content, startIndex, endIndex),
+        ...(httpMethod ? { httpMethod } : {})
+      });
+    }
   }
   return mappings;
-}
-
-function methodNameAfterSpringAnnotation(afterAnnotation: string): string | undefined {
-  return methodSignatureAfterSpringAnnotation(afterAnnotation)?.methodName;
-}
-
-function methodSignatureAfterSpringAnnotation(
-  afterAnnotation: string
-): { methodName: string; endOffset: number } | undefined {
-  const kotlin = afterAnnotation.match(
-    /^\s*(?:@[A-Za-z_][\w.]*\s*(?:\([^)]*\))?\s*)*(?:(?:public|private|protected|internal|open|override|suspend)\s+)*fun\s+([A-Za-z_]\w*)\s*\(/
-  );
-  if (kotlin) return methodSignatureMatch(afterAnnotation, kotlin);
-  const java = afterAnnotation.match(
-    /^\s*(?:@[A-Za-z_][\w.]*\s*(?:\([^)]*\))?\s*)*(?:(?:public|private|protected|static|final|abstract|synchronized)\s+)*(?:[A-Za-z_][\w$<>,.?[\]\s]*\s+)?([A-Za-z_]\w*)\s*\(/
-  );
-  return java ? methodSignatureMatch(afterAnnotation, java) : undefined;
-}
-
-function methodSignatureMatch(
-  source: string,
-  match: RegExpMatchArray
-): { methodName: string; endOffset: number } {
-  const methodName = match[1]!;
-  const nameOffset = match[0]!.lastIndexOf(methodName);
-  return {
-    methodName,
-    endOffset: lineEndIndex(source, nameOffset)
-  };
 }
 
 function httpMethodFromRequestMapping(args: string): string | undefined {
@@ -1557,21 +1603,25 @@ function extractSpringBeanMethods(
   file: ScannedFile
 ): Array<{ name: string; evidence: EvidenceSpan }> {
   const beans: Array<{ name: string; evidence: EvidenceSpan }> = [];
-  const beanPattern = /@(?:[A-Za-z_][\w.]*\.)?Bean\s*(?:\([^)]*\))?/g;
+  const beanPattern = /@(?:[A-Za-z_][\w.]*\.)?Bean\b/g;
+  const lastClosingParen = file.content.lastIndexOf(')');
   let match: RegExpExecArray | null;
   while ((match = beanPattern.exec(file.content))) {
-    const signature = methodSignatureAfterSpringAnnotation(
-      file.content.slice(match.index + match[0]!.length)
-    );
-    if (!signature) continue;
-    beans.push({
-      name: signature.methodName,
-      evidence: evidenceSpanFromRange(
-        file.content,
-        match.index,
-        match.index + match[0]!.length + signature.endOffset
-      )
-    });
+    const prefix = jvmAnnotationPrefix(file.content, match.index, lastClosingParen);
+    const signature = jvmMethodSignature(file.content, prefix.endIndex);
+    beanPattern.lastIndex = Math.max(beanPattern.lastIndex, signature.endIndex);
+    if (signature.methodName === undefined) continue;
+    for (const annotation of prefix.annotations) {
+      if (annotation.name !== 'Bean') continue;
+      beans.push({
+        name: signature.methodName,
+        evidence: evidenceSpanFromRange(
+          file.content,
+          annotation.index,
+          lineEndIndex(file.content, signature.nameIndex!)
+        )
+      });
+    }
   }
   return beans;
 }
@@ -5560,19 +5610,20 @@ function testDeclarationEvidence(content: string, language: string): EvidenceSpa
 }
 
 function firstJvmTestDeclarationEvidence(content: string): EvidenceSpan | undefined {
-  const classPattern =
-    /^\s*(?:(?:@[A-Za-z_][\w.]*\s*(?:\([^)]*\))?)\s*)*(?:(?:public|private|protected|internal|abstract|final|open|data|sealed|static)\s+)*(?:class|interface|enum|record|object)\s+[A-Za-z_]\w*\b[^{\n]*/gm;
-  const methodPattern =
-    /^\s*(?:(?:@[A-Za-z_][\w.]*\s*(?:\([^)]*\))?)\s*)*(?:(?:public|private|protected|internal|static|final|open|override|suspend)\s+)*(?:fun\s+[A-Za-z_]\w*\s*\(|(?:[A-Za-z_][\w$<>,.?[\]\s]*\s+)?[A-Za-z_]\w*\s*\()/gm;
-  const classMatch = classPattern.exec(content);
-  const match = classMatch ?? methodPattern.exec(content);
-  if (!match) return undefined;
-  const startIndex = firstNonWhitespaceIndex(content, match.index);
-  return evidenceSpanFromRange(
-    content,
-    startIndex,
-    lineEndIndex(content, match.index + match[0]!.length)
-  );
+  for (const match of jvmClassDeclarations(content)) {
+    return evidenceSpanFromRange(content, match.startIndex, lineEndIndex(content, match.endIndex));
+  }
+  const lastClosingParen = content.lastIndexOf(')');
+  let cursor = 0;
+  while (cursor < content.length) {
+    const prefix = jvmAnnotationPrefix(content, cursor, lastClosingParen);
+    const signature = jvmMethodSignature(content, prefix.endIndex);
+    if (signature.methodName !== undefined) {
+      return evidenceSpanFromRange(content, prefix.startIndex, lineEndIndex(content, signature.endIndex));
+    }
+    cursor = nextDeclarationCandidate(content, prefix.startIndex, signature.endIndex);
+  }
+  return undefined;
 }
 
 function firstPythonTestDeclarationEvidence(content: string): EvidenceSpan | undefined {
@@ -5597,23 +5648,72 @@ function firstGoTestDeclarationEvidence(content: string): EvidenceSpan | undefin
 }
 
 function firstRustTestDeclarationEvidence(content: string): EvidenceSpan | undefined {
-  const attributePattern =
-    /^\s*#\s*\[\s*test\s*\]\s*(?:\r?\n\s*#\s*\[[^\n]*\]\s*)*\r?\n\s*(?:(?:pub(?:\([^)]*\))?|async)\s+)*fn\s+[A-Za-z_]\w*\s*\(/gm;
-  const attributeMatch = attributePattern.exec(content);
-  if (attributeMatch) {
-    return evidenceSpanFromRange(
-      content,
-      firstNonWhitespaceIndex(content, attributeMatch.index),
-      lineEndIndex(content, attributeMatch.index + attributeMatch[0]!.length)
-    );
+  const testAttributePattern = /#\s*\[\s*test\s*\]/y;
+  const attributePattern = /#\s*\[[^\n]*\]/y;
+  const lastClosingParen = content.lastIndexOf(')');
+  let fallback: EvidenceSpan | undefined;
+  let cursor = 0;
+  while (cursor < content.length) {
+    let index = skipWhitespace(content, cursor);
+    const blockStart = index;
+    let testIndex: number | undefined;
+    let attributeLineBreak = false;
+    while (content[index] === '#') {
+      testAttributePattern.lastIndex = index;
+      const testAttribute = testAttributePattern.exec(content);
+      const testEnd = testAttributePattern.lastIndex;
+      attributePattern.lastIndex = index;
+      const attribute = attributePattern.exec(content);
+      const endIndex = attribute ? attributePattern.lastIndex : testEnd;
+      if (!attribute && !testAttribute) break;
+      if (testAttribute && testEnd === endIndex) testIndex ??= index;
+      index = skipWhitespace(content, endIndex);
+      attributeLineBreak = content.slice(endIndex, index).includes('\n');
+    }
+    const signature = rustFunctionSignature(content, index, lastClosingParen);
+    if (signature.methodName !== undefined) {
+      if (testIndex !== undefined && attributeLineBreak) {
+        return evidenceSpanFromRange(content, testIndex, lineEndIndex(content, signature.endIndex));
+      }
+      if (
+        !fallback && (index === blockStart || attributeLineBreak) &&
+        /^(?:test_[A-Za-z_]\w*|[A-Za-z_]\w*_test)$/.test(signature.methodName)
+      ) {
+        fallback = declarationLineEvidence(content, index, signature.endIndex - index, 'rust');
+      }
+    }
+    cursor = lineEndIndex(content, signature.endIndex) + 1;
   }
+  return fallback;
+}
 
-  const functionPattern =
-    /^\s*(?:(?:pub(?:\([^)]*\))?|async)\s+)*fn\s+(?:test_[A-Za-z_]\w*|[A-Za-z_]\w*_test)\s*\(/gm;
-  const functionMatch = functionPattern.exec(content);
-  return functionMatch
-    ? declarationLineEvidence(content, functionMatch.index, functionMatch[0]!.length, 'rust')
-    : undefined;
+function rustFunctionSignature(content: string, startIndex: number, lastClosingParen: number): {
+  endIndex: number;
+  methodName?: string;
+} {
+  const wordPattern = /[A-Za-z_]\w*/y;
+  let index = startIndex;
+  while (true) {
+    wordPattern.lastIndex = index;
+    const word = wordPattern.exec(content)?.[0];
+    if (!word) return { endIndex: index };
+    let endIndex = wordPattern.lastIndex;
+    if (word !== 'pub' && word !== 'async' && word !== 'fn') return { endIndex };
+    if (word === 'pub' && content[endIndex] === '(') {
+      if (endIndex > lastClosingParen) return { endIndex: content.length };
+      endIndex = content.indexOf(')', endIndex + 1) + 1;
+    }
+    if (!/\s/.test(content[endIndex] ?? '')) return { endIndex };
+    index = skipWhitespace(content, endIndex);
+    if (word === 'pub' || word === 'async') continue;
+    wordPattern.lastIndex = index;
+    const methodName = wordPattern.exec(content)?.[0];
+    if (!methodName) return { endIndex: index };
+    endIndex = skipWhitespace(content, wordPattern.lastIndex);
+    return content[endIndex] === '('
+      ? { endIndex: endIndex + 1, methodName }
+      : { endIndex };
+  }
 }
 
 function firstPatternMatch(content: string, patterns: readonly RegExp[]): RegExpExecArray | undefined {
