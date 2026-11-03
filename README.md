@@ -11,9 +11,13 @@ An integrated agent harness for goals, context, tools, and verified outcomes.
 [![Verify](https://github.com/YouSangSon/Ariadne/actions/workflows/verify.yml/badge.svg)](https://github.com/YouSangSon/Ariadne/actions/workflows/verify.yml)
 ![Node.js 24.22+](https://img.shields.io/badge/Node.js-24.22%2B-43853d?logo=nodedotjs&logoColor=white)
 
-[제품 방향](docs/product-direction.md) · [현재 기능](#현재-사용할-수-있는-것) · [시작하기](#시작하기) · [실행 정책](docs/execution-policy.md)
+[한국어](README.md) · [日本語](README.ja.md) · [English](README.en.md) · [简体中文](README.zh-CN.md)
+
+[제품 방향](docs/product-direction.md) · [현재 기능](#features) · [시작하기](#getting-started) · [실행 정책](docs/execution-policy.md)
 
 </div>
+
+한국어 README를 기준으로 네 언어의 구성·명령·지원 범위를 함께 갱신합니다. 연결된 상세 문서는 한국어 또는 영어로 제공됩니다. README 번역은 CLI의 표시 언어 지원을 뜻하지 않습니다.
 
 ---
 
@@ -26,6 +30,8 @@ Ariadne는 **사용자의 목표를 실행과 검증으로 잇는 통합 에이�
 필요한 정보와 검증은 유지하면서 **원하는 결과를 얻는 데 드는 전체 모델 사용량**을 줄이는 것이 기준입니다.
 아직 범용 작업을 자동 완주하는 실행기는 제공하지 않습니다. 현재 기능과 구현 우선순위는 아래와 [제품 방향](docs/product-direction.md)에서 구분합니다.
 
+<a id="workflow"></a>
+
 ## 지향하는 작업 흐름
 
 1. 원하는 결과와 완료 조건을 이해합니다. 이미 확인한 내용은 다시 묻지 않습니다.
@@ -34,6 +40,8 @@ Ariadne는 **사용자의 목표를 실행과 검증으로 잇는 통합 에이�
 4. 수행 결과를 확인하고, 중단되면 확인한 상태에서 이어 갑니다.
 
 이 흐름은 제품 목표입니다. 현재는 요구사항·문맥·기억·도구 연결의 기반을 제공하며 자동 배정·실행·재개는 개발 중입니다.
+
+<a id="features"></a>
 
 ## 현재 사용할 수 있는 것
 
@@ -52,6 +60,8 @@ Ariadne는 **사용자의 목표를 실행과 검증으로 잇는 통합 에이�
 > **개발 중인 경계:** 작업 DB·dispatcher·자동 재개·실행 풀·완료 봉인은 아직 공개 실행 기능이 아닙니다.
 > 이 저장소는 검증한 컨텍스트 보완과 연결 기반 요소까지 게시한 체크포인트입니다.
 > API 전송 모듈의 존재가 범용 작업의 자동 완주나 네이티브 CLI의 무인 실행을 뜻하지 않습니다.
+
+<a id="getting-started"></a>
 
 ## 시작하기
 
@@ -92,6 +102,8 @@ node scripts/install.mjs
 기존 글로벌 설정은 `--global-pointer`를 선택한 경우에만 연결합니다.
 프로젝트 적용과 제거 절차는 [온보딩](docs/ONBOARDING.md)과 [운영 가이드](docs/OPERATIONS.md)를 따릅니다.
 
+<a id="responsibilities"></a>
+
 ## 규칙과 실행기의 책임
 
 | 대상 | Ariadne의 역할 | 별도로 유지되는 것 |
@@ -102,6 +114,8 @@ node scripts/install.mjs
 
 단일 도구만 사용해도 됩니다. 여러 도구를 연결해도 인증이나 구독을 하나로 합치지 않습니다.
 유료 공급자 실호출·네이티브 자동 실행·OS 수준 프로세스 격리는 검증하지 않았습니다.
+
+<a id="principles"></a>
 
 ## 작은 하네스, 확인할 수 있는 규칙
 
@@ -114,6 +128,8 @@ node scripts/install.mjs
 `AGENTS.md`는 일하는 규칙을 전달합니다. 스크립트와 테스트는 결정론적으로 검사할 수 있는 부분을 담당합니다.
 지침 파일만으로 백그라운드 이벤트 수신이나 자동 복구가 생기지는 않습니다.
 
+<a id="verification"></a>
+
 ## 검증
 
 ```sh
@@ -125,6 +141,8 @@ node scripts/verify.mjs
 검사는 실제 파일·임시 프로젝트와 테스트가 띄운 HTTP 서버를 사용합니다. CI의 PostgreSQL·pgvector·로컬 transformer 검색 검증은 별도 작업으로 실행합니다. 모델 호출은 필요하지 않습니다.
 API 프로토콜 검사를 모델 품질·구독 절감률·실서비스 성능의 근거로 해석하지 않습니다.
 파일 SHA 검사와 rename 사이의 임의 외부 writer 경쟁은 보장하지 않으므로 독립 작업 공간이 필요합니다.
+
+<a id="repository-guide"></a>
 
 <details>
 <summary><strong>저장소 길잡이</strong></summary>
