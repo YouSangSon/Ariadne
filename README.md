@@ -4,26 +4,36 @@
 
 # Ariadne
 
-**도구를 바꿔도, 작업의 실은 이어지도록.**
+**원하는 일을 끝낼 때까지, 작업의 실을 잇습니다.**
 
-A portable coding-agent harness for requirements, context, and evidence.
+An integrated agent harness for goals, context, tools, and verified outcomes.
 
 [![Verify](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml/badge.svg)](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml)
 ![Node.js 24.22+](https://img.shields.io/badge/Node.js-24.22%2B-43853d?logo=nodedotjs&logoColor=white)
-![One project](https://img.shields.io/badge/one_project-four_capabilities-eab308)
 
-[시작하기](#시작하기) · [통합 구조](docs/consolidation.md) · [온보딩](docs/ONBOARDING.md) · [실행 정책](docs/execution-policy.md) · [설계](docs/unified-execution-design.md)
+[제품 방향](docs/product-direction.md) · [현재 기능](#현재-사용할-수-있는-것) · [시작하기](#시작하기) · [실행 정책](docs/execution-policy.md)
 
 </div>
 
 ---
 
-세션이 바뀔 때마다 목표를 다시 설명하고, 이전 결과를 찾아 옮기고, 테스트가 정말 통과했는지 확인하는 일.
-Ariadne는 이 수고를 줄이기 위한 **개인 프로젝트용 코딩 에이전트 하네스**입니다.
+Ariadne는 **사용자의 목표를 실행과 검증으로 잇는 통합 에이전트 하네스**입니다.
 
-**Akasha·Context-forge·Parallax의 기능과 위키 관계 인덱스를 하나의 Ariadne에서 사용합니다.** 별도 저장소나 글로벌 패키지를 설치하지 않습니다.
+사용자가 원하는 일을 맡기면, 필요한 문맥·도구·실행기를 연결하고 결과를 확인하는 것이 목표입니다.
+코딩, 조사, 문서 작성, 분석, 반복 업무를 같은 작업 흐름으로 다루는 방향을 지향합니다.
 
-요구사항에서 시작해 작업 문맥과 검증 기록을 이어 줍니다. 이름은 미궁에서 돌아올 길을 알려 준 아리아드네의 실에서 가져왔습니다.
+매번 목표를 다시 설명하거나 같은 자료를 다시 찾고, 실패 원인도 모른 채 호출을 반복하는 낭비를 줄이는 데 초점을 둡니다.
+필요한 정보와 검증은 유지하면서 **원하는 결과를 얻는 데 드는 전체 모델 사용량**을 줄이는 것이 기준입니다.
+아직 범용 작업을 자동 완주하는 실행기는 제공하지 않습니다. 현재 기능과 구현 우선순위는 아래와 [제품 방향](docs/product-direction.md)에서 구분합니다.
+
+## 지향하는 작업 흐름
+
+1. 원하는 결과와 완료 조건을 이해합니다. 이미 확인한 내용은 다시 묻지 않습니다.
+2. 관련 문맥과 이전 근거를 찾아 작업에 필요한 만큼 전달합니다.
+3. 권한·예산·필수 기능에 맞는 도구와 실행기를 선택합니다.
+4. 수행 결과를 확인하고, 중단되면 확인한 상태에서 이어 갑니다.
+
+이 흐름은 제품 목표입니다. 현재는 요구사항·문맥·기억·도구 연결의 기반을 제공하며 자동 배정·실행·재개는 개발 중입니다.
 
 ## 현재 사용할 수 있는 것
 
@@ -41,7 +51,7 @@ Ariadne는 이 수고를 줄이기 위한 **개인 프로젝트용 코딩 에이
 
 > **개발 중인 경계:** 작업 DB·dispatcher·자동 재개·실행 풀·완료 봉인은 아직 공개 실행 기능이 아닙니다.
 > 이 저장소는 검증한 컨텍스트 보완과 연결 기반 요소까지 게시한 체크포인트입니다.
-> API 전송 모듈의 존재가 자동 코딩 루프나 네이티브 CLI의 무인 실행을 뜻하지 않습니다.
+> API 전송 모듈의 존재가 범용 작업의 자동 완주나 네이티브 CLI의 무인 실행을 뜻하지 않습니다.
 
 ## 시작하기
 
@@ -55,7 +65,7 @@ npm run verify
 node bin/ariadne.mjs --help
 ```
 
-다른 프로젝트에서는 같은 실행파일에 작업을 맡깁니다.
+현재 제공하는 코드 분석과 문맥 명령은 작업할 저장소에서 실행합니다.
 
 ```sh
 node /path/to/ariadne/bin/ariadne.mjs code init
@@ -71,7 +81,7 @@ node --env-file=.env bin/ariadne.mjs memory serve
 node --env-file=.env bin/ariadne.mjs memory mcp
 ```
 
-`memory init`의 MCP·세션 hook과 `code install-agent`·`install-hook`도 같은 Ariadne 설치를 참조합니다. [설정·복구·이전 경계](docs/consolidation.md)를 먼저 확인하세요. Ontology의 원본은 설계 문서였으며, 통합된 위키 인덱스가 enterprise ontology 엔진을 구현했다는 뜻은 아닙니다.
+클라이언트 연결과 저장소 설정은 [설정·운영 안내](docs/consolidation.md#runtime-directories-and-agent-clients)를 따릅니다.
 
 공통 규칙과 스킬을 독립 설치 경로에 복사합니다.
 
@@ -133,7 +143,6 @@ API 프로토콜 검사를 모델 품질·구독 절감률·실서비스 성능�
 
 프로젝트 이름과 저장소 경로는 **Ariadne / `ariadne`**입니다.
 기존 설치 데이터 형식 `.harness/`, `~/.harness`, `harness-*` 식별자는 유지합니다.
-공개본은 회사 이메일·비공개 로컬 경로와 이전 비공개 Git 이력을 제외한 별도 스냅샷입니다.
 
 </details>
 

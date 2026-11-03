@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "One personal coding-agent harness for requirements, memory, code impact and knowledge.",
+  "description": "An integrated agent harness for user goals, context, tools and verified outcomes.",
   "engines": { "node": ">=24.22.2" },
   "bin": { "ariadne": "bin/ariadne.mjs" },
   "scripts": {

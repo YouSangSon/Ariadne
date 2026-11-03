@@ -1,6 +1,8 @@
 # Ariadne
 
-Personal coding-agent harness. One product and checkout; `packages/memory` and
+Integrated agent harness for user goals, context, tools and verified outcomes.
+Product direction belongs to `docs/product-direction.md`; coding is one task domain.
+One product and checkout; `packages/memory` and
 `packages/code` are private implementation packages with pinned dependency graphs.
 
 - Read `README.md` and `docs/consolidation.md` before cross-package changes.
