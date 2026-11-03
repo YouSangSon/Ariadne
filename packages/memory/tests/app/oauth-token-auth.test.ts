@@ -1,0 +1,421 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  exportJWK,
+  generateKeyPair,
+  SignJWT,
+  type FetchImplementation,
+  type JWK,
+} from "jose";
+import {
+  acceptedScopesForKind,
+  checkOAuthScopes,
+  createOAuthTokenVerifier,
+  loadOAuthTokenVerifierConfig,
+  requiredScopeKindForTool,
+} from "../../src/app/middleware/oauth-token-auth.js";
+import type { OAuthProtectedResourceConfig } from "../../src/app/oauth-protected-resource.js";
+
+const protectedResource: OAuthProtectedResourceConfig = {
+  metadataUrl:
+    "https://akasha.example.com/.well-known/oauth-protected-resource/mcp",
+  metadata: {
+    resource: "https://akasha.example.com/mcp",
+    authorization_servers: ["https://auth.example.com/"],
+    bearer_methods_supported: ["header"],
+    scopes_supported: ["akasha:read", "akasha:write", "akasha:admin"],
+  },
+};
+
+describe("loadOAuthTokenVerifierConfig", () => {
+  it("returns null when OAuth protected-resource metadata is disabled", () => {
+    expect(loadOAuthTokenVerifierConfig({}, null)).toBeNull();
+  });
+
+  it("uses default optional list behavior when list env values are unset", () => {
+    const config = loadOAuthTokenVerifierConfig({}, protectedResource);
+
+    expect(config!.issuers[0]).not.toHaveProperty("jwksUrl");
+    expect(config!.algorithms).toEqual([
+      "RS256",
+      "RS384",
+      "RS512",
+      "PS256",
+      "PS384",
+      "PS512",
+      "ES256",
+      "ES384",
+      "ES512",
+      "EdDSA",
+    ]);
+  });
+
+  it("builds verifier config from protected-resource metadata", () => {
+    const config = loadOAuthTokenVerifierConfig(
+      {
+        MCP_OAUTH_JWKS_URLS: " https://auth.example.com/jwks ",
+        MCP_OAUTH_JWT_ALGORITHMS: " RS256 , ES256 ",
+        MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: "15",
+        MCP_OAUTH_JWKS_TIMEOUT_MS: " 2500 ",
+        MCP_OAUTH_ORGANIZATION_CLAIM: " tenant ",
+        MCP_OAUTH_JWT_TYPE: " at+jwt ",
+      },
+      protectedResource,
+    );
+
+    expect(config).toMatchObject({
+      resource: "https://akasha.example.com/mcp",
+      algorithms: ["RS256", "ES256"],
+      clockToleranceSeconds: 15,
+      jwksTimeoutMs: 2500,
+      organizationClaim: "tenant",
+      requiredType: "at+jwt",
+      issuers: [
+        expect.objectContaining({
+          jwksUrl: "https://auth.example.com/jwks",
+          issuerCandidates: [
+            "https://auth.example.com/",
+            "https://auth.example.com",
+          ],
+        }),
+      ],
+    });
+  });
+
+  it("rejects a JWKS URL count that does not match configured issuers", () => {
+    expect(() =>
+      loadOAuthTokenVerifierConfig(
+        {
+          MCP_OAUTH_JWKS_URLS:
+            "https://auth.example.com/jwks,https://extra.example.com/jwks",
+        },
+        protectedResource,
+      ),
+    ).toThrow(/one JWKS URL per/);
+  });
+
+  it("rejects blank entries in OAuth comma-separated lists", () => {
+    const cases = [
+      ["MCP_OAUTH_JWKS_URLS", ""],
+      ["MCP_OAUTH_JWKS_URLS", " \n\t "],
+      ["MCP_OAUTH_JWKS_URLS", ",https://auth.example.com/jwks"],
+      ["MCP_OAUTH_JWKS_URLS", "https://auth.example.com/jwks,"],
+      [
+        "MCP_OAUTH_JWKS_URLS",
+        "https://auth-a.example.com/jwks,,https://auth-b.example.com/jwks",
+      ],
+      ["MCP_OAUTH_JWT_ALGORITHMS", ""],
+      ["MCP_OAUTH_JWT_ALGORITHMS", " \n\t "],
+      ["MCP_OAUTH_JWT_ALGORITHMS", ",RS256"],
+      ["MCP_OAUTH_JWT_ALGORITHMS", "RS256,"],
+      ["MCP_OAUTH_JWT_ALGORITHMS", "RS256,,ES256"],
+    ] as const;
+
+    for (const [name, value] of cases) {
+      expect(() =>
+        loadOAuthTokenVerifierConfig({ [name]: value }, protectedResource),
+      ).toThrow(new RegExp(name));
+    }
+  });
+
+  it("rejects invalid numeric verifier env values", () => {
+    const cases = [
+      {
+        env: { MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: " \n\t " },
+        message: /MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS/,
+      },
+      {
+        env: { MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: "1.5" },
+        message: /MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS/,
+      },
+      {
+        env: { MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: "-1" },
+        message: /MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS/,
+      },
+      {
+        env: { MCP_OAUTH_JWKS_TIMEOUT_MS: " \n\t " },
+        message: /MCP_OAUTH_JWKS_TIMEOUT_MS/,
+      },
+      {
+        env: { MCP_OAUTH_JWKS_TIMEOUT_MS: "1e3" },
+        message: /MCP_OAUTH_JWKS_TIMEOUT_MS/,
+      },
+      {
+        env: { MCP_OAUTH_JWKS_TIMEOUT_MS: "0" },
+        message: /MCP_OAUTH_JWKS_TIMEOUT_MS/,
+      },
+      {
+        env: { MCP_OAUTH_JWKS_TIMEOUT_MS: "2147483648" },
+        message: /MCP_OAUTH_JWKS_TIMEOUT_MS/,
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      expect(() =>
+        loadOAuthTokenVerifierConfig(testCase.env, protectedResource),
+      ).toThrow(testCase.message);
+    }
+  });
+
+  it.each(["MCP_OAUTH_ORGANIZATION_CLAIM", "MCP_OAUTH_JWT_TYPE"])(
+    "rejects whitespace-only %s values",
+    (name) => {
+      expect(() =>
+        loadOAuthTokenVerifierConfig({ [name]: " \n\t " }, protectedResource),
+      ).toThrow(new RegExp(name));
+    },
+  );
+});
+
+describe("OAuth token verifier", () => {
+  it("verifies a JWT against JWKS, issuer, audience, and extracts scope/org claims", async () => {
+    const fixture = await createJwtFixture({
+      scope: "akasha:read akasha:write",
+      organization_id: "org-a",
+    });
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    const result = await verifier!.verify(fixture.jwt);
+
+    expect(result).toMatchObject({
+      token: fixture.jwt,
+      authType: "oauth",
+      scopes: ["akasha:read", "akasha:write"],
+      organizationId: "org-a",
+      subject: "user-1",
+      issuer: "https://auth.example.com",
+      audience: "https://akasha.example.com/mcp",
+    });
+  });
+
+  it("rejects a token with the wrong audience", async () => {
+    const fixture = await createJwtFixture(
+      { scope: "akasha:read" },
+      { audience: "https://other.example.com/mcp" },
+    );
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    await expect(verifier!.verify(fixture.jwt)).resolves.toBeNull();
+  });
+
+  it("extracts scopes from the scp array claim", async () => {
+    const fixture = await createJwtFixture({
+      scp: ["akasha:read", "akasha:admin"],
+    });
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    const result = await verifier!.verify(fixture.jwt);
+
+    expect(result!.scopes).toEqual(["akasha:read", "akasha:admin"]);
+  });
+
+  it("allows OAuth tokens without an organization claim to remain unbound", async () => {
+    const fixture = await createJwtFixture({
+      scope: "akasha:read",
+    });
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    const result = await verifier!.verify(fixture.jwt);
+
+    expect(result).toMatchObject({
+      token: fixture.jwt,
+      authType: "oauth",
+      scopes: ["akasha:read"],
+    });
+    expect(result!.organizationId).toBeUndefined();
+  });
+
+  it("rejects OAuth tokens with blank organization claims", async () => {
+    const fixture = await createJwtFixture({
+      scope: "akasha:read",
+      organization_id: " \n\t ",
+    });
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    await expect(verifier!.verify(fixture.jwt)).resolves.toBeNull();
+  });
+
+  it("rejects OAuth tokens with non-string organization claims", async () => {
+    const fixture = await createJwtFixture({
+      scope: "akasha:read",
+      organization_id: 123,
+    });
+    const verifier = createOAuthTokenVerifier(
+      loadOAuthTokenVerifierConfig(
+        { MCP_OAUTH_JWKS_URLS: "https://auth.example.com/jwks" },
+        protectedResource,
+      ),
+      { fetch: fixture.fetch },
+    );
+
+    await expect(verifier!.verify(fixture.jwt)).resolves.toBeNull();
+  });
+});
+
+describe("OAuth scope enforcement", () => {
+  it("maps tools to read/write/admin scope kinds", () => {
+    expect(requiredScopeKindForTool("search_memory", {})).toBe("read");
+    expect(requiredScopeKindForTool("list_memory", {})).toBe("read");
+    expect(requiredScopeKindForTool("inspect_memory_graph", {})).toBe("read");
+    expect(requiredScopeKindForTool("build_context_pack", {})).toBe("read");
+    expect(requiredScopeKindForTool("add_memory", {})).toBe("write");
+    expect(requiredScopeKindForTool("compact_memory", { dryRun: true })).toBe(
+      "read",
+    );
+    expect(requiredScopeKindForTool("compact_memory", { dryRun: false })).toBe(
+      "admin",
+    );
+    expect(requiredScopeKindForTool("update_memory", {})).toBe("admin");
+    expect(requiredScopeKindForTool("delete_memory", {})).toBe("admin");
+    expect(requiredScopeKindForTool("tag_memory", {})).toBe("admin");
+    expect(requiredScopeKindForTool("list_audit_log", {})).toBe("admin");
+  });
+
+  it("treats akasha:memory as the umbrella compatibility scope", () => {
+    expect(acceptedScopesForKind("read")).toContain("akasha:memory");
+    expect(acceptedScopesForKind("write")).toContain("akasha:memory");
+    expect(acceptedScopesForKind("admin")).toContain("akasha:memory");
+  });
+
+  it("returns insufficient_scope when an OAuth token lacks the required scope", () => {
+    const result = checkOAuthScopes(
+      {
+        token: "jwt",
+        authType: "oauth",
+        scopes: ["akasha:read"],
+      },
+      "add_memory",
+      {},
+      protectedResource,
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      kind: "write",
+      challengeScope: "akasha:write",
+    });
+  });
+
+  it("does not scope-check static bearer tokens", () => {
+    expect(
+      checkOAuthScopes(
+        { token: "static", authType: "static" },
+        "add_memory",
+        {},
+        protectedResource,
+      ),
+    ).toEqual({ ok: true });
+  });
+
+  it("rejects malformed direct scope inputs", () => {
+    expect(() =>
+      requiredScopeKindForTool("compact_memory", null as never),
+    ).toThrow("OAuth scope input must be an object");
+    expect(() =>
+      checkOAuthScopes(
+        { token: "jwt", authType: "oauth", scopes: ["akasha:read"] },
+        "compact_memory",
+        null as never,
+        protectedResource,
+      ),
+    ).toThrow("OAuth scope input must be an object");
+  });
+
+  it("rejects malformed direct OAuth token scopes", () => {
+    expect(() =>
+      checkOAuthScopes(
+        { token: "jwt", authType: "oauth", scopes: "akasha:read" as never },
+        "add_memory",
+        {},
+        protectedResource,
+      ),
+    ).toThrow("OAuth token scopes must be an array");
+
+    expect(() =>
+      checkOAuthScopes(
+        {
+          token: "jwt",
+          authType: "oauth",
+          scopes: ["akasha:read", 42] as never,
+        },
+        "add_memory",
+        {},
+        protectedResource,
+      ),
+    ).toThrow("OAuth token scopes[1] must be a string");
+  });
+
+  it("rejects unsupported direct scope helpers", () => {
+    expect(() => acceptedScopesForKind("owner" as never)).toThrow(
+      'OAuth scope kind must be "read", "write", or "admin"',
+    );
+    expect(() => requiredScopeKindForTool("unknown_tool" as never, {})).toThrow(
+      "unsupported OAuth scope tool: unknown_tool",
+    );
+  });
+});
+
+async function createJwtFixture(
+  claims: Record<string, unknown>,
+  options: { audience?: string; issuer?: string } = {},
+): Promise<{ jwt: string; fetch: FetchImplementation }> {
+  const { publicKey, privateKey } = await generateKeyPair("RS256");
+  const publicJwk = (await exportJWK(publicKey)) as JWK & {
+    kid?: string;
+    alg?: string;
+    use?: string;
+  };
+  publicJwk.kid = "test-key";
+  publicJwk.alg = "RS256";
+  publicJwk.use = "sig";
+
+  const issuer = options.issuer ?? "https://auth.example.com";
+  const audience = options.audience ?? "https://akasha.example.com/mcp";
+  const jwt = await new SignJWT(claims)
+    .setProtectedHeader({ alg: "RS256", kid: "test-key" })
+    .setIssuer(issuer)
+    .setAudience(audience)
+    .setSubject("user-1")
+    .setIssuedAt()
+    .setExpirationTime("5m")
+    .sign(privateKey);
+
+  const fetchImpl = vi.fn<FetchImplementation>(async (url) => {
+    expect(url).toBe("https://auth.example.com/jwks");
+    return new Response(JSON.stringify({ keys: [publicJwk] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  });
+
+  return { jwt, fetch: fetchImpl };
+}

@@ -1,0 +1,468 @@
+import path from "node:path";
+import { describe, expect, it } from "vitest";
+import { resolveServiceConfig } from "../../src/config.js";
+import { DEFAULT_PG_POOL_OPTIONS } from "../../src/db/connection.js";
+
+const BASE_ENV = {
+  DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",
+  QDRANT_URL: "http://qdrant:6333",
+  QDRANT_API_KEY: "local-qdrant-key",
+};
+
+function envWith(overrides: Record<string, unknown>): NodeJS.ProcessEnv {
+  return {
+    ...BASE_ENV,
+    ...overrides,
+  } as unknown as NodeJS.ProcessEnv;
+}
+
+describe("resolveServiceConfig", () => {
+  it("parses Postgres, Qdrant, OpenAI, and optional backup settings when EMBEDDING_PROVIDER=openai is set explicitly", () => {
+    const config = resolveServiceConfig({
+      env: {
+        NODE_ENV: "production",
+        HOST: "127.0.0.1",
+        PORT: "8787",
+        DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",
+        QDRANT_URL: "http://qdrant:6333",
+        QDRANT_API_KEY: "local-qdrant-key",
+        EMBEDDING_PROVIDER: "openai",
+        OPENAI_API_KEY: "test-openai-key",
+        OPENAI_EMBEDDING_MODEL: "text-embedding-3-small",
+        BACKUP_DIR: "/var/lib/developer-memory-os/backups",
+        BACKUP_TARGET_HOST: "backup@example.internal",
+        BACKUP_ENCRYPTION_KEY_FILE: "/run/secrets/akasha-backup-data-key",
+      },
+    });
+
+    expect(config.host).toBe("127.0.0.1");
+    expect(config.port).toBe(8787);
+    expect(config.databaseUrl).toContain("postgres://memory:memory");
+    expect(config.postgres.pool).toEqual(DEFAULT_PG_POOL_OPTIONS);
+    expect(config.qdrant.url).toBe("http://qdrant:6333");
+    expect(config.openai.apiKey).toBe("test-openai-key");
+    expect(config.embedding.provider).toBe("openai");
+    expect(config.embedding.model).toBe("text-embedding-3-small");
+    expect(config.embedding.dimensions).toBe(1536);
+    expect(config.backups.targetHost).toBe("backup@example.internal");
+    expect(config.backups.encryptionKeyFile).toBe(
+      "/run/secrets/akasha-backup-data-key",
+    );
+  });
+
+  it("defaults to the transformers provider with Xenova/all-MiniLM-L6-v2 (384-dim) when EMBEDDING_PROVIDER is unset, with no OPENAI_API_KEY required", () => {
+    const config = resolveServiceConfig({
+      env: {
+        DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",
+        QDRANT_URL: "http://qdrant:6333",
+        QDRANT_API_KEY: "local-qdrant-key",
+        // No EMBEDDING_PROVIDER → falls back to "transformers".
+        // No OPENAI_API_KEY → must NOT be required.
+      },
+    });
+
+    expect(config.embedding.provider).toBe("transformers");
+    expect(config.embedding.model).toBe("Xenova/all-MiniLM-L6-v2");
+    expect(config.embedding.dimensions).toBe(384);
+  });
+
+  it("rejects invalid port values", () => {
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",
+          QDRANT_URL: "http://qdrant:6333",
+          QDRANT_API_KEY: "local-qdrant-key",
+          OPENAI_API_KEY: "test-openai-key",
+          PORT: "not-a-port",
+        },
+      }),
+    ).toThrow("Invalid PORT: not-a-port");
+  });
+
+  it.each([
+    ["HOST", { HOST: 123 }, "Invalid HOST: expected string"],
+    ["PORT", { PORT: 8787 }, "Invalid PORT: expected string"],
+    [
+      "VECTOR_BACKEND",
+      { VECTOR_BACKEND: 123 },
+      "Invalid VECTOR_BACKEND: expected string",
+    ],
+    [
+      "EMBEDDING_PROVIDER",
+      { EMBEDDING_PROVIDER: 123 },
+      "Invalid EMBEDDING_PROVIDER: expected string",
+    ],
+    [
+      "DATABASE_URL",
+      { DATABASE_URL: 123 },
+      "Invalid DATABASE_URL: expected string",
+    ],
+    ["PG_POOL_MAX", { PG_POOL_MAX: 10 }, "Invalid PG_POOL_MAX: expected string"],
+    [
+      "PG_IDLE_TIMEOUT_MS",
+      { PG_IDLE_TIMEOUT_MS: 30_000 },
+      "Invalid PG_IDLE_TIMEOUT_MS: expected string",
+    ],
+    [
+      "PG_CONNECT_TIMEOUT_MS",
+      { PG_CONNECT_TIMEOUT_MS: 5_000 },
+      "Invalid PG_CONNECT_TIMEOUT_MS: expected string",
+    ],
+    ["QDRANT_URL", { QDRANT_URL: 123 }, "Invalid QDRANT_URL: expected string"],
+    [
+      "QDRANT_API_KEY",
+      { QDRANT_API_KEY: 123 },
+      "Invalid QDRANT_API_KEY: expected string",
+    ],
+    [
+      "OPENAI_API_KEY",
+      { OPENAI_API_KEY: 123 },
+      "Invalid OPENAI_API_KEY: expected string",
+    ],
+    [
+      "EMBEDDING_DIMENSIONS",
+      { EMBEDDING_DIMENSIONS: 384 },
+      "Invalid EMBEDDING_DIMENSIONS: expected string",
+    ],
+    [
+      "TRANSFORMERS_EMBEDDING_MODEL",
+      { TRANSFORMERS_EMBEDDING_MODEL: 123 },
+      "Invalid TRANSFORMERS_EMBEDDING_MODEL: expected string",
+    ],
+    [
+      "OPENAI_EMBEDDING_MODEL",
+      {
+        EMBEDDING_PROVIDER: "openai",
+        OPENAI_API_KEY: "test-openai-key",
+        OPENAI_EMBEDDING_MODEL: 123,
+      },
+      "Invalid OPENAI_EMBEDDING_MODEL: expected string",
+    ],
+    [
+      "EMBEDDING_MODEL",
+      { EMBEDDING_PROVIDER: "local", EMBEDDING_MODEL: 123 },
+      "Invalid EMBEDDING_MODEL: expected string",
+    ],
+    [
+      "QDRANT_COLLECTION_NAME",
+      { QDRANT_COLLECTION_NAME: 123 },
+      "Invalid QDRANT_COLLECTION_NAME: expected string",
+    ],
+    [
+      "inactive QDRANT_URL",
+      { VECTOR_BACKEND: "pgvector", QDRANT_URL: 123 },
+      "Invalid QDRANT_URL: expected string",
+    ],
+    [
+      "inactive QDRANT_API_KEY",
+      { VECTOR_BACKEND: "pgvector", QDRANT_API_KEY: 123 },
+      "Invalid QDRANT_API_KEY: expected string",
+    ],
+    ["BACKUP_DIR", { BACKUP_DIR: 123 }, "Invalid BACKUP_DIR: expected string"],
+    [
+      "BACKUP_TARGET_HOST",
+      { BACKUP_TARGET_HOST: 123 },
+      "Invalid BACKUP_TARGET_HOST: expected string",
+    ],
+    [
+      "BACKUP_ENCRYPTION_KEY_FILE",
+      { BACKUP_ENCRYPTION_KEY_FILE: 123 },
+      "Invalid BACKUP_ENCRYPTION_KEY_FILE: expected string",
+    ],
+  ])("rejects non-string %s", (_name, overrides, expected) => {
+    expect(() =>
+      resolveServiceConfig({
+        env: envWith(overrides),
+      }),
+    ).toThrow(expected);
+  });
+
+  it.each([
+    ["POSTGRES_USER", { POSTGRES_USER: 123 }],
+    ["POSTGRES_PASSWORD", { POSTGRES_PASSWORD: 123 }],
+    ["POSTGRES_DB", { POSTGRES_DB: 123 }],
+  ])(
+    "rejects non-string fallback %s when DATABASE_URL is absent",
+    (name, overrides) => {
+      expect(() =>
+        resolveServiceConfig({
+          env: {
+            DATABASE_URL: undefined,
+            POSTGRES_USER: "memory",
+            POSTGRES_PASSWORD: "memory",
+            POSTGRES_DB: "memory_os",
+            QDRANT_URL: "http://qdrant:6333",
+            QDRANT_API_KEY: "local-qdrant-key",
+            ...overrides,
+          } as unknown as NodeJS.ProcessEnv,
+        }),
+      ).toThrow(`Invalid ${name}: expected string`);
+    },
+  );
+
+  it.each([
+    ["DATABASE_URL", { DATABASE_URL: " \n\t " }],
+    ["QDRANT_URL", { QDRANT_URL: " \n\t " }],
+    ["QDRANT_API_KEY", { QDRANT_API_KEY: " \n\t " }],
+    [
+      "OPENAI_API_KEY",
+      { EMBEDDING_PROVIDER: "openai", OPENAI_API_KEY: " \n\t " },
+    ],
+  ])(
+    "rejects whitespace-only required %s",
+    (name, overrides) => {
+      expect(() =>
+        resolveServiceConfig({
+          env: {
+            ...BASE_ENV,
+            ...overrides,
+          },
+        }),
+      ).toThrow(`Missing required environment variable: ${name}`);
+    },
+  );
+
+  it.each(["1e3", "0x2253", "0b10001001010011", "8787.5", "+8787", " 8787 "])(
+    "rejects non-decimal PORT value %s",
+    (port) => {
+      expect(() =>
+        resolveServiceConfig({
+          env: {
+            ...BASE_ENV,
+            PORT: port,
+          },
+        }),
+      ).toThrow(`Invalid PORT: ${port}`);
+    },
+  );
+
+  it("rejects out-of-range PORT values", () => {
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          ...BASE_ENV,
+          PORT: "65536",
+        },
+      }),
+    ).toThrow("Invalid PORT: 65536");
+  });
+
+  it.each(["", "1e3", "0x180", "0b110000000", "384.5", "+384", " 384 "])(
+    "rejects non-decimal EMBEDDING_DIMENSIONS value %s",
+    (dimensions) => {
+      expect(() =>
+        resolveServiceConfig({
+          env: {
+            ...BASE_ENV,
+            EMBEDDING_DIMENSIONS: dimensions,
+          },
+        }),
+      ).toThrow(`expected positive integer, got "${dimensions}"`);
+    },
+  );
+
+  it("accepts plain decimal EMBEDDING_DIMENSIONS values", () => {
+    const config = resolveServiceConfig({
+      env: {
+        ...BASE_ENV,
+        EMBEDDING_DIMENSIONS: "512",
+      },
+    });
+
+    expect(config.embedding.dimensions).toBe(512);
+  });
+
+  it("accepts plain decimal Postgres pool tuning values", () => {
+    const config = resolveServiceConfig({
+      env: {
+        ...BASE_ENV,
+        PG_POOL_MAX: "24",
+        PG_IDLE_TIMEOUT_MS: "45000",
+        PG_CONNECT_TIMEOUT_MS: "7500",
+      },
+    });
+
+    expect(config.postgres.pool).toEqual({
+      max: 24,
+      idleTimeoutMillis: 45_000,
+      connectionTimeoutMillis: 7_500,
+    });
+  });
+
+  it.each([
+    ["PG_POOL_MAX", { PG_POOL_MAX: "" }],
+    ["PG_POOL_MAX", { PG_POOL_MAX: "0" }],
+    ["PG_POOL_MAX", { PG_POOL_MAX: "1e3" }],
+    ["PG_POOL_MAX", { PG_POOL_MAX: "10.5" }],
+    ["PG_POOL_MAX", { PG_POOL_MAX: " 10 " }],
+    ["PG_IDLE_TIMEOUT_MS", { PG_IDLE_TIMEOUT_MS: "" }],
+    ["PG_IDLE_TIMEOUT_MS", { PG_IDLE_TIMEOUT_MS: "0" }],
+    ["PG_IDLE_TIMEOUT_MS", { PG_IDLE_TIMEOUT_MS: "30_000" }],
+    ["PG_CONNECT_TIMEOUT_MS", { PG_CONNECT_TIMEOUT_MS: "" }],
+    ["PG_CONNECT_TIMEOUT_MS", { PG_CONNECT_TIMEOUT_MS: "0" }],
+    ["PG_CONNECT_TIMEOUT_MS", { PG_CONNECT_TIMEOUT_MS: "+5000" }],
+  ])("rejects invalid Postgres pool %s value", (name, overrides) => {
+    const raw = Object.values(overrides)[0];
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          ...BASE_ENV,
+          ...overrides,
+        },
+      }),
+    ).toThrow(
+      `Invalid ${name}: expected positive integer, got "${String(raw)}"`,
+    );
+  });
+
+  it.each([
+    [
+      "OPENAI_EMBEDDING_MODEL",
+      {
+        EMBEDDING_PROVIDER: "openai",
+        OPENAI_API_KEY: "test-openai-key",
+        OPENAI_EMBEDDING_MODEL: " \n\t ",
+      },
+    ],
+    [
+      "TRANSFORMERS_EMBEDDING_MODEL",
+      {
+        TRANSFORMERS_EMBEDDING_MODEL: " \n\t ",
+      },
+    ],
+    [
+      "EMBEDDING_MODEL",
+      {
+        EMBEDDING_PROVIDER: "local",
+        EMBEDDING_MODEL: " \n\t ",
+      },
+    ],
+    [
+      "QDRANT_COLLECTION_NAME",
+      {
+        QDRANT_COLLECTION_NAME: " \n\t ",
+      },
+    ],
+    [
+      "QDRANT_COLLECTION_NAME",
+      {
+        VECTOR_BACKEND: "pgvector",
+        QDRANT_COLLECTION_NAME: " \n\t ",
+      },
+    ],
+  ])("rejects whitespace-only optional %s", (name, overrides) => {
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          ...BASE_ENV,
+          ...overrides,
+        },
+      }),
+    ).toThrow(`Invalid ${name}: expected non-empty string`);
+  });
+
+  it.each([
+    ["BACKUP_DIR", { BACKUP_DIR: " \n\t " }],
+    ["BACKUP_TARGET_HOST", { BACKUP_TARGET_HOST: " \n\t " }],
+    [
+      "BACKUP_ENCRYPTION_KEY_FILE",
+      { BACKUP_ENCRYPTION_KEY_FILE: " \n\t " },
+    ],
+  ])("rejects whitespace-only optional backup %s", (name, overrides) => {
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          ...BASE_ENV,
+          ...overrides,
+        },
+      }),
+    ).toThrow(`Invalid ${name}: expected non-empty string`);
+  });
+
+  it("treats exact empty BACKUP_TARGET_HOST as local-only", () => {
+    const config = resolveServiceConfig({
+      env: {
+        ...BASE_ENV,
+        BACKUP_TARGET_HOST: "",
+      },
+    });
+
+    expect(config.backups.targetHost).toBeUndefined();
+  });
+
+  it("rejects exact empty BACKUP_ENCRYPTION_KEY_FILE", () => {
+    expect(() =>
+      resolveServiceConfig({
+        env: {
+          ...BASE_ENV,
+          BACKUP_ENCRYPTION_KEY_FILE: "",
+        },
+      }),
+    ).toThrow("Invalid BACKUP_ENCRYPTION_KEY_FILE: expected non-empty string");
+  });
+
+  it("derives the database url from Postgres env when DATABASE_URL is absent", () => {
+    const config = resolveServiceConfig({
+      env: {
+        POSTGRES_USER: "memory",
+        POSTGRES_PASSWORD: "memory",
+        POSTGRES_DB: "memory_os",
+        QDRANT_URL: "http://qdrant:6333",
+        QDRANT_API_KEY: "local-qdrant-key",
+        OPENAI_API_KEY: "test-openai-key",
+      },
+    });
+
+    expect(config.databaseUrl).toBe(
+      "postgres://memory:memory@postgres:5432/memory_os",
+    );
+  });
+
+  it.each([
+    ["POSTGRES_USER", { POSTGRES_USER: " \n\t " }],
+    ["POSTGRES_PASSWORD", { POSTGRES_PASSWORD: " \n\t " }],
+    ["POSTGRES_DB", { POSTGRES_DB: " \n\t " }],
+  ])(
+    "rejects whitespace-only fallback %s when DATABASE_URL is absent",
+    (name, overrides) => {
+      expect(() =>
+        resolveServiceConfig({
+          env: {
+            POSTGRES_USER: "memory",
+            POSTGRES_PASSWORD: "memory",
+            POSTGRES_DB: "memory_os",
+            QDRANT_URL: "http://qdrant:6333",
+            QDRANT_API_KEY: "local-qdrant-key",
+            ...overrides,
+          },
+        }),
+      ).toThrow(`Missing required environment variable: ${name}`);
+    },
+  );
+
+  it("does not require a backup target host for runtime services", () => {
+    const config = resolveServiceConfig({
+      env: {
+        DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",
+        QDRANT_URL: "http://qdrant:6333",
+        QDRANT_API_KEY: "local-qdrant-key",
+        OPENAI_API_KEY: "test-openai-key",
+      },
+    });
+
+    expect(config.backups.targetHost).toBeUndefined();
+  });
+
+  it("uses the default backup directory when BACKUP_DIR is unset", () => {
+    const config = resolveServiceConfig({
+      env: {
+        ...BASE_ENV,
+      },
+    });
+
+    expect(config.backups.directory).toBe(
+      path.join(process.cwd(), ".developer-memory-os", "backups"),
+    );
+  });
+});

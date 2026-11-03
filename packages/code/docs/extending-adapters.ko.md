@@ -1,0 +1,181 @@
+# Parallax — 어댑터 확장
+
+[English](extending-adapters.md) · **한국어** · [中文](extending-adapters.zh.md)
+
+Parallax는 **semantic adapter**를 통해 entity/relation graph를 추출한다. 각 adapter는 하나의 언어 또는 파일 형식을 담당하며, 스캔된 파일을 entity, relation, diagnostic으로 바꾼다. 이 가이드는 adapter 계약, adapter가 등록·선택되는 방식, 그리고 따라야 하는 evidence/confidence 규율을 최소 예제와 함께 설명한다.
+
+## adapter 계약
+
+adapter는 `SemanticAdapter` 인터페이스(`src/adapters/types.ts`)를 구현한다:
+
+- `id` — 고유하고 안정적인 식별자. 같은 `id`로 두 adapter를 등록하면 throw한다.
+- `version` — adapter 버전 문자열([버전 관리](#버전-관리와-재추출) 참고).
+- `capabilities` — 이 adapter가 만들 수 있는 `AdapterCapability` 값.
+- `confidence?` — adapter의 기본 confidence 라벨(생략 시 `unknown`으로 폴백).
+- `knownGaps?` — 이 adapter가 해석하지 *않는* 것에 대한 사람이 읽는 메모.
+- `selectionMode?` — 범위가 정해진 언어/파일 adapter의 기본값은 `targeted`, 마지막 fallback adapter는 `catch-all`.
+- `fileContentScope?` — 기본값은 `full-index`; adapter가 현재 `process(file)` 입력의 content만 필요로 하고 `ctx.indexedFiles` / `files`는 path-level context로만 쓸 때만 `target-only`를 설정한다.
+- `outputOwnership?` — 기본값은 `unrestricted`; `processed-file`은 아래의 파일별 출력 소유권 검사를 활성화한다.
+- `supports(file)` — 이 adapter가 파일을 처리하면 `true`를 반환.
+- `start(ctx, files)` — index run을 위한 `AdapterRun`(또는 `Promise<AdapterRun>`)을 반환.
+
+반환된 `AdapterRun`은 `IndexEvent`를 yield하는 async generator인 `process(file)`과 선택적 `dispose()`를 노출한다. 각 `IndexEvent`는 세 가지 kind 중 하나다:
+
+- `entity` — `PendingEntity`(`EntityDescriptor`: `kind`, 선택적 `path`, `symbol`, `symbolKind`, `languageId`, `displayName`, `metadata`).
+- `relation` — `source`와 `target` descriptor, `RelationKind`, 선택적 `metadata`와 `evidence`를 가진 `PendingRelation`.
+- `diagnostic` — `warn` 또는 `error` 메시지, 선택적으로 파일에 연결.
+
+orchestrator는 각 `EntityDescriptor`를 content-hash해 entity id를 계산하므로, 같은 descriptor는 항상 같은 entity로 매핑된다.
+
+## Capability
+
+`AdapterCapability`는 다음 중 하나다: `imports`, `exports`, `calls`, `references`, `types`, `symbols`, `docrefs`, `tests`, `packages`. adapter는 추출할 수 있는 부분집합을 선언해 coverage와 gap이 adapter별로 명시되게 한다.
+
+## 파일 content 범위
+
+`fileContentScope`는 adapter의 cross-file content 계약을 명시한다:
+
+- `full-index` — adapter가 `ctx.indexedFiles`, `files`, import resolution, package/lockfile discovery, 또는 다른 startup state를 통해 스캔된 어떤 파일의 content든 읽을 수 있다. source compatibility와 안전성을 위해 기본값이다.
+- `target-only` — adapter가 현재 `process(file)`에 전달된 파일 content만 읽는다. indexed path set은 reference resolution에 사용할 수 있지만, `start()` 중이나 target file을 처리하는 동안 다른 파일의 `content`를 읽으면 안 된다.
+
+구현을 확인한 뒤에만 `target-only`를 사용한다. 예를 들어 config/infra path-reference extraction은 indexed file path로 reference를 검증하지만 다른 indexed file content는 읽지 않는다. build-system/package와 TypeScript/JavaScript adapter는 lockfile/package catalog, import resolver, cross-file target을 indexed content에서 만들기 때문에 `full-index`로 유지한다.
+
+## 출력 소유권
+
+현재 파일의 내용만 읽는다는 선언은 출력 행의 소유권을 보장하지 않는다.
+`outputOwnership = 'processed-file'`은 별도의 선택적 계약이다.
+
+- 명시적 entity와 relation source는 현재 `process(file)`의 경로와 파일 기반
+  entity kind(workflow/resource/contract 포함)를 사용한다. symbol, module,
+  package, external identity는 이 계약에서 지원하지 않는다.
+- relation target은 같은 경로의 파일 기반 entity이거나 다른 indexed file을
+  가리키는 `{ kind: 'file', path }`만 허용한다. 다른 파일 target의 metadata와
+  미인덱싱 placeholder는 거부한다.
+- 명시적 evidence와 diagnostic의 파일은 현재 파일이어야 한다. 파일 없는
+  diagnostic은 거부하며, relation evidence 생략 시 기존 현재 파일 fallback을 쓴다.
+- 입력은 복제 후 동결한다. 이벤트는 `structuredClone`이 가능해야 하며 검증 전에
+  복제하므로 generator나 dispose가 나중에 원본을 바꿔도 저장할 이벤트는 유지된다.
+  계약 위반이나 복제 실패 시 그래프를 반영하기 전에 실행을 실패 처리하고 감사 기록은 남긴다.
+
+처음에는 config/infra만 참여한다. 선언이 없는 adapter의 기존 동작은 유지한다.
+실행 시작 시 확정한 소유권 선언을 extractor signature에 포함하므로 파일 내용이
+같아도 선언이 바뀌면 다시 검증한다. 이 계약만으로 changed-only extraction을
+활성화하지 않는다. fresh-index 동등성과 읽기량 검증 전까지 변경된 내용은 전체 추출한다.
+
+두 선언은 처리 순서 독립성도 보장하지 않는다. 예를 들어 `start()`에서 순번을 0으로
+두고 `process()`마다 증가시켜 자기 entity metadata에 쓰면, 전체 A→B 처리에서 B는 2,
+B만 처리하면 1이다. 다른 본문을 읽거나 다른 파일 행을 쓰지 않아도 결과가 달라진다.
+선택 실행에는 파일별 재실행의 독립성을 별도로 명시·입증해야 한다. 현재는 순서와
+startup context가 영향을 주는 adapter까지 보존하도록 changed-body full fallback을 유지한다.
+
+config/infra의 순수 선택 검사에서는 context 본문·해시를 읽으면 실패하게 두고,
+전체·역순·단일 파일 처리와 수정된 target의 이벤트를 비교한다. 같은 Dockerfile도
+indexed path 하나를 제거하면 관계가 달라짐을 확인한다. 이 근거는 한정된 adapter
+이벤트 검사이며 일반 독립성 선언이나 영속 graph·saved-report oracle을 대신하지
+않는다. 경로 집합 변경은 여전히 무효화해야 하며 runtime 선택 추출은 비활성 상태다.
+
+## Evidence와 confidence (불변 원칙 I-10)
+
+모든 relation은 `evidence` — source 파일, span, snippet — 와 confidence 라벨을 가져야 한다. `Confidence`는 네 단계다:
+
+- `proven` — parser 수준 fact로 뒷받침됨.
+- `inferred` — 도출되었지만 잘 뒷받침됨.
+- `heuristic` — 폭넓은 패턴 기반 coverage.
+- `unknown` — confidence가 없을 때의 폴백.
+
+이는 불변 원칙 **I-10**([invariants.ko.md](invariants.ko.md) 참고)을 강제한다 — 모든 impact 판단은 evidence + provenance + confidence를 함께 가지며, 알 수 없는 것은 fact로 제시하지 않고 `unknown`으로 드러낸다. adapter의 run별 confidence와 `knownGaps`는 기록되어, agent와 사람이 parser 기반 결과를 폭넓은 heuristic coverage와 구분할 수 있게 한다.
+
+## 등록과 선택 순서
+
+adapter는 registry(`src/adapters/registry.ts`)에 살며 `src/indexer.ts`의 `createDefaultRegistry()`가 조립한다. 선택은 등록 순서에서 **first-match-wins**다 — `pickAdapter(file)`은 `supports()`가 `true`를 반환하는 첫 등록 adapter를 반환한다.
+
+이 때문에 등록 순서가 load-bearing이다. 기본 registry는 순서대로 등록한다: build-system/package adapter, config/infra adapter, TypeScript/JavaScript adapter, JVM/Spring adapter, Python adapter, Go adapter, Rust adapter, 그리고 마지막으로 multi-language regex adapter. 그 마지막 adapter는 `supports()`가 항상 `true`를 반환하는 **catch-all**이므로 반드시 LAST로 등록되어야 한다 — catch-all 뒤에 등록된 adapter는 도달 불가능하다. registry는 이 순서를 강제한다.
+
+registry는 이제 이 계약을 명시적으로 강제한다. `selectionMode`는 기존 source compatibility를 위해 선택 사항이며 생략하면 `targeted`다. 마지막 fallback coverage를 의도한 adapter만 `selectionMode = 'catch-all'`을 설정한다. `AdapterRegistry.register()`는 이미 등록된 catch-all adapter 뒤에 다른 adapter를 등록하려 하면 거부하며, error에는 새 adapter와 이를 막는 catch-all adapter의 이름이 모두 들어간다. 중복 `id` 검증은 여전히 먼저 실행되어 기존 중복 id error를 유지한다.
+
+adapter 등록을 검토하거나 테스트할 때는 `registry.manifest()`를 사용한다. 이 API는 등록 순서의 immutable snapshot을 반환한다. 각 entry에는 `order`, `id`, `version`, `capabilities`, `confidence`(기본값 `unknown`), `knownGaps`(기본값 빈 배열), `selectionMode`(기본값 `targeted`), `fileContentScope`(기본값 `full-index`), `outputOwnership`(기본값 `unrestricted`)가 포함된다. 호출자는 registry 상태를 변경하지 않고 이 정보를 검사할 수 있다.
+
+## 버전 관리와 재추출
+
+각 index run은 모든 활성 adapter의 `id`, `version`, 확정된 `outputOwnership`과 indexer 의미 버전으로 구성된 `extractor_version` 시그니처를 기록한다. adapter의 `version`을 올리면 다음 `parallax index` run에서 그 기록된 시그니처가 바뀐다. adapter의 추출 출력이 바뀔 때마다 `version`을 올려, 실행이 adapter 버전을 가로질러 조용히 섞이지 않게 하자.
+
+## 최소 예제
+
+`.example` 파일을 처리해 하나의 `file` entity와 하나의 `IMPORTS` relation을 evidence와 함께 내보내는 작은 adapter:
+
+```ts
+import type {
+  AdapterCapability,
+  AdapterRun,
+  ExtractCtx,
+  IndexEvent,
+  SemanticAdapter
+} from './types.js';
+import type { ScannedFile } from '../types.js';
+
+const capabilities: readonly AdapterCapability[] = ['imports'];
+
+export class ExampleAdapter implements SemanticAdapter {
+  readonly id = 'example';
+  readonly version = '0.1.0';
+  readonly capabilities = capabilities;
+  readonly confidence = 'heuristic';
+  readonly selectionMode = 'targeted';
+  readonly fileContentScope = 'target-only';
+  readonly knownGaps = ['only resolves a single literal import form'];
+
+  supports(file: ScannedFile): boolean {
+    return file.relativePath.endsWith('.example');
+  }
+
+  start(_ctx: ExtractCtx, _files: readonly ScannedFile[]): AdapterRun {
+    return {
+      async *process(file: ScannedFile): AsyncIterable<IndexEvent> {
+        // 1) 파일을 entity로 선언.
+        yield { kind: 'entity', entity: { kind: 'file', path: file.relativePath } };
+
+        // 2) evidence가 뒷받침하는 relation을 내보냄.
+        const match = /^import\s+(\S+)/m.exec(file.content);
+        if (match) {
+          yield {
+            kind: 'relation',
+            relation: {
+              source: { kind: 'file', path: file.relativePath },
+              target: { kind: 'file', path: match[1]! },
+              kind: 'IMPORTS',
+              evidence: [
+                {
+                  file: file.relativePath,
+                  snippet: match[0],
+                  startLine: 1,
+                  confidence: 'heuristic'
+                }
+              ]
+            }
+          };
+        }
+      }
+    };
+  }
+}
+```
+
+catch-all adapter **앞에** `createDefaultRegistry()`에 등록해, `supports()`가 먼저 참조되게 한다.
+
+## adapter checklist
+
+adapter를 추가하거나 바꾸기 전에:
+
+- 고유한 `id`를 사용하고, 추출 output이 바뀌면 `version`을 올린다.
+- 언어/파일별 adapter에는 `selectionMode = 'targeted'`를 선호하고, `catch-all`은 마지막 fallback adapter에만 사용한다.
+- adapter가 target-file content만 읽고 indexed file은 path metadata로만 쓰는 경우가 아니면 `fileContentScope = 'full-index'`를 유지한다.
+- 모든 targeted adapter를 catch-all adapter보다 앞에 등록한다.
+- focused test나 review note에서 `registry.manifest()`로 순서, capability, confidence, known gap, selection mode, file content scope를 확인한다.
+- manifest가 heuristic 또는 불완전한 coverage를 드러낼 수 있도록 `knownGaps`를 최신으로 유지한다.
+
+## 함께 보기
+
+- [mcp.ko.md](mcp.ko.md) — 인덱싱된 graph를 읽는 MCP surface
+- [cli-reference.ko.md](cli-reference.ko.md) — `parallax index`와 분석 명령
+- [invariants.ko.md](invariants.ko.md) — evidence-first 불변 원칙(I-10)
+- [glossary.ko.md](glossary.ko.md) — adapter, evidence, confidence 정의

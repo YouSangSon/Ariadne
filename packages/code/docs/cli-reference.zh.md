@@ -1,0 +1,152 @@
+# Parallax — CLI 参考
+
+[English](cli-reference.md) · [한국어](cli-reference.ko.md) · **中文**
+
+`parallax` CLI 是进入 indexing、impact 分析、graph export、agent memory、workspace catalog、诊断、MCP 服务器与 UI 的本地入口。命令使用当前工作目录中的 repo，本地状态保存在 `<repo>/.parallax/impact.db`。运行 `parallax --help`（或 `-h`）查看内置摘要。
+
+也可以在命令或子命令之后、其他选项之前使用帮助参数，例如 `parallax index --help`、`parallax workspace init -h` 或 `parallax mcp serve --help`。它输出同一摘要后退出，不执行命令、不打开数据库，也不启动服务器。参数列表中更靠后的帮助形式标记仍遵循现有选项值与输入验证规则。
+
+大多数 machine-oriented 命令可通过 command-specific flag 输出 JSON。`analyze` 默认输出人类可读摘要，`graph export` 默认输出 Mermaid 文本。
+
+## Indexing
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax init` | 为 repo 创建本地 `.parallax/` 存储与全新数据库 |
+| `parallax index [--max-file-bytes <n>]` | 扫描 repo 并提取 entity/relation graph；`--max-file-bytes` 限制每文件扫描大小 |
+| `parallax scip import --file <index.scip or index.scip.json>` | 导入 SCIP binary index 或官方 SCIP CLI 输出的 JSON，并用 SCIP reference edge 增强最新完成的 index |
+| `parallax scip export [--file <index.scip.json>]` | 将最新完成的 Parallax index 导出为 SCIP 兼容 JSON，可输出到 stdout 或文件 |
+| `parallax reindex-vec [--model <hf-model>]` | 重建 sqlite-vec ANN 索引；`--model` 选择 embedding 模型 |
+| `parallax reembed [--model <hf-model>] [--all]` | 重新计算 fact embedding；`--all` 重嵌入所有 fact，否则仅缺失部分 |
+
+`scip import` 需要已有完成的 Parallax index。`parallax scip import --file index.scip` 会通过 `PATH` 中的官方 `scip` CLI 导入 binary SCIP index；也可以先运行 `scip print --json index.scip > index.scip.json`，再用 `parallax scip import --file index.scip.json` 导入预生成 JSON。显式选择的 `--file` 可以是任意可信的本地文件。Import 不会重新读取 live document path，只使用 SCIP `Document.text`、已记录的 clean Git commit 或最新 index 中已有的 metadata；无法验证的 textless、unindexed document 会被跳过并给出警告。`scip export` 会从最新完成的 index 生成 SCIP 兼容 JSON。binary `.scip` protobuf 写出会等到用户确实需要时再做。
+
+## Analysis
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax analyze --changed <file[,file]> [--depth <n>] [--max-fanout <n>] [--json] [--sarif-output <path>]` | 将显式给出的变更文件列表对最新 index 分析 |
+| `parallax analyze --base <ref> [--head <ref>] [--depth <n>] [--max-fanout <n>] [--json] [--sarif-output <path>]` | 从 `git diff <base>...<head>`（默认 head `HEAD`）推导变更文件列表 |
+| `parallax repo-map --changed <file[,file]> [--query <text>] [--budget <tokens>] [--json]` | 构建 token-budgeted repo map/context card，包含 changed root、affected file、test、文档、work artifact、evidence ref、verification action、ranked verification plan、resource、confidence、provenance、known gap 与 omitted count |
+| `parallax pr triage --base <ref> [--head <ref>] [--fail-on <level>] [--sarif-output <path>] [--query <text>] [--budget <tokens>]` | 运行本地 dependency/PR triage 路径：分析 diff、写入 SARIF、打印 repo map |
+| `parallax install-hook [--hook pre-commit\|pre-push\|all] [--fail-on <level>] [--command <bin>] [--dry-run] [--force]` | 安装本地 Git hook，在 commit 或 push 前运行 Parallax impact gate |
+| `parallax query "<cypher>"` | 在已索引的图上运行只读 Cypher 子集并打印 JSON 行 |
+| `parallax ingest-traces --file <traces.json>` | 将与观测到的运行时 `source -> target` 边匹配的关系提升为 `proven` 置信度 |
+
+`query` 子集支持任一方向（`->` 或 `<-`）的可选关系 hop（固定或可变长度 `*`、`*N`、`*min..max`；max 上限为 8）、节点 label、`WHERE` 等于 / `CONTAINS`、投影、`COUNT(<var>)` 聚合（非聚合 `RETURN` 项成为隐式分组键）、对投影列的 `ORDER BY`（`ASC`/`DESC`）和 `LIMIT`——例如 `MATCH (a)-[r:DEPENDS_ON]->(b) WHERE a.path CONTAINS 'store' RETURN a.path, b.path ORDER BY b.path DESC LIMIT 20`、“什么依赖 X”的反向形式 `MATCH (x)<-[r:DEPENDS_ON]-(d) WHERE x.path = 'src/store.ts' RETURN d.path`、“从 X 可达的一切”的传递形式 `MATCH (x)-[:DEPENDS_ON*1..3]->(dep) WHERE x.path = 'src/store.ts' RETURN dep.path`，或“被依赖最多的文件”形式 `MATCH (a)-[r:DEPENDS_ON]->(b) RETURN b.path, COUNT(a) ORDER BY COUNT(a) DESC LIMIT 10`。write、procedure、projection（`WITH`/`UNWIND`）、`COUNT(*)` 和双向子句会被拒绝；可变长度路径的关系变量不可投影；`ORDER BY` 只接受投影列；`COUNT` 不能用于可变长度路径。`ingest-traces` 是与只读 MCP 分离的写入面（invariant **I-8**），运行时观测只会提高置信度。
+
+标志：
+
+- `--changed` — 逗号分隔的变更文件（与 `--base`/`--head` 互斥）。
+- `--base` / `--head` — Git ref；`--head` 需要 `--base`。若无 `--base`/`--head`/`--changed`，则接受 positional 文件路径。
+- `--depth` — ripple 计算的最大 traversal 深度。
+- `--max-fanout` — traversal 期间每节点的最大 fan-out。
+- `--json` — 输出完整 report JSON 而非摘要，并跳过将 report 写入存储。输出会针对已发布的 [report JSON Schema](report-schema.zh.md) 进行校验。
+- `--sarif-output <path>` — 将 SARIF 2.1.0 projection 以格式化 JSON 写入文件，用于 GitHub Code Scanning upload。projection 包含 affected-file finding、index coverage-gap warning、cross-repo contract-break warning、recommended verification-action note 与 adapter known-gap note。父目录会自动创建。stdout 仍保留普通 human summary，且不能与 `--json` 同用。
+- `--sarif-category <category>` — 设置 SARIF run automation id / GitHub Code Scanning category。除非由 GitHub Action 等 wrapper 传入，否则 category 为空。
+- `--fail-on <level>` — 按 confidence 控制退出码：`proven` / `inferred` / `heuristic` 仅当受影响文件达到或超过该 confidence 时失败；`any`（默认）只要有受影响文件就失败；`none` 永不失败。用于 CI 仅对高置信影响进行 gate。
+
+默认（无 `--json`）会持久化 report 并打印简短摘要；写入时显示 report 路径。
+
+`repo-map` 是面向 agent 的 read-only planning surface。它复用与 MCP 相同的 impact analysis、context-pack ranking、indexed search 和 `parallax://` resource；不会创建新的 index。`verificationPlan` 会按最近的 `package.json` root 和 runner 对现有 recommended action 分组，输出可复制的命令，并列出每组覆盖的 changed / affected / target path。planner 不会执行 Nx、Bazel 或其他外部 build tool。`--budget` 是用 `Math.ceil(text.length / 4)` 估算的 token 目标，因此输出会披露 requested budget、estimated tokens、truncation 状态和 omitted count。`--query` 会加入来自现有 index 的 ranked search-context match，`--json` 输出完整 structured card。
+
+`pr triage` 是面向 dependency update 与 pull request review 的本地 wrapper。它接受与 `analyze` 相同的 changed-file 输入，持久化 impact report，默认将 SARIF 写到 `.parallax/pr-triage.sarif`，应用 `--fail-on`，并用 dependency-focused 默认 query 打印 repo map。它不会调用 GitHub、上传 SARIF、checkout branch 或修改 remote 状态。PR branch 已经在本地可用后的典型 Dependabot 流程：
+
+```bash
+parallax index
+parallax pr triage --base origin/main --head HEAD --fail-on proven
+```
+
+`install-hook` 是一个 opt-in 的本地 installer。它会把可执行的 `pre-commit` 和/或 `pre-push` hook 文件写入当前生效的 Git hooks 目录，也支持使用 `core.hooksPath` 的仓库。生成的 `pre-commit` hook 会用 `git diff --cached` 得到 staged changed-file 列表并执行 gate；生成的 `pre-push` hook 会优先使用 Git pre-push input 计算 push diff，然后依次回退到 `PARALLAX_BASE`、upstream merge-base、`origin/main`。已有的非 Parallax hook 在没有 `--force` 时会被跳过；`--dry-run` 只打印计划不写文件。需要有意绕过时，使用 `PARALLAX_SKIP_HOOK=1` 或 Git 的 `--no-verify`。
+
+当变更文件是已索引的 provider contract，且 workspace 中已经存在持久化的 `BREAKS_COMPATIBILITY_WITH` link 时，`analyze` 也会包含 `crossRepoImpacts`。这些条目会标识 consumer service、consumer file、provider contract、breaking change、confidence、evidence snippet 和 workspace resource URI。`analyze` 不会自动运行 contract diff；如果 workspace 已陈旧，请先用 `parallax workspace contract-diff` 刷新 link。
+
+## Graph
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax graph export --report <id> [--format mermaid\|json\|dot] [--limit <n>] [--cursor <cursor>]` | 渲染某已存 report 的 relationship graph；默认格式为 `mermaid` |
+
+`--limit` 和 `--cursor` 仅在 `--format json` 下生效。它们使用与 MCP/UI graph JSON pagination 相同的 `nodeOffset:edgeOffset` cursor 和 `1..500` limit contract。
+
+## Agent memory
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax remember --entity <id> --attribute <name> --value <json\|string> [--branch <name>] [--agent <id>] [--op assert\|retract] [--evidence-fact-ids id1,id2] [--supersedes-fact-ids id1,id2]` | 将 fact 作为 content-addressable 观察持久化 |
+| `parallax retract --entity <id> --attribute <name> --value <json\|string> [--branch <name>] [--agent <id>]` | 持久化一次撤回（等价于 `remember --op retract`） |
+| `parallax recall [--query <text>] [--semantic] [--entity <id>] [--attribute <name>] [--branch <name>] [--k <n>] [--as-of-tx <tx-id>] [--current-only]` | 按 filter 或 semantic similarity 查询 fact |
+| `parallax profile --entity <id> [--branch <name>] [--k <n>] [--as-of-tx <tx-id>]` | 将 entity 的 fact 聚合为 static / dynamic / summary 桶 |
+| `parallax trace --fact-id <id> [--depth <n>]` | 遍历某 fact 的 provenance/evidence chain |
+| `parallax branch --name <name> [--from <name>]` | 从已有 branch（默认 `main`）分叉出新 branch |
+| `parallax branch --abandon <name>` | 将 branch 标记为 abandoned |
+| `parallax branch --restore <name>` | 将 abandoned branch 恢复为 active |
+| `parallax merge --target <branch> --source <branch> [--agent <id>]` | 将 source branch merge 进 target |
+| `parallax reflect [--branch <name>] [--older-than-days <n>] [--entity <id>] [--model <provider:id>] [--agent <id>] [--dry-run]` | 将较旧的 fact 汇总为新的 summary fact |
+| `parallax reflect --repair [--branch <name>] [--dry-run]` | 为 orphan reflection fact 恢复丢失的 provenance |
+| `parallax gc-branches [--dry-run] [--max-age <days>]` | 归档 abandoned branch 的 transaction；`--max-age` 先 auto-abandon 陈旧的 active branch |
+| `parallax import-session --file <path> --format codex\|claude [--branch <name>] [--agent <id>]` | 将 agent 会话 transcript 导入 memory |
+
+通过 `--value` 传入的 `remember`/`recall` 值在可能时按 JSON 解析，否则当作字符串。`--op` 标志接受 `assert` 或 `retract`；`retract` 是 `remember --op retract` 的简写。
+
+## Workspace
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax workspace init [--name <name>] [--service <service>] [--force]` | 为该 repo 创建或重建 workspace catalog |
+| `parallax workspace add-repo <path> [--name <name>] [--service <service>] [--remote <url>]` | 将另一个本地 repo 注册进 workspace catalog |
+| `parallax workspace discover-packages [--name <name>] [--json]` | 发现 npm/pnpm workspace package 与 Nx project config，并同步到 workspace catalog |
+| `parallax workspace list [--name <name>] [--json]` | 列出 workspace 及其成员 repo |
+| `parallax workspace resolve-contracts [--name <name>] [--json]` | 解析 cross-repo 的 provider/consumer contract link |
+| `parallax workspace contract-diff --contract <path> [--name <name>] [--provider <service>] [--provider-path <path>] [--json]` | 将 contract 文件与已索引的 workspace baseline 做 diff |
+| `parallax workspace verify [--name <name>] [--json]` | 验证已持久化的 cross-repo link，并标记 malformed、stale 或 orphan row |
+| `parallax workspace consumers --provider <service> [--contract <path>] [--method <method>] [--path <route>] [--name <name>] [--json]` | 从已持久化的 workspace link 列出某个 provider 的 consumer |
+| `parallax workspace providers --consumer <service> [--file <path>] [--name <name>] [--json]` | 从已持久化的 workspace link 列出某个 consumer 使用的 provider |
+
+`workspace verify`、`workspace consumers` 和 `workspace providers` 只读取已持久化的 link。它们不会运行 resolution 或 contract diff。使用 `workspace resolve-contracts` 刷新 `CONSUMES_HTTP_ENDPOINT` link，使用 `workspace contract-diff` 刷新 `BREAKS_COMPATIBILITY_WITH` link。
+
+`workspace add-repo` 以 repo 路径作为 positional 参数。cross-repo 范围仅限用户显式注册的本地 repo——无 clone 或网络访问。catalog entry 也可以指向同一 monorepo 内已经索引过的 package 目录；`resolve-contracts` 会读取最近的上级 Parallax 数据库，并将 path 限定在该 member 内。
+
+`workspace discover-packages` 只读取本地 manifest：`package.json` 的 `workspaces` 数组 / `workspaces.packages`、`pnpm-workspace.yaml` 的 `packages`，以及存在 `nx.json` 时的 Nx `project.json` 或 `package.json` `nx` project config。它支持 direct path、`*`、`**`、前导 `!` exclude，以及简单的 `{apps,packages}` brace group，然后把发现的 package/project 目录作为 member repo 写入 `.parallax/workspace.json`。如果发现 member，会用这些 member entry 替换 root repo entry，以避免同一 monorepo link 重复；当前 repo root 之外的 catalog entry 会保留。Turborepo package membership 通过 package-manager workspace manifest 覆盖，`turbo.json` task config 不作为 catalog source。它不会执行 npm、pnpm、Nx、Turbo、install、daemon、cache 或网络调用。
+
+## Diagnostics
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax doctor` | 打印健康报告（schema、最新 index、coverage、adapter run、vector 状态） |
+
+## MCP
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax mcp serve` | 为当前 repo 启动 MCP stdio 服务器（见 [mcp.zh.md](mcp.zh.md)） |
+| `parallax install-agent [--config <path>] [--name <name>] [--dry-run]` | 将 Parallax 只读 MCP 服务器注册到客户端的 `mcpServers` 配置（默认 `.mcp.json`）；`--dry-run` 仅预览合并结果而不写入 |
+| `parallax install-agent --copilot-package --target <repo> [--config <path>] [--name <name>] [--dry-run] [--force]` | 在显式目标 repo 中规划或安装 GitHub Copilot package：`.github/copilot-instructions.md`、`.github/agents/parallax-impact.agent.md`，以及仅在提供 `--config` 时生成 MCP 配置片段 |
+
+Copilot package 命令只会写入显式 `--target <repo>` 路径之下。它不会调用 GitHub、push 变更，也不会修改此 Parallax repo，除非把此 repo 作为 `--target` 传入。`--dry-run` 会打印计划的相对路径和 action；已有文件在没有 `--force` 时会跳过。
+
+## UI
+
+| 命令 | 用途 |
+| :--- | :--- |
+| `parallax ui [--report <id>] [--port <n>]` | 启动本地 UI explorer；`--report` 打开指定 report，`--port` 设置监听端口 |
+
+UI 会一直运行直到被中断（`SIGINT`/`SIGTERM`）；启动时打印其 URL。Workbench URL 会保留选中的影响路径、筛选文本与 report-delta 策略预设，toolbar 可将当前视图导出为 JSON、affected-path CSV 或 PNG/SVG 影响图。
+
+## Exit code
+
+| 代码 | 含义 |
+| :--- | :--- |
+| `0` | 成功 |
+| `1` | `analyze` 找到一个或多个 affected 文件（一个有意的 CI/agent 信号，表示变更有 impact），或 `doctor` 发现健康错误 |
+| `2` | 命令抛出错误（未知命令、缺失必需标志或其他失败） |
+
+有 impact 时 `analyze` 的 exit code `1` 是有意为之：它让 CI 作业与 agent hook 无需解析 report 即可把"此变更影响其他文件"当作非零信号处理。
+
+## 另见
+
+- [mcp.zh.md](mcp.zh.md) — 同一存储之上的 MCP 服务器 surface
+- [report-schema.zh.md](report-schema.zh.md) — `analyze --json` 输出的已发布 JSON Schema
+- [extending-adapters.zh.md](extending-adapters.zh.md) — `parallax index` 如何提取 graph
+- [invariants.zh.md](invariants.zh.md) — local-first、explicit-trigger、read-only-first 不变量
+- [glossary.zh.md](glossary.zh.md) — 术语

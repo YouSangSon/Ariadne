@@ -1,0 +1,179 @@
+# Parallax — 扩展适配器
+
+[English](extending-adapters.md) · [한국어](extending-adapters.ko.md) · **中文**
+
+Parallax 通过 **semantic adapter** 提取其 entity/relation graph。每个 adapter 负责一种语言或文件格式，把扫描到的文件转化为 entity、relation 和 diagnostic。本指南描述 adapter 契约、adapter 如何注册与选择，以及它们必须遵循的 evidence/confidence 纪律，并附一个最小示例。
+
+## adapter 契约
+
+adapter 实现 `SemanticAdapter` 接口（`src/adapters/types.ts`）：
+
+- `id` — 唯一且稳定的标识符。用相同 `id` 注册两个 adapter 会 throw。
+- `version` — adapter 版本字符串（见[版本管理](#版本管理与重新提取)）。
+- `capabilities` — 此 adapter 能产生的 `AdapterCapability` 值。
+- `confidence?` — adapter 的默认 confidence 标签（省略时回退为 `unknown`）。
+- `knownGaps?` — 关于此 adapter *不*解析什么的人类可读说明。
+- `selectionMode?` — 有边界的语言/文件 adapter 默认是 `targeted`，最后的 fallback adapter 使用 `catch-all`。
+- `fileContentScope?` — 默认是 `full-index`；只有当 adapter 只需要当前 `process(file)` 输入的 content，并且只把 `ctx.indexedFiles` / `files` 当作 path-level context 时，才设置为 `target-only`。
+- `outputOwnership?` — 默认是 `unrestricted`；`processed-file` 启用下述文件输出归属校验。
+- `supports(file)` — 若此 adapter 处理该文件则返回 `true`。
+- `start(ctx, files)` — 为该 index run 返回一个 `AdapterRun`（或 `Promise<AdapterRun>`）。
+
+返回的 `AdapterRun` 暴露 `process(file)`——一个 yield `IndexEvent` 的 async generator——以及可选的 `dispose()`。每个 `IndexEvent` 是三种 kind 之一：
+
+- `entity` — 一个 `PendingEntity`（`EntityDescriptor`：`kind`、可选 `path`、`symbol`、`symbolKind`、`languageId`、`displayName`、`metadata`）。
+- `relation` — 带有 `source` 与 `target` descriptor、一个 `RelationKind`、可选 `metadata` 与 `evidence` 的 `PendingRelation`。
+- `diagnostic` — 一条 `warn` 或 `error` 消息，可选地关联到某文件。
+
+orchestrator 对每个 `EntityDescriptor` 做 content-hash 来计算其 entity id，因此相同的 descriptor 总是映射到相同的 entity。
+
+## Capability
+
+`AdapterCapability` 是以下之一：`imports`、`exports`、`calls`、`references`、`types`、`symbols`、`docrefs`、`tests`、`packages`。adapter 声明它能提取的子集，使 coverage 与 gap 按 adapter 显式呈现。
+
+## 文件 content 范围
+
+`fileContentScope` 显式说明 adapter 的跨文件 content 契约：
+
+- `full-index` — adapter 可以通过 `ctx.indexedFiles`、`files`、import resolution、package/lockfile discovery 或其他 startup state 读取任意已扫描文件的 content。为了 source compatibility 与安全性，这是默认值。
+- `target-only` — adapter 只读取当前传给 `process(file)` 的文件 content。它仍可使用 indexed path set 做 reference resolution，但不能在 `start()` 中或处理 target file 时读取其他文件的 `content`。
+
+只有检查实现后才使用 `target-only`。例如 config/infra path-reference extraction 用 indexed file path 校验 reference，但不读取其他 indexed file content。build-system/package 与 TypeScript/JavaScript adapter 会从 indexed content 构建 lockfile/package catalog、import resolver 与 cross-file target，因此保持 `full-index`。
+
+## 输出归属
+
+仅读取当前文件，并不能证明输出行属于该文件。
+`outputOwnership = 'processed-file'` 是单独的可选契约：
+
+- 显式 entity 和 relation source 必须使用当前 `process(file)` 路径及基于文件的
+  entity kind（包含 workflow/resource/contract）。暂不支持 symbol、module、
+  package 或 external identity。
+- relation target 可以是同一路径的文件实体，或指向另一个已索引文件的纯
+  `{ kind: 'file', path }` 引用。拒绝其他文件 target 的 metadata 和未索引占位实体。
+- 显式 evidence 与 diagnostic 的文件必须是当前文件。拒绝无文件 diagnostic；
+  relation evidence 缺省时仍使用当前文件作为 fallback。
+- 输入先复制再冻结。事件必须支持 `structuredClone`，并在校验前复制，防止
+  generator 或 dispose 后续修改已接受的事件。违规或复制失败会在发布图之前
+  使本次运行失败，同时保留失败审计记录。
+
+初期只有 config/infra 启用。未声明的 adapter 保持原有行为。运行开始时确定的
+归属声明参与 extractor signature，因此即使内容未变，更改声明也会重新校验。
+这尚未启用 changed-only extraction；fresh-index 等价性与读取量门禁通过前，
+内容变更仍执行完整提取。
+
+这两个声明也不证明处理顺序独立性。若 run 内计数器写入各文件自己的 metadata，
+完整 A→B 处理时 B 为 2，只处理 B 时为 1；没有读取其他正文或写入其他文件行，
+结果仍会变化。选择性重放还需要单独明确并证明文件独立性；目前 changed-body
+full fallback 继续保留有状态处理与 startup context。
+
+config/infra 的纯选择测试禁止读取 context 正文和 hash，比较完整、逆序、单文件
+处理以及已修改 target 的事件。测试也确认：移除一个 indexed path 会改变正文未变的
+Dockerfile 关系。这只是有限的 adapter 事件证据，不是通用独立性声明，也不能替代
+持久化 graph 或 saved-report oracle。路径集合变化仍须使缓存失效；runtime
+选择性提取仍未启用。
+
+## Evidence 与 confidence（不变量 I-10）
+
+每个 relation 都应携带 `evidence`——一个 source 文件、span 与 snippet——以及一个 confidence 标签。`Confidence` 有四个级别：
+
+- `proven` — 由 parser 级 fact 支撑。
+- `inferred` — 推导得出但有充分支撑。
+- `heuristic` — 宽泛的基于模式的 coverage。
+- `unknown` — 缺少 confidence 时的回退。
+
+这强制了不变量 **I-10**（见 [invariants.zh.md](invariants.zh.md)）：每个 impact 判断都同时携带 evidence + provenance + confidence，未知之物以 `unknown` 显式呈现而非当作 fact。adapter 的每次 run 的 confidence 与 `knownGaps` 都会被记录，使 agent 与人能区分 parser 支撑的结果与宽泛的 heuristic coverage。
+
+## 注册与选择顺序
+
+adapter 存放于 registry（`src/adapters/registry.ts`），由 `src/indexer.ts` 中的 `createDefaultRegistry()` 组装。选择在注册顺序中是 **first-match-wins**——`pickAdapter(file)` 返回首个 `supports()` 为 `true` 的已注册 adapter。
+
+这使注册顺序 load-bearing。默认 registry 按以下顺序注册：build-system/package adapter、config/infra adapter、TypeScript/JavaScript adapter、JVM/Spring adapter、Python adapter、Go adapter、Rust adapter，最后是 multi-language regex adapter。最后那个 adapter 是一个 `supports()` 永远返回 `true` 的 **catch-all**，因此必须 LAST 注册——任何注册在 catch-all 之后的 adapter 都不可达。registry 会强制这一顺序。
+
+registry 现在显式强制这项契约。`selectionMode` 为了 source compatibility 是可选字段，省略时默认为 `targeted`；只有刻意作为最后 fallback coverage 的 adapter 才设置 `selectionMode = 'catch-all'`。如果已经存在 catch-all adapter，`AdapterRegistry.register()` 会拒绝在它之后注册任何 adapter，error 会同时命名新 adapter 与阻挡它的 catch-all adapter。重复 `id` 校验仍然先运行，并保留既有的重复 id error。
+
+审查或测试 adapter 注册时使用 `registry.manifest()`。它按注册顺序返回一个 immutable snapshot。每个 entry 暴露 `order`、`id`、`version`、`capabilities`、`confidence`（默认 `unknown`）、`knownGaps`（默认空数组）、`selectionMode`（默认 `targeted`）和 `fileContentScope`（默认 `full-index`）及 `outputOwnership`（默认 `unrestricted`）。调用方可以检查这些信息，但不能改变 registry 状态。
+
+## 版本管理与重新提取
+
+每次 index run 都会记录由所有活跃 adapter 的 `id`、`version`、已确定的 `outputOwnership` 及 indexer 语义版本组成的 `extractor_version` 签名。提升某 adapter 的 `version` 会在下一次 `parallax index` run 中改变该记录的签名。每当 adapter 的提取输出改变时就提升 `version`，以免运行在 adapter 版本之间被悄悄混淆。
+
+## 最小示例
+
+一个处理 `.example` 文件、发出一个 `file` entity 和一个带 evidence 的 `IMPORTS` relation 的小 adapter：
+
+```ts
+import type {
+  AdapterCapability,
+  AdapterRun,
+  ExtractCtx,
+  IndexEvent,
+  SemanticAdapter
+} from './types.js';
+import type { ScannedFile } from '../types.js';
+
+const capabilities: readonly AdapterCapability[] = ['imports'];
+
+export class ExampleAdapter implements SemanticAdapter {
+  readonly id = 'example';
+  readonly version = '0.1.0';
+  readonly capabilities = capabilities;
+  readonly confidence = 'heuristic';
+  readonly selectionMode = 'targeted';
+  readonly fileContentScope = 'target-only';
+  readonly knownGaps = ['only resolves a single literal import form'];
+
+  supports(file: ScannedFile): boolean {
+    return file.relativePath.endsWith('.example');
+  }
+
+  start(_ctx: ExtractCtx, _files: readonly ScannedFile[]): AdapterRun {
+    return {
+      async *process(file: ScannedFile): AsyncIterable<IndexEvent> {
+        // 1) 将文件声明为 entity。
+        yield { kind: 'entity', entity: { kind: 'file', path: file.relativePath } };
+
+        // 2) 发出一个由 evidence 支撑的 relation。
+        const match = /^import\s+(\S+)/m.exec(file.content);
+        if (match) {
+          yield {
+            kind: 'relation',
+            relation: {
+              source: { kind: 'file', path: file.relativePath },
+              target: { kind: 'file', path: match[1]! },
+              kind: 'IMPORTS',
+              evidence: [
+                {
+                  file: file.relativePath,
+                  snippet: match[0],
+                  startLine: 1,
+                  confidence: 'heuristic'
+                }
+              ]
+            }
+          };
+        }
+      }
+    };
+  }
+}
+```
+
+在 `createDefaultRegistry()` 中把它注册在 catch-all adapter **之前**，使其 `supports()` 先被参考。
+
+## adapter checklist
+
+添加或修改 adapter 前：
+
+- 使用唯一的 `id`，并在提取输出变化时提升 `version`。
+- 对语言/文件专用 adapter 优先使用 `selectionMode = 'targeted'`；只把 `catch-all` 留给最后的 fallback adapter。
+- 除非 adapter 只读取 target-file content，并把 indexed files 仅当作 path metadata，否则保持 `fileContentScope = 'full-index'`。
+- 将所有 targeted adapter 注册在任何 catch-all adapter 之前。
+- 在 focused test 或 review note 中用 `registry.manifest()` 确认顺序、capability、confidence、known gap、selection mode 和 file content scope。
+- 保持 `knownGaps` 最新，让 manifest 能说明哪些 coverage 是 heuristic 或不完整的。
+
+## 另见
+
+- [mcp.zh.md](mcp.zh.md) — 读取已索引 graph 的 MCP surface
+- [cli-reference.zh.md](cli-reference.zh.md) — `parallax index` 与分析命令
+- [invariants.zh.md](invariants.zh.md) — evidence-first 不变量（I-10）
+- [glossary.zh.md](glossary.zh.md) — adapter、evidence、confidence 定义

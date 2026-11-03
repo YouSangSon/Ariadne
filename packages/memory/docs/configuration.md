@@ -1,0 +1,441 @@
+> **English** | [한국어](configuration.ko.md)
+
+# Configuration reference
+
+Akasha is configured entirely through environment variables. There are
+no config files or runtime flags. This document is the canonical reference
+for every variable the project reads.
+
+For a copy-paste template, see [.env.example](../.env.example) at the repo
+root. The `install.sh` wrapper auto-creates `.env` from that template on
+first run.
+
+## How config flows
+
+```
+.env (your file)
+   ├─→ docker compose substitution     (compose.yaml's ${VAR:-default})
+   └─→ Node process.env                (read by src/config.ts)
+```
+
+Everything inside Postgres / Qdrant containers comes from the compose layer.
+The Node app reads from `process.env` directly via `resolveServiceConfig` in
+`src/config.ts`. Values supplied to `compose up` propagate to both.
+
+## Validation behavior
+
+Variables marked **required** throw at startup if missing or invalid. This is
+intentional — fail-closed beats running with an undefined value silently.
+Optional variables use their documented defaults when unset, but explicitly
+configured whitespace-only values are invalid.
+
+The fail-closed gate also refuses to bind to a non-loopback host
+(`HOST=0.0.0.0`, `HOST=10.x.x.x`, etc.) when both `MEMORY_API_TOKENS` and
+OAuth token validation are absent — preventing accidental zero-auth public
+exposure.
+
+## Required
+
+| Variable | Default | Notes |
+|---|---|---|
+| `MEMORY_API_TOKENS` | — | Comma-separated static bearer tokens. Required for non-loopback binds unless OAuth token validation is configured. See [Auth](#auth) below. |
+
+`OPENAI_API_KEY` is **not** required for default operation. The default
+embedding provider is `transformers` (free local ONNX). Set `OPENAI_API_KEY`
+only when you set `EMBEDDING_PROVIDER=openai`. See [Embeddings](#embeddings).
+
+## Postgres
+
+The compose-bundled Postgres is the default. Override `DATABASE_URL` to point
+at an external instance.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `DATABASE_URL` | (computed) | Full URL. Takes precedence over `POSTGRES_*`. |
+| `POSTGRES_USER` | `memory` | |
+| `POSTGRES_PASSWORD` | `memory` | Change in production. |
+| `POSTGRES_DB` | `memory_os` | |
+| `POSTGRES_HOST` | `127.0.0.1` (host process) / `postgres` (compose) | |
+| `POSTGRES_PORT` | `5432` | |
+| `PG_POOL_MAX` | `10` | Maximum connections per Node process pool. Increase only when Postgres has matching connection capacity. |
+| `PG_IDLE_TIMEOUT_MS` | `30000` | Milliseconds before an idle client is closed. |
+| `PG_CONNECT_TIMEOUT_MS` | `5000` | Milliseconds to wait for a new pool connection before failing. |
+
+When the compose-managed Postgres is used, `DATABASE_URL` is auto-built from
+the `POSTGRES_*` parts (with host=`postgres` inside the network). When running
+the migration script from the host, `install.sh` rewrites the host to
+`127.0.0.1:5432` for reachability.
+
+`PG_POOL_MAX`, `PG_IDLE_TIMEOUT_MS`, and `PG_CONNECT_TIMEOUT_MS` tune the
+Node Postgres client pool used by runtime services and migrations. They are
+plain decimal positive integers; whitespace, fractional, scientific, or
+prefixed number formats are rejected at startup.
+
+## Vector backend
+
+| Variable | Default | Notes |
+|---|---|---|
+| `VECTOR_BACKEND` | `qdrant` | `qdrant` (default) or `pgvector`. When `pgvector`, vectors are stored in Postgres — no Qdrant service needed and Qdrant credentials are not required. Switching backends requires a `reindex_memory`. |
+
+### pgvector — admin prerequisite
+
+When `VECTOR_BACKEND=pgvector`, the `vector` Postgres extension must be installed before the app starts. The app checks for the extension at boot and throws a clear error if it is absent — it does **not** run `CREATE EXTENSION` itself (that requires superuser, which the app role typically lacks on managed Postgres).
+
+**Docker / local** (the `pgvector/pgvector:pg16` image ships the extension; the `postgres` superuser can run):
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+**RDS / Cloud SQL / Supabase**: enable the extension through the managed extension panel or a one-time superuser migration script. Supabase enables it by default in new projects. On RDS, use `rds_superuser` via a migration.
+
+Once the extension exists, all subsequent table and index creation is done by the app role (table-owner privileges are sufficient).
+
+## Qdrant
+
+Qdrant variables are only required when `VECTOR_BACKEND=qdrant` (the default).
+
+| Variable | Default | Notes |
+|---|---|---|
+| `QDRANT_URL` | `http://localhost:6333` | Inside compose: `http://qdrant:6333`. |
+| `QDRANT_API_KEY` | `local-qdrant-key` | Development-only default. Generate a strong replacement in production. |
+| `QDRANT_COLLECTION_NAME` | `memory_chunks_v1` | Bumping the version triggers a reindex. |
+
+The compose defaults are for local development only. Production operators
+should replace `POSTGRES_PASSWORD`, `QDRANT_API_KEY`, and every
+`MEMORY_API_TOKENS` value with generated secrets before the first deploy.
+
+## Server bind (HTTP API)
+
+| Variable | Default | Notes |
+|---|---|---|
+| `HOST` | `127.0.0.1` | Bind interface. `0.0.0.0` exposes off-box; pair with `MEMORY_API_TOKENS` or OAuth token validation. |
+| `PORT` | `8787` | Plain decimal integer from 1 to 65535. |
+| `NODE_ENV` | unset | `production` enables connection pooling defaults. |
+
+## Embeddings
+
+| Variable | Default | Notes |
+|---|---|---|
+| `EMBEDDING_PROVIDER` | `transformers` | `transformers` (free local ONNX, default), `openai` (paid API), or `local` (deterministic stub for CI). |
+| `OPENAI_EMBEDDING_MODEL` | `text-embedding-3-small` | 1536-dim. Bumping requires reindex. |
+| `TRANSFORMERS_EMBEDDING_MODEL` | `Xenova/all-MiniLM-L6-v2` | Hugging Face ONNX model id; the default has 384 dimensions. Set matching `EMBEDDING_DIMENSIONS` for another model. |
+| `EMBEDDING_DIMENSIONS` | `384` | Plain decimal positive integer vector size for `transformers` and `local` providers. |
+| `EMBEDDING_MODEL` | `local-deterministic-v1` | Only meaningful when `EMBEDDING_PROVIDER=local`. |
+
+The transformer chunker counts model tokens, including special tokens, and uses the smaller of the configured chunk target and tokenizer limit. The default model currently allows 512 input tokens. Original UTF-16 offsets and bounded overlap are preserved. Other providers keep their existing chunking behavior. Search queries and direct embedding inputs must fit the model limit; overlong inputs return an explicit error.
+
+### Choosing a provider — cost vs. quality vs. setup
+
+| Provider | Cost | Semantic quality | Setup |
+|---|---|---|---|
+| `openai` | Paid API; see [pricing](https://openai.com/api/pricing) | Evaluate on your own corpus | Set `OPENAI_API_KEY` |
+| `transformers` | No embedding API fee; uses local CPU/RAM | Depends on model, language and corpus; see the measured multilingual limits below | Installed by the project (`@huggingface/transformers`); model files download on first use |
+| `local` | Free | **None — semantically meaningless**, exact-match only | Zero setup, but unsuitable for real retrieval |
+
+The default runs `Xenova/all-MiniLM-L6-v2` locally via ONNX. The installed
+Transformers.js runtime owns its model cache (`env.cacheDir`; normally `.cache`
+relative to the library installation in Node). Confirm that path in the target
+runtime before preparing an offline deployment.
+
+**Switching providers requires a reindex** — different vector dimensions or
+content semantics produce incompatible Qdrant points. Run
+the `reindex_memory` MCP tool or `POST /v1/memory/reindex` after switching.
+For the v1.0.x → transformers-default upgrade specifically, see the
+step-by-step playbook in
+[docs/migrations/openai-to-transformers.md](migrations/openai-to-transformers.md)
+(includes `curl` commands for recreating the Qdrant collection at the new
+dimension).
+
+<a id="multilingual-retrieval"></a>
+### Experimental multilingual retrieval
+
+The default model missed 9 of 18 Korean/Japanese/Chinese and cross-language
+smoke questions. Multilingual MPNet found all 18 in the top 5, but ranked an audit
+export ahead of the billing export for one Chinese question. Its stricter
+language-direction qualification remains **RED**. The fixed labels, thresholds
+and failed alternatives are recorded in [GATES.md](https://github.com/YouSangSon/akasha/blob/main/GATES.md#multilingual-retrieval-v3).
+
+To evaluate the existing configurable provider in a separate Qdrant index:
+
+```dotenv
+VECTOR_BACKEND=qdrant
+EMBEDDING_PROVIDER=transformers
+TRANSFORMERS_EMBEDDING_MODEL=Xenova/paraphrase-multilingual-mpnet-base-v2
+EMBEDDING_DIMENSIONS=768
+QDRANT_COLLECTION_NAME=memory_multilingual_experiment_v1
+```
+
+Use a new collection name. Pause ordinary queries/writes, reindex every required
+organization and project/user scope from canonical records, and verify completion
+before serving the new model. A 384-dimensional collection cannot accept these
+vectors. Preserve the old index for rollback; switching the model name alone
+does not migrate vectors. Retrieval was measured with Qdrant, not pgvector;
+the experiment did not exercise an existing-index migration or rollback.
+
+This is an opt-in experiment, not a default-model change or broad language
+certification. The [model card](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
+describes the model; our two questions per direction are a small smoke corpus.
+The retrieval result does not calibrate automatic repeat detection or semantic
+compaction thresholds for this model. Leave semantic deduplication disabled and
+independently validate repeat judgments before using them for automation.
+
+## Auth
+
+`MEMORY_API_TOKENS` is a comma-separated list of bearer tokens. Each token may
+optionally be bound to an organization with `:` syntax:
+
+The token value itself must not contain `:`. Akasha treats a single colon as
+the optional `token:org` separator and rejects entries with more than one
+colon at startup.
+
+```bash
+# Single token, any org:
+MEMORY_API_TOKENS=dev-token
+
+# Multi-token rotation (deploy with both, rotate clients, then drop old):
+MEMORY_API_TOKENS=old-token,new-token
+
+# Org-bound (multi-tenant): each token can only read/write its bound org.
+MEMORY_API_TOKENS=alpha-token:dev-team,beta-token:finance-team
+
+# Mixed:
+MEMORY_API_TOKENS=alpha-token:dev-team,legacy-token
+```
+
+Blank entries inside a configured comma list are rejected: leading commas,
+trailing commas, repeated commas, and whitespace-only entries are invalid.
+Set the whole value empty (`MEMORY_API_TOKENS=`) only for loopback local
+development with auth disabled.
+
+When a token has an org binding:
+- Requests automatically inherit `organizationId = <bound org>`.
+- A request body or `x-organization-id` header that disagrees → **403**.
+
+When a token has no binding (legacy form):
+- Requests use `organizationId` from `x-organization-id` header or body.
+- If neither supplies one, the default-strict guard refuses the read with a
+  clear error pointing the operator at the three available fixes (token-org
+  binding, header, body). Bind tokens to orgs in production.
+- To opt into the historical org-blind behavior — e.g. a single-tenant
+  install with no plans to add a second tenant — set
+  `LEGACY_ANONYMOUS_SEARCH=true` in `.env`. The flag is read on every
+  request, so flips take effect without a restart. This flag now gates
+  **all** read paths: `retrieve_memory` (search), `compact_memory` dry-run
+  (`listMemory`), and the vector-hydration step (`getMemoryRecordsByIds`).
+  Without it, every read that omits an org throws an operational error.
+
+### OAuth/OIDC protected-resource discovery and JWT validation
+
+Akasha can advertise OAuth 2.0 Protected Resource Metadata for MCP Streamable
+HTTP clients and validate JWT access tokens issued by the configured
+authorization servers. Static `MEMORY_API_TOKENS` continue to work; HTTP
+clients may authenticate with either a configured static token or a JWT whose
+issuer, audience, signature, expiry, and scope pass validation. Origin checks
+and rate limiting still apply.
+
+Leave `MCP_OAUTH_AUTHORIZATION_SERVERS` unset to disable discovery. When it is
+set, `MCP_OAUTH_RESOURCE_URL` is required and the app serves metadata
+unauthenticated at:
+
+- `/.well-known/oauth-protected-resource`
+- `/.well-known/oauth-protected-resource/mcp`
+
+Unauthorized `/mcp` and `/v1/*` requests also include a `WWW-Authenticate`
+challenge with `resource_metadata` and `scope` parameters.
+
+OAuth access tokens are accepted only when:
+- `iss` matches one of `MCP_OAUTH_AUTHORIZATION_SERVERS`.
+- `aud` contains `MCP_OAUTH_RESOURCE_URL`.
+- The signature verifies against the issuer's JWKS.
+- The token is not expired or not-yet-valid, allowing
+  `MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS`.
+- The token carries the scope required by the requested tool.
+
+Scopes:
+- `akasha:read` — `search_memory`, `build_context_pack`,
+  `list_memory`, `inspect_memory_graph`, `get_goal_run`, `list_goal_runs`,
+  `build_goal_context`, `check_repeat_attempt`, `list_workspace_roots`,
+  `classify_memory_candidate`, and dry-run `compact_memory`.
+- `akasha:write` — `add_memory`, `add_memory_interactive`,
+  `start_goal_run`, `record_iteration`, `complete_goal_run`, and
+  `abandon_goal_run`.
+- `akasha:admin` — `reindex_memory`, `unarchive_memory`, `list_audit_log`,
+  `update_memory`, `delete_memory`, `tag_memory`, and `compact_memory` with
+  `dryRun: false`.
+- `akasha:memory` — compatibility umbrella scope that satisfies all of the
+  above.
+
+If the JWT contains `MCP_OAUTH_ORGANIZATION_CLAIM` (default:
+`organization_id`) as a non-empty string, Akasha treats it like a token-org
+binding: requests inherit that `organizationId`, and conflicting body/header
+org values return 403.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `MCP_OAUTH_AUTHORIZATION_SERVERS` | unset → disabled | Comma-separated HTTPS issuer URLs for authorization servers. Blank entries are rejected when set. |
+| `MCP_OAUTH_RESOURCE_URL` | required when enabled | Public protected resource URL. Use the externally reachable HTTPS URL, normally `https://.../mcp`. |
+| `MCP_OAUTH_SCOPES` | `akasha:memory` | Comma-separated scopes advertised in metadata and space-delimited in the challenge header. Blank entries are rejected when set. |
+| `MCP_OAUTH_JWKS_URLS` | discovered from issuer metadata | Optional comma-separated HTTPS JWKS URLs. When set, provide one URL per authorization server. Blank entries are rejected. |
+| `MCP_OAUTH_JWT_ALGORITHMS` | `RS256,RS384,RS512,PS256,PS384,PS512,ES256,ES384,ES512,EdDSA` | Accepted JWS `alg` values. Blank entries are rejected when set. |
+| `MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS` | `60` | Clock skew tolerance for `exp` / `nbf`. |
+| `MCP_OAUTH_JWT_TYPE` | unset | Optional required JWT `typ` header, e.g. `at+jwt`. If set, it must contain non-whitespace text. Leave unset for provider compatibility. |
+| `MCP_OAUTH_ORGANIZATION_CLAIM` | `organization_id` | JWT claim used as the org binding when present. If set, it must contain non-whitespace text. |
+| `MCP_OAUTH_JWKS_TIMEOUT_MS` | `5000` | Timeout for remote JWKS fetches. |
+| `MCP_OAUTH_RESOURCE_NAME` | unset | Optional human-readable `resource_name`. If set, it must contain non-whitespace text. |
+| `MCP_OAUTH_RESOURCE_DOCUMENTATION_URL` | unset | Optional HTTPS URL emitted as `resource_documentation`. If set, it must contain non-whitespace text. |
+
+## Personal / single-tenant use
+
+`organization_id` is just a string label, not a "company" or "account" concept —
+there is no separate signup or user system. Record-bearing tables default writes
+to `'default'` when the caller omits an org, but read paths are strict by
+default: pass `organizationId` (or bind the token to an org) for
+search/context-pack/compact reads unless you explicitly set
+`LEGACY_ANONYMOUS_SEARCH=true`. For one-person use, pick one org label and use
+it consistently.
+
+Three personal setups, in order of increasing isolation:
+
+| Use case | `MEMORY_API_TOKENS` | `HOST` | What you get |
+|---|---|---|---|
+| Local solo, no auth | (empty) | `127.0.0.1` | Writes can use the `'default'` org. Pass `organizationId: "default"` on reads, or opt into `LEGACY_ANONYMOUS_SEARCH=true`. |
+| Local solo, token-protected | `mytoken` (no `:`) | `127.0.0.1` or LAN | Token verified. Pass `x-organization-id: default` or body `organizationId` for strict read paths. |
+| Future-proof single tenant | `mytoken:yousang-personal` | any | Requests are isolated under one named tenant via the token binding — adding a second person later is one more comma-separated entry, no schema change. |
+
+Multi-tenancy is the **N=1 special case** of the same code path, so there is no
+"personal mode" flag and no separate query path to maintain. If you want strict
+per-user isolation later (e.g. SaaS-style serving multiple individuals), issue
+each person their own `token:org` pair — the org filter at the SQL and Qdrant
+layers handles the rest.
+
+## Rate limit
+
+| Variable | Default | Notes |
+|---|---|---|
+| `RATE_LIMIT_PER_MINUTE` | unset → no limit (compose deployments default to **60**) | Positive integer token-bucket cap, keyed per token. Recommended in production. |
+
+This limiter is in-memory and process-local. In multi-replica deployments,
+each app replica has its own bucket, so the effective limit can scale with
+replica count. Put a shared reverse-proxy or edge limiter in front of Akasha
+(for example NGINX `limit_req_zone`/`limit_req` or Cloudflare rate limiting
+rules) when you need a deployment-wide quota.
+
+The compaction-apply path has a separate, stricter limit (1 per hour per
+org by default) hard-coded in `applyCompaction` deps. It can be tuned by
+constructing the orchestrator differently in custom integrations.
+
+## Compaction sweeper
+
+The sweeper retries Qdrant cleanup for archived records whose in-line delete
+failed. Off by default — opt in on one continuously running HTTP replica, or
+run a dedicated `npm run start:worker` process with this flag set.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `COMPACTION_SWEEP_ENABLED` | `false` | Truthy values: `true`, `1`, `yes` (case-insensitive). All others = false. |
+| `COMPACTION_SWEEP_INTERVAL_MS` | `30000` | Tick interval. Must be ≥ 1000. |
+
+When enabled, each tick processes up to 100 pending rows and gives up after 5
+attempts (rows then move to `qdrant_status='failed'` for ops review).
+
+## Ingest sweeper
+
+The ingest sweeper re-indexes memory records whose Qdrant upsert was interrupted
+by a process crash between the write-ahead `markQdrantPending` and
+`markQdrantCompleted`. Without it, crash-orphaned records remain in Qdrant's
+backlog indefinitely (invisible to search); with it enabled, they are picked up
+on the next sweep cycle. Off by default — opt in on one continuously running
+HTTP replica, or run a dedicated `npm run start:worker` process with this flag
+set.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `INGEST_SWEEP_ENABLED` | `false` | Truthy values: `true`, `1`, `yes` (case-insensitive). All others = false. |
+| `INGEST_SWEEP_INTERVAL_MS` | `30000` | Tick interval in ms. Must be ≥ 1000. |
+
+When enabled, each tick claims up to 100 due rows and gives up after 5 attempts
+(rows then move to `qdrant_status='failed'` for ops review). Backoff is
+exponential: 1 s, 2 s, 4 s, 8 s, capped at 5 min.
+
+## Backup
+
+| Variable | Default | Notes |
+|---|---|---|
+| `BACKUP_DIR` | `./.developer-memory-os/backups` | Where `npm run backup:create` writes. |
+| `BACKUP_TARGET_HOST` | unset | Optional SSH/scp target for off-host replication. Leave empty to keep `backup:create` local-only; `backup:verify` requires a non-empty remote target. |
+| `BACKUP_TARGET_DIR` | `BACKUP_DIR` | Optional remote directory used by backup copy and verification scripts. If set, it must contain non-whitespace text. |
+| `BACKUP_ENCRYPTION_KEY_FILE` | unset | Optional file containing a 32-byte AES key (hex, base64, or raw bytes). If set, it must contain non-whitespace text. When set, backup artifacts are encrypted with AES-256-GCM before off-host copy. |
+| `BACKUP_ENCRYPTION_KEEP_PLAINTEXT` | `false` | Set `true` only for local debugging; accepts trimmed, case-insensitive `true` or `false`. Any other configured value fails before encryption starts. By default plaintext artifacts are removed after encrypted `.enc` artifacts and manifest checksums are written. |
+
+See [docs/operations.md](operations.md) for the backup/restore workflow.
+
+## Logging and MCP identity
+
+| Variable | Default | Notes |
+|---|---|---|
+| `LOG_LEVEL` | `info` in production, `debug` otherwise | Case-insensitive pino log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal`, or `silent`. Logs go to stderr so MCP stdio JSON-RPC stays clean. |
+| `DEVELOPER_MEMORY_USER_ID` | derived from `git config user.email`, then OS username | Stable user-scope id used when a tool needs user memory and no explicit `userScopeId` is supplied. If set, it must contain non-whitespace text. |
+| `DMO_CWD` | `process.cwd()` | MCP stdio startup working directory override; mainly useful when launching the built CLI from another directory. If set, it must contain non-whitespace text. |
+
+## Restore smoke
+
+`npm run restore:smoke` is an operator verification helper, not part of normal
+request serving. It restores the newest manifest from `BACKUP_DIR` into an
+isolated compose project and validates search/context-pack behavior.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `RESTORE_POSTGRES_URL` | required | Connection string for the isolated restore Postgres. |
+| `RESTORE_QDRANT_URL` | required for Qdrant manifests | URL for the isolated restore Qdrant. Pgvector manifests skip Qdrant restore. |
+| `RESTORE_SMOKE_POSTGRES_RESTORE_CMD` | required | Shell command that restores `RESTORE_SMOKE_POSTGRES_ARTIFACT_PATH`. |
+| `RESTORE_SMOKE_QDRANT_RESTORE_CMD` | required for Qdrant manifests | Shell command that restores `RESTORE_SMOKE_QDRANT_ARTIFACT_PATH`. Pgvector manifests skip this command. |
+| `RESTORE_SMOKE_PROJECT` | `restore-smoke` | Docker Compose project name for the isolated stack. If set, it must contain non-whitespace text. |
+| `RESTORE_SMOKE_PROJECT_KEY` | `project-alpha` | Project key used by smoke-search and context-pack checks. If set, it must contain non-whitespace text. |
+| `RESTORE_SMOKE_ORGANIZATION_ID` | unset | Optional organization id passed to strict search/context-pack checks. If set, it must contain non-whitespace text. Set this for default-strict restores unless you intentionally use `LEGACY_ANONYMOUS_SEARCH=true`. |
+| `RESTORE_SMOKE_USER_SCOPE_ID` | unset | Optional user scope included in restore checks. If set, it must contain non-whitespace text. |
+| `RESTORE_SMOKE_SEARCH_QUERY` | `continue work` | Query used by the restored search check. If set, it must contain non-whitespace text. |
+| `RESTORE_SMOKE_PACK_TASK` | `continue work` | Task text used by the restored context-pack check. If set, it must contain non-whitespace text. |
+| `RESTORE_APP_PORT` | `18787` | Host port expected for the isolated app service. Plain decimal integer from 1 to 65535. |
+
+## Common configurations
+
+### Local solo dev (loopback, no auth needed)
+
+```bash
+EMBEDDING_PROVIDER=local
+MEMORY_API_TOKENS=
+HOST=127.0.0.1
+```
+
+Loopback bind + empty tokens = the fail-closed gate permits this in dev.
+Embedding stays offline. No external API key required.
+
+### Single-user with OpenAI
+
+```bash
+EMBEDDING_PROVIDER=openai
+OPENAI_API_KEY=sk-...
+MEMORY_API_TOKENS=local-dev-token
+HOST=127.0.0.1
+PORT=8787
+```
+
+### Multi-tenant production
+
+```bash
+HOST=0.0.0.0
+PORT=8787
+DATABASE_URL=postgres://memory:STRONG_PW@db.internal:5432/memory_os
+QDRANT_URL=https://qdrant.internal:6333
+QDRANT_API_KEY=STRONG_QDRANT_KEY
+EMBEDDING_PROVIDER=openai
+OPENAI_API_KEY=sk-prod-...
+MEMORY_API_TOKENS=team-a-token:team-a,team-b-token:team-b,ops-token:ops
+RATE_LIMIT_PER_MINUTE=300
+COMPACTION_SWEEP_ENABLED=true
+NODE_ENV=production
+```
+
+Pair with TLS at the reverse proxy layer; see
+[docs/deployment.md](deployment.md).

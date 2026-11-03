@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Release gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # CPU binaries are bundled; these runners do not need extra GPU providers.
+      ONNXRUNTIME_NODE_INSTALL: skip
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check bundled ONNX CPU backend
+        run: |
+          node <<'JS'
+          const assert = require('node:assert/strict');
+          const ort = require('onnxruntime-node');
+          assert.ok(ort.listSupportedBackends().some(backend => backend.name === 'cpu' && backend.bundled));
+          console.log('ONNX Runtime ' + ort.env.versions.node + ': bundled CPU backend available');
+          JS
+
+      - name: Prepare PR bench baseline
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_WORKTREE="$(mktemp -d -t parallax-bench-base-XXXXXX)"
+          cleanup() {
+            git worktree remove --force "$BASE_WORKTREE" >/dev/null 2>&1 || rm -rf "$BASE_WORKTREE"
+          }
+          trap cleanup EXIT
+          git worktree add --detach "$BASE_WORKTREE" "${{ github.event.pull_request.base.sha }}"
+          npm ci --prefix "$BASE_WORKTREE"
+          npm --prefix "$BASE_WORKTREE" run bench
+          mkdir -p .parallax/bench
+          cp "$BASE_WORKTREE/.parallax/bench/impact-bench-report.json" .parallax/bench/impact-bench-baseline.json
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Report bench summary
+        if: always()
+        run: npm run bench:report -- --github-step-summary --allow-missing --baseline .parallax/bench/impact-bench-baseline.json

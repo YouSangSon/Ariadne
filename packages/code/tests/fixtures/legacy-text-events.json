@@ -1,0 +1,261 @@
+{
+  "source": "de2de4758ba8af344998a38fad4950b089875dae",
+  "scope": "synthetic legacy IndexEvents captured without DB/app; lane source overrides root source where present",
+  "lanes": [
+    {
+      "adapterId": "config-infra-semantic-v0",
+      "version": "1",
+      "files": [
+        {
+          "relativePath": ".github/workflows/ci.yml",
+          "language": "yaml",
+          "content": "İİİİİİİİİİİİ\nrun: node src/a.ts\nsentinel\n"
+        },
+        {
+          "relativePath": "Dockerfile",
+          "language": "dockerfile",
+          "content": "# head\r\n# head\r\n# head\r\n# head\r\n# head\r\n# head\r\n# head\r\n# head\r\n# head\r\n# head\r\nCOPY --from=builder src/a.ts /app/a.ts\r\n"
+        }
+      ],
+      "events": {
+        ".github/workflows/ci.yml": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "workflow",
+                "path": ".github/workflows/ci.yml",
+                "languageId": "yaml",
+                "displayName": ".github/workflows/ci.yml"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "github-actions path reference",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": ".github/workflows/ci.yml",
+                  "snippet": "sentinel",
+                  "confidence": "heuristic",
+                  "startLine": 3,
+                  "endLine": 3,
+                  "startCol": 1,
+                  "endCol": 9
+                }
+              ]
+            }
+          }
+        ],
+        "Dockerfile": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "resource",
+                "path": "Dockerfile",
+                "languageId": "dockerfile",
+                "displayName": "Dockerfile"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "dockerfile path reference",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": "Dockerfile",
+                  "snippet": "COPY --from=builder src/a.ts /app/a.ts\r",
+                  "confidence": "heuristic",
+                  "startLine": 11,
+                  "endLine": 11,
+                  "startCol": 1,
+                  "endCol": 40
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "adapterId": "multi-language-regex-mvp",
+      "version": "38",
+      "files": [
+        {
+          "relativePath": "config.yml",
+          "language": "yaml",
+          "content": "# İİİİİİİİİİİİİİİİİİİİ\npath: src/a.ts\nsentinel: other\n"
+        }
+      ],
+      "events": {
+        "config.yml": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "file",
+                "path": "config.yml",
+                "languageId": "yaml",
+                "displayName": "config.yml"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "system/config mention",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": "config.yml",
+                  "snippet": "sentinel: other",
+                  "confidence": "heuristic",
+                  "startLine": 3,
+                  "endLine": 3,
+                  "startCol": 1,
+                  "endCol": 16
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "source": "5429afc13507d73d90347bbed08e82f776b32cae",
+      "adapterId": "config-infra-semantic-v0",
+      "version": "2",
+      "files": [
+        {
+          "relativePath": ".github/workflows/repeat.yml",
+          "language": "yaml",
+          "content": "# header\nrun: node src/a.ts\n"
+        },
+        {
+          "relativePath": "Dockerfile",
+          "language": "dockerfile",
+          "content": "COPY --from=builder src/a.ts src/a.ts /out/\n"
+        },
+        {
+          "relativePath": "images/Dockerfile",
+          "language": "dockerfile",
+          "content": "COPY --from=builder src/a.ts src/a.ts\n"
+        }
+      ],
+      "events": {
+        ".github/workflows/repeat.yml": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "workflow",
+                "path": ".github/workflows/repeat.yml",
+                "languageId": "yaml",
+                "displayName": ".github/workflows/repeat.yml"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "github-actions path reference",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": ".github/workflows/repeat.yml",
+                  "snippet": "run: node src/a.ts",
+                  "confidence": "heuristic",
+                  "startLine": 2,
+                  "endLine": 2,
+                  "startCol": 1,
+                  "endCol": 19
+                }
+              ]
+            }
+          }
+        ],
+        "Dockerfile": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "resource",
+                "path": "Dockerfile",
+                "languageId": "dockerfile",
+                "displayName": "Dockerfile"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "dockerfile path reference",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": "Dockerfile",
+                  "snippet": "COPY --from=builder src/a.ts src/a.ts /out/",
+                  "confidence": "heuristic",
+                  "startLine": 1,
+                  "endLine": 1,
+                  "startCol": 1,
+                  "endCol": 44
+                }
+              ]
+            }
+          }
+        ],
+        "images/Dockerfile": [
+          {
+            "kind": "relation",
+            "relation": {
+              "source": {
+                "kind": "resource",
+                "path": "images/Dockerfile",
+                "languageId": "dockerfile",
+                "displayName": "images/Dockerfile"
+              },
+              "target": {
+                "kind": "file",
+                "path": "src/a.ts"
+              },
+              "kind": "CONFIGURES",
+              "metadata": {
+                "provenance": "dockerfile path reference",
+                "confidence": "heuristic"
+              },
+              "evidence": [
+                {
+                  "file": "images/Dockerfile",
+                  "snippet": "COPY --from=builder src/a.ts src/a.ts",
+                  "confidence": "heuristic",
+                  "startLine": 1,
+                  "endLine": 1,
+                  "startCol": 1,
+                  "endCol": 38
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "staleSnippetPrefix": "COPY --from=builder src/a.ts src/a.ts /out/",
+      "preservedRelationSource": "file:images/Dockerfile"
+    }
+  ]
+}

@@ -10,9 +10,9 @@ A portable coding-agent harness for requirements, context, and evidence.
 
 [![Verify](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml/badge.svg)](https://github.com/YouSangSon/ariadne/actions/workflows/verify.yml)
 ![Node.js 24.22+](https://img.shields.io/badge/Node.js-24.22%2B-43853d?logo=nodedotjs&logoColor=white)
-![Dependencies: zero](https://img.shields.io/badge/runtime_dependencies-0-eab308)
+![One project](https://img.shields.io/badge/one_project-four_capabilities-eab308)
 
-[시작하기](#시작하기) · [온보딩](docs/ONBOARDING.md) · [실행 정책](docs/execution-policy.md) · [설계](docs/unified-execution-design.md)
+[시작하기](#시작하기) · [통합 구조](docs/consolidation.md) · [온보딩](docs/ONBOARDING.md) · [실행 정책](docs/execution-policy.md) · [설계](docs/unified-execution-design.md)
 
 </div>
 
@@ -20,6 +20,8 @@ A portable coding-agent harness for requirements, context, and evidence.
 
 세션이 바뀔 때마다 목표를 다시 설명하고, 이전 결과를 찾아 옮기고, 테스트가 정말 통과했는지 확인하는 일.
 Ariadne는 이 수고를 줄이기 위한 **개인 프로젝트용 코딩 에이전트 하네스**입니다.
+
+**Akasha·Context-forge·Parallax의 기능과 위키 관계 인덱스를 하나의 Ariadne에서 사용합니다.** 별도 저장소나 글로벌 패키지를 설치하지 않습니다.
 
 요구사항에서 시작해 작업 문맥과 검증 기록을 이어 줍니다. 이름은 미궁에서 돌아올 길을 알려 준 아리아드네의 실에서 가져왔습니다.
 
@@ -29,6 +31,9 @@ Ariadne는 이 수고를 줄이기 위한 **개인 프로젝트용 코딩 에이
 | --- | --- |
 | **REQ 기반 작업** | 목표·수용 기준·제약·검증 명령을 하나의 요구사항 문서로 유지 |
 | **필수 문맥 보존** | 확정 사실과 verification을 우선 보존하고, 필수 정보가 예산을 넘으면 출력 없이 실패 |
+| **영속 메모리** | PostgreSQL 원본·Qdrant/pgvector 검색, 조직별 권한과 HTTP·MCP 도구 |
+| **코드 영향 분석** | 로컬 SQLite 그래프, 변경 영향·검증 대상·근거와 MCP·UI |
+| **지식 관계** | 작업 기록의 위키 승격과 링크·미해결 관계 인덱스 |
 | **공통 규칙·스킬** | 원본 하나에서 Codex·Claude Code용 미러 생성 및 일치 검사 |
 | **변경 감지 기반 요소** | 모든 AC와 불변 scope를 묶은 계약 해시, dirty·untracked·mode를 포함하는 소스 지문 |
 | **제한된 파일 도구** | 경로·symlink·시크릿·크기·기존 SHA 검사와 임시 파일을 통한 교체 |
@@ -40,13 +45,33 @@ Ariadne는 이 수고를 줄이기 위한 **개인 프로젝트용 코딩 에이
 
 ## 시작하기
 
-추가 npm 패키지 없이 실행합니다. 전체 공개본 검증 기준은 **Node.js 24.22 이상**입니다.
+전체 제품은 **Node.js 24.22.2 이상**에서 설치·실행합니다. 파일 기반 코어는 외부 DB 없이 사용할 수 있고, 영속 메모리 서비스는 PostgreSQL과 선택한 벡터 저장소가 필요합니다.
 
 ```sh
 git clone https://github.com/YouSangSon/ariadne.git
 cd ariadne
-node scripts/verify.mjs
+npm run setup
+npm run verify
+node bin/ariadne.mjs --help
 ```
+
+다른 프로젝트에서는 같은 실행파일에 작업을 맡깁니다.
+
+```sh
+node /path/to/ariadne/bin/ariadne.mjs code init
+node /path/to/ariadne/bin/ariadne.mjs code index
+node /path/to/ariadne/bin/ariadne.mjs code analyze --changed src/example.ts --fail-on none
+node /path/to/ariadne/bin/ariadne.mjs context --root . --req my-task
+```
+
+메모리는 `packages/memory/.env.example`을 루트 `.env`로 복사하고 DB·벡터 설정을 확인한 뒤 사용합니다. 실제 값은 Git에서 제외합니다. 기본 transformer 모델은 로컬에서 실행하며 첫 실행에 가중치를 내려받을 수 있습니다. API 키나 유료 공급자는 자동 설정하지 않습니다.
+
+```sh
+node --env-file=.env bin/ariadne.mjs memory serve
+node --env-file=.env bin/ariadne.mjs memory mcp
+```
+
+`memory init`의 MCP·세션 hook과 `code install-agent`·`install-hook`도 같은 Ariadne 설치를 참조합니다. [설정·복구·이전 경계](docs/consolidation.md)를 먼저 확인하세요. Ontology의 원본은 설계 문서였으며, 통합된 위키 인덱스가 enterprise ontology 엔진을 구현했다는 뜻은 아닙니다.
 
 공통 규칙과 스킬을 독립 설치 경로에 복사합니다.
 
@@ -82,11 +107,12 @@ node scripts/install.mjs
 ## 검증
 
 ```sh
+npm run verify
+# 코어만 확인할 때
 node scripts/verify.mjs
-node --test tests/context-pack.test.mjs tests/loop-*.test.mjs
 ```
 
-검사는 실제 파일과 이번 테스트가 띄운 HTTP 서버를 사용합니다. 모델 호출은 필요하지 않습니다.
+검사는 실제 파일·임시 프로젝트와 테스트가 띄운 HTTP 서버를 사용합니다. CI의 PostgreSQL·pgvector·로컬 transformer 검색 검증은 별도 작업으로 실행합니다. 모델 호출은 필요하지 않습니다.
 API 프로토콜 검사를 모델 품질·구독 절감률·실서비스 성능의 근거로 해석하지 않습니다.
 파일 SHA 검사와 rename 사이의 임의 외부 writer 경쟁은 보장하지 않으므로 독립 작업 공간이 필요합니다.
 
@@ -99,6 +125,9 @@ API 프로토콜 검사를 모델 품질·구독 절감률·실서비스 성능�
 | `skills/` | 요구사항·라우팅·문맥·인수인계 스킬 원본 |
 | `.agents/`, `.claude/` | 도구별 생성 미러 |
 | `lib/`, `scripts/`, `tests/` | 결정론 검사와 회귀 근거 |
+| `packages/memory/`, `packages/code/` | 내부 구현·고정된 의존성·기존 계약과 테스트 |
+| `bin/ariadne.mjs` | 단일 설치·실행 진입점 |
+| `modules/llm-wiki/` | 위키 승격과 관계 인덱스 |
 | `modules/loop/` | 계약·파일 도구·전송·수동 인수인계 기반 요소 |
 | `evaluation/` | 모델 호출 없는 평가 장치의 제어군 |
 

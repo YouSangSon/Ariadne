@@ -1,0 +1,774 @@
+# Gates
+
+Evidence is current only when the command and result are recorded in this file. A focused pass proves only its named scope.
+
+## Current Packaged VM Checks — 2026-10-28
+
+- The archive built from `c48026697cab2e68761e3691dddd5c4571b10ea1` is
+  823,724 bytes, SHA-256
+  `fc8f6886c4d8af86ff573ca0f1e3810a4896935ce7e57b34ccf8d9b15a8d5a61`.
+  It contains 89 compiled bodies and eight KO/JA/EN/ZH root/docs README entries.
+  Ubuntu Linux x64 used official Node 24.14.0 and locked production dependencies
+  with lifecycle scripts disabled. Embedding/reflection were explicit stubs.
+- All 19 public CLI steps passed their expected exits. Actual stdio MCP passed
+  initialization, 24-tool discovery, impact/context and invalid-path checks.
+  Saved report graphs remained equal after a later full reindex. Six loopback
+  HTTP assertions covered health, selected/missing reports and path traversal;
+  Docker source, escaped JSON and Unicode/CRLF evidence checks also passed.
+- The 23-body synthetic profile completed baseline/source-edit/config-edit full
+  indexing. Every phase still read all 23 bodies and zero samples; this does not
+  establish read reduction, a representative speedup or the old timeout's cause.
+  No whole-source profile or real-model inference ran.
+- **Combined command exited 1:** its final harness assertion incorrectly required
+  the shared installation temporary directory to be empty. CLI help (exit 0)
+  and invalid observer usage (exit 2) had passed, but the subsequent package-body
+  check was not reached. Earlier passes remain scoped successes.
+- A separate narrow follow-up exited 0 without repeating those integration
+  scenarios. It observed `node-compile-cache` immediately after npm installation,
+  before either command. Help/invalid usage left that directory unchanged and
+  also left separate empty working/temporary directories empty. All 155 package
+  bodies were unchanged after this follow-up. This does not retroactively prove
+  the skipped post-run hash check in the first execution.
+- Both units used the shared nonblocking lock, one CPU, 1 GiB memory and no swap.
+  Each peak reached 1 GiB with zero OOM/kill events; this includes installation,
+  so it is not an application-only memory measurement. Normal and fallback
+  cleanup both acquire the shared lock and require the exact owned directory.
+  Both final audits passed: inactive unit, absent root/processes, available lock.
+  The two owned Orca terminals closed; no shared service was changed.
+- Fresh PAH views showed 36.8 MB / 3 TB billed outgoing and 1.63 GB incoming;
+  the last aggregation was 2026-10-28 17:07:30 KST. These delayed values do not
+  establish a real-time traffic total or an overage block. Raw logs, harnesses,
+  follow-up and hashes remain in the existing portfolio owner's
+  `config-extraction-profile/current-package-vm/` directory. No native browser,
+  clipboard/download/PNG or default-model validation is implied.
+
+## Relation Endpoint Freshness — 2026-10-28
+
+- [Test-only CI](https://github.com/YouSangSon/Parallax/actions/runs/40658378651)
+  at `309908a` passed 832 existing tests and failed the new regression: two full
+  runs generated 11 UPDATEs that left the entity's run ID unchanged. Entity
+  versions, relations, evidence and FTS payload assertions passed before that
+  failure. Dogfood and later canonical stages did not run.
+- The shared placeholder freshness statement now updates only when the run ID
+  differs. Initial inserts and the first advance of an older endpoint remain;
+  explicit entity/version writes, FTS triggers and publication rollback are
+  unchanged. No schema or adapter version change is needed.
+- `tests/index-publication.test.ts` observes the actual indexer through a trigger
+  in its owned fixture. It reads FTS with a read-only connection before any repair
+  and checks repeated/self references plus cross-run advancement. Required CI
+  owns DB execution; local checks do not run this test. This removes redundant
+  writes but does not establish whole-index speedup or a VM timeout cause.
+
+## CPU Runner Installation — 2026-10-28
+
+- [CI 40650749353](https://github.com/YouSangSon/Parallax/actions/runs/40650749353)
+  failed during the ONNX postinstall download with IPv4 `ETIMEDOUT` and IPv6
+  `ENETUNREACH`. Neither the historical index diagnostic nor Verify started;
+  the later missing `tsx` error was a consequence of the incomplete install.
+- Locked ONNX Runtime 1.30.0 bundles its CPU binding/library and requests CUDA
+  provider files separately on Linux x64. Its supported `skip` install flag was
+  checked against the installed parser and upstream source. CI and Release now
+  scope that flag to their CPU jobs, including the PR baseline install, and check
+  native binding load plus bundled CPU backend availability after installation.
+  npm lifecycle scripts, dependency versions, user defaults and required Verify
+  remain unchanged.
+- [CI 40654547854](https://github.com/YouSangSon/Parallax/actions/runs/40654547854)
+  at `a475354` passed both installs, native ONNX 1.30.0 CPU backend loading and
+  canonical Verify: 832/832 tests, dogfood 2/2, benchmark and dependency audit.
+  Final-tree PR/main checks remain separate evidence. No model inference, GPU
+  execution or tag publication was performed.
+
+## Historical Index Publication Diagnostic — 2026-10-28
+
+- The first bounded full-index CI run emitted 26,571 events and completed all
+  284 file iterators, but did not return before its 90-second timeout. It exited
+  124 without a CPU profile; cgroup memory/OOM counters stayed zero. This failed
+  diagnostic skipped Verify and does not establish the earlier VM timeout cause.
+- A smaller run at `a475354` retained all startup inputs, 284 body reads and
+  all-file redaction/metadata writes, but extracted events from only one file.
+  Its 2,070 events matched the historical count, encoded size and SHA-256 before
+  publication. The real indexer returned in 5,298.948 ms; all 287 input files
+  remained byte-identical. Both runs used historical `23ec770` source/runtime.
+- The completed partial graph used one CPU, 1 GiB RAM and no swap. Unit exit,
+  profile digest, normal iterator exhaustion and owned-resource cleanup passed.
+  This is neither a full graph benchmark nor a current-runtime/VM result. Exact
+  scopes and profile limitations are in
+  [verification](docs/verification.md#historical-index-publication-diagnostic).
+  Temporary diagnostic code is removed before product landing.
+
+## Evidence Position Allocation — 2026-10-28
+
+- `offsetPosition()` scans LF positions instead of splitting the prefix into a
+  line array. UTF-16 columns, empty lines, CRLF boundaries and non-LF separators
+  retain their existing behavior; shared regex version 41 stays unchanged.
+- `node --import tsx --test --test-concurrency=1 tests/text-reference-evidence.test.ts`
+  passed 19/19 before and after the change. `npm run lint`, `npm run build` and
+  `git diff --check` passed. Local execution contains no DB/app/full suite.
+- [Comparison CI](https://github.com/YouSangSon/Parallax/actions/runs/40643803770)
+  at `c287c8b` passed canonical verification: 832/832 tests, dogfood 2/2,
+  benchmark and dependency audit. Both bounded diagnostic processes exited 0,
+  with no cgroup limit/OOM events; their owned unit/worktree/root cleanup passed.
+  All 5,718 events across 11 files retained identical per-file hashes and sizes.
+- Temporary CI instrumentation is removed from the final product tree. The
+  single ordered observation is scoped in
+  [verification](docs/verification.md#evidence-position-allocation); it does not
+  establish whole-index speedup or the earlier VM timeout's cause. Required
+  checks on the final PR tree and merged main remain separate delivery evidence.
+
+## TypeScript Export Lookup Keys — 2026-10-28
+
+- Version 40 pure extraction connected `ChildTwo` and `two.make()` to the wrong
+  file when different path/export-name pairs produced the same colon-delimited
+  cache key. Seven new cases failed while the existing seven cycle cases passed.
+- Five lookup caches and three namespace/factory visited keys now use JSON
+  tuples. Success/failure cache entries, reverse lookup order, namespace type and
+  factory receivers, and valid re-export chains retain their distinct targets.
+  Shared regex version 41 invalidates earlier receipts; SQL/schema and public
+  interfaces are unchanged.
+- `node --import tsx --test --test-concurrency=1 tests/typescript-export-cycle.test.ts`
+  passed 14/14. `npm run lint`, `npm run build` and `git diff --check` passed.
+  The CI-only incremental oracles seed actual captured version 40
+  events and check clean-Git/non-Git rebuilds, corrected relation targets, fresh
+  graph/report equality, no-op reuse and old saved-report preservation.
+- Whole-source VM diagnosis remains pending. A separate largest-file sample
+  harness passed a three-file pure self-check; this is preparation, not a new VM
+  result or a cause established for the earlier timeout.
+
+## TypeScript Mixed Export Cycle — 2026-10-28
+
+- A three-file pure adapter reproduction on version 39 raised `RangeError` when
+  default and named re-exports formed a cycle. The corrected seven-case suite
+  reproduced five failures while two normal paths passed. A first static-call
+  expectation was corrected to the existing typed-receiver contract before the
+  implementation changed; no new static-call support is claimed.
+- Both cross-kind resolver calls now pass the same visited set. JSON tuple keys
+  prevent string export names and colon-bearing paths from colliding. Concrete
+  chains and alternate star branches remain resolvable. Shared regex version 40
+  invalidates older extraction receipts; no persistence/schema contract changes.
+- `node --import tsx --test --test-concurrency=1 tests/typescript-export-cycle.test.ts`
+  passed 7/7. `npm run lint`, `npm run build`, `node scripts/docs-lint.js` and
+  `git diff --check` passed. Local execution contains no DB/app/full suite.
+  Required CI owns the two new clean-Git/non-Git fresh-graph, report, no-op and
+  adapter-audit oracles, along with existing version/publication/rollback gates.
+- The separate whole-source VM profile remains incomplete. This small cycle
+  reproduction is not evidence that the same input caused that timeout.
+
+## Prior Delivery Boundary — 2026-10-27
+
+- PR #62 head `516d72e` passed required checks and canonical `npm run verify`:
+  804/804 tests, dogfood 2/2, benchmark and audit. Merged main `5429afc` passed
+  CI/Security/CodeQL/Scorecard and the same canonical counts.
+- PR #63 head `b0ffb53` passed required checks and canonical `npm run verify`:
+  811/811 tests, dogfood 2/2, benchmark and audit. Six legacy upgrade oracles cover
+  false-source removal, destination preservation, fresh graphs and old reports.
+  Main `ae0102f` also passed CI/Security/CodeQL/Scorecard and canonical 811/811,
+  dogfood 2/2, benchmark and audit; exact receipts retain their separate scope.
+- Final runtime package has 89 verified compiled bodies and eight root/docs
+  README entry points in KO/JA/EN/ZH. All 155 packaged files equal `23ec770`.
+  The latest packaged VM passes and failed whole-source profile are scoped below.
+- The active plan now separates completed runtime slices from remaining S1
+  evidence. This documentation correction changes no source, dependency, schema,
+  workflow or runtime behavior. Local checks remain docs/diff only; unchanged
+  passing runtime evidence is reused and required remote gates remain enabled.
+
+<a id="latest-packaged-vm-checks--2026-10-27"></a>
+
+## Historical Packaged VM Checks — 2026-10-27
+
+- Source `23ec770595292f27bc363a6746f935c782d3f0cb` differs from runtime head
+  `b0ffb53` only in unpackaged plan/gate documents. Reused archive SHA-256
+  `a1a9ae6f23246f7574f6a743c461a49917b17032a74cc7f1a7bf9d2c55598091`
+  is 814,813 bytes. No local app/DB/full suite or duplicate build/pack ran.
+- Existing `my-cloud` command targeted Ubuntu Linux x64. Official Node 24.14.0
+  archive/binary hashes were checked; `npm ci --ignore-scripts --omit=dev
+  --no-audit --no-fund --registry=https://registry.npmjs.org` used the existing
+  lock in an owned temporary directory. Embedding/reflection used explicit
+  `stub-sha256`/`stub`; native/default model inference is not established.
+- `python3 demo-workflow.py <packaged-cli> <owned-fixture>` passed all 19 expected
+  exits, including failing tests after the TTL edit, successful aligned tests,
+  impact/no-impact and invalid-path flows. `python3 mcp-roundtrip.py ...` passed
+  actual stdio initialization, 24-tool discovery, impact/context calls, invalid
+  path rejection and source-file immutability. A later full reindex left the
+  saved report's exported graph equal.
+- Headless loopback HTTP assertions passed health, selected report/graph,
+  missing-report error state and path-traversal rejection. This is not a new
+  native-browser, responsive, clipboard, download or PNG observation.
+- `node docker-source-smoke.mjs <package> <fixture>` passed absent stage-source
+  relations, retained destination/local-copy relations, escaped JSON paths and
+  original Unicode/CRLF evidence lines 2/11. Application source was unchanged.
+- `node profile-tool/config-extraction-profile.js <package>` passed three full
+  index phases on the existing synthetic 23-body fixture. The observer counts
+  body reads separately from samples; process windows include event collection.
+
+  | Phase | Body reads | Sample reads | Config process window total |
+  | --- | ---: | ---: | ---: |
+  | baseline | 23 | 0 | 2.498 ms |
+  | source edit | 23 | 0 | 0.374 ms |
+  | config edit | 23 | 0 | 0.599 ms |
+
+  This single ordered observation establishes neither a timing distribution,
+  CPU cost, general independence, scanner-read reduction nor a speedup claim.
+- **Failed:** the next `node real-config-profile.mjs <package> <source-copy>`
+  exceeded its 150-second subprocess deadline on an immutable 287-file public
+  source export without Git history. The combined unit exited 1. Peak memory
+  reached 1,073,741,824 bytes; cgroup `max` was 1,178, with OOM/kill counts 0.
+  No completed whole-source profile was emitted, so no phase or adapter is
+  assigned the bottleneck. The subsequent help/usage and post-run package-body
+  assertions were not reached. No identical full retry or limit increase ran.
+- Shared nonblocking process lock covered execution through cleanup. Actual
+  cgroup limits were CPU `100000 100000`, memory 1 GiB, swap 0. Final audit
+  passed: unit inactive, owned root/processes absent, shared lock available.
+  Both owned Orca terminals closed. Final host MemAvailable exceeded 3.3 GiB
+  and disk free exceeded 53 GiB; no shared service was stopped.
+- Authenticated PAH reload showed 26.9 MB / 3 TB billed outgoing and 1.35 GB
+  incoming for 2026-10-23–2026-11-22. Last aggregation was 2026-10-26 22:07:10
+  KST, so this is delayed provider evidence. Overage blocking was unconfirmed;
+  billing/credential settings were unchanged. Evidence remains in the existing
+  portfolio owner's `config-extraction-profile/latest-package-vm/` directory.
+
+## Workbench Export Feedback — 2026-10-25
+
+- Clipboard follow-up: the emitted-client regression reproduced a false legacy
+  copy result being displayed as success. The shared helper now throws on that
+  result so both link and command controls use their existing failure handling.
+  Bounded tests exercise true/false/throw results, localized/fallback feedback,
+  exact copied text, temporary textarea cleanup and restored button state.
+  Modern Clipboard API resolution/rejection stays separate; a rejection does
+  not retry the legacy path. Real legacy-browser execution is not claimed.
+  Source contract: [W3C copy action](https://www.w3.org/TR/clipboard-apis/#copy-action).
+- [x] `node --import tsx --test --test-concurrency=1 tests/ui-toolbar-feedback.test.ts`
+  passes 4/4; `npm run lint`, `npm run build` and `git diff --check` pass.
+  Local execution contains no DB/app/integration suite. The final PR and main
+  required checks retain their own commit-specific receipts.
+
+- The `70ccf92` npm package passed the approved VM's 19-step public CLI fixture,
+  real stdio MCP (24 tools), invalid-path controls, and saved-graph equality after
+  a later full reindex. Native desktop inspection covered filtering, selection,
+  Strict policy, copied link state, history restoration, source new-tab/back
+  links, EN/KO/ZH, keyboard focus, zero-impact and missing-report states.
+- PNG output was saved through the native browser dialog and decoded as a
+  760×580 PNG. Waiting for the automated download event timed out. The enclosing
+  UI observation later reached its own deadline and exited 1; its finally cleanup,
+  absent UI process/port/path and released lock were verified separately. This
+  is not an all-green wrapper or a 375-pixel result: actual width stayed 2560.
+- The missing-map PNG guard rejected export, but its button said "Copy failed".
+  The emitted-client regression reproduced that error without local DB/app
+  execution. The shared handler now accepts action-specific failure text;
+  JSON/CSV/PNG use EN/KO/ZH export messages and copy retains its prior messages.
+  Pure tests cover localized/fallback failures, no file on failed export,
+  successful JSON/CSV/copy feedback and restoration. Rendered locale payloads
+  remain covered by remote UI tests. No full local suite is run.
+- [x] Candidate `48907f2` was freshly built and packaged; only `dist/src/ui.js`
+  and `dist/src/ui/client.js` differ from the public-flow archive. The approved
+  VM displayed `Export failed` / `내보내기 실패` / `导出失败` for missing-map PNG
+  export, with no SVG, while Korean copy success still displayed `복사됨`.
+- [x] Activating the owned tab and using native DevTools established an actual
+  375×812 CSS-pixel viewport, document/body width 375 and a saved 750×1624 image.
+  Image pixels are separate from CSS pixels. Prior request-only attempts and
+  an emulated-mode CDP click timeout are not counted as passing checks. Device
+  defaults, device mode and DevTools were restored; the final width was 2560.
+  Normal VM shutdown and cleanup passed after this narrow recheck. Exact final
+  PR/main gates remain separately owned by the PR and portfolio receipts.
+
+## Docker Source Operands — 2026-10-26
+
+- Reproduced a false local relation from repeated stage-source text. Raw operand
+  spans now distinguish source, leading `--from` value and destination; glob/URL
+  filters apply only to local dependency resolution. JSON uses the original
+  validated payload, preserving significant spaces, escaped paths and literal quotes.
+- [x] `node_modules/.bin/tsx --test tests/text-reference-evidence.test.ts tests/config-infra-selection.test.ts`
+  passes 27/27. Rejected JSON cannot enter the secondary string lexer; ordinary
+  shell quoting/continuations retain the existing whitespace-token grammar.
+- [x] `npm run lint`, `npm run build` and `git diff --check` pass.
+- Config/infra version 3 adds Git/non-Git v2-cohort oracles requiring unchanged-input
+  full rebuilding, false source removal, destination preservation, fresh-graph
+  equality and old saved-report immutability. Prior v1/regex38 fixtures remain.
+  No local DB/app/full-suite execution; exact required PR/main gates own results.
+- Independent review identified unsafe rescanning after JSON rejection. Parsing
+  fewer than two validated string values now returns before lexing; this also
+  covers valid empty/one-element arrays that have no source operands.
+
+## Source Evidence Coordinates — 2026-10-26
+
+- Reproduced wrong-line evidence after `İ` lowercase expansion, CRLF COPY offsets
+  and a false local relation from a deferred Docker stage source. Review exposed
+  LF-leading paths and empty-line evidence; both adapter families now retain the
+  original line range without interpreting its LF twice.
+- [x] `node_modules/.bin/tsx --test tests/text-reference-evidence.test.ts tests/config-infra-selection.test.ts`
+  passes 22/22, including whole-string final sigma, UTF-16 columns, CRLF,
+  deferred-source exclusion, fallback path/stem lookup and empty lines.
+- Config/infra version 2 and shared regex version 39 invalidate legacy extraction
+  receipts. Four remote Git/non-Git oracles seed actual legacy event fixtures,
+  require unchanged-input rebuilding and fresh-graph equality, and preserve saved
+  report snapshots. These DB oracles are not executed locally; exact PR/main
+  checks own their results. Existing SCIP/trace reapply rules still apply.
+- [x] `npm run lint`, `npm run build` and `git diff --check` pass.
+- No new dependency, scanner read skipping, selective carry or public API change.
+  This PR #62 checkpoint retained the first-occurrence Docker parser limit;
+  Docker Source Operands above records its later correction. See
+  [coordinate repair](docs/verification.md#source-evidence-coordinates).
+
+## Config/Infra Selection Contract — 2026-10-25
+
+- [x] Bounded process-local memo tests pass 11/11, including actual computation
+  misses/hits across new instances, exact body/language/path/order/root identity,
+  empty output, partial/failing generators, mutation isolation, interleaved runs
+  and payload/entry eviction. Earlier independence checks use cold namespaces.
+- A new remote public-indexer oracle compares warm source/config/path edits with
+  cold fresh graphs, versions, coverage, counters, current adapter audit,
+  redacted facts/provenance and saved reports. A separate trigger checks that
+  both miss and hit still fail publication, preserve the old graph and publish
+  no valid receipt; recovery reuses computation through normal publication.
+  These DB tests are not run locally; exact PR/main gates own their results.
+- Paired pure Git-corpus arrays match base `63c17db` for Parallax and Codex.
+  Codex's 28 configs compute 28/0/1/28 times for cold/warm/one-body-edit/path-change;
+  observed windows are 32.719/6.955/8.436/22.651 ms. Corresponding uncached original,
+  edited and path-change windows are 43.705/18.694/17.444 ms. These are single
+  ordered observations with startup/JIT/instrumentation effects, not a latency
+  distribution, a CLI speedup or a read reduction. The unchanged reference is
+  still `970111f6`; freshness against its remote is unverified.
+- Only repeated same-process public API calls can benefit. No daemon, general
+  independence flag, persistent raw-event cache or selective SQL carry is added.
+  Local checks remain pure/type/build/docs/schema; existing remote canonical
+  verification must pass before landing.
+
+- [x] A bounded pure observation uses immutable Git workflow blobs and recognized
+  tracked-language path context. The fixed old compiled adapter and candidate
+  `808ce5f` produce equal full event arrays for Parallax/Codex forward, reverse
+  and individual-file processing, plus 1298 boundary/exotic/Unicode cases.
+  The context bodies/hashes are inaccessible. Timing includes start and
+  consumption; it is not whole-index latency, CPU time or a read reduction.
+- [x] `node --import tsx --test --test-concurrency=1 tests/config-infra-selection.test.ts`
+  passes 5/5 before and after the change. `npm run lint`, `npm run build` and
+  `git diff --check` pass. Independent design and implementation reviews approve
+  the preserved ordering/fallback/evidence/cache boundary. Final PR/main gates
+  remain owned by their exact remote receipts; no full local suite is run.
+
+- [x] The approved my-cloud measurement used the PR #55 / `5fc6cba` package,
+  verified artifact/module hashes, a nonblocking shared process lock, and actual
+  cgroup limits of one CPU and 1 GiB. Provider-billed usage was below the agreed
+  hold threshold; delayed aggregation and unconfirmed overage blocking remain
+  separate limitations. No host installation, credentials or Docker permissions
+  were changed. See [observations](docs/verification.md#config-extraction-observations).
+- [x] All three profile phases returned full extraction, 23 body reads and three
+  nonempty config process samples. The enclosing runner later failed an optional
+  help assertion: the CLI prints `Commands:`, not `Usage`. Its valid profile
+  output is retained; the full profile was not repeated to repair that assertion.
+- [x] A separate narrow run checked CLI help exit 0, invalid observer invocation
+  exit 2, both expected messages and no fixture residue. It exited 0. Locked npm
+  install used disabled lifecycle scripts; default embeddings and a general
+  installed-package workflow were not tested on this VM.
+- [x] Ordinary/failure cleanup and a forced service-timeout cleanup were observed.
+  Final checks found all owned units inactive, owned execution paths absent,
+  no Node process and the shared lock available. Original shared resources stay
+  outside this cleanup scope. Selective runtime extraction remains deferred.
+- PR #54's persisted full/reversed and stateful-fallback gates passed 771/771,
+  dogfood 2/2, benchmark/audit, all five PR checks and all four main workflows.
+- The config extraction observer uses a small non-Git fixture and the existing
+  scanner observer. Only its pure wrapper is executed locally; the remote
+  correctness case checks phases, event/file counts and runtime hashes without
+  timing thresholds. Actual VM observations remain separate from those checks.
+
+- [x] `node --import tsx --test --test-concurrency=1 tests/config-infra-selection.test.ts`:
+  3/3 pure cases pass without DB, services, filesystem fixtures or model access.
+  Exact emitted events agree for full/reversed/single-file processing and an
+  edited target, while context content/hash getters throw on access.
+- [x] Removing an indexed target path changes an unchanged Dockerfile's output;
+  path-set invalidation is required. Nonempty target/evidence assertions prevent
+  vacuous equality. Product code, schema and adapter declarations are unchanged.
+- Added remote persisted oracles compare reversed config/infra full processing
+  with fresh full graph tables, report JSON and exported report graphs after
+  target edits and path removal. Earlier saved reports must remain unchanged.
+- A run-local ordinal adapter declares both target-only content and
+  processed-file ownership but emits a different relation if an earlier process
+  call is skipped. Its changed-body oracle requires all files to be processed
+  and compares the persisted graph/report with a fresh full index.
+- These additions require the remote canonical gate; no local DB/app/full suite
+  is run. General adapter independence and selective runtime extraction remain
+  unproven; changed-body full fallback stays active.
+
+## Git Cache Input Validity — 2026-10-25
+
+- [x] Regression head `48e2f53` at PR merge `3565445` failed 8/758 remote tests:
+  seven hidden-body cases plus same-HEAD shallow deepen. All eight actual CLI
+  controls matched fresh full graphs. Later Verify stages were not reached.
+- [x] `5f5120f` adds actual DB mutable-supports cache/normal-delta oracles:
+  remote Release failed exactly 10/760, including both new cases; 750 passed.
+  These are separate failures, not a passing overall gate or a local DB run.
+- Implementation captures ordered scanner inputs before callbacks and shares the
+  selected history with co-change extraction. A private nullable v17 receipt is
+  committed with the graph; absent/unknown/mismatched inputs force full.
+  Co-change savepoint failure keeps completed audit but no valid receipt.
+- Legacy cohorts rebuild once without backfill; SCIP/trace must be reapplied,
+  then actual identical-input preservation remains mandatory. V16 read APIs
+  remain supported. No new CLI/JSON field or dependency is introduced.
+- New remote oracles cover history loss as well as growth, legacy reapply,
+  second-scan/history publication, summed benchmark read counters, receipt/graph
+  rollback and partial co-change recovery. Local execution is type/lint only.
+- A retained hit also checks the latest completed ID after closing its reader
+  snapshot. A real child B publication followed by file restoration to A must
+  leave the latest graph equal to fresh A; movement requires a new capture.
+- [x] Candidate `a0d03fe` passed 768/769 remotely; only the real child B→restore A
+  admission oracle failed. The follow-up guard reads the latest ID after ending
+  the snapshot; same-body child movement also requires fresh capture.
+- `npm run lint` (type/docs/schema) passes locally. Exact final-head Release,
+  security, merge and main-run receipts are owned by [PR #51](https://github.com/YouSangSon/Parallax/pull/51)
+  and the portfolio evidence owner in `CONTEXT.md`. Required checks must pass
+  before landing; a focused pass is not the full gate. Selective execution and
+  read reduction remain off.
+- [x] Final `b239c21` passed all five PR checks: 769/769, dogfood 2/2,
+  benchmark and audit. PR #51 merged as `eca7eb1` with exact tree equality;
+  CI, Security, CodeQL and Scorecard passed on that main commit separately.
+
+## S1 Recovery Bookkeeping Removal — 2026-10-25
+
+- [x] Static call-path review found no caller of private `restore()`; its seven
+  capture SELECTs only filled maps consumed by that dead method. All live
+  capture sites were already inside the publication transaction/savepoint.
+- [x] Removed 447 source lines and eight capture call sites, with no added source
+  lines. Exact AST comparison preserves public exported functions, extractor
+  identity, immutable input snapshots, writer rollback and clean-reuse snapshot.
+  Public types, schema and existing tests are unchanged; `npm run check` passes.
+- Independent final integrity review found no blocker. Existing rollback,
+  cohort and saved-report oracles remain mandatory in remote Release; no local
+  DB/integration/full suite or new implementation-mirroring test was run.
+  Final head `45c4fa2` passed all five PR checks, 739/739, dogfood 2/2 and
+  bench/audit. PR #50 merged as `8b337ba` with exact tree equality and all four
+  main workflows passed. No latency/RSS improvement claim is made.
+
+## Audit Setup Reliability — 2026-10-25
+
+- Main #46 and #48 Security installs failed in the ONNX lifecycle download
+  before reaching vulnerability assessment. #48 recorded ENETUNREACH/timeout;
+  the same source tree passed normal install/full verification/audit in Release.
+- The audit job alone uses `npm ci --ignore-scripts`. Frozen dependency/lock
+  validation and the fail-closed high/critical/JSON/command gate remain intact.
+  Gitleaks, workflow triggers/permissions and normal Release installation are
+  unchanged. Registry and Release download failures remain possible.
+- [x] YAML parsing and an exact object-diff assertion confirm only the audit
+  install command changed. No local dependency installation/full suite ran.
+  PR #49 final head `2034986` passed all five checks, including Security audit
+  and normal Release install, 739/739, dogfood 2/2 and bench/audit. It merged as
+  `f4dc665` with exact source/main tree equality. Main-run receipts are separate.
+
+## S1 Current-Cohort Clean Reuse — 2026-10-25
+
+- [x] Regression-only `74101645` failed remote `npm run verify` in exactly
+  2/737 tests: restoring clean HEAD selected a historical cohort, and a real
+  child CLI writer moved rows between candidate/count queries. The other
+  735 tests passed; later canonical stages were not reached.
+- [x] The independent review found a pre-plan overtaking schedule even after
+  the first cache fix passed 738/738. Regression-only `b5e6d1c` reproduced it:
+  738/739 passed; only the actual child-CLI scan-observer schedule failed with
+  an empty latest cohort. Publication also rejects a completed ID greater than
+  or equal to its own, preserving cohort publication order without a new epoch.
+- Reuse now selects the latest completed row before testing cache fields and
+  reads candidate/files/coverage/counters in one short DEFERRED snapshot.
+  Hit/miss/error releases it; fatal reuse errors close the caller's DB.
+  This changes no extraction output or empty-repository semantics.
+- [x] Final head `54da882` passed 739/739, dogfood 2/2, bench/audit and all
+  five PR checks. PR #48 merged as `ee21205` with source/main tree equality.
+  Main Release also passed; its separate Security install failure is retained
+  under the audit setup follow-up above. Local execution was limited to
+  type/docs/schema and diff checks; no local DB/integration suite ran.
+
+## S1 Publication Admission — 2026-10-25
+
+- [x] Remote `npm run verify` at regression-only `6a643420` failed 1/732:
+  the new overlapping no-op oracle observed an empty latest graph. The other
+  731 tests passed; this failed run did not reach later canonical stages.
+- [x] Before graph/version/transaction writes, publication now checks the exact
+  planned completed run ID (including null) and main branch ID/head while holding
+  the SQLite writer slot. A mismatch rejects the stale run with a retry message;
+  no automatic adapter replay or long-lived adapter transaction is added.
+- [x] Local `npm run lint` (type/docs/schema) passes; after the independent
+  review's barrier-cleanup correction, `npm run check` passes again. No local
+  database/integration/full-suite execution was performed for this slice.
+- Independent data-integrity review found no remaining production/test blocker.
+  The added remote oracles cover overlapping no-op, full reverse completion with
+  and without a baseline, and memory-head movement during adapter startup.
+  Final head `f53d2552` passed all five PR checks: 735/735, dogfood 2/2,
+  benchmark and audit. PR #47 merged as `3183802` with exact tree equality;
+  all four main workflows passed. This does not establish filesystem snapshots
+  or atomicity of all trace writer statements.
+
+## S1 Scanner Read Baseline — 2026-10-24
+
+- [x] The new counter regression failed before implementation because scan
+  observations had no read counts. After the change, the scan-metrics,
+  synthetic-repo and fresh-index oracle suites pass 10/10 with file concurrency
+  1; TypeScript no-emit check, docs lint and diff checks pass.
+- [x] Integration with the corrected no-op carry passes 16/16 focused cases.
+  The repeated 20-file probe retains the same deterministic read/byte counts.
+- [x] `node --import tsx bench/impact-perf.ts --scales 20` reports 20 body
+  reads / 1,143 bytes for each full, non-git no-op and edited run. The fixture
+  produces 19 affected files. This proves the counters and unchanged read cost,
+  not a performance improvement or device I/O measurement.
+- [x] Independent review found no blocking issue. Counts include unsupported
+  recognized-language bodies and bounded samples, use raw returned byte sizes,
+  and leave `IndexResult`/CLI output unchanged. Clean same-HEAD reuse emits no
+  scan observation; failed scans do not publish a partial counter result.
+- [x] PR #46 final head `845343a` passed remote `npm run verify`: 731/731,
+  dogfood 2/2, bench and audit. All five PR checks and all four main workflows at
+  `7a05f81` succeeded. Main Security's first install timed out in the upstream
+  ONNX download; only that failed job was rerun at the same SHA and succeeded.
+  No selective extraction or read-skipping is enabled.
+- PR #46's first CodeQL summary rejected a stat(path)/readFile(path) race.
+  A tiny filesystem-only fixture reproduced path replacement bypassing the
+  checked size and same-file growth. The first replacement fixture also removed
+  a pending directory entry; that harness issue was corrected before recording
+  the product failure. Both logs remain separate.
+- [x] Reads now share one checked regular-file descriptor and allocate at most
+  its approved body size. Eight filesystem-only cases pass, covering raw/empty/oversize
+  counts, optional sample failure, symlink replacement, path replacement,
+  growth, short reads and read-error descriptor cleanup. Local full verification
+  was cancelled on the finding; under the revised user goal only lightweight
+  local checks and the existing mandatory remote CI may establish this slice.
+  Final CodeQL clearance and exact-head CI passed as recorded above. Windows execution
+  and atomic parent-directory snapshots are outside the proven boundary.
+  Initial open failure fails the scan; optional sample-read failure after opening
+  preserves a skip. Independent final security review found no blocker.
+  Typecheck, schema drift, documentation lint and diff checks pass.
+
+## S1 Output Ownership Gate — 2026-10-24
+
+- [x] Before implementation, the two focused regressions for foreign entity
+  rejection and unchanged legacy-to-owned transition failed with missing
+  expected rejection.
+- [x] `node --import tsx --test --test-concurrency=1
+  tests/adapter-output-ownership.test.ts tests/adapter_registry.test.ts
+  tests/config-infra-adapter.test.ts tests/incremental-index-oracle.test.ts`
+  passes 31/31; `tsc -p tsconfig.json --noEmit` passes. Cases cover invalid
+  ownership, preserved graph/current-state tables, declaration invalidation,
+  input isolation, post-yield/dispose mutation, config/infra and fresh-index
+  equivalence under the existing full-extraction policy.
+- [x] Independent data-integrity review found and addressed mutable event
+  references and non-file identity scope before delivery; final code review
+  found no blocking issue in this bounded contract.
+- Local canonical verification of the first head passed 663/713 tests; 48 MCP
+  waits, a CLI null child status and a SCIP startup marker wait failed. Serial
+  recovery was interrupted after repeated failures. Exact-head Linux CI passed
+  713/713, dogfood, benchmark and audit; this does not make the local run green.
+- [x] Phase diagnostics identified a 5,048 ms MCP initialize timeout before any
+  output, while completed initialization took 2,353–4,089 ms and later requests
+  2–324 ms. The bounded test harness now allows 30 seconds for initialize,
+  CLI child execution and SCIP startup markers; post-init RPCs retain 5 seconds
+  and the SCIP lock assertion is unchanged. The three affected failure cases
+  pass with file concurrency 1. This is test robustness, not a latency gain.
+- The pre-carry head `394ede7` subsequently passed local canonical verification:
+  715/715 tests, dogfood 2/2, benchmark and audit; all five remote checks passed.
+- [x] Six no-op oracles reproduced loss of descriptor metadata, file/global
+  diagnostics, custom contract versions and foreign placeholders, including a
+  SCIP-augmented cohort. Separate regressions reproduced trace confidence
+  downgrade and SQL rollback masked by a duplicate snapshot restore.
+- [x] No-op carry now copies versions/diagnostics and keeps scanner skips fresh;
+  cloned external adapter audits and remapped relation ownership let SCIP
+  reimport remove vanished rows. Runtime-proven co-change confidence survives.
+  Publication failure leaves graph/version/fact/branch rows unchanged and records
+  a failed index run. Focused ownership/registry/config/oracle/trace tests pass
+  39/39 and typecheck passes. The semantics revision forces one full rebuild;
+  external SCIP/trace augmentation must be reapplied after a full rebuild.
+- [x] Clean same-HEAD reuse, dirty no-op startup skipping and one-time revision
+  rebuilding pass 3/3. Independent final data-integrity review found no blocker.
+- [x] Final head `2607ea4` passed canonical verification after the dependency
+  refresh: 721/721, dogfood 2/2, benchmark and audit; all five PR checks passed.
+  PR #44 merged as `5876ee1`, with source/main tree equality verified.
+  No selective extraction or read-reduction claim is made by this unit.
+
+## Dependency Refresh — 2026-10-25
+
+- The resumed PR's security job rejected two high findings in body-parser and
+  zod. A fresh npm audit reproduced both; the old zero-findings receipt does not
+  establish the current registry state.
+- Compatible `npm audit fix --package-lock-only --ignore-scripts` changes only
+  body-parser 2.3.0 to 2.4.0, iconv-lite 0.7.2 to 0.7.3 and zod 4.3.6 to 4.6.7.
+  Direct ranges, overrides and the fail-closed audit policy are unchanged.
+- [x] Clean native Node 24.14.0 `npm ci` completed with zero vulnerabilities.
+  Canonical verification and exact-head CI passed at `2607ea4` before PR #44
+  landed; the pre-patch command's audit failure is retained separately.
+
+## CLI Help Safety Gate — 2026-10-23
+
+- [x] Isolated CLI regression reproduced `index --help` returning an index
+  result instead of help. The initial harness heading mismatch was corrected
+  separately before recording this product failure.
+- [x] `node --import tsx --test tests/cli-help.test.ts` passes 2/2 after the
+  correction: 16 help prefixes exit without filesystem changes, including
+  UI/MCP servers and all five nested command families. Literal `-h`/`--help`
+  option values and missing-value, integer and invalid-subcommand errors retain
+  their existing behavior.
+- [x] Independent review caught an option-before-help validation regression;
+  the nested prefix guard now rejects option-prefixed subcommand tokens, with
+  explicit `workspace --name --help` and `scip --file -h` regressions.
+- The final PR checks and resume evidence bundle own canonical verification,
+  landing and cleanup results for this slice. No UI/runtime-model changes are
+  included, so prior browser and native embedding evidence retains its scope.
+
+## Portfolio Readiness Gate — 2026-10-23
+
+- [x] Reproduced `npm run audit:dependencies` failure on the expired exception.
+  Raw audit: 6 high, 1 critical, 3 moderate; all reported fixes available.
+- [x] `npm audit fix` (no force/override) changed only the lockfile and reported
+  zero vulnerabilities. Direct dependency ranges are unchanged.
+- [x] Removed the exception; focused `tests/security.test.ts` passes 9/9,
+  including former-exception rejection, high/critical thresholds, malformed
+  reports, exit mismatches and secret-safe failures.
+- [x] Actual `computeEmbedding` smoke with default `Xenova/multilingual-e5-base`
+  q8 on macOS arm64 / Node 24.14.0 produced a nonzero 768-dimensional,
+  768-byte int8 vector; repeat input was identical. This is local CPU inference,
+  separate from the canonical suite's deterministic embedding stub.
+- [x] Clean `npm ci` and canonical `npm run verify` pass on Node 24.14.0 /
+  macOS arm64: lint/schema/build, 697/697 tests, dogfood 2/2, deterministic
+  bench 78/78 with no unexpected relations, and dependency audit. The run
+  completed 2026-10-23 05:34:38 UTC; test fixtures used an isolated TMPDIR.
+- [x] Packaged CLI session-change workflow: 19 commands with expected exits;
+  two failing tests become two passing tests after the recommended targets are
+  updated. Hand-labelled fixture: expected 4, found 5, missing 0, extra README
+  candidate 1. This is fixture evidence, not a general accuracy claim.
+- [x] Actual stdio MCP: initialize, 24 listed tools, analyze, context brief,
+  path-escape rejection, and unchanged source hashes.
+- [x] Live browser: filter, selection, keyboard Enter/Tab and focus, history,
+  policy selection, language, report selection, zero affected targets, missing
+  report, source rendering, and reduced motion. Postman source escape returns
+  expected HTTP 400. The initial headless driver verified Blob payloads and
+  clipboard denial; a native Brave follow-up verified link/command clipboard
+  contents, actual JSON/CSV/PNG files, source opening in a new tab and returning
+  to the same report/language, and Back/Forward path/filter/preset restoration
+  with matching visible inspector content.
+- [x] Confidence badge regression reproduced at 1.93:1 proven / 2.32:1 heuristic
+  on dark cards. Final computed contrast is 5.29:1 / 5.08:1. Desktop 1440px and
+  mobile 390px screenshots inspected; mobile document/body have no horizontal
+  overflow, with intentional contained metric/SVG scrolling.
+- [x] Final UI source `npm run verify` completed at 2026-10-23 05:52:42 UTC:
+  lint/schema/build/install smoke, 697 tests, dogfood 2/2, bench 78/78, and audit.
+  That packaged runtime differed from the CLI/MCP-tested artifact only in UI
+  styles; the later PNG correction also changes the UI client.
+- [x] Actual PNG inspection exposed pale map headings on the hard-coded light
+  canvas. Export now uses the existing `--graph` background. Saved 760x580 PNG
+  pixels match `#263d32`; heading contrast improves from 1.74:1 / 1.33:1 to
+  6.58:1 / 8.63:1. Before/after files and native observations are preserved.
+- Follow-up `npm run verify` after the PNG change ended at 06:50:45 UTC with
+  lint/build/install smoke passing and 684/697 tests passing. Eleven MCP
+  response waits, one CLI child deadline and one SCIP fixture wait failed
+  while host load exceeded 200 on 10 logical CPUs. The full command did not
+  pass; its downstream dogfood/bench/audit commands were not reached.
+- [x] The 13 failed cases passed with test-file concurrency 1 and unchanged
+  deadlines. The unreached commands then passed separately: dogfood 2/2,
+  bench 78/78 expected relations and dependency audit, ending at 07:00:12 UTC.
+  This is scoped recovery evidence, not a successful full local command.
+  The final PR's checks own remote validation of its exact head.
+- [x] Advisory `npm run bench:perf -- --scales 200,1000` on macOS arm64 / M1 Max:
+  1,000 synthetic files indexed in 4,957 ms; edited reindex 6,528 ms. Single run,
+  sampled RSS, no production-performance claim or performance gate.
+- [x] Independent final security review found no P0–P2 issues in the dependency
+  gate, tests, lockfile and documentation diff.
+- [x] PR #38 and #39 passed all five remote checks and merged to main as
+  `27865fe` and `d4cac49`. Each later PR owns its checks and merge event.
+- Portfolio provenance, final landing and exact cleanup receipts are maintained
+  in the resume evidence folder referenced by `CONTEXT.md`; no remote deployment
+  or paid inference was performed.
+
+## Main-only Scorecard Follow-up — 2026-10-23
+
+- Re-audit found that the successful PR checks did not cover the main-only
+  Scorecard workflow. Run `39917147939` failed during job setup because
+  `ossf/scorecard-action@v2` has no matching branch or tag; analysis never ran.
+- The action reference now pins the verified `v2.5.0` release commit. Existing
+  triggers, permissions, publication and upload steps are preserved. This pins
+  the action metadata, not the upstream container image's version tag.
+- Local workflow semantic validation and documentation lint own the pre-merge
+  evidence. The final PR checks and exact merge SHA's main workflow runs own
+  remote evidence; PR success alone does not establish Scorecard execution.
+- [x] PR #41 merged as `6774e64` after all five PR checks passed. On that exact
+  main commit, CI `39937453188`, Security `39937453163`, CodeQL `39937453157`
+  and Scorecard `39937453174` completed successfully. CI's `npm run verify`
+  passed 697 tests, dogfood 2/2, bench 78/78 and the dependency audit. Scorecard
+  analysis, artifact/SARIF uploads and public result commit matching passed;
+  this does not mean zero advisory findings or complete control visibility.
+
+## Prior S1 Correctness Gate
+
+- [x] RED: `node --import tsx --test tests/incremental-index-oracle.test.ts`
+  passed 3/4 and failed because a `tsconfig.json` alias-only edit did not update
+  `src/app.ts` from `src/session.ts` to `other/session.ts`.
+- [x] GREEN: the same oracle resolves the final alias, equals a fresh full index,
+  and reports `mode=full` for changed context (4/4 passed).
+- [x] Scope safety: target-only content scope alone cannot authorize changed-only
+  carry-forward; the foreign-source event regression drops vanished rows, while
+  zero-change dirty runs still skip adapter startup (focused 4/4 passed).
+- [x] Upgrade safety: `extractor_version` includes the indexer-semantics revision;
+  a synthetic pre-fix cohort forces one rebuild.
+- [x] Focused delta, registry, oracle, perf-formatting tests pass (26/26), and
+  bounded `bench:perf -- --scales 200` reports `edit_reindex_ms=383.0` with
+  `edit_scan_ms=17.6` as advisory evidence.
+- [x] Final-tree `npm run verify` passes after the CodeQL corrective slice:
+  lint/schema drift, install smoke, 697/697 tests, dogfood 2/2, deterministic
+  bench 78/78 at score 0.9987, and the dependency audit gate all completed.
+- [x] `git diff --check` and the final intended-file review passed before checkpointing.
+- [x] No owned Parallax test process remains. The final run's 650 recent
+  `parallax-*` fixture directories were moved recoverably to
+  `~/.Trash/Parallax-Codex-20260831-codeql-tests.qvAnPM`; no recent match remains.
+
+## Deferred S1 Read-Reduction Gate
+
+Before selective reads, define and enforce emitted-row ownership separately from
+`fileContentScope`. Add deterministic file/byte read counts before claiming a
+win; timing alone is advisory. Until then every changed-body run stays on the
+conservative full-read/full-extraction path.
+
+## Documentation Gate
+
+- [x] `PLAN.md`, `BACKLOG.md`, `IMPROVEMENT_OPPORTUNITIES.md`, `DECISIONS.md`, and EN/KO/ZH verification/roadmap docs describe the same boundary.
+- [x] `CLAUDE.md` loads `PLAN.md` before the historical local handoff.
+- [x] `docs/CODEX-NAVIGATION-GUIDE.md` exists and matches current ownership/navigation.
+- [x] `npm run docs:lint` passes.
+
+## Historical Dependency Audit Gate — superseded 2026-10-23
+
+- [x] `npm audit fix` refreshed only lockfile-resolved transitive packages and
+  removed all six fixable high-severity findings.
+- [x] `npm run audit:dependencies` accepts only the exact four remaining
+  high-severity nodes/advisories plus their locked versions/edges, expires at
+  `2026-10-01T00:00:00Z`, and fails closed on drift, malformed/failed audit
+  execution, or expiry. Low/moderate findings remain outside the high-severity
+  threshold instead of being silently promoted into release failures.
+- [x] `npm run test:security` passes 9/9, including threshold, drift, expiry,
+  command/JSON failure, and secret-safe diagnostic regressions.
+- [x] Forced package overrides were rejected: the reachable Transformers /
+  ONNX path has no compatible upstream fix to smoke-test, so the exception is a
+  time-bounded risk acceptance rather than remediation.
+- [x] The final current-tree `npm run verify` reached this gate and accepted
+  only the pinned, expiring exception; focused security remains 9/9.
+
+## PR Code Scanning Gate
+
+- [x] PR #35's first GitHub Advanced Security result reported four new high
+  alerts: polynomial Python test-name regex, duplicated/mis-anchored repo-map
+  test regex, SCIP source-read TOCTOU, and SHA-1 over redacted evidence input.
+- [x] Focused local correction passes 24/24 plus security 9/9, typecheck,
+  docs lint, and `git diff --check`. The two regexes now use linear shared
+  classification; SCIP document bodies come only from embedded text or an
+  immutable clean Git blob, while existing indexed metadata remains unchanged;
+  evidence IDs use SHA-256. A two-process regression proves SCIP takes its
+  SQLite snapshot lock before Git blob reads, and explicit trusted `--file`
+  inputs no longer claim repository containment they cannot atomically enforce.
+- [x] Independent review's P1 snapshot race and P2 input-path/documentation
+  findings are corrected; final diff inspection reports no remaining P0-P2.
+- [x] Correction commit `eb21527` was pushed. CodeQL, gitleaks, dependency
+  audit, JavaScript/TypeScript analysis, and the 6m28s Release gate all passed;
+  PR #35 then squash-merged to `main` as `4f289a6`.
+
+## Audited UI Gate
+
+- [x] Native selection buttons are siblings of source/copy controls; rendered
+  impact and delta rows contain no nested interactive elements.
+- [x] Light-surface selected focus uses `#18735f` (measured 5.29:1 against the
+  selected background), while dark controls use the inverse ink token.
+- [x] Reduced-motion CSS and scroll behavior are explicit; `popstate` restores
+  filter, preset, and path while discrete selection uses browser history.
+- [x] PNG export requires a rendered impact path and reports failure for an
+  empty map instead of a false `Exported` state.
+- [x] `npm run test:ui` passes 12/12. A live Playwright CLI pass exercised
+  filtering, native keyboard selection, push/Back restoration, reduced motion,
+  focus contrast, valid PNG download, and empty-map failure. Browser fixtures,
+  downloads, and processes were cleaned after the pass.

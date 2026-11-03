@@ -1,3 +1,5 @@
+> 현재 제품 설치·memory/code/knowledge 실행은 [통합 가이드](consolidation.md)를 따른다. 아래는 파일 기반 규칙 배포 절차다.
+
 # Ariadne 온보딩
 
 > 이 문서는 하네스를 처음 설치하는 팀원용이다. 설계 배경은 `DESIGN.md`를 본다.
@@ -73,8 +75,8 @@ node scripts/uninstall.mjs   # manifest 기반 제거 + 글로벌 포인터 복�
 | 모듈 | 추가 요구사항 |
 |---|---|
 | llm-wiki (볼트 승격 + 온톨로지 인덱스) | Obsidian 볼트 경로만 |
-| akasha (팀 공유 메모리) | Postgres + Docker, Node ≥22 |
-| parallax (임팩트 분석) | **Node ≥24** (내장 node:sqlite 사용) |
+| Ariadne memory (영속 메모리) | Postgres + Docker, Node ≥22 |
+| Ariadne code (임팩트 분석) | **Node ≥24** (내장 node:sqlite 사용) |
 | telemetry (팀 집계) | OTel collector. `user.email`은 끌 수 없음에 유의 |
 
 사용법·연결 방법은 [MODULES.md](./MODULES.md).

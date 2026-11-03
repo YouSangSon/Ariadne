@@ -1,0 +1,2481 @@
+import { execFileSync } from 'node:child_process';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
+
+import {
+  addWorkspaceRepo,
+  analyzeContractDiff,
+  analyzeDiff,
+  exportImpactGraph,
+  indexProject,
+  initProject,
+  initWorkspace,
+  ingestTraces,
+  queryCoChanges,
+  resolveCrossRepoContracts
+} from '../src/index.js';
+import { searchContextForRepo } from '../src/mcp.js';
+import { recallSemantic } from '../src/agent_memory.js';
+import type { EmbeddingResult } from '../src/embeddings.js';
+import {
+  GO_SEMANTIC_ADAPTER_ID,
+  JVM_SPRING_SEMANTIC_ADAPTER_ID,
+  MULTI_LANG_REGEX_ADAPTER_ID,
+  PYTHON_SEMANTIC_ADAPTER_ID,
+  RUST_SEMANTIC_ADAPTER_ID,
+  TS_JS_SEMANTIC_ADAPTER_ID
+} from '../src/adapters/multi-language-regex.js';
+import { BUILD_SYSTEM_PACKAGE_ADAPTER_ID } from '../src/adapters/build-system-package.js';
+import { CONFIG_INFRA_SEMANTIC_ADAPTER_ID } from '../src/adapters/config-infra.js';
+
+const fixtureId = 'phase6b-multilanguage-v0';
+const schemaVersion = 7;
+const crossRepoContractFixtureId = 'cross-repo-contract-impact-v0';
+const contractDiffQualityFixtureId = 'contract-diff-quality-v0';
+const coChangeQualityFixtureId = 'co-change-quality-v0';
+const tracePromotionQualityFixtureId = 'trace-promotion-quality-v0';
+const defaultOutputPath = '.parallax/bench/impact-bench-report.json';
+const regexAdapterId = MULTI_LANG_REGEX_ADAPTER_ID;
+const retrievalFixtureId = 'search-context-retrieval-v0';
+const semanticRecallFixtureId = 'semantic-recall-model-regression-v0';
+const semanticModelA = 'bench-semantic-model-a';
+const semanticModelB = 'bench-semantic-model-b';
+
+export type ImpactBenchReport = {
+  schemaVersion: 2 | 3 | 4 | 5 | 6 | 7;
+  fixtureId: typeof fixtureId;
+  summary: {
+    passed: boolean;
+    score: number;
+    expectedRelations: number;
+    matchedRelations: number;
+    unexpectedRelations: number;
+  };
+  scores: {
+    relationRecall: number;
+    relationPrecision: number;
+    affectedFileRecall: number;
+    evidencePresence: number;
+    spanCompleteness: number;
+    adapterAttribution: number;
+    contextPackReadiness: number;
+  };
+  missingRelations: string[];
+  unexpectedRelations: string[];
+  expectedRelationLabels: string[];
+  analyzeDiff: {
+    changedFiles: string[];
+    expectedAffectedFiles: string[];
+    matchedAffectedFiles: string[];
+  };
+  crossRepoContracts: CrossRepoContractBench;
+  contractDiffQuality: ContractDiffQualityBench;
+  coChangeQuality: CoChangeQualityBench;
+  tracePromotionQuality: TracePromotionQualityBench;
+  retrieval: RetrievalBenchReport;
+  outputPath: string;
+};
+
+export type RunImpactBenchOptions = {
+  workspaceRoot?: string;
+  outputPath?: string;
+  keepFixture?: boolean;
+};
+
+type ExpectedRelation = {
+  kind: string;
+  sourceKind?: string;
+  sourcePath: string;
+  sourceSymbol?: string;
+  targetKind?: string;
+  targetPath?: string;
+  targetSymbol?: string;
+  targetDisplayName?: string;
+  adapterId: string;
+  label: string;
+};
+
+type ActualRelation = {
+  kind: string;
+  sourceKind: string;
+  sourcePath: string | null;
+  sourceSymbol: string | null;
+  targetKind: string;
+  targetPath: string | null;
+  targetSymbol: string | null;
+  targetDisplayName: string;
+  adapterId: string | null;
+  evidenceCount: number;
+  spanCount: number;
+};
+
+type RelationMatch = {
+  expected: ExpectedRelation;
+  actual?: ActualRelation;
+};
+
+type RetrievalBenchReport = {
+  fixtureId: typeof retrievalFixtureId;
+  summary: RetrievalMetrics;
+  semanticModels?: SemanticRecallBenchReport;
+  budgets: {
+    brief: {
+      maxReturnedBytes: number;
+      budgetExceededCount: number;
+    };
+  };
+  streamAblations: {
+    all: RetrievalMetrics;
+    withoutEvidenceFts: RetrievalMetrics;
+    withoutFactsFts: RetrievalMetrics;
+  };
+  queries: RetrievalQueryReport[];
+};
+
+type SemanticRecallBenchReport = {
+  fixtureId: typeof semanticRecallFixtureId;
+  summary: {
+    passed: boolean;
+    modelCount: number;
+    recallAt1: number;
+    isolation: number;
+  };
+  models: SemanticRecallModelReport[];
+};
+
+type SemanticRecallModelReport = {
+  model: string;
+  expectedFactId: string;
+  disallowedFactId: string;
+  topFactId: string | null;
+  returnedFactIds: string[];
+  recallAt1: number;
+  isolated: boolean;
+};
+
+type SemanticRecallSpec = {
+  model: string;
+  queryVector: Buffer;
+  expectedFactId: string;
+  disallowedFactId: string;
+};
+
+type RetrievalMetrics = {
+  recallAt5: number;
+  recallAt10: number;
+  precisionAt5: number;
+  mrr: number;
+  ndcgAt10: number;
+};
+
+type RetrievalQuerySpec = {
+  id: string;
+  query: string;
+  expectedEntityIds: string[];
+};
+
+type RetrievalQueryReport = RetrievalQuerySpec & RetrievalMetrics & {
+  returnedEntityIds: string[];
+  resourceUris: string[];
+  returnedBytes: number;
+  budgetExceeded: boolean;
+};
+
+type SearchContextBenchResult = {
+  results: Array<{ entity: { id: string }; resourceUri: string }>;
+  limits: { returnedBytes: number; budgetExceeded: boolean };
+};
+
+type CrossRepoContractBench = {
+  fixtureId: typeof crossRepoContractFixtureId;
+  summary: {
+    passed: boolean;
+    score: number;
+    expectedImpacts: number;
+    matchedImpacts: number;
+    expectedGraphEdges: number;
+    matchedGraphEdges: number;
+  };
+  expectedConsumerPaths: string[];
+  matchedConsumerPaths: string[];
+  missingConsumerPaths: string[];
+  expectedEvidenceKinds: string[];
+  matchedEvidenceKinds: string[];
+  graphEdges: {
+    expected: number;
+    matched: number;
+  };
+};
+
+type ContractDiffQualityBench = {
+  fixtureId: typeof contractDiffQualityFixtureId;
+  summary: {
+    passed: boolean;
+    score: number;
+    expectedCases: number;
+    matchedCases: number;
+    expectedChanges: number;
+    matchedChanges: number;
+  };
+  cases: ContractDiffQualityCaseReport[];
+  missingChanges: string[];
+};
+
+type ContractDiffQualityCaseReport = {
+  id: string;
+  score: number;
+  expectedChanges: number;
+  matchedChanges: number;
+  expectedChangeKeys: string[];
+  matchedChangeKeys: string[];
+  missingChangeKeys: string[];
+};
+
+type ContractDiffQualityExpectedChange = {
+  kind: string;
+  classification: string;
+  schemaPath?: string;
+};
+
+type CoChangeQualityBench = {
+  fixtureId: typeof coChangeQualityFixtureId;
+  summary: {
+    passed: boolean;
+    score: number;
+    expectedPartners: number;
+    matchedPartners: number;
+    expectedAffectedFiles: number;
+    matchedAffectedFiles: number;
+  };
+  expectedPartners: string[];
+  matchedPartners: string[];
+  missingPartners: string[];
+  expectedAffectedFiles: string[];
+  matchedAffectedFiles: string[];
+  missingAffectedFiles: string[];
+};
+
+type TracePromotionQualityBench = {
+  fixtureId: typeof tracePromotionQualityFixtureId;
+  summary: {
+    passed: boolean;
+    score: number;
+    expectedPromotions: number;
+    matchedPromotions: number;
+    expectedProvenAffectedFiles: number;
+    matchedProvenAffectedFiles: number;
+    unmatchedEdges: number;
+  };
+  expectedPromotedEdges: string[];
+  matchedPromotedEdges: string[];
+  missingPromotedEdges: string[];
+  expectedProvenAffectedFiles: string[];
+  matchedProvenAffectedFiles: string[];
+  missingProvenAffectedFiles: string[];
+  unmatchedEdges: string[];
+};
+
+type ContractDiffQualityCaseSpec =
+  | {
+      id: string;
+      contractKind?: 'openapi';
+      current: ContractDiffBenchOpenApiOptions;
+      expectedChanges: ContractDiffQualityExpectedChange[];
+    }
+  | {
+      id: string;
+      contractKind: 'json-schema';
+      current: ContractDiffBenchJsonSchemaOptions;
+      expectedChanges: ContractDiffQualityExpectedChange[];
+    }
+  | {
+      id: string;
+      contractKind: 'avro';
+      current: ContractDiffBenchAvroOptions;
+      expectedChanges: ContractDiffQualityExpectedChange[];
+    };
+
+type ContractDiffBenchOpenApiOptions = {
+  requestRequired?: string[];
+  requestEmailFormat?: string;
+  requestRoleEnum?: string[];
+  responseRequired?: string[];
+  responseIdFormat?: string;
+  responseIdNullable?: boolean;
+  responseNameType?: string;
+  includeResponseStatus?: boolean;
+  responseStatusEnum?: string[];
+};
+
+type ContractDiffBenchJsonSchemaOptions = {
+  required?: string[];
+};
+
+type ContractDiffBenchAvroOptions = {
+  includeName?: boolean;
+};
+
+const retrievalQueries: readonly RetrievalQuerySpec[] = [
+  {
+    id: 'evidence-fts-policy',
+    query: 'credential nonce validator',
+    expectedEntityIds: ['file:bench/evidence-policy.ts']
+  },
+  {
+    id: 'facts-fts-policy',
+    query: 'checkout retry policy',
+    expectedEntityIds: ['file:bench/fact-policy.ts']
+  }
+];
+
+const semanticRecallSpecs: readonly SemanticRecallSpec[] = [
+  {
+    model: semanticModelA,
+    queryVector: int8Vector([127, 0, 0, 0]),
+    expectedFactId: 'bench:model-a-policy',
+    disallowedFactId: 'bench:model-foreign-a-policy'
+  },
+  {
+    model: semanticModelB,
+    queryVector: int8Vector([0, 127, 0, 0]),
+    expectedFactId: 'bench:model-b-policy',
+    disallowedFactId: 'bench:model-foreign-b-policy'
+  }
+];
+
+const contractDiffQualityCases: readonly ContractDiffQualityCaseSpec[] = [
+  {
+    id: 'removed-response-required-property',
+    current: { responseRequired: ['id'] },
+    expectedChanges: [
+      {
+        kind: 'removed_response_required_property',
+        classification: 'breaking',
+        schemaPath: 'responses.200.body.required.name'
+      }
+    ]
+  },
+  {
+    id: 'json-schema-required-property-removal',
+    contractKind: 'json-schema',
+    current: { required: ['id'] },
+    expectedChanges: [
+      {
+        kind: 'removed_response_required_property',
+        classification: 'breaking',
+        schemaPath: '#.required.name'
+      }
+    ]
+  },
+  {
+    id: 'avro-required-field-removal',
+    contractKind: 'avro',
+    current: { includeName: false },
+    expectedChanges: [
+      {
+        kind: 'removed_response_required_property',
+        classification: 'breaking',
+        schemaPath: '#.required.name'
+      }
+    ]
+  },
+  {
+    id: 'removed-response-optional-property',
+    current: { includeResponseStatus: false },
+    expectedChanges: [
+      {
+        kind: 'removed_response_optional_property',
+        classification: 'non-breaking',
+        schemaPath: 'responses.200.body.properties.status'
+      }
+    ]
+  },
+  {
+    id: 'added-request-required-property',
+    current: { requestRequired: ['name', 'email'] },
+    expectedChanges: [
+      {
+        kind: 'added_request_required_property',
+        classification: 'breaking',
+        schemaPath: 'requestBody.required.email'
+      }
+    ]
+  },
+  {
+    id: 'removed-request-enum-value',
+    current: { requestRoleEnum: ['admin', 'member'] },
+    expectedChanges: [
+      {
+        kind: 'removed_request_property_enum_value',
+        classification: 'breaking',
+        schemaPath: 'requestBody.properties.role.enum.string:"viewer"'
+      }
+    ]
+  },
+  {
+    id: 'added-request-format',
+    current: { requestEmailFormat: 'email' },
+    expectedChanges: [
+      {
+        kind: 'changed_request_property_format',
+        classification: 'breaking',
+        schemaPath: 'requestBody.properties.email.format'
+      }
+    ]
+  },
+  {
+    id: 'changed-response-property-type',
+    current: { responseNameType: 'integer' },
+    expectedChanges: [
+      {
+        kind: 'changed_response_property_type',
+        classification: 'breaking',
+        schemaPath: 'responses.200.body.properties.name'
+      }
+    ]
+  },
+  {
+    id: 'changed-response-property-format',
+    current: { responseIdFormat: 'date-time' },
+    expectedChanges: [
+      {
+        kind: 'changed_response_property_format',
+        classification: 'breaking',
+        schemaPath: 'responses.200.body.properties.id.format'
+      }
+    ]
+  },
+  {
+    id: 'added-response-property-nullable',
+    current: { responseIdNullable: true },
+    expectedChanges: [
+      {
+        kind: 'added_response_property_nullable',
+        classification: 'breaking',
+        schemaPath: 'responses.200.body.properties.id.nullable'
+      }
+    ]
+  },
+  {
+    id: 'removed-response-enum-value',
+    current: { responseStatusEnum: ['active', 'pending'] },
+    expectedChanges: [
+      {
+        kind: 'removed_response_property_enum_value',
+        classification: 'breaking',
+        schemaPath: 'responses.200.body.properties.status.enum.string:"disabled"'
+      }
+    ]
+  }
+];
+
+const expectedRelations: readonly ExpectedRelation[] = [
+  languageRelation('DEPENDS_ON', 'src/ts/type-only.ts', 'src/ts/session.ts', 'TS type-only import reaches session'),
+  languageRelation('DEPENDS_ON', 'src/ts/namespace-consumer.ts', 'src/ts/session.ts', 'TS namespace import reaches session'),
+  languageRelation('CALLS', 'src/ts/namespace-consumer.ts', 'src/ts/session.ts', 'TS namespace consumer calls session validator'),
+  languageRelation('DEPENDS_ON', 'src/ts/private.ts', 'src/ts/session.ts', 'TS private route imports session'),
+  languageRelation('CALLS', 'src/ts/private.ts', 'src/ts/session.ts', 'TS private route calls session validator'),
+  languageRelation('DEPENDS_ON', 'src/ts/widget.tsx', 'src/ts/session.ts', 'TSX dynamic import reaches session'),
+  languageRelation('DEPENDS_ON', 'src/ts/static-widget.tsx', 'src/ts/session.ts', 'TSX static import reaches session'),
+  languageRelation('CALLS', 'src/ts/static-widget.tsx', 'src/ts/session.ts', 'TSX static widget calls session validator'),
+  languageRelation('DEPENDS_ON', 'src/ts/barrel.ts', 'src/ts/session.ts', 'TS re-export barrel reaches session'),
+  languageRelation('DEPENDS_ON', 'src/ts/nodenext-barrel.ts', 'src/ts/session.ts', 'TS NodeNext .js re-export barrel reaches session'),
+  languageRelation('DEPENDS_ON', 'src/ts/alias-consumer.ts', 'src/ts/session.ts', 'TS path alias import reaches session'),
+  languageRelation('CALLS', 'src/ts/alias-consumer.ts', 'src/ts/session.ts', 'TS path alias consumer calls session validator'),
+  languageSymbolRelation('CALLS', 'src/ts/object-literal-consumer.ts', 'authorizeWithObjectLiteral', 'guard.validateSession', 'TS object literal method consumer calls guard validator'),
+  languageRelation('DEPENDS_ON', 'src/js/legacy.js', 'src/ts/session.ts', 'JS require reaches TS session'),
+  languageRelation('CALLS', 'src/js/legacy.js', 'src/ts/session.ts', 'JS require consumer calls session validator'),
+  languageRelation('DEPENDS_ON', 'tests/session.test.ts', 'src/ts/session.ts', 'TS test imports session'),
+  languageRelation('CALLS', 'tests/session.test.ts', 'src/ts/session.ts', 'TS test calls session validator'),
+  languageRelation('VERIFIES', 'tests/session.test.ts', 'src/ts/session.ts', 'TS test verifies session'),
+  fallbackRelation('DOCUMENTS', 'README.md', 'src/ts/session.ts', 'Markdown documents session'),
+  configInfraRelation('CONFIGURES', '.github/workflows/ci.yml', 'src/ts/session.ts', 'Workflow config references session'),
+  packageDeclareRelation('package.json', '@acme/impact-bench', 'npm package declares bench workspace package'),
+  packageManifestIdentityRelation('package.json', 'npm package identity depends on package manifest'),
+  packageDependencyRelation('package.json', 'typescript', 'npm package depends on TypeScript package'),
+  packageDependencyRelation('package.json', 'tslib', 'npm lockfile transitive dependency depends on tslib package'),
+  packageManifestIdentityRelation('pyproject.toml', 'Python package identity depends on pyproject manifest'),
+  packageDependencyRelation('pyproject.toml', 'fastapi', 'Python project dependency depends on FastAPI package'),
+  packageDependencyRelation('pyproject.toml', 'pytest', 'Python optional dependency depends on pytest package'),
+  packageDependencyRelation('pyproject.toml', 'mypy', 'Python dependency group depends on mypy package'),
+  packageDependencyRelation('pyproject.toml', 'mkdocs', 'Poetry dependency group depends on mkdocs package'),
+  packageManifestIdentityRelation('pom.xml', 'Maven package identity depends on build manifest'),
+  packageDependencyRelation('pom.xml', 'org.springframework.boot:spring-boot-starter-web', 'Maven property dependency depends on Spring Web package'),
+  packageManifestIdentityRelation('app/build.gradle.kts', 'Gradle package identity depends on build manifest'),
+  packageDependencyRelation('app/build.gradle.kts', 'org.springframework.boot:spring-boot-starter-web', 'Gradle version catalog alias depends on Spring Web package'),
+  buildSystemConfigRelation('go.work', 'services/go-api/go.mod', 'Go workspace includes service module'),
+  buildSystemConfigRelation('go.work', 'libs/go-shared/go.mod', 'Go workspace includes shared module'),
+  packageManifestIdentityRelation('services/go-api/go.mod', 'Go service package identity depends on module manifest'),
+  packageManifestIdentityRelation('libs/go-shared/go.mod', 'Go shared package identity depends on module manifest'),
+  localPackageDependencyRelation('services/go-api/go.mod', 'libs/go-shared/go.mod', 'Go replace dependency depends on local shared module'),
+  buildSystemConfigRelation('Cargo.toml', 'crates/bench-api/Cargo.toml', 'Cargo workspace includes API crate'),
+  buildSystemConfigRelation('Cargo.toml', 'crates/bench-core/Cargo.toml', 'Cargo workspace includes core crate'),
+  packageManifestIdentityRelation('crates/bench-api/Cargo.toml', 'Cargo API package identity depends on manifest'),
+  packageManifestIdentityRelation('crates/bench-core/Cargo.toml', 'Cargo core package identity depends on manifest'),
+  localPackageDependencyRelation('crates/bench-api/Cargo.toml', 'crates/bench-core/Cargo.toml', 'Cargo path dependency depends on local core crate'),
+  packageDependencyRelation('crates/bench-api/Cargo.toml', 'serde', 'Cargo workspace dependency depends on serde package'),
+  endpointRelation('src/main/java/com/example/UserController.java', 'GET /api/users', 'Spring Java GET endpoint'),
+  endpointRelation('src/main/java/com/example/UserController.java', 'POST /api/users', 'Spring Java POST endpoint'),
+  languageRelation('DEPENDS_ON', 'src/main/java/com/example/UserController.java', 'src/main/java/com/example/UserService.java', 'Spring controller imports service'),
+  languageRelation('DEPENDS_ON', 'src/test/java/com/example/UserControllerTest.java', 'src/main/java/com/example/UserController.java', 'Spring @WebMvcTest imports controller'),
+  languageRelation('VERIFIES', 'src/test/java/com/example/UserControllerTest.java', 'src/main/java/com/example/UserController.java', 'Spring @WebMvcTest verifies controller'),
+  endpointRelation('src/main/kotlin/com/example/AuditController.kt', 'GET /api/audits', 'Spring Kotlin GET endpoint'),
+  languageRelation('DEPENDS_ON', 'src/test/kotlin/com/example/AuditControllerTest.kt', 'src/main/kotlin/com/example/AuditController.kt', 'Kotlin @SpringBootTest imports controller'),
+  languageRelation('VERIFIES', 'src/test/kotlin/com/example/AuditControllerTest.kt', 'src/main/kotlin/com/example/AuditController.kt', 'Kotlin @SpringBootTest verifies controller'),
+  springDeclareRelation('src/main/java/com/example/AppConfig.java', 'AppConfig', 'Spring @Configuration declares config class'),
+  springDeclareRelation('src/main/java/com/example/AppConfig.java', 'auditClock', 'Spring @Bean declares bean method'),
+  springDeclareRelation('src/main/java/com/example/AppProperties.java', 'AppProperties', 'Spring @ConfigurationProperties declares properties class'),
+  fallbackRelation('CONFIGURES', 'src/main/resources/application.yml', 'src/main/java/com/example/UserService.java', 'Spring application.yml references service'),
+  fallbackRelation('CONFIGURES', 'src/main/resources/application.properties', 'src/main/java/com/example/AppProperties.java', 'Spring application.properties references configuration properties'),
+  springDeclareRelation('src/main/java/com/example/User.java', 'User', 'JPA @Entity declares persistence entity'),
+  springDeclareRelation('src/main/java/com/example/UserRepository.java', 'UserRepository', 'Spring Data repository declares repository'),
+  languageRelation('DEPENDS_ON', 'src/main/java/com/example/UserRepository.java', 'src/main/java/com/example/User.java', 'Spring Data repository imports entity'),
+  languageRelation('DEPENDS_ON', 'src/test/java/com/example/UserRepositoryTest.java', 'src/main/java/com/example/UserRepository.java', 'Spring @DataJpaTest imports repository'),
+  languageRelation('VERIFIES', 'src/test/java/com/example/UserRepositoryTest.java', 'src/main/java/com/example/UserRepository.java', 'Spring @DataJpaTest verifies repository'),
+  springDeclareRelation('src/main/java/com/example/CatalogClient.java', 'CatalogClient', 'Spring Feign @FeignClient declares client'),
+  externalRelation('DEPENDS_ON', 'src/main/java/com/example/UserClient.java', 'org.springframework.web.reactive.function.client.WebClient', 'Spring WebClient import declares client dependency'),
+  externalRelation('DEPENDS_ON', 'src/main/java/com/example/AdminClient.java', 'org.springframework.web.client.RestTemplate', 'Spring RestTemplate import declares client dependency'),
+  contractEndpointRelation('contracts/openapi.yaml', 'GET /api/users', 'OpenAPI contract declares users endpoint'),
+  contractReferenceRelation('contracts/openapi.yaml', 'src/main/java/com/example/UserController.java', 'OpenAPI contract references controller implementation'),
+  contractImplementerRelation('src/main/java/com/example/UserController.java', 'contracts/openapi.yaml', 'Spring controller implements OpenAPI contract'),
+  configInfraRelation('DEPENDS_ON', 'Dockerfile', 'src/main/java/com/example/UserController.java', 'Dockerfile COPY dependency'),
+  configInfraRelation('CONFIGURES', 'Dockerfile', 'src/main/java/com/example/UserController.java', 'Dockerfile copies controller'),
+  languageDeclareRelation('src/python/util.py', 'Helper', 'Python class declares Helper'),
+  languageDeclareRelation('src/python/util.py', 'helper', 'Python function declares helper'),
+  languageRelation('DEPENDS_ON', 'src/python/app.py', 'src/python/util.py', 'Python module imports util'),
+  languageRelation('VERIFIES', 'tests/python/test_util.py', 'src/python/util.py', 'Pytest verifies util'),
+  languageDeclareRelation('src/go/calc.go', 'Add', 'Go function declares Add'),
+  languageRelation('VERIFIES', 'src/go/calc_test.go', 'src/go/calc.go', 'Go test verifies calc'),
+  languageDeclareRelation('src/rust/lib.rs', 'run', 'Rust function declares run'),
+  languageRelation('VERIFIES', 'src/rust/lib_test.rs', 'src/rust/lib.rs', 'Rust test verifies lib')
+];
+
+const changedFiles = ['src/ts/session.ts'] as const;
+const expectedAffectedFiles = [
+  '.github/workflows/ci.yml',
+  'README.md',
+  'src/js/legacy.js',
+  'src/ts/alias-consumer.ts',
+  'src/ts/barrel.ts',
+  'src/ts/namespace-consumer.ts',
+  'src/ts/nodenext-barrel.ts',
+  'src/ts/private.ts',
+  'src/ts/static-widget.tsx',
+  'src/ts/type-only.ts',
+  'src/ts/widget.tsx',
+  'tests/session.test.ts'
+] as const;
+
+export async function runImpactBench(options: RunImpactBenchOptions = {}): Promise<ImpactBenchReport> {
+  const workspaceRoot = path.resolve(options.workspaceRoot ?? process.cwd());
+  const outputPath = path.resolve(workspaceRoot, options.outputPath ?? defaultOutputPath);
+  const outputPathForReport = toPosixRelative(workspaceRoot, outputPath);
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-fixture-'));
+
+  try {
+    await writeFixture(fixtureRoot);
+    await initProject({ repoRoot: fixtureRoot });
+    const index = await indexProject({ repoRoot: fixtureRoot });
+    seedRetrievalFixture(fixtureRoot, index.indexRunId);
+    const analyzeReport = await analyzeDiff({
+      repoRoot: fixtureRoot,
+      changedFiles: [...changedFiles],
+      persistReport: false,
+      readOnly: true
+    });
+
+    const db = new DatabaseSync(path.join(fixtureRoot, '.parallax/impact.db'), {
+      readOnly: true
+    });
+    let actualRelations: ActualRelation[];
+    try {
+      actualRelations = loadActualRelations(db, index.indexRunId);
+    } finally {
+      db.close();
+    }
+
+    const relationMatches = matchExpectedRelations(actualRelations);
+    const missingRelations = relationMatches
+      .filter((match) => !match.actual)
+      .map((match) => match.expected.label)
+      .sort();
+    const unexpectedRelations = findUnexpectedRelations(actualRelations).sort();
+    const matchedRelations = relationMatches.filter((match) => match.actual).length;
+    const matchedAffectedFiles = expectedAffectedFiles
+      .filter((expected) => analyzeReport.affectedFiles.some((file) => file.path === expected))
+      .sort();
+
+    const relationRecall = ratio(matchedRelations, expectedRelations.length);
+    const relationPrecision = ratio(
+      matchedRelations,
+      matchedRelations + unexpectedRelations.length
+    );
+    const affectedFileRecall = ratio(matchedAffectedFiles.length, expectedAffectedFiles.length);
+    const evidencePresence = ratio(
+      relationMatches.filter((match) => match.actual && match.actual.evidenceCount > 0).length,
+      expectedRelations.length
+    );
+    const spanCompleteness = ratio(
+      relationMatches.filter((match) => match.actual && match.actual.spanCount > 0).length,
+      expectedRelations.length
+    );
+    const adapterAttribution = ratio(
+      relationMatches.filter(
+        (match) => match.actual && match.actual.adapterId === match.expected.adapterId
+      ).length,
+      expectedRelations.length
+    );
+    const contextPackReadiness = analyzeReport.evidence.length > 0
+      && Buffer.byteLength(JSON.stringify(analyzeReport.evidence.slice(0, 20)), 'utf8') < 20_000
+      ? 1
+      : 0;
+    const retrieval = await runRetrievalBench(fixtureRoot);
+    const crossRepoContracts = await runCrossRepoContractBench();
+
+    const scores = {
+      relationRecall,
+      relationPrecision,
+      affectedFileRecall,
+      evidencePresence,
+      spanCompleteness,
+      adapterAttribution,
+      contextPackReadiness
+    };
+    const score = weightedScore(scores);
+    const contractDiffQuality = await runContractDiffQualityBench();
+    const coChangeQuality = await runCoChangeQualityBench();
+    const tracePromotionQuality = await runTracePromotionQualityBench();
+    const passed =
+      relationRecall >= 0.95 &&
+      relationPrecision >= 0.95 &&
+      affectedFileRecall === 1 &&
+      evidencePresence === 1 &&
+      spanCompleteness >= 0.9 &&
+      adapterAttribution === 1 &&
+      contextPackReadiness === 1 &&
+      retrieval.summary.recallAt5 === 1 &&
+      retrieval.summary.mrr === 1 &&
+      retrieval.semanticModels?.summary.passed === true &&
+      crossRepoContracts.summary.passed === true &&
+      contractDiffQuality.summary.passed === true &&
+      coChangeQuality.summary.passed === true &&
+      tracePromotionQuality.summary.passed === true &&
+      score >= 0.9;
+
+    const report: ImpactBenchReport = {
+      schemaVersion,
+      fixtureId,
+      summary: {
+        passed,
+        score,
+        expectedRelations: expectedRelations.length,
+        matchedRelations,
+        unexpectedRelations: unexpectedRelations.length
+      },
+      scores,
+      missingRelations,
+      unexpectedRelations,
+      expectedRelationLabels: expectedRelations.map((relation) => relation.label).sort(),
+      analyzeDiff: {
+        changedFiles: [...changedFiles],
+        expectedAffectedFiles: [...expectedAffectedFiles],
+        matchedAffectedFiles
+      },
+      crossRepoContracts,
+      contractDiffQuality,
+      coChangeQuality,
+      tracePromotionQuality,
+      retrieval,
+      outputPath: outputPathForReport
+    };
+
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    return report;
+  } finally {
+    if (!options.keepFixture) {
+      await rm(fixtureRoot, { recursive: true, force: true });
+    }
+  }
+}
+
+function seedRetrievalFixture(repoRoot: string, indexRunId: number): void {
+  const db = new DatabaseSync(path.join(repoRoot, '.parallax/impact.db'));
+  try {
+    db.exec('PRAGMA foreign_keys = ON;');
+    const repo = db.prepare('SELECT id FROM repos LIMIT 1').get() as { id: number };
+    const insertEntity = db.prepare(`
+      INSERT OR REPLACE INTO entities (
+        id, repo_id, kind, path, symbol, language_id, display_name,
+        created_index_run_id, updated_index_run_id
+      )
+      VALUES (?, ?, 'file', ?, NULL, 'typescript', ?, ?, ?)
+    `);
+    insertEntity.run(
+      'file:bench/evidence-policy.ts',
+      repo.id,
+      'bench/evidence-policy.ts',
+      'Bench Evidence Policy',
+      indexRunId,
+      indexRunId
+    );
+    insertEntity.run(
+      'file:bench/fact-policy.ts',
+      repo.id,
+      'bench/fact-policy.ts',
+      'Bench Fact Policy',
+      indexRunId,
+      indexRunId
+    );
+    for (const [entityId, entityPath, displayName] of [
+      ['file:bench/model-a-policy.ts', 'bench/model-a-policy.ts', 'Bench Model A Policy'],
+      ['file:bench/model-b-policy.ts', 'bench/model-b-policy.ts', 'Bench Model B Policy'],
+      ['file:bench/model-foreign-a-policy.ts', 'bench/model-foreign-a-policy.ts', 'Bench Foreign A Policy'],
+      ['file:bench/model-foreign-b-policy.ts', 'bench/model-foreign-b-policy.ts', 'Bench Foreign B Policy']
+    ] as const) {
+      insertEntity.run(entityId, repo.id, entityPath, displayName, indexRunId, indexRunId);
+    }
+    db.prepare(`
+      INSERT OR REPLACE INTO relations (
+        id, repo_id, source_entity_id, target_entity_id, kind, confidence,
+        adapter_run_id, index_run_id, provenance
+      )
+      VALUES (?, ?, ?, ?, 'DOCUMENTS', 'medium', NULL, ?, 'impact-bench-retrieval')
+    `).run(
+      'bench:evidence-policy',
+      repo.id,
+      'file:bench/evidence-policy.ts',
+      'file:bench/evidence-policy.ts',
+      indexRunId
+    );
+    db.prepare(`
+      INSERT OR REPLACE INTO relation_evidence (
+        id, relation_id, repo_id, file_path, kind, snippet, confidence, index_run_id
+      )
+      VALUES (?, ?, ?, ?, 'DOCUMENTS', ?, 'medium', ?)
+    `).run(
+      'bench:evidence-policy:0',
+      'bench:evidence-policy',
+      repo.id,
+      'bench/evidence-policy.ts',
+      'rotating credential validator rejects stale nonce during handoff',
+      indexRunId
+    );
+
+    db.prepare(`
+      INSERT OR IGNORE INTO attribute_defs (name, value_type, is_code_relation, description)
+      VALUES ('session_summary', 'json', 0, 'Bench retrieval memory fact')
+    `).run();
+    db.prepare(`
+      INSERT OR IGNORE INTO transactions (id, parent_tx_id, branch_id, ts, agent, index_run_id)
+      VALUES ('tx_bench_retrieval', NULL, 'br_main', datetime('now'), 'impact-bench', ?)
+    `).run(indexRunId);
+    db.prepare(`
+      INSERT OR REPLACE INTO facts (id, entity_id, attribute, value_blob, op, tx_id, redacted)
+      VALUES (?, ?, 'session_summary', ?, 'assert', 'tx_bench_retrieval', 0)
+    `).run(
+      'bench:fact-policy',
+      'file:bench/fact-policy.ts',
+      JSON.stringify('checkout retry owner escalation policy')
+    );
+    const insertFact = db.prepare(`
+      INSERT OR REPLACE INTO facts (id, entity_id, attribute, value_blob, op, tx_id, redacted)
+      VALUES (?, ?, 'session_summary', ?, 'assert', 'tx_bench_retrieval', 0)
+    `);
+    for (const [factId, entityId, value] of [
+      ['bench:model-a-policy', 'file:bench/model-a-policy.ts', 'model a semantic recall target'],
+      ['bench:model-b-policy', 'file:bench/model-b-policy.ts', 'model b semantic recall target'],
+      [
+        'bench:model-foreign-a-policy',
+        'file:bench/model-foreign-a-policy.ts',
+        'foreign model a decoy target'
+      ],
+      [
+        'bench:model-foreign-b-policy',
+        'file:bench/model-foreign-b-policy.ts',
+        'foreign model b decoy target'
+      ]
+    ] as const) {
+      insertFact.run(factId, entityId, JSON.stringify(value));
+    }
+
+    const insertEmbedding = db.prepare(`
+      INSERT OR REPLACE INTO fact_embeddings (fact_id, model, vector, dim, created_at)
+      VALUES (?, ?, ?, ?, datetime('now'))
+    `);
+    for (const [factId, model, vector] of [
+      ['bench:model-a-policy', semanticModelA, int8Vector([127, 0, 0, 0])],
+      ['bench:model-a-policy', semanticModelB, int8Vector([0, -127, 0, 0])],
+      ['bench:model-b-policy', semanticModelA, int8Vector([-127, 0, 0, 0])],
+      ['bench:model-b-policy', semanticModelB, int8Vector([0, 127, 0, 0])],
+      ['bench:model-foreign-a-policy', semanticModelB, int8Vector([127, 0, 0, 0])],
+      ['bench:model-foreign-b-policy', semanticModelA, int8Vector([0, 127, 0, 0])]
+    ] as const) {
+      insertEmbedding.run(factId, model, vector, vector.length);
+    }
+  } finally {
+    db.close();
+  }
+}
+
+async function writeCrossRepoBenchConsumer(repoRoot: string): Promise<void> {
+  await mkdir(path.join(repoRoot, 'src'), { recursive: true });
+  await writeFile(
+    path.join(repoRoot, 'src/client.ts'),
+    [
+      'export async function loadUsers() {',
+      '  return fetch("https://users.example.test/api/users");',
+      '}',
+      ''
+    ].join('\n'),
+    'utf8'
+  );
+}
+
+async function writeCrossRepoBenchOpenApiContract(repoRoot: string, routes: string[]): Promise<void> {
+  await mkdir(path.join(repoRoot, 'contracts'), { recursive: true });
+  const routeLines = routes.flatMap((route) => [
+    `  ${route}:`,
+    '    get:',
+    `      operationId: ${route.replace(/[^a-z0-9]/gi, '') || 'root'}`,
+    '      responses:',
+    "        '200':",
+    '          description: ok'
+  ]);
+  await writeFile(
+    path.join(repoRoot, 'contracts/openapi.yaml'),
+    [
+      'openapi: 3.0.0',
+      'info:',
+      '  title: Users API',
+      '  version: 1.0.0',
+      'paths:',
+      ...routeLines,
+      ''
+    ].join('\n'),
+    'utf8'
+  );
+}
+
+async function runCrossRepoContractBench(): Promise<CrossRepoContractBench> {
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-cross-repo-'));
+  try {
+    const providerRoot = path.join(fixtureRoot, 'provider');
+    const consumerRoot = path.join(fixtureRoot, 'consumer');
+    await mkdir(providerRoot, { recursive: true });
+    await mkdir(consumerRoot, { recursive: true });
+    await writeFile(path.join(providerRoot, 'README.md'), 'provider\n', 'utf8');
+    await writeFile(path.join(consumerRoot, 'README.md'), 'consumer\n', 'utf8');
+    await writeCrossRepoBenchConsumer(consumerRoot);
+    await writeCrossRepoBenchOpenApiContract(providerRoot, ['/api/users', '/api/status']);
+
+    await initProject({ repoRoot: consumerRoot });
+    await initProject({ repoRoot: providerRoot });
+    await indexProject({ repoRoot: consumerRoot });
+    await indexProject({ repoRoot: providerRoot });
+
+    initWorkspace({ repoRoot: providerRoot, name: 'platform', serviceName: 'users-api' });
+    addWorkspaceRepo({
+      repoRoot: providerRoot,
+      workspaceName: 'platform',
+      localPath: consumerRoot,
+      serviceName: 'web'
+    });
+
+    const resolved = resolveCrossRepoContracts({ repoRoot: providerRoot, workspaceName: 'platform' });
+    if (resolved.links.length !== 1) {
+      throw new Error(`cross-repo bench expected 1 resolved link, got ${resolved.links.length}`);
+    }
+
+    await writeCrossRepoBenchOpenApiContract(providerRoot, ['/api/status']);
+    analyzeContractDiff({
+      repoRoot: providerRoot,
+      workspaceName: 'platform',
+      providerServiceName: 'users-api',
+      contractPath: 'contracts/openapi.yaml'
+    });
+
+    const report = await analyzeDiff({
+      repoRoot: providerRoot,
+      changedFiles: ['contracts/openapi.yaml'],
+      writeReport: true
+    });
+    const graph = await exportImpactGraph({ repoRoot: providerRoot, reportId: report.id, format: 'json' });
+    const graphJson = JSON.parse(graph.rendered) as {
+      edges: Array<{ source: string; target: string; kind: string; confidence: string }>;
+    };
+
+    const expectedConsumerPaths = ['web:src/client.ts'];
+    const matchedConsumerPaths = expectedConsumerPaths.filter((consumerPath) =>
+      report.crossRepoImpacts?.some((impact) =>
+        impact.consumer.serviceName === 'web'
+        && impact.consumer.path === 'src/client.ts'
+        && impact.provider.serviceName === 'users-api'
+        && impact.provider.contractPath === 'contracts/openapi.yaml'
+      ) === true
+      && report.affectedFiles.some((file) => file.path === consumerPath)
+    );
+    const expectedEvidenceKinds = ['BREAKS_COMPATIBILITY_WITH'];
+    const expectedCrossRepoEvidence = report.evidence.filter((evidence) =>
+      evidence.extractorId === 'cross-repo-contract-impact'
+      && evidence.kind === 'BREAKS_COMPATIBILITY_WITH'
+      && evidence.relationKind === 'BREAKS_COMPATIBILITY_WITH'
+      && evidence.subject?.id === 'cross-repo:platform:web:src/client.ts'
+      && evidence.subject.path === 'web:src/client.ts'
+      && evidence.target?.id === 'contract:users-api:contracts/openapi.yaml'
+      && evidence.target.path === 'contracts/openapi.yaml'
+    );
+    const matchedEvidenceKinds = expectedEvidenceKinds.filter((kind) =>
+      expectedCrossRepoEvidence.some((evidence) => evidence.kind === kind)
+    );
+    const expectedGraphEdgeKeys = new Set(
+      expectedCrossRepoEvidence.map((evidence) => {
+        if (!evidence.subject?.id || !evidence.target?.id) {
+          throw new Error('cross-repo bench expected evidence with subject and target ids');
+        }
+        return `${evidence.subject.id}->${evidence.target.id}`;
+      })
+    );
+    const matchedGraphEdges = graphJson.edges.filter((edge) =>
+      edge.kind === 'BREAKS_COMPATIBILITY_WITH'
+      && edge.confidence === 'heuristic'
+      && expectedGraphEdgeKeys.has(`${edge.source}->${edge.target}`)
+    ).length;
+    const expectedGraphEdges = expectedGraphEdgeKeys.size;
+    const score = ratio(
+      matchedConsumerPaths.length + matchedEvidenceKinds.length + Math.min(matchedGraphEdges, expectedGraphEdges),
+      expectedConsumerPaths.length + expectedEvidenceKinds.length + expectedGraphEdges
+    );
+
+    return {
+      fixtureId: crossRepoContractFixtureId,
+      summary: {
+        passed: score === 1,
+        score,
+        expectedImpacts: expectedConsumerPaths.length,
+        matchedImpacts: matchedConsumerPaths.length,
+        expectedGraphEdges,
+        matchedGraphEdges
+      },
+      expectedConsumerPaths,
+      matchedConsumerPaths,
+      missingConsumerPaths: expectedConsumerPaths.filter((consumerPath) => !matchedConsumerPaths.includes(consumerPath)),
+      expectedEvidenceKinds,
+      matchedEvidenceKinds,
+      graphEdges: {
+        expected: expectedGraphEdges,
+        matched: matchedGraphEdges
+      }
+    };
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+}
+
+async function runCoChangeQualityBench(): Promise<CoChangeQualityBench> {
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-co-change-'));
+  try {
+    await writeCoChangeBenchGitHistory(fixtureRoot);
+    await initProject({ repoRoot: fixtureRoot });
+    await indexProject({ repoRoot: fixtureRoot });
+
+    const changedFile = 'src/alpha.ts';
+    const expectedPartners = ['src/beta.ts'];
+    const coChanges = queryCoChanges(fixtureRoot, changedFile);
+    const report = await analyzeDiff({
+      repoRoot: fixtureRoot,
+      changedFiles: [changedFile],
+      persistReport: false,
+      readOnly: true
+    });
+
+    const matchedPartners = expectedPartners
+      .filter((expectedPath) =>
+        coChanges.partners.some((partner) =>
+          partner.path === expectedPath &&
+          partner.coChangeCount === 3 &&
+          partner.couplingScore === 1 &&
+          partner.confidence === 'heuristic'
+        )
+      )
+      .sort();
+    const expectedAffectedFiles = ['src/beta.ts'];
+    const matchedAffectedFiles = expectedAffectedFiles
+      .filter((expectedPath) =>
+        report.affectedFiles.some((file) =>
+          file.path === expectedPath && file.confidence === 'heuristic'
+        )
+      )
+      .sort();
+    const matched = matchedPartners.length + matchedAffectedFiles.length;
+    const expected = expectedPartners.length + expectedAffectedFiles.length;
+    const score = ratio(matched, expected);
+
+    return {
+      fixtureId: coChangeQualityFixtureId,
+      summary: {
+        passed: matched === expected,
+        score,
+        expectedPartners: expectedPartners.length,
+        matchedPartners: matchedPartners.length,
+        expectedAffectedFiles: expectedAffectedFiles.length,
+        matchedAffectedFiles: matchedAffectedFiles.length
+      },
+      expectedPartners,
+      matchedPartners,
+      missingPartners: expectedPartners.filter((expectedPath) => !matchedPartners.includes(expectedPath)),
+      expectedAffectedFiles,
+      matchedAffectedFiles,
+      missingAffectedFiles: expectedAffectedFiles.filter((expectedPath) =>
+        !matchedAffectedFiles.includes(expectedPath)
+      )
+    };
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+}
+
+async function runTracePromotionQualityBench(): Promise<TracePromotionQualityBench> {
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-trace-promotion-'));
+  try {
+    await writeCoChangeBenchGitHistory(fixtureRoot);
+    await initProject({ repoRoot: fixtureRoot });
+    await indexProject({ repoRoot: fixtureRoot });
+
+    const edge = { source: 'src/beta.ts', target: 'src/alpha.ts' };
+    const expectedPromotedEdges = [traceEdgeKey(edge)];
+    const summary = ingestTraces(fixtureRoot, [edge]);
+    const report = await analyzeDiff({
+      repoRoot: fixtureRoot,
+      changedFiles: ['src/alpha.ts'],
+      persistReport: false,
+      readOnly: true
+    });
+    const matchedPromotedEdges =
+      summary.promoted === expectedPromotedEdges.length && summary.unmatched.length === 0
+        ? expectedPromotedEdges
+        : [];
+    const expectedProvenAffectedFiles = ['src/beta.ts'];
+    const matchedProvenAffectedFiles = expectedProvenAffectedFiles
+      .filter((expectedPath) =>
+        report.affectedFiles.some((file) =>
+          file.path === expectedPath && file.confidence === 'proven'
+        )
+      )
+      .sort();
+    const matched = matchedPromotedEdges.length + matchedProvenAffectedFiles.length;
+    const expected = expectedPromotedEdges.length + expectedProvenAffectedFiles.length;
+    const score = ratio(matched, expected);
+    const unmatchedEdges = summary.unmatched.map(traceEdgeKey).sort();
+
+    return {
+      fixtureId: tracePromotionQualityFixtureId,
+      summary: {
+        passed: matched === expected && unmatchedEdges.length === 0,
+        score,
+        expectedPromotions: expectedPromotedEdges.length,
+        matchedPromotions: matchedPromotedEdges.length,
+        expectedProvenAffectedFiles: expectedProvenAffectedFiles.length,
+        matchedProvenAffectedFiles: matchedProvenAffectedFiles.length,
+        unmatchedEdges: unmatchedEdges.length
+      },
+      expectedPromotedEdges,
+      matchedPromotedEdges,
+      missingPromotedEdges: expectedPromotedEdges.filter((expectedEdge) =>
+        !matchedPromotedEdges.includes(expectedEdge)
+      ),
+      expectedProvenAffectedFiles,
+      matchedProvenAffectedFiles,
+      missingProvenAffectedFiles: expectedProvenAffectedFiles.filter((expectedPath) =>
+        !matchedProvenAffectedFiles.includes(expectedPath)
+      ),
+      unmatchedEdges
+    };
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+}
+
+function traceEdgeKey(edge: { source: string; target: string }): string {
+  return `${edge.source}->${edge.target}`;
+}
+
+async function writeCoChangeBenchGitHistory(repoRoot: string): Promise<void> {
+  git(repoRoot, ['init']);
+  git(repoRoot, ['config', 'user.email', 'test@example.com']);
+  git(repoRoot, ['config', 'user.name', 'Test']);
+  await mkdir(path.join(repoRoot, 'src'), { recursive: true });
+  for (let round = 1; round <= 3; round++) {
+    await writeFile(path.join(repoRoot, 'src/alpha.ts'), `export const alpha = ${round};\n`, 'utf8');
+    await writeFile(path.join(repoRoot, 'src/beta.ts'), `export const beta = ${round};\n`, 'utf8');
+    git(repoRoot, ['add', '-A']);
+    git(repoRoot, ['commit', '-m', `round ${round}`]);
+  }
+}
+
+function git(repoRoot: string, args: readonly string[]): void {
+  execFileSync('git', [...args], {
+    cwd: repoRoot,
+    stdio: ['ignore', 'ignore', 'ignore']
+  });
+}
+
+async function runContractDiffQualityBench(): Promise<ContractDiffQualityBench> {
+  const fixtureRoot = await mkdtemp(path.join(tmpdir(), 'impact-bench-contract-diff-'));
+  try {
+    const providerRoot = path.join(fixtureRoot, 'provider');
+    await mkdir(providerRoot, { recursive: true });
+    await writeFile(path.join(providerRoot, 'README.md'), 'provider\n', 'utf8');
+    await writeContractDiffBenchOpenApiJsonContract(providerRoot);
+    await writeContractDiffBenchJsonSchemaContract(providerRoot);
+    await writeContractDiffBenchAvroContract(providerRoot);
+
+    await initProject({ repoRoot: providerRoot });
+    await indexProject({ repoRoot: providerRoot });
+    initWorkspace({ repoRoot: providerRoot, name: 'platform', serviceName: 'users-api' });
+
+    const cases: ContractDiffQualityCaseReport[] = [];
+    for (const spec of contractDiffQualityCases) {
+      const contractPath = spec.contractKind === 'json-schema'
+        ? 'contracts/user.schema.json'
+        : spec.contractKind === 'avro'
+          ? 'contracts/user.avsc'
+          : 'contracts/openapi.json';
+      if (spec.contractKind === 'json-schema') {
+        await writeContractDiffBenchJsonSchemaContract(providerRoot, spec.current);
+      } else if (spec.contractKind === 'avro') {
+        await writeContractDiffBenchAvroContract(providerRoot, spec.current);
+      } else {
+        await writeContractDiffBenchOpenApiJsonContract(providerRoot, spec.current);
+      }
+      const result = analyzeContractDiff({
+        repoRoot: providerRoot,
+        workspaceName: 'platform',
+        providerServiceName: 'users-api',
+        contractPath,
+        persist: false
+      });
+      const actualKeys = new Set(result.changes.map(contractDiffChangeKey));
+      const expectedChangeKeys = spec.expectedChanges.map(contractDiffExpectedChangeKey).sort();
+      const matchedChangeKeys = expectedChangeKeys.filter((key) => actualKeys.has(key)).sort();
+      const missingChangeKeys = expectedChangeKeys.filter((key) => !actualKeys.has(key)).sort();
+      cases.push({
+        id: spec.id,
+        score: ratio(matchedChangeKeys.length, expectedChangeKeys.length),
+        expectedChanges: expectedChangeKeys.length,
+        matchedChanges: matchedChangeKeys.length,
+        expectedChangeKeys,
+        matchedChangeKeys,
+        missingChangeKeys
+      });
+    }
+
+    const expectedChanges = cases.reduce((total, item) => total + item.expectedChanges, 0);
+    const matchedChanges = cases.reduce((total, item) => total + item.matchedChanges, 0);
+    const matchedCases = cases.filter((item) => item.missingChangeKeys.length === 0).length;
+    const score = ratio(matchedChanges, expectedChanges);
+    return {
+      fixtureId: contractDiffQualityFixtureId,
+      summary: {
+        passed: matchedCases === cases.length && matchedChanges === expectedChanges,
+        score,
+        expectedCases: cases.length,
+        matchedCases,
+        expectedChanges,
+        matchedChanges
+      },
+      cases,
+      missingChanges: cases.flatMap((item) =>
+        item.missingChangeKeys.map((key) => `${item.id}: ${key}`)
+      ).sort()
+    };
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+}
+
+async function writeContractDiffBenchOpenApiJsonContract(
+  repoRoot: string,
+  options: ContractDiffBenchOpenApiOptions = {}
+): Promise<void> {
+  await mkdir(path.join(repoRoot, 'contracts'), { recursive: true });
+  const contract = {
+    openapi: '3.0.0',
+    info: {
+      title: 'Users API',
+      version: '1.0.0'
+    },
+    paths: {
+      '/api/users': {
+        get: {
+          operationId: 'listUsers',
+          responses: {
+            '200': {
+              description: 'ok',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: options.responseRequired ?? ['id', 'name'],
+                    properties: {
+                      id: {
+                        type: 'string',
+                        format: options.responseIdFormat ?? 'uuid',
+                        ...(options.responseIdNullable ? { nullable: true } : {})
+                      },
+                      name: { type: options.responseNameType ?? 'string' },
+                      ...(options.includeResponseStatus === false
+                        ? {}
+                        : {
+                          status: {
+                            type: 'string',
+                            enum: options.responseStatusEnum ?? ['active', 'disabled', 'pending']
+                          }
+                        })
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        post: {
+          operationId: 'createUser',
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: options.requestRequired ?? ['name'],
+                  properties: {
+                    name: { type: 'string' },
+                    email: {
+                      type: 'string',
+                      ...(options.requestEmailFormat !== undefined ? { format: options.requestEmailFormat } : {})
+                    },
+                    role: {
+                      type: 'string',
+                      enum: options.requestRoleEnum ?? ['admin', 'member', 'viewer']
+                    }
+                  }
+                }
+              }
+            }
+          },
+          responses: {
+            '201': {
+              description: 'created'
+            }
+          }
+        }
+      }
+    }
+  };
+  await writeFile(
+    path.join(repoRoot, 'contracts/openapi.json'),
+    `${JSON.stringify(contract, null, 2)}\n`,
+    'utf8'
+  );
+}
+
+async function writeContractDiffBenchJsonSchemaContract(
+  repoRoot: string,
+  options: ContractDiffBenchJsonSchemaOptions = {}
+): Promise<void> {
+  await mkdir(path.join(repoRoot, 'contracts'), { recursive: true });
+  const contract = {
+    $schema: 'https://json-schema.org/draft/2020-12/schema',
+    $id: 'https://example.test/schemas/user',
+    type: 'object',
+    required: options.required ?? ['id', 'name'],
+    properties: {
+      id: { type: 'string' },
+      name: { type: 'string' },
+      status: { type: 'string' }
+    }
+  };
+  await writeFile(
+    path.join(repoRoot, 'contracts/user.schema.json'),
+    `${JSON.stringify(contract, null, 2)}\n`,
+    'utf8'
+  );
+}
+
+async function writeContractDiffBenchAvroContract(
+  repoRoot: string,
+  options: ContractDiffBenchAvroOptions = {}
+): Promise<void> {
+  await mkdir(path.join(repoRoot, 'contracts'), { recursive: true });
+  const fields: Array<Record<string, unknown>> = [
+    { name: 'id', type: 'string' }
+  ];
+  if (options.includeName !== false) {
+    fields.push({ name: 'name', type: 'string' });
+  }
+  await writeFile(
+    path.join(repoRoot, 'contracts/user.avsc'),
+    `${JSON.stringify({
+      type: 'record',
+      name: 'UserEvent',
+      namespace: 'example.events',
+      fields
+    }, null, 2)}\n`,
+    'utf8'
+  );
+}
+
+function contractDiffExpectedChangeKey(change: ContractDiffQualityExpectedChange): string {
+  return [
+    change.kind,
+    change.classification,
+    change.schemaPath ?? ''
+  ].join('|');
+}
+
+function contractDiffChangeKey(change: { kind: string; classification: string; schemaPath?: string }): string {
+  return [
+    change.kind,
+    change.classification,
+    change.schemaPath ?? ''
+  ].join('|');
+}
+
+async function runRetrievalBench(repoRoot: string): Promise<RetrievalBenchReport> {
+  const all = await runRetrievalQueries(repoRoot, []);
+  const withoutEvidenceFts = await runRetrievalQueries(repoRoot, ['evidenceFts']);
+  const withoutFactsFts = await runRetrievalQueries(repoRoot, ['factsFts']);
+  const semanticModels = runSemanticRecallModelBench(repoRoot);
+
+  return {
+    fixtureId: retrievalFixtureId,
+    summary: summarizeRetrieval(all),
+    semanticModels,
+    budgets: {
+      brief: {
+        maxReturnedBytes: Math.max(...all.map((query) => query.returnedBytes)),
+        budgetExceededCount: all.filter((query) => query.budgetExceeded).length
+      }
+    },
+    streamAblations: {
+      all: summarizeRetrieval(all),
+      withoutEvidenceFts: summarizeRetrieval(withoutEvidenceFts),
+      withoutFactsFts: summarizeRetrieval(withoutFactsFts)
+    },
+    queries: all
+  };
+}
+
+function runSemanticRecallModelBench(repoRoot: string): SemanticRecallBenchReport {
+  const db = new DatabaseSync(path.join(repoRoot, '.parallax/impact.db'), {
+    readOnly: true
+  });
+  try {
+    const models = semanticRecallSpecs.map((spec) => {
+      const embedding: EmbeddingResult = {
+        model: spec.model,
+        vector: spec.queryVector,
+        dim: spec.queryVector.length
+      };
+      const result = recallSemantic(db, embedding, { k: 5, currentOnly: true });
+      const returnedFactIds = result.facts.map((fact) => fact.id);
+      const topFactId = returnedFactIds[0] ?? null;
+      const recallAt1 = topFactId === spec.expectedFactId ? 1 : 0;
+      const isolated = !returnedFactIds.includes(spec.disallowedFactId);
+      return {
+        model: spec.model,
+        expectedFactId: spec.expectedFactId,
+        disallowedFactId: spec.disallowedFactId,
+        topFactId,
+        returnedFactIds,
+        recallAt1,
+        isolated
+      };
+    });
+    const recallAt1 = ratio(
+      models.filter((model) => model.recallAt1 === 1).length,
+      models.length
+    );
+    const isolation = ratio(
+      models.filter((model) => model.isolated).length,
+      models.length
+    );
+    return {
+      fixtureId: semanticRecallFixtureId,
+      summary: {
+        passed: recallAt1 === 1 && isolation === 1,
+        modelCount: models.length,
+        recallAt1,
+        isolation
+      },
+      models
+    };
+  } finally {
+    db.close();
+  }
+}
+
+async function runRetrievalQueries(
+  repoRoot: string,
+  disabledStreams: Array<'evidenceFts' | 'factsFts'>
+): Promise<RetrievalQueryReport[]> {
+  const reports: RetrievalQueryReport[] = [];
+  for (const spec of [...retrievalQueries].sort((left, right) => left.id.localeCompare(right.id))) {
+    const result = await searchContextForRepo({
+      repoRoot,
+      query: spec.query,
+      k: 10,
+      includeEvidence: false,
+      budget: 'brief',
+      disabledStreams
+    }) as SearchContextBenchResult;
+    const returnedEntityIds = result.results.map((item) => item.entity.id);
+    const metrics = retrievalMetrics(returnedEntityIds, spec.expectedEntityIds);
+    reports.push({
+      ...spec,
+      ...metrics,
+      returnedEntityIds,
+      resourceUris: result.results.map((item) => item.resourceUri),
+      returnedBytes: result.limits.returnedBytes,
+      budgetExceeded: result.limits.budgetExceeded
+    });
+  }
+  return reports;
+}
+
+function languageRelation(
+  kind: string,
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind,
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: fileKindForPath(targetPath),
+    targetPath,
+    adapterId: adapterIdForPath(sourcePath),
+    label
+  };
+}
+
+function fallbackRelation(
+  kind: string,
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind,
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: fileKindForPath(targetPath),
+    targetPath,
+    adapterId: regexAdapterId,
+    label
+  };
+}
+
+function configInfraRelation(
+  kind: string,
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind,
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: fileKindForPath(targetPath),
+    targetPath,
+    adapterId: CONFIG_INFRA_SEMANTIC_ADAPTER_ID,
+    label
+  };
+}
+
+function buildSystemConfigRelation(
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'CONFIGURES',
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: fileKindForPath(targetPath),
+    targetPath,
+    adapterId: BUILD_SYSTEM_PACKAGE_ADAPTER_ID,
+    label
+  };
+}
+
+function springDeclareRelation(
+  sourcePath: string,
+  targetSymbol: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DECLARES',
+    sourceKind: 'file',
+    sourcePath,
+    targetKind: 'symbol',
+    targetPath: sourcePath,
+    targetSymbol,
+    adapterId: JVM_SPRING_SEMANTIC_ADAPTER_ID,
+    label
+  };
+}
+
+function languageDeclareRelation(
+  sourcePath: string,
+  targetSymbol: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DECLARES',
+    sourceKind: 'file',
+    sourcePath,
+    targetKind: 'symbol',
+    targetPath: sourcePath,
+    targetSymbol,
+    adapterId: adapterIdForPath(sourcePath),
+    label
+  };
+}
+
+function languageSymbolRelation(
+  kind: string,
+  sourcePath: string,
+  sourceSymbol: string,
+  targetSymbol: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind,
+    sourceKind: 'symbol',
+    sourcePath,
+    sourceSymbol,
+    targetKind: 'symbol',
+    targetPath: sourcePath,
+    targetSymbol,
+    adapterId: adapterIdForPath(sourcePath),
+    label
+  };
+}
+
+function externalRelation(
+  kind: string,
+  sourcePath: string,
+  targetDisplayName: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind,
+    sourceKind: 'file',
+    sourcePath,
+    targetKind: 'external_entity',
+    targetDisplayName,
+    adapterId: adapterIdForPath(sourcePath),
+    label
+  };
+}
+
+function endpointRelation(
+  sourcePath: string,
+  targetDisplayName: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'IMPLEMENTS',
+    sourceKind: 'file',
+    sourcePath,
+    targetKind: 'endpoint',
+    targetDisplayName,
+    adapterId: JVM_SPRING_SEMANTIC_ADAPTER_ID,
+    label
+  };
+}
+
+function contractEndpointRelation(
+  sourcePath: string,
+  targetDisplayName: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DECLARES',
+    sourceKind: 'contract',
+    sourcePath,
+    targetKind: 'endpoint',
+    targetDisplayName,
+    adapterId: regexAdapterId,
+    label
+  };
+}
+
+function contractReferenceRelation(
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'REFERENCES',
+    sourceKind: 'contract',
+    sourcePath,
+    targetKind: fileKindForPath(targetPath),
+    targetPath,
+    adapterId: regexAdapterId,
+    label
+  };
+}
+
+function contractImplementerRelation(
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'IMPLEMENTS',
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: 'contract',
+    targetPath,
+    adapterId: regexAdapterId,
+    label
+  };
+}
+
+function packageDeclareRelation(
+  sourcePath: string,
+  targetDisplayName: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DECLARES',
+    sourceKind: fileKindForPath(sourcePath),
+    sourcePath,
+    targetKind: 'package',
+    targetPath: sourcePath,
+    targetDisplayName,
+    adapterId: BUILD_SYSTEM_PACKAGE_ADAPTER_ID,
+    label
+  };
+}
+
+function packageManifestIdentityRelation(
+  sourcePath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DEPENDS_ON',
+    sourceKind: 'package',
+    sourcePath,
+    targetKind: fileKindForPath(sourcePath),
+    targetPath: sourcePath,
+    adapterId: BUILD_SYSTEM_PACKAGE_ADAPTER_ID,
+    label
+  };
+}
+
+function packageDependencyRelation(
+  sourcePath: string,
+  targetDisplayName: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DEPENDS_ON',
+    sourceKind: 'package',
+    sourcePath,
+    targetKind: 'package',
+    targetDisplayName,
+    adapterId: BUILD_SYSTEM_PACKAGE_ADAPTER_ID,
+    label
+  };
+}
+
+function localPackageDependencyRelation(
+  sourcePath: string,
+  targetPath: string,
+  label: string
+): ExpectedRelation {
+  return {
+    kind: 'DEPENDS_ON',
+    sourceKind: 'package',
+    sourcePath,
+    targetKind: 'package',
+    targetPath,
+    adapterId: BUILD_SYSTEM_PACKAGE_ADAPTER_ID,
+    label
+  };
+}
+
+function adapterIdForPath(relativePath: string): string {
+  if (isBuildSystemManifestPath(relativePath)) return BUILD_SYSTEM_PACKAGE_ADAPTER_ID;
+  if (
+    relativePath.startsWith('.github/workflows/') ||
+    relativePath === 'Dockerfile' ||
+    relativePath === 'Containerfile' ||
+    relativePath.endsWith('.tf')
+  ) return CONFIG_INFRA_SEMANTIC_ADAPTER_ID;
+  const language = languageIdForPath(relativePath);
+  if (language === 'typescript' || language === 'javascript') return TS_JS_SEMANTIC_ADAPTER_ID;
+  if (language === 'java' || language === 'kotlin') return JVM_SPRING_SEMANTIC_ADAPTER_ID;
+  if (language === 'python') return PYTHON_SEMANTIC_ADAPTER_ID;
+  if (language === 'go') return GO_SEMANTIC_ADAPTER_ID;
+  if (language === 'rust') return RUST_SEMANTIC_ADAPTER_ID;
+  return regexAdapterId;
+}
+
+async function writeFixture(repoRoot: string): Promise<void> {
+  const dirs = [
+    'contracts',
+    'src/ts',
+    'src/js',
+    'src/main/java/com/example',
+    'src/main/kotlin/com/example',
+    'src/main/resources',
+    'src/test/java/com/example',
+    'src/test/kotlin/com/example',
+    'src/python',
+    'tests/python',
+    'src/go',
+    'services/go-api',
+    'libs/go-shared',
+    'crates/bench-api',
+    'crates/bench-core',
+    'src/rust',
+    'app',
+    'gradle',
+    '.github/workflows'
+  ];
+  await Promise.all(dirs.map((dir) => mkdir(path.join(repoRoot, dir), { recursive: true })));
+
+  await writeFile(path.join(repoRoot, 'package.json'), JSON.stringify({
+    name: '@acme/impact-bench',
+    private: true,
+    dependencies: {
+      typescript: '^5.9.3'
+    }
+  }, null, 2));
+  await writeFile(path.join(repoRoot, 'package-lock.json'), JSON.stringify({
+    name: '@acme/impact-bench',
+    lockfileVersion: 3,
+    packages: {
+      '': {
+        name: '@acme/impact-bench',
+        dependencies: {
+          typescript: '^5.9.3'
+        }
+      },
+      'node_modules/typescript': {
+        version: '5.9.3'
+      },
+      'node_modules/tslib': {
+        version: '2.6.2'
+      }
+    }
+  }, null, 2));
+  await writeFile(path.join(repoRoot, 'pyproject.toml'), [
+    '[project]',
+    'name = "impact-api"',
+    'version = "0.1.0"',
+    'dependencies = [',
+    '  "fastapi>=0.110",',
+    ']',
+    '',
+    '[project.optional-dependencies]',
+    'dev = [',
+    '  "pytest>=8",',
+    ']',
+    '',
+    '[dependency-groups]',
+    'typing = [',
+    '  "mypy>=1.10",',
+    '  { include-group = "test" },',
+    ']',
+    'test = []',
+    '',
+    '[tool.poetry.group.docs.dependencies]',
+    'mkdocs = "^1.6"',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'pom.xml'), [
+    '<project>',
+    '  <modelVersion>4.0.0</modelVersion>',
+    '  <properties>',
+    '    <acme.group>com.acme</acme.group>',
+    '    <revision>1.0.0</revision>',
+    '    <spring.boot.version>3.2.0</spring.boot.version>',
+    '  </properties>',
+    '  <groupId>${acme.group}</groupId>',
+    '  <artifactId>impact-bench-service</artifactId>',
+    '  <version>${revision}</version>',
+    '  <dependencies>',
+    '    <dependency>',
+    '      <groupId>org.springframework.boot</groupId>',
+    '      <artifactId>spring-boot-starter-web</artifactId>',
+    '      <version>${spring.boot.version}</version>',
+    '    </dependency>',
+    '  </dependencies>',
+    '</project>',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'tsconfig.json'), JSON.stringify({
+    compilerOptions: {
+      baseUrl: '.',
+      paths: {
+        '@app/*': ['src/ts/*']
+      }
+    }
+  }, null, 2));
+  await writeFile(path.join(repoRoot, 'gradle/libs.versions.toml'), [
+    '[versions]',
+    'springBoot = "3.2.0"',
+    '',
+    '[libraries]',
+    'spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web", version.ref = "springBoot" }',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'app/build.gradle.kts'), [
+    'plugins { java }',
+    'dependencies {',
+    '  implementation(libs.spring.boot.starter.web)',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'go.work'), [
+    'go 1.22',
+    '',
+    'use (',
+    '  ./services/go-api',
+    '  ./libs/go-shared',
+    ')',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'services/go-api/go.mod'), [
+    'module example.com/go-api',
+    '',
+    'go 1.22',
+    '',
+    'require github.com/acme/shared v0.0.0',
+    '',
+    'replace github.com/acme/shared => ../../libs/go-shared',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'libs/go-shared/go.mod'), [
+    'module example.com/internal/shared',
+    '',
+    'go 1.22',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'Cargo.toml'), [
+    '[workspace]',
+    'members = [',
+    '  "crates/*",',
+    ']',
+    '',
+    '[workspace.dependencies]',
+    'serde = "1"',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'crates/bench-api/Cargo.toml'), [
+    '[package]',
+    'name = "bench-api"',
+    'version = "0.1.0"',
+    'edition = "2021"',
+    '',
+    '[dependencies]',
+    'bench-core = { path = "../bench-core", version = "0.1.0" }',
+    'serde = { workspace = true }',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'crates/bench-core/Cargo.toml'), [
+    '[package]',
+    'name = "bench-core"',
+    'version = "0.1.0"',
+    'edition = "2021"',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/session.ts'), [
+    'export type Session = { token: string };',
+    'export function validateSession(token: string): boolean {',
+    '  return token.length > 0;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/types.ts'), 'export type RouteMode = "private";\n');
+  await writeFile(path.join(repoRoot, 'src/ts/type-only.ts'), [
+    'import type { Session } from "./session";',
+    'export type SessionToken = Session["token"];',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/namespace-consumer.ts'), [
+    'import * as session from "./session";',
+    'export function namespaceConsumer(token: string): boolean {',
+    '  return session.validateSession(token);',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/private.ts'), [
+    'import { validateSession } from "./session";',
+    'export function privateRoute(token: string): string {',
+    '  return validateSession(token) ? "ok" : "no";',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/widget.tsx'), [
+    'export async function Widget() {',
+    '  void import("./session");',
+    '  return <span>dynamic</span>;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/static-widget.tsx'), [
+    'import { validateSession } from "./session";',
+    'export function StaticWidget() {',
+    '  return <span>{validateSession("demo") ? "ok" : "no"}</span>;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/barrel.ts'), 'export { validateSession } from "./session";\n');
+  await writeFile(
+    path.join(repoRoot, 'src/ts/nodenext-barrel.ts'),
+    'export { validateSession } from "./session.js";\n'
+  );
+  await writeFile(path.join(repoRoot, 'src/ts/alias-consumer.ts'), [
+    'import { validateSession } from "@app/session";',
+    'export function aliasConsumer(): boolean {',
+    '  return validateSession("alias");',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/ts/object-literal-consumer.ts'), [
+    'export function authorizeWithObjectLiteral(token: string): boolean {',
+    '  const guard = {',
+    '    validateSession(candidate: string): boolean {',
+    '      return candidate.length > 0;',
+    '    }',
+    '  };',
+    '  return guard.validateSession(token);',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/js/legacy.js'), [
+    'const { validateSession } = require("../ts/session");',
+    'exports.legacyRoute = function legacyRoute(token) {',
+    '  return validateSession(token);',
+    '};',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'tests/session.test.ts'), [
+    'import { validateSession } from "../src/ts/session";',
+    'test("validateSession", () => {',
+    '  expect(validateSession("abc")).toBe(true);',
+    '});',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'README.md'), 'The session boundary is src/ts/session.ts.\n');
+  await writeFile(path.join(repoRoot, '.github/workflows/ci.yml'), [
+    'name: ci',
+    'on: [push]',
+    'jobs:',
+    '  test:',
+    '    runs-on: ubuntu-latest',
+    '    steps:',
+    '      - run: npm test -- src/ts/session.ts',
+    ''
+  ].join('\n'));
+
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/UserService.java'), [
+    'package com.example;',
+    'import org.springframework.stereotype.Service;',
+    '@Service',
+    'public class UserService {',
+    '  public String listUsers() { return "users"; }',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/UserController.java'), [
+    'package com.example;',
+    'import org.springframework.web.bind.annotation.GetMapping;',
+    'import org.springframework.web.bind.annotation.PostMapping;',
+    'import org.springframework.web.bind.annotation.RequestMapping;',
+    'import org.springframework.web.bind.annotation.RestController;',
+    'import com.example.UserService;',
+    '@RestController',
+    '@RequestMapping("/api")',
+    'public class UserController {',
+    '  private final UserService userService;',
+    '  public UserController(UserService userService) { this.userService = userService; }',
+    '  @GetMapping("/users")',
+    '  public String listUsers() { return userService.listUsers(); }',
+    '  @PostMapping("/users")',
+    '  public String createUser() { return "created"; }',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/User.java'), [
+    'package com.example;',
+    'import jakarta.persistence.Entity;',
+    'import jakarta.persistence.Table;',
+    '@Entity',
+    '@Table(name = "users")',
+    'public class User {',
+    '  private Long id;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/UserRepository.java'), [
+    'package com.example;',
+    'import org.springframework.data.jpa.repository.JpaRepository;',
+    'import org.springframework.stereotype.Repository;',
+    'import com.example.User;',
+    '@Repository',
+    'public interface UserRepository extends JpaRepository<User, Long> {}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/AppProperties.java'), [
+    'package com.example;',
+    'import org.springframework.boot.context.properties.ConfigurationProperties;',
+    '@ConfigurationProperties(prefix = "impact")',
+    'public class AppProperties {',
+    '  private String owner;',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/AppConfig.java'), [
+    'package com.example;',
+    'import java.time.Clock;',
+    'import org.springframework.context.annotation.Bean;',
+    'import org.springframework.context.annotation.Configuration;',
+    '@Configuration',
+    'public class AppConfig {',
+    '  @Bean',
+    '  public Clock auditClock() { return Clock.systemUTC(); }',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/CatalogClient.java'), [
+    'package com.example;',
+    'import org.springframework.cloud.openfeign.FeignClient;',
+    '@FeignClient(name = "catalog")',
+    'public interface CatalogClient {',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/UserClient.java'), [
+    'package com.example;',
+    'import org.springframework.web.reactive.function.client.WebClient;',
+    'public class UserClient {',
+    '  private final WebClient webClient;',
+    '  public UserClient(WebClient webClient) { this.webClient = webClient; }',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/java/com/example/AdminClient.java'), [
+    'package com.example;',
+    'import org.springframework.web.client.RestTemplate;',
+    'public class AdminClient {',
+    '  private final RestTemplate restTemplate;',
+    '  public AdminClient(RestTemplate restTemplate) { this.restTemplate = restTemplate; }',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'contracts/openapi.yaml'), [
+    'openapi: 3.0.3',
+    'info:',
+    '  title: User API',
+    '  version: 1.0.0',
+    '  x-service-name: user-service',
+    'paths:',
+    '  /api/users:',
+    '    get:',
+    '      operationId: listUsers',
+    '      x-implementation: src/main/java/com/example/UserController.java',
+    '      responses:',
+    '        "200":',
+    '          description: ok',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/test/java/com/example/UserControllerTest.java'), [
+    'package com.example;',
+    'import org.junit.jupiter.api.Test;',
+    'import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;',
+    'import com.example.UserController;',
+    '@WebMvcTest(UserController.class)',
+    'public class UserControllerTest {',
+    '  @Test',
+    '  void listUsers() {}',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/test/java/com/example/UserRepositoryTest.java'), [
+    'package com.example;',
+    'import org.junit.jupiter.api.Test;',
+    'import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;',
+    'import com.example.UserRepository;',
+    '@DataJpaTest',
+    'public class UserRepositoryTest {',
+    '  @Test',
+    '  void verifiesRepository() {}',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/resources/application.yml'), [
+    'impact:',
+    '  owner: src/main/java/com/example/UserService.java',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/resources/application.properties'), [
+    'impact.properties=src/main/java/com/example/AppProperties.java',
+    ''
+  ].join('\n'));
+
+  await writeFile(path.join(repoRoot, 'src/main/kotlin/com/example/AuditService.kt'), [
+    'package com.example',
+    'import org.springframework.stereotype.Service',
+    '@Service',
+    'class AuditService { fun listAudits(): String = "audits" }',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/main/kotlin/com/example/AuditController.kt'), [
+    'package com.example',
+    'import org.springframework.web.bind.annotation.GetMapping',
+    'import org.springframework.web.bind.annotation.RequestMapping',
+    'import org.springframework.web.bind.annotation.RestController',
+    'import com.example.AuditService',
+    '@RestController',
+    '@RequestMapping("/api")',
+    'class AuditController(private val auditService: AuditService) {',
+    '  @GetMapping("/audits")',
+    '  fun listAudits(): String = auditService.listAudits()',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/test/kotlin/com/example/AuditControllerTest.kt'), [
+    'package com.example',
+    'import org.junit.jupiter.api.Test',
+    'import org.springframework.boot.test.context.SpringBootTest',
+    'import com.example.AuditController',
+    '@SpringBootTest',
+    'class AuditControllerTest {',
+    '  @Test fun listAudits() {}',
+    '}',
+    ''
+  ].join('\n'));
+
+  await writeFile(path.join(repoRoot, 'src/python/util.py'), [
+    'class Helper:',
+    '    pass',
+    '',
+    'def helper():',
+    '    return "ok"',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/python/app.py'), [
+    'from util import helper',
+    'def run():',
+    '    return helper()',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'tests/python/test_util.py'), [
+    'from util import helper',
+    'def test_helper():',
+    '    assert helper() == "ok"',
+    ''
+  ].join('\n'));
+
+  await writeFile(path.join(repoRoot, 'src/go/calc.go'), [
+    'package calc',
+    'func Add(a int, b int) int { return a + b }',
+    'type Result struct { Value int }',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/go/calc_test.go'), [
+    'package calc',
+    'import "testing"',
+    'func TestAdd(t *testing.T) {',
+    '  _ = Add(1, 2)',
+    '}',
+    ''
+  ].join('\n'));
+
+  await writeFile(path.join(repoRoot, 'src/rust/lib.rs'), [
+    'pub fn run() -> bool { true }',
+    'pub struct User;',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'src/rust/lib_test.rs'), [
+    'use super::run;',
+    '#[test]',
+    'fn run_test() {',
+    '  assert!(run());',
+    '}',
+    ''
+  ].join('\n'));
+  await writeFile(path.join(repoRoot, 'Dockerfile'), [
+    'FROM eclipse-temurin:21',
+    'COPY src/main/java/com/example/UserController.java /app/UserController.java',
+    ''
+  ].join('\n'));
+}
+
+function loadActualRelations(db: DatabaseSync, indexRunId: number): ActualRelation[] {
+  return db.prepare(`
+    SELECT
+      r.kind,
+      source.kind AS sourceKind,
+      source.path AS sourcePath,
+      source.symbol AS sourceSymbol,
+      target.kind AS targetKind,
+      target.path AS targetPath,
+      target.symbol AS targetSymbol,
+      target.display_name AS targetDisplayName,
+      adapter_runs.adapter_id AS adapterId,
+      count(relation_evidence.id) AS evidenceCount,
+      sum(CASE WHEN relation_evidence.start_line IS NOT NULL THEN 1 ELSE 0 END) AS spanCount
+    FROM relations r
+    JOIN entities source ON source.id = r.source_entity_id
+    JOIN entities target ON target.id = r.target_entity_id
+    LEFT JOIN adapter_runs ON adapter_runs.id = r.adapter_run_id
+    LEFT JOIN relation_evidence ON relation_evidence.relation_id = r.id
+    WHERE r.index_run_id = ?
+    GROUP BY r.id
+    ORDER BY r.kind, source.kind, source.path, source.symbol, target.kind, target.path, target.symbol, target.display_name
+  `).all(indexRunId) as ActualRelation[];
+}
+
+function matchExpectedRelations(actualRelations: readonly ActualRelation[]): RelationMatch[] {
+  const actualByKey = new Map(actualRelations.map((actual) => [relationKey(actual), actual]));
+  return expectedRelations.map((expected) => {
+    const actual = actualByKey.get(relationKey(expected));
+    return actual ? { expected, actual } : { expected };
+  });
+}
+
+function findUnexpectedRelations(actualRelations: readonly ActualRelation[]): string[] {
+  const expectedKeys = new Set(expectedRelations.map((expected) => relationKey(expected)));
+  const externalScoredSourcePaths = new Set(
+    expectedRelations
+      .filter((expected) => expected.targetKind === 'external_entity')
+      .map((expected) => expected.sourcePath)
+  );
+  const expectedPaths = new Set(
+    expectedRelations.flatMap((expected) =>
+      [expected.sourcePath, expected.targetPath].filter((file): file is string => Boolean(file))
+    )
+  );
+  return actualRelations
+    .filter((actual) => {
+      if (actual.kind === 'DECLARES' && actual.sourceKind !== 'contract') return false;
+      if (
+        actual.targetKind === 'external_entity' &&
+        (!actual.sourcePath || !externalScoredSourcePaths.has(actual.sourcePath))
+      ) {
+        return false;
+      }
+      if (actual.sourceKind === 'symbol') return false;
+      if (!actual.sourcePath || !expectedPaths.has(actual.sourcePath)) return false;
+      if (actual.targetPath && !expectedPaths.has(actual.targetPath)) return false;
+      return !expectedKeys.has(relationKey(actual));
+    })
+    .map(formatActualRelation);
+}
+
+function relationKey(relationValue: ExpectedRelation | ActualRelation): string {
+  const sourceKind = 'sourceKind' in relationValue && relationValue.sourceKind
+    ? relationValue.sourceKind
+    : 'file';
+  const targetKind = 'targetKind' in relationValue && relationValue.targetKind
+    ? relationValue.targetKind
+    : 'file';
+  const source = entityKey(sourceKind, relationValue.sourcePath, relationValue.sourceSymbol);
+  const target = entityKey(
+    targetKind,
+    relationValue.targetPath,
+    relationValue.targetSymbol,
+    relationValue.targetDisplayName
+  );
+  return `${relationValue.kind}:${source}->${target}`;
+}
+
+function entityKey(
+  kind: string,
+  pathValue?: string | null,
+  symbol?: string | null,
+  displayName?: string | null
+): string {
+  if (kind === 'endpoint') {
+    return `${kind}:${displayName ?? symbol ?? ''}`;
+  }
+  if (pathValue) {
+    return `${kind}:${pathValue}${symbol ? `#${symbol}` : ''}`;
+  }
+  return `${kind}:${symbol ?? displayName ?? ''}`;
+}
+
+function formatActualRelation(actual: ActualRelation): string {
+  return `${actual.kind}: ${entityKey(actual.sourceKind, actual.sourcePath, actual.sourceSymbol)} -> ${entityKey(
+    actual.targetKind,
+    actual.targetPath,
+    actual.targetSymbol,
+    actual.targetDisplayName
+  )}`;
+}
+
+function fileKindForPath(filePath: string): string {
+  if (filePath.endsWith('.md')) return 'doc';
+  if (
+    filePath.includes('/test') ||
+    filePath.startsWith('tests/') ||
+    /(?:^|[/\\]).*(?:[._-](?:test|spec)|Test)\.(?:[cm]?[tj]sx?|java|kt|py|go|rs)$/.test(filePath) ||
+    /(?:^|[/\\])test_.*\.py$/.test(filePath)
+  ) {
+    return 'test';
+  }
+  if (filePath.startsWith('.github/workflows/')) return 'workflow';
+  if (filePath === 'Dockerfile') return 'resource';
+  if (isPathObviousContract(filePath)) return 'contract';
+  if (
+    filePath.endsWith('.json') ||
+    filePath.endsWith('.toml') ||
+    filePath.endsWith('.yml') ||
+    filePath.endsWith('.yaml') ||
+    filePath.endsWith('.properties') ||
+    isBuildSystemManifestPath(filePath)
+  ) return 'config';
+  return 'file';
+}
+
+function isBuildSystemManifestPath(filePath: string): boolean {
+  const basename = path.posix.basename(filePath);
+  return new Set([
+    'package.json',
+    'pom.xml',
+    'build.gradle',
+    'build.gradle.kts',
+    'go.mod',
+    'go.work',
+    'Cargo.toml',
+    'pyproject.toml'
+  ]).has(basename);
+}
+
+function isPathObviousContract(filePath: string): boolean {
+  const basename = path.posix.basename(filePath);
+  const withoutExtension = basename.replace(/\.[^.]+$/, '').toLowerCase();
+  return (
+    withoutExtension.includes('openapi') ||
+    withoutExtension.includes('swagger') ||
+    withoutExtension.includes('asyncapi')
+  );
+}
+
+function languageIdForPath(filePath: string): string | undefined {
+  const basename = path.posix.basename(filePath);
+  if (basename === 'Dockerfile' || basename === 'Containerfile') return 'dockerfile';
+  if (basename === 'package.json') return 'json';
+  const ext = path.posix.extname(filePath);
+  if (ext === '.ts' || ext === '.tsx') return 'typescript';
+  if (ext === '.js' || ext === '.jsx' || ext === '.mjs' || ext === '.cjs') return 'javascript';
+  if (ext === '.java') return 'java';
+  if (ext === '.kt' || ext === '.kts') return 'kotlin';
+  if (ext === '.py') return 'python';
+  if (ext === '.go') return 'go';
+  if (ext === '.rs') return 'rust';
+  if (ext === '.yml' || ext === '.yaml') return 'yaml';
+  if (ext === '.properties') return 'properties';
+  if (ext === '.md') return 'markdown';
+  return undefined;
+}
+
+function int8Vector(values: readonly number[]): Buffer {
+  const bytes = Int8Array.from(values);
+  return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+}
+
+function ratio(numerator: number, denominator: number): number {
+  if (denominator === 0) return 1;
+  return round(numerator / denominator);
+}
+
+function retrievalMetrics(returnedEntityIds: readonly string[], expectedEntityIds: readonly string[]): RetrievalMetrics {
+  const expected = new Set(expectedEntityIds);
+  const relevantRanks = returnedEntityIds
+    .map((entityId, index) => expected.has(entityId) ? index + 1 : null)
+    .filter((rank): rank is number => rank !== null);
+  const recallAt5 = ratio(
+    returnedEntityIds.slice(0, 5).filter((entityId) => expected.has(entityId)).length,
+    expected.size
+  );
+  const recallAt10 = ratio(
+    returnedEntityIds.slice(0, 10).filter((entityId) => expected.has(entityId)).length,
+    expected.size
+  );
+  const precisionAt5 = ratio(
+    returnedEntityIds.slice(0, 5).filter((entityId) => expected.has(entityId)).length,
+    5
+  );
+  const mrr = relevantRanks.length > 0 ? round(1 / relevantRanks[0]!) : 0;
+  const dcgAt10 = returnedEntityIds.slice(0, 10).reduce((total, entityId, index) => {
+    if (!expected.has(entityId)) return total;
+    return total + 1 / Math.log2(index + 2);
+  }, 0);
+  const idealDcgAt10 = Array.from({ length: Math.min(expected.size, 10) }).reduce<number>(
+    (total, _unused, index) => total + 1 / Math.log2(index + 2),
+    0
+  );
+  const ndcgAt10 = idealDcgAt10 === 0 ? 1 : round(dcgAt10 / idealDcgAt10);
+  return { recallAt5, recallAt10, precisionAt5, mrr, ndcgAt10 };
+}
+
+function summarizeRetrieval(reports: readonly RetrievalQueryReport[]): RetrievalMetrics {
+  return {
+    recallAt5: averageMetric(reports, 'recallAt5'),
+    recallAt10: averageMetric(reports, 'recallAt10'),
+    precisionAt5: averageMetric(reports, 'precisionAt5'),
+    mrr: averageMetric(reports, 'mrr'),
+    ndcgAt10: averageMetric(reports, 'ndcgAt10')
+  };
+}
+
+function averageMetric(reports: readonly RetrievalQueryReport[], key: keyof RetrievalMetrics): number {
+  if (reports.length === 0) return 1;
+  return round(reports.reduce((total, report) => total + report[key], 0) / reports.length);
+}
+
+function weightedScore(scores: ImpactBenchReport['scores']): number {
+  return round(
+    scores.relationRecall * 0.35 +
+    scores.relationPrecision * 0.2 +
+    scores.affectedFileRecall * 0.15 +
+    scores.evidencePresence * 0.1 +
+    scores.adapterAttribution * 0.1 +
+    scores.contextPackReadiness * 0.05 +
+    scores.spanCompleteness * 0.05
+  );
+}
+
+function round(value: number): number {
+  return Number(value.toFixed(4));
+}
+
+function toPosixRelative(root: string, filePath: string): string {
+  return path.relative(root, filePath).split(path.sep).join('/');
+}
+
+async function main(): Promise<void> {
+  const report = await runImpactBench();
+  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+  if (!report.summary.passed) {
+    process.exitCode = 1;
+  }
+}
+
+const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : '';
+if (import.meta.url === invokedPath) {
+  await main();
+}
