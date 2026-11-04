@@ -1,5 +1,5 @@
 // 온톨로지 인덱스 — 볼트 위키링크에서 파생 생성 (REQ llm-wiki-ontology AC2)
-// 이중 기록이 아니다: 매 실행 전체 재생성이므로 stale이 구조적으로 불가능하다.
+// 매 실행 전체 재생성한다. 이후 볼트가 바뀌면 다음 실행까지 인덱스가 오래될 수 있다.
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs'
 import { join, basename } from 'node:path'
 

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "terms": [
+    {
+      "id": "memory",
+      "name": "Memory",
+      "description": "Retains reusable knowledge with its source and scope.",
+      "synonyms": ["기억", "メモリ", "记忆"],
+      "sources": ["example-source.md"]
+    },
+    {
+      "id": "ontology",
+      "name": "Ontology",
+      "description": "Defines shared terms and explicit relationships for retrieval.",
+      "synonyms": ["온톨로지", "オントロジー", "本体"],
+      "sources": ["example-source.md"]
+    }
+  ],
+  "relations": [
+    { "from": "ontology", "type": "describes", "to": "memory", "sources": ["example-source.md"] }
+  ]
+}

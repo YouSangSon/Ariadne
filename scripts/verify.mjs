@@ -4,9 +4,16 @@ import { readdirSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { repoRootFromArgs } from './mirror-lib.mjs'
+import { selectModules } from '../lib/module-selection.mjs'
 import { scrub } from '../lib/scrub.mjs'
 
 const root = repoRootFromArgs(process.argv)
+const args = process.argv.slice(2)
+const rootIndex = args.indexOf('--root')
+if (rootIndex !== -1 && args[rootIndex + 1] && !args[rootIndex + 1].startsWith('--')) args.splice(rootIndex, 2)
+let modules
+try { modules = selectModules(args, ['core', 'ontology']) }
+catch (error) { console.error(`verify: ${error.message}`); process.exit(2) }
 const scriptsDir = dirname(fileURLToPath(import.meta.url))
 const REQ_LINE = /^REQ: ([a-z0-9][a-z0-9-]*|none \(.+\))$/m
 
@@ -28,9 +35,10 @@ function run(command, args) {
   return scrub((r.error ? [reason] : [reason, r.stdout, r.stderr]).filter(Boolean).join('\n')).text
 }
 
-step('tests', () => {
-  const tests = readdirSync(join(root, 'tests')).filter((name) => name.endsWith('.test.mjs')).sort()
+step(modules.has('code') ? 'source tests + code integration' : 'source tests only', () => {
+  const tests = readdirSync(join(root, 'tests')).filter((name) => name.endsWith('.test.mjs') && name !== 'product-mcp.test.mjs' && (name !== 'product-code.test.mjs' || modules.has('code'))).sort()
   if (!tests.length) return 'core tests가 없다'
+  if (modules.has('code') && !tests.includes('product-code.test.mjs')) return 'code integration test is missing'
   return run(process.execPath, ['--test', ...tests.map((name) => join(root, 'tests', name))])
 })
 

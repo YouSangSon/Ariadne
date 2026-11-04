@@ -12,6 +12,7 @@ function fixture(t, mirror) {
   mkdirSync(join(root, 'lib'))
   mkdirSync(join(root, 'tests'))
   copyFileSync(new URL('../scripts/verify.mjs', import.meta.url), join(root, 'scripts/verify.mjs'))
+  copyFileSync(new URL('../lib/module-selection.mjs', import.meta.url), join(root, 'lib/module-selection.mjs'))
   copyFileSync(new URL('../lib/scrub.mjs', import.meta.url), join(root, 'lib/scrub.mjs'))
   writeFileSync(join(root, 'scripts/mirror-lib.mjs'), 'export const repoRootFromArgs = () => process.cwd()\n')
   writeFileSync(join(root, 'scripts/check-mirror.mjs'), mirror)

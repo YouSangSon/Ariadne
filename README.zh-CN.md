@@ -51,6 +51,7 @@ Ariadne 是一个**将用户目标与执行和验证相连接的集成智能体�
 | **保留必需上下文** | 优先保留已确认事实和验证内容；必需信息超出预算时不产生输出并失败 |
 | **持久记忆** | 以 PostgreSQL 为原始数据源，提供 Qdrant 或 pgvector 搜索、组织级权限及 HTTP、MCP 工具 |
 | **代码影响分析** | 本地 SQLite 图、变更影响、验证目标、依据，以及 MCP 和 UI |
+| **本体** | 读取用户定义的术语、关系和来源文件，提供有界词汇搜索及审核状态检查 |
 | **知识关系** | 将工作记录提升为 Wiki 内容，并索引链接和未解决的关系 |
 | **共用规则和技能** | 从单一源文件生成 Codex、Claude Code 镜像并检查一致性 |
 | **变更检测基础能力** | 涵盖所有验收标准（AC）和不可变范围的契约哈希，以及包含 dirty、untracked 和 mode 的源指纹 |
@@ -67,7 +68,7 @@ Ariadne 是一个**将用户目标与执行和验证相连接的集成智能体�
 
 ## 开始使用
 
-完整产品需要 **Node.js 24.22.2 或更高版本**才能安装和运行。基于文件的核心无需外部数据库即可使用，持久记忆服务需要 PostgreSQL 和选定的向量存储。
+完整产品需要 **Node.js 24.22.2 或更高版本**才能安装和运行。基于文件的核心无需外部数据库即可使用，持久记忆服务需要 PostgreSQL 和选定的向量存储。以下示例安装全部模块；如只需部分模块，请在克隆后参照[选择模块](#module-selection)。
 
 ```sh
 git clone https://github.com/YouSangSon/Ariadne.git
@@ -77,7 +78,42 @@ npm run verify
 node bin/Ariadne.mjs --help
 ```
 
-在要处理的仓库中运行当前提供的代码分析和上下文命令。
+<a id="module-selection"></a>
+
+### 选择模块
+
+源码检出始终包含所有模块。在 `setup` 或 `verify` 的 `--modules` 中以逗号分隔下表名称；`core` 始终包含在内。省略该选项时，将安装或验证全部模块。
+
+| 模块 | 作用与环境要求 |
+| --- | --- |
+| `core` | 共用框架；无需外部数据库或 npm 包依赖 |
+| `ontology` | 搜索和审核 JSON 术语、关系及来源；无需外部数据库或 npm 包依赖 |
+| `memory` | 持久记忆；需要 PostgreSQL 和选定的向量存储配置 |
+| `code` | 代码影响分析；使用目标仓库的本地 SQLite |
+
+```sh
+# 仅选择核心或本体
+npm run setup -- --modules core
+npm run setup -- --modules ontology
+# 一起安装并验证记忆和本体
+npm run setup -- --modules memory,ontology
+npm run verify -- --modules memory,ontology
+```
+
+仅安装所选包的依赖。选择不会保存，后续执行时需再次指定该选项；它不会卸载现有依赖，也不会隐藏其他模块的命令。
+
+本体使用用户编写的 JSON 术语、同义词、带类型的关系及来源路径。
+
+```sh
+node bin/Ariadne.mjs ontology inspect --file modules/ontology/example.json
+node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --query memory --limit 5
+```
+
+每次读取都会根据定义和来源文件重新计算审核摘要，并报告 `unreviewed`、`current` 或 `stale`。搜索是有界词汇搜索，不提供 LLM、SQL 或可回答性判断。审核状态不代表经过身份验证的批准。现有的 `knowledge promote` 和 `knowledge index` 处理独立的 Wiki 快照。
+
+记忆、代码和本体各自拥有自己的模型和存储。本体遵循领域驱动设计和整洁架构的边界，分为纯领域、协调端口的应用层，以及文件系统和 CLI 适配器。记忆和代码现有的内部实现保持不变。详见[模块与本体](docs/modular-ontology.md)。
+
+在要处理的仓库中运行当前提供的代码分析和上下文命令。代码命令需要 `code` 模块的依赖。
 
 ```sh
 node /path/to/Ariadne/bin/Ariadne.mjs code init
@@ -86,7 +122,7 @@ node /path/to/Ariadne/bin/Ariadne.mjs code analyze --changed src/example.ts --fa
 node /path/to/Ariadne/bin/Ariadne.mjs context --root . --req my-task
 ```
 
-使用记忆功能前，将 `packages/memory/.env.example` 复制为根目录下的 `.env`，并检查数据库和向量设置。不要将实际值提交到 Git。默认 transformer 模型在本地运行，首次运行时可能下载权重。API 密钥和付费供应商不会自动配置。
+使用记忆功能前，先安装 `memory` 模块的依赖，再将 `packages/memory/.env.example` 复制为根目录下的 `.env`，并检查数据库和向量设置。不要将实际值提交到 Git。默认 transformer 模型在本地运行，首次运行时可能下载权重。API 密钥和付费供应商不会自动配置。
 
 ```sh
 node --env-file=.env bin/Ariadne.mjs memory serve
@@ -136,9 +172,11 @@ node scripts/install.mjs
 
 ```sh
 npm run verify
-# 仅检查核心时
+# 不安装包依赖，仅检查核心源码时
 node scripts/verify.mjs
 ```
+
+完整的 `npm run verify` 保留现有的包检查。与 setup 一样，可使用 `--modules` 验证所选模块。即使仅选择 `core`，核心源码检查也包含共用的本体源码测试。
 
 检查使用真实文件、临时项目和测试启动的 HTTP 服务器。CI 中的 PostgreSQL、pgvector 和本地 transformer 搜索验证作为独立任务运行，无需调用模型。
 不要将 API 协议检查视为模型质量、订阅节省率或实际服务性能的依据。
@@ -157,6 +195,7 @@ node scripts/verify.mjs
 | `lib/`, `scripts/`, `tests/` | 确定性检查和回归依据 |
 | `packages/memory/`, `packages/code/` | 内部实现、固定的依赖、现有契约与测试 |
 | `bin/Ariadne.mjs` | 单一安装和执行入口 |
+| `modules/ontology/` | 基于文件的本体模型和搜索 |
 | `modules/llm-wiki/` | Wiki 内容提升和关系索引 |
 | `modules/loop/` | 契约、文件工具、传输和手动交接基础能力 |
 | `evaluation/` | 无模型调用评估工具的对照组 |
