@@ -83,6 +83,10 @@ const EXPECTED_PACKAGE_FILES = [
   "!dist/tests/",
   "!dist/vitest.config.js",
   "!dist/src/eval/",
+  "!dist/src/domain/evaluation/",
+  "!dist/src/application/evaluation/",
+  "!dist/src/infrastructure/evaluation/",
+  "!dist/src/composition/runtime/client-evaluation.*",
   "scripts/*.sh",
   ".env.example",
   "docs/",
@@ -199,7 +203,7 @@ function trackedRuntimeSourceFiles(): string[] {
   return execFileSync("git", ["ls-files", "src"], { encoding: "utf8" })
     .split(/\r?\n/)
     .filter((path) => path.endsWith(".ts"))
-    .filter((path) => !path.startsWith("src/eval/"))
+    .filter((path) => !/^(?:src\/eval\/|src\/(?:domain|application|infrastructure)\/evaluation\/|src\/composition\/runtime\/client-evaluation\.ts$)/.test(path))
     .sort();
 }
 
@@ -546,6 +550,10 @@ describe("package manifest publish surface", () => {
       "!dist/tests/",
       "!dist/vitest.config.js",
       "!dist/src/eval/",
+      "!dist/src/domain/evaluation/",
+      "!dist/src/application/evaluation/",
+      "!dist/src/infrastructure/evaluation/",
+      "!dist/src/composition/runtime/client-evaluation.*",
       "!docs/_internal/",
       "!docs/skills/",
       "!docs/superpowers/",
@@ -635,7 +643,7 @@ describe("package manifest publish surface", () => {
   it("keeps the excluded eval harness out of runtime imports", () => {
     const violations: string[] = [];
     const evalImportPattern =
-      /(?:from\s+|import\s*\()\s*["'][^"']*\/eval(?:\/|["'])/g;
+      /(?:from\s+|import\s*\()\s*["'][^"']*\/(?:eval|evaluation)(?:\/|["'])/g;
 
     for (const path of trackedRuntimeSourceFiles()) {
       const text = fs.readFileSync(path, "utf8");

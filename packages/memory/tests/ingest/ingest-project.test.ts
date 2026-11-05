@@ -2,14 +2,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { ingestProjectArtifacts } from "../../src/ingest/ingest-project.js";
-import { collectProjectSources } from "../../src/ingest/readers.js";
-import type {
-  AddMemoryInput,
-  MemoryRepository,
-  SearchMemoryInput,
-  SearchMemoryResult,
-} from "../../src/types.js";
+import { ingestProjectArtifacts } from "../../src/composition/runtime/ingest-project.js";
+import { collectProjectSources } from "../../src/infrastructure/files/readers.js";
+import type { AddMemoryInput, SearchMemoryInput, SearchMemoryResult } from "../../src/domain/model/memory.js";
+import type { MemoryRepository } from "../../src/application/ports/memory-repositories.js";
 
 const fixtureProjectRoot = path.resolve(
   "tests/fixtures/project-alpha",

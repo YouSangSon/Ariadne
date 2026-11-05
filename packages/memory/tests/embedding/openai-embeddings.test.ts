@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createOpenAiEmbeddingClient,
   type EmbeddingsCreateClient,
-} from "../../src/embedding/openai-embeddings.js";
+} from "../../src/infrastructure/embedding/openai-embeddings.js";
 
 describe("createOpenAiEmbeddingClient", () => {
   afterEach(() => {

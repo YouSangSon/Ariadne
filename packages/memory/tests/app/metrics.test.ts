@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AddressInfo } from "node:net";
 
-import { createOperatorServer } from "../../src/app/server.js";
+import { createOperatorServer } from "../../src/interfaces/http/server.js";
 import {
   createMetricsRegistry,
   METRICS_CONTENT_TYPE,
   normalizeHttpMethod,
-} from "../../src/app/metrics.js";
-import type { BackgroundQueueMetricsCollector } from "../../src/app/background-queue-metrics.js";
-import type { DependencyProbes } from "../../src/health/check-dependencies.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+} from "../../src/interfaces/http/metrics.js";
+import type { BackgroundQueueMetricsCollector } from "../../src/infrastructure/postgres/background-queue-metrics.js";
+import type { DependencyProbes } from "../../src/infrastructure/health/check-dependencies.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 import { goalRunRegistryStubs } from "../fixtures/goal-run-stubs.js";
 
 type ServerHandle = {

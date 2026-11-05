@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createMcpServer } from "../../src/mcp/server.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+import { createMcpServer } from "../../src/interfaces/mcp/server.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 
 describe("createMcpServer", () => {
   it.each([

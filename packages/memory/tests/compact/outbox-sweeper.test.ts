@@ -2,12 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import {
   runOutboxSweep,
   type RunOutboxSweepInput,
-} from "../../src/compact/outbox-sweeper.js";
-import type {
-  MemoryArchiveRepository,
-  PendingQdrantCleanup,
-} from "../../src/store/memory-archive-repository.js";
-import type { VectorIndex } from "../../src/vector/vector-index.js";
+} from "../../src/application/usecases/outbox-sweeper.js";
+import type { MemoryArchiveRepository, PendingQdrantCleanup } from "../../src/application/ports/memory-archive.js";
+import type { VectorIndex } from "../../src/application/ports/vector-index.js";
 
 const SILENT_LOGGER = {
   info: vi.fn(),

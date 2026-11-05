@@ -11,14 +11,14 @@
 //     npx vitest run tests/vector/pgvector-index.integration.test.ts
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { createPgPool } from "../../src/db/connection.js";
-import { createPgVectorIndex } from "../../src/vector/pgvector-index.js";
-import type { VectorFilter, VectorPoint } from "../../src/vector/vector-index.js";
-import { runMigrations } from "../../src/db/migrate.js";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
-import { createMemoryChunkRepository } from "../../src/store/canonical-indexing.js";
-import { runIngestSweep } from "../../src/compact/ingest-sweeper.js";
-import type { PgPool } from "../../src/db/connection.js";
+import { createPgPool } from "../../src/infrastructure/postgres/connection.js";
+import { createPgVectorIndex } from "../../src/infrastructure/vector/pgvector-index.js";
+import type { VectorFilter, VectorPoint } from "../../src/application/ports/vector-index.js";
+import { runMigrations } from "../../src/infrastructure/postgres/migrate.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
+import { createMemoryChunkRepository } from "../../src/infrastructure/postgres/canonical-indexing.js";
+import { runIngestSweep } from "../../src/application/usecases/ingest-sweeper.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
 
 const TEST_URL = process.env.PGVECTOR_TEST_URL;
 const HAS_TEST_URL = typeof TEST_URL === "string" && TEST_URL.trim().length > 0;

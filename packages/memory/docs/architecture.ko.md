@@ -8,75 +8,77 @@
 
 ## 레이어
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│ 클라이언트                                                       │
-│   • Claude Code / Codex CLI  (MCP stdio)                        │
-│   • MCP HTTP clients         (MCP Streamable HTTP)               │
-│   • curl / 앱 코드           (JSON HTTP)                          │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Transport                                                       │
-│   src/mcp/server.ts          → MCP SDK stdio                    │
-│   src/app/mcp-http.ts        → MCP Streamable HTTP at /mcp       │
-│   src/app/routes/memory.ts   → JSON HTTP under /v1/*             │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Tool descriptor + registry                                      │
-│   src/mcp/tool-schemas.ts     → shared zod schema + route       │
-│   src/mcp/service-tools.ts    → MCP service tool registration   │
-│   src/mcp/context-tools.ts    → MCP-only context tool           │
-│   src/mcp/resources.ts        → MCP resource template           │
-│   src/mcp/prompts.ts          → MCP prompt template             │
-│   src/mcp/tool-registry.ts    → registry assembly               │
-│   src/mcp/tool-registry-instrumentation.ts → audit wrapper      │
-│   src/mcp/tool-repository-access.ts → handler repo access        │
-│   src/mcp/tool-handlers.ts    → tool 구현                       │
-│   src/audit/tool-handlers.ts  → audit-log read adapter          │
-│   src/compact/tool-handlers.ts → compaction tool adapters        │
-│   src/goal-run/tool-handlers.ts → goal-run tool adapter          │
-│   src/store/tool-handlers.ts  → canonical reindex adapter       │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ 도메인 오케스트레이터                                             │
-│   src/compact/compact-memory.ts        plan builder             │
-│   src/compact/apply-compaction.ts      destructive apply 경로    │
-│   src/compact/unarchive-compaction.ts  복구 흐름                 │
-│   src/compact/outbox-sweeper.ts        Qdrant cleanup retry     │
-│   src/compact/sweeper-loop.ts          백그라운드 스케줄러        │
-│   src/app/background-workers.ts        공용 worker lifecycle    │
-│   src/app/worker.ts                    전용 worker 프로세스      │
-│   src/context-pack/build-context-pack.ts  pack assembler        │
-│   src/goal-run/build-goal-context.ts      goal context pack     │
-│   src/goal-run/find-repeat-attempts.ts    retry loop detector   │
-│   src/search/retrieve-memory.ts        vector + PG hydrate       │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Repository                                                      │
-│   src/store/memory-repository.ts          memory_records, sources│
-│   src/store/canonical-indexing.ts         memory_chunks + vector │
-│   src/store/memory-archive-repository.ts  compaction_runs +     │
-│                                           memory_archive        │
-│   src/jobs/ingest-job-repository.ts       ingest_jobs           │
-│   src/audit/audit-log-repository.ts       audit_log             │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ 영속성                                                           │
-│   Postgres 16  (compose 컨테이너 또는 외부)                       │
-│   Qdrant 또는 pgvector  (활성 vector backend)                    │
-│   임베딩       (transformers 로컬 ONNX [기본] / openai /          │
-│                 local 결정론적)                                   │
-└─────────────────────────────────────────────────────────────────┘
+메모리 패키지는 하나의 경계 컨텍스트입니다. 메모리, 목표 실행, 엔티티 언급,
+검색, 압축이 같은 모델과 조직 권한 규칙을 공유합니다. 내부 폴더는 독립 서비스가
+아니라 책임을 구분합니다.
+
+| 소유 위치 | 책임 |
+| --- | --- |
+| `src/domain/model/` | 메모리, 출처, 목표 실행, 압축, 벡터 값. |
+| `src/domain/policies/`, `src/domain/evaluation/` | 비밀 거부, 범위 검증, 청크 분할, 순위, 중복 탐지, 시간 감쇠, 문맥 선택과 결정론적 평가 지표. |
+| `src/application/contracts/`, `src/application/ports/` | 전송 방식과 무관한 명령·결과, 저장소·임베딩·벡터·쓰기·로그·사용자 식별·프로젝트 출처의 타입 계약. |
+| `src/application/tools/`, `src/application/usecases/`, `src/application/indexing/` | 도구 동작, 검색, 원본 인덱싱, 압축, 복원과 재시도 흐름. |
+| `src/application/lifecycle/`, `src/application/ingest/`, `src/application/evaluation/`, `src/application/operations/` | 초기화 파일 계획, 동기 출처 수집, 평가 파싱·채점·영수증 검사, 백업·복원 검증. |
+| `src/infrastructure/` | PostgreSQL SQL과 세션, 벡터·임베딩 어댑터, 파일, 프로세스 실행, 설정, 사용자 식별, 상태 검사와 로그 출력. |
+| `src/interfaces/` | HTTP·MCP 계약, 인증, 스키마, CLI·운영 명령과 worker 타이머. |
+| `src/composition/runtime/` | 제공자 선택, 원본 서비스 생성과 registry·worker·수집·초기화의 기본 연결. |
+
+Domain은 domain만, application은 domain과 application만 가져옵니다.
+Infrastructure는 안쪽 포트를 구현하고 전송 어댑터와 조립 코드가 이를 연결합니다.
+안쪽 코드는 과거 호환 경로, MCP·HTTP SDK, 파일·프로세스 어댑터, 환경 설정,
+PostgreSQL pool·query 인터페이스를 가져오지 않습니다. Application에서 순수 경로,
+해시, 비교 연산은 `node:path`, `node:crypto`, `node:util`을 사용합니다.
+
+`MemoryWriteCoordinator`는 record, archive, create, restore 작업을 제공합니다.
+PostgreSQL 구현은 하나의 세션을 예약하고 같은 세션으로 쓰기 범위의 모든 저장소와
+pgvector 어댑터를 생성합니다. Advisory lock, 트랜잭션 콜백, 인덱싱 의도, 보상 처리와
+벡터 정리는 이 쓰기 범위 안에서 함께 유지합니다. 일반 SQL 실행기를 유스케이스에
+전달하면 이 보장을 잃으므로, application은 타입을 지정한 저장소와 쓰기 범위를 받습니다.
+
+서비스 명령·결과는 `application/contracts/tools.ts`가 소유합니다. MCP 전용 roots,
+elicitation, sampling, 권한 DTO는 `interfaces/mcp/contracts.ts`에 있습니다.
+HTTP와 MCP는 계속 같은 서비스 스키마와 registry를 사용하며 조직 검사와 오류 동작을
+유지합니다.
+
+평가 코퍼스 구성, 사전 메모리 적재, 프로필·유료 실행 조건, 채점, 실패 시 중지,
+근거 저장 순서와 작업 폴더 정리는 `src/application/evaluation/`이 소유합니다.
+Git 리비전 읽기, 클라이언트 프로세스, 명령 변환과 근거 파일은 포트로 전달합니다.
+백업의 유효 기간, 로컬·외부 사본 무결성, 암호화 대상 선택, 암호화 manifest의
+멱등성, 평문 보존과 manifest 저장 순서는 `src/application/operations/`가 소유합니다.
+Infrastructure는 AES 스트림, 체크섬, 파일과 SSH 실행을 담당합니다.
+패키지 허용 목록은 이동한 평가 폴더와 조립 진입점도 제외해 기존 평가 전용 범위를 유지합니다.
+
+기존 모듈 경로는 바깥쪽 호환 진입점으로 유지합니다. 명령은 계속 `src/cli.ts`,
+`src/mcp/server.ts`, `src/app/server.ts`, `src/app/worker.ts`, `src/db/migrate.ts`와
+`scripts/`의 여섯 파일을 사용합니다. SQL 자산은 `src/db/migrations/`와
+`src/db/schema.sql`에 그대로 있습니다. 환경 설정 키, 데이터베이스 스키마, lockfile과
+동기 수집 동작을 유지합니다. 중지된 제품 dispatcher나 자동 복구 런타임을 활성화하지 않습니다.
+
+[`../architecture-map.json`](../architecture-map.json)은 모든 운영
+`src/**/*.ts`, SQL 자산, `scripts/**/*.{ts,sh}` 파일의 계층과 컨텍스트를 지정합니다.
+테스트, fixture, 문서, 설치된 의존성과 생성된 `dist/`는 이 운영 목록에서 제외합니다.
+운영 파일을 추가하면 소유 항목도 추가해야 합니다. TypeScript AST 검사는 타입 import,
+재노출, 동적 import, 로컬 별칭, 과거 호환 경로, 컨텍스트 간 의존성과 누락 파일을 검사합니다.
+실패 조건을 주입하는 음성 대조 검사도 포함합니다. 공개 export 스냅샷은 커밋 `5a26b40`의
+기존 TypeScript 모듈 104곳을 기록합니다.
+
+구조와 공개 이름 호환성은 다음 명령으로 확인합니다.
+
+```bash
+npm exec -- vitest run tests/architecture
+npm run typecheck
 ```
 
-MCP service tool 등록은 `src/mcp/service-tools.ts` 에 있으며,
-`src/mcp/tool-schemas.ts` 의 shared descriptor를 사용하고 JSON HTTP와 같은
-registry로 dispatch합니다.
+동작은 기존 패키지 테스트로 검증합니다. 실제 PostgreSQL·pgvector 검사는 명시적인 테스트
+환경 변수가 필요하며 구조 검사나 단위 테스트 통과로 대체할 수 없습니다.
+
+MCP stdio, `/mcp`의 MCP Streamable HTTP, `/v1/*`의 JSON HTTP가 같은
+서비스 registry를 사용합니다. `src/application/tools/tool-handlers.ts`는
+메모리 동작과 `src/application/tools/audit-handlers.ts`,
+`src/application/tools/compact-handlers.ts`,
+`src/application/tools/goal-run-handlers.ts`,
+`src/application/tools/store-handlers.ts`를 연결합니다. 저장소 선택은
+`src/application/tools/tool-repository-access.ts`가 소유합니다.
 
 ## 데이터 흐름: 쓰기
 
@@ -98,22 +100,22 @@ MCP transport는 capability-gated context helper도 노출합니다.
 수집한 뒤, accept된 입력을 위와 같은 `add_memory` write path로 보냅니다.
 `classify_memory_candidate` 는 client sampling으로 candidate text의 memory kind와
 summary를 제안하며 저장은 하지 않습니다.
-이 MCP-only context tool 등록은 `src/mcp/context-tools.ts` 에 있습니다.
-MCP resource template 등록은 `src/mcp/resources.ts` 에 있으며, service tool과
+이 MCP-only context tool 등록은 `src/interfaces/mcp/context-tools.ts` 에 있습니다.
+MCP resource template 등록은 `src/interfaces/mcp/resources.ts` 에 있으며, service tool과
 같은 registry method로 read-only recent memory와 context-pack view를 노출합니다.
-MCP prompt 등록은 `src/mcp/prompts.ts` 에 있으며, tool contract를 바꾸지 않고
+MCP prompt 등록은 `src/interfaces/mcp/prompts.ts` 에 있으며, tool contract를 바꾸지 않고
 context-pack startup과 store-memory prompt template을 렌더링합니다.
 
 Write-ahead outbox: chunk이 Postgres에 커밋된 후, `writeCanonicalMemory` 는
 Qdrant 에 접근하기 전에 `markQdrantPending` 을 호출해 `qdrant_next_retry_at`
 를 예약합니다. 이 시점과 `markQdrantCompleted` 사이에 프로세스가 크래시되면,
 job row 는 `qdrant_status='pending'` + 재시도 타임스탬프를 갖고 남아 ingest
-sweeper(`src/compact/ingest-sweeper.ts`, `INGEST_SWEEP_ENABLED` opt-in)가
+sweeper(`src/application/usecases/ingest-sweeper.ts`, `INGEST_SWEEP_ENABLED` opt-in)가
 이미 커밋된 chunk를 재인덱스할 수 있습니다. 인-프로세스 오류는 기존처럼
 catch 블록(option-A 삭제: CASCADE가 레코드·chunk·job을 제거, 고아 없음)을
 통해 처리되므로 `add_memory` 의 성공/실패 의미는 변경되지 않습니다.
 
-쓰기 전: `src/store/secret-scrub.ts` 의 `assertNoSecrets(content)` —
+쓰기 전: `src/domain/policies/secret-scrub.ts` 의 `assertNoSecrets(content)` —
 provider API key / PEM / bearer/JWT / 자격증명이 포함된 데이터베이스 URL 패턴
 매칭 시 거부. `writeCanonicalMemory` 의 어떤 store touch보다도 앞에서 실행 →
 매칭 시 사이드 이펙트 없이 short-circuit.
@@ -149,7 +151,7 @@ matching 옆에서 이 persistent entity graph를 exact-match rescue/boost 경�
 ```
 compact_memory dryRun=false
   ↓
-applyCompaction (src/compact/apply-compaction.ts)
+applyCompaction (src/application/usecases/apply-compaction.ts)
   ├─ rate-limit 체크         (countRecentApplyRuns, 기본 1/h/org)
   ├─ createCompactionRun     (UUID idempotency_key, ON CONFLICT DO NOTHING)
   ├─ archive 후보별:
@@ -163,7 +165,7 @@ applyCompaction (src/compact/apply-compaction.ts)
 ```
 
 Cross-store 일관성: PG-first 는 PG commit 후 Qdrant delete 전 크래시 시
-Qdrant에 orphan vector 남김. sweeper (`src/compact/sweeper-loop.ts`, opt-in)
+Qdrant에 orphan vector 남김. sweeper (`src/interfaces/worker/sweeper-loop.ts`, opt-in)
 가 reconcile. 역순은 살아있는 `memory_records` 가 삭제된 Qdrant point를
 가리키는 사용자 가시 버그.
 
@@ -183,7 +185,7 @@ lifecycle을 사용합니다.
 ```
 unarchive_memory
   ↓
-unarchiveCompaction (src/compact/unarchive-compaction.ts)
+unarchiveCompaction (src/application/usecases/unarchive-compaction.ts)
   ├─ findArchiveByIds         (org-scoped)
   ├─ archive 행별:
   │    ├─ already_unarchived / org mismatch / source_id 없음 시 skip
@@ -281,7 +283,7 @@ goal_run_id FK        iteration_count          created_at
 마이그레이션은 `src/db/migrations/` 에 위치. 현재 범위는 `001-015` 이며,
 런너는 부트스트랩 시 `001` 부터 `015` 까지 적용합니다 (모두 idempotent,
 `CREATE … IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
-source of truth는 `src/db/migrate.ts` 의 `MIGRATION_FILES` 와 mirror된
+source of truth는 `src/infrastructure/postgres/migrate.ts` 의 `MIGRATION_FILES` 와 mirror된
 `embeddedPostgresMigrationSql` fallback입니다. 오래된 `src/db/schema.sql` 은
 historical SQLite/FTS artifact이며 active Postgres schema가 아닙니다.
 `009_memory_archive_qdrant_retry.sql` 은 archive Qdrant retry metadata를
@@ -313,7 +315,7 @@ write 경로의 SQL 쿼리에 `WHERE organization_id = $org` 포함. `MEMORY_API
 언바운드 토큰 (`:org` 없음, `x-organization-id` 헤더 없음, body org 없음) 은
 테넌트 경계를 넘어 자동으로 데이터를 읽을 수 없으며, 세 가지 해결 방법을
 안내하는 명확한 운영 에러를 받습니다. 공유 헬퍼 `assertOrganizationId`
-(`src/store/assert-organization-id.ts`) 가 세 진입점 모두에서 일관되게 이를
+(`src/domain/policies/assert-organization-id.ts`) 가 세 진입점 모두에서 일관되게 이를
 강제합니다.
 
 apply 시 `memory_archive` 에 쓰이는 `organization_id` 는 caller 토큰이 아닌
@@ -322,7 +324,7 @@ canonical 레코드 자체에서 (DELETE의 RETURNING) 읽음 — 토큰의 바�
 
 ## Audit trail
 
-모든 도구 호출은 `src/mcp/tool-registry-instrumentation.ts` 의 `instrument()`
+모든 도구 호출은 `src/application/tools/tool-registry-instrumentation.ts` 의 `instrument()`
 wrapper를 통해 `audit_log` 행 생성. 행에는 org, actor, 도구 이름, project
 key, outcome (`ok`/`error`), 에러 메시지, duration ms, request id 포함;
 destructive operation 의 경우 `metadata` JSONB 에 구조화된 디테일 (archive id,
@@ -334,18 +336,18 @@ run id 등).
 
 ## 벡터 백엔드 플러거빌리티
 
-`src/mcp/canonical-services.ts` 가 `VECTOR_BACKEND` 를 통해 벡터 백엔드
+`src/composition/runtime/canonical-services.ts` 가 `VECTOR_BACKEND` 를 통해 벡터 백엔드
 선택 (기본값: `qdrant`):
 
-- `qdrant` **(기본)** → `src/vector/qdrant-index.ts`,
+- `qdrant` **(기본)** → `src/infrastructure/vector/qdrant-index.ts`,
   `@qdrant/js-client-rest` 래핑. `QDRANT_URL` + `QDRANT_API_KEY` 필요.
-- `pgvector` → `src/vector/pgvector-index.ts`, `vector` 확장을 사용해
+- `pgvector` → `src/infrastructure/vector/pgvector-index.ts`, `vector` 확장을 사용해
   Postgres 에 임베딩 저장. 기존 PG pool 재사용 — **두 번째 서비스 불필요**.
   Qdrant 자격증명 불필요. `ensureCollection(dims)` 는 부트스트랩 시
   `vector` 확장이 이미 설치되어 있는지 확인한 뒤 테이블과 HNSW/BTree 인덱스를
   생성합니다 — 재시작 시 no-op (`CREATE … IF NOT EXISTS`).
 
-두 어댑터 모두 `VectorIndex` 인터페이스 (`src/vector/vector-index.ts`) 구현:
+두 어댑터 모두 `VectorIndex` 인터페이스 (`src/application/ports/vector-index.ts`) 구현:
 `ensureCollection`, `upsert`, `query`, `delete`. 필터 변환 (`VectorFilter` →
 Qdrant `must` / SQL `WHERE`) 은 각 어댑터 내부에 캡슐화 — Qdrant 또는
 pgvector SQL 방언이 오케스트레이션 코드에 누출되지 않음.
@@ -370,16 +372,16 @@ docker compose -f compose.yaml -f compose.pgvector.yaml up -d
 
 ## Embedding pluggability
 
-`src/embedding/embedding-factory.ts` 가 `EMBEDDING_PROVIDER` 를 통해
+`src/composition/runtime/embedding-factory.ts` 가 `EMBEDDING_PROVIDER` 를 통해
 provider 선택 (기본값: `transformers`):
 
-- `transformers` **(기본)** → `src/embedding/transformers-embedding.ts`,
+- `transformers` **(기본)** → `src/infrastructure/embedding/transformers-embedding.ts`,
   설치된 `@huggingface/transformers` package 기반 무료 로컬 ONNX 추론.
   기본 모델 `Xenova/all-MiniLM-L6-v2`, 384-dim. 첫 호출 시 HF 캐시에
   ~22 MB 다운로드; 이후 완전 오프라인 동작. API 키 불필요.
-- `openai` → `src/embedding/openai-embeddings.ts`,
+- `openai` → `src/infrastructure/embedding/openai-embeddings.ts`,
   `text-embedding-3-small`, 1536-dim. `OPENAI_API_KEY` 필요.
-- `local` → `src/embedding/local-embedding.ts`, 결정론적 SHA-256 해싱
+- `local` → `src/infrastructure/embedding/local-embedding.ts`, 결정론적 SHA-256 해싱
   → 384-dim 벡터. 외부 호출 없음; 시맨틱 검색이 불필요한 CI /
   air-gapped / 오프라인 환경용.
 

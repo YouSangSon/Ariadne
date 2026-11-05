@@ -1,7 +1,7 @@
-import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/store/memory-write-coordinator.js";
+import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/application/ports/memory-write.js";
 import { describe, expect, it, vi } from "vitest";
-import { createToolRegistry } from "../../src/mcp/tool-registry.js";
-import type { CanonicalServices } from "../../src/mcp/types.js";
+import { createToolRegistry } from "../../src/composition/runtime/tool-registry.js";
+import type { CanonicalServices } from "../../src/application/contracts/tools.js";
 import { goalRunServicesStub } from "../fixtures/goal-run-stubs.js";
 
 // Drive the real handlers with only the goalRuns service stubbed in. The

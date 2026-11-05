@@ -51,6 +51,7 @@ This workflow is a product goal. The project currently provides foundations for 
 | **Required context preservation** | Preserve confirmed facts and verification first, and fail without output if required information exceeds the budget |
 | **Persistent memory** | PostgreSQL source of truth, Qdrant or pgvector search, organization-level permissions, and HTTP and MCP tools |
 | **Code impact analysis** | Local SQLite graph, change impact, verification targets, evidence, MCP, and UI |
+| **Ontology** | Read user-defined terms, relationships, and source files; perform bounded lexical search and check review status |
 | **Knowledge relationships** | Promote work records to the wiki and index links and unresolved relationships |
 | **Shared rules and skills** | Generate mirrors for Codex and Claude Code from one source and check that they match |
 | **Change detection foundations** | Contract hash covering all acceptance criteria and immutable scope, and a source fingerprint including dirty, untracked, and mode changes |
@@ -67,7 +68,7 @@ The installation and usage instructions below apply when you have the required p
 
 ## Getting started
 
-Install and run the full product with **Node.js 24.22.2 or later**. The file-based core works without an external database. The persistent memory service requires PostgreSQL and a selected vector store.
+Install and run the full product with **Node.js 24.22.2 or later**. The file-based core works without an external database. The persistent memory service requires PostgreSQL and a selected vector store. The example below installs everything; to use only selected modules, clone first and follow [module selection](#module-selection).
 
 ```sh
 git clone https://github.com/YouSangSon/Ariadne.git
@@ -77,7 +78,42 @@ npm run verify
 node bin/Ariadne.mjs --help
 ```
 
-Run the available code analysis and context commands from the repository where you are working.
+<a id="module-selection"></a>
+
+### Selecting modules
+
+The source checkout always contains all modules. Pass comma-separated names from the table to `setup` or `verify` with `--modules`; `core` is always included. Omit the option to install or verify all modules.
+
+| Module | Role and requirements |
+| --- | --- |
+| `core` | Shared harness; no external database or npm package dependencies |
+| `ontology` | Search and review JSON terms, relationships, and sources; no external database or npm package dependencies |
+| `memory` | Persistent memory; requires PostgreSQL and a configured vector store |
+| `code` | Code impact analysis; uses local SQLite in the target repository |
+
+```sh
+# Select only core or ontology
+npm run setup -- --modules core
+npm run setup -- --modules ontology
+# Install and verify memory and ontology together
+npm run setup -- --modules memory,ontology
+npm run verify -- --modules memory,ontology
+```
+
+Only selected package dependencies are installed. Selection is not saved, so pass the option again on subsequent runs. It does not uninstall existing dependencies or hide other modules' commands.
+
+Ontology uses user-authored JSON terms, synonyms, typed relationships, and source paths.
+
+```sh
+node bin/Ariadne.mjs ontology inspect --file modules/ontology/example.json
+node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --query memory --limit 5
+```
+
+Each read recomputes a review digest from definitions and source files and reports `unreviewed`, `current`, or `stale`. Search is bounded lexical search; it provides no LLM, SQL, or answerability judgment. Review status is not authenticated approval. The existing `knowledge promote` and `knowledge index` commands handle separate wiki snapshots.
+
+Memory, code, requirements, context packs, rules integration, wiki, execution foundations, and ontology own their rules and data. Their domains and applications depend on ports; file, database, HTTP, and process adapters connect from the outside. Existing entrypoints and storage contracts remain compatible. See [architecture](docs/architecture.md) for ownership and boundary checks, and [modules and ontology](docs/modular-ontology.md) for the ontology format.
+
+Run the available code analysis and context commands from the repository where you are working. Code commands require the `code` module's dependencies.
 
 ```sh
 node /path/to/Ariadne/bin/Ariadne.mjs code init
@@ -86,7 +122,7 @@ node /path/to/Ariadne/bin/Ariadne.mjs code analyze --changed src/example.ts --fa
 node /path/to/Ariadne/bin/Ariadne.mjs context --root . --req my-task
 ```
 
-To use memory, copy `packages/memory/.env.example` to `.env` at the root and check the database and vector settings. Exclude actual values from Git. The default transformer model runs locally and may download weights on its first run. API keys and paid providers are not configured automatically.
+To use memory, install the `memory` module's dependencies, copy `packages/memory/.env.example` to `.env` at the root, and check the database and vector settings. Exclude actual values from Git. The default transformer model runs locally and may download weights on its first run. API keys and paid providers are not configured automatically.
 
 ```sh
 node --env-file=.env bin/Ariadne.mjs memory serve
@@ -136,9 +172,11 @@ An instruction file alone does not provide background event handling or automati
 
 ```sh
 npm run verify
-# To check only the core
+# To check core source without package dependencies
 node scripts/verify.mjs
 ```
+
+The full `npm run verify` retains the existing package checks. Pass `--modules` to verify a selection, as with setup. Core source checks include shared ontology source tests even when only `core` is selected.
 
 The checks use real files, temporary projects, and HTTP servers started by the tests. CI runs PostgreSQL, pgvector, and local transformer search verification as separate jobs. Model calls are not required.
 Do not treat API protocol checks as evidence of model quality, subscription savings, or production performance.
@@ -157,6 +195,7 @@ An arbitrary external writer racing between the file SHA check and rename is not
 | `lib/`, `scripts/`, `tests/` | Deterministic checks and regression evidence |
 | `packages/memory/`, `packages/code/` | Internal implementations, pinned dependencies, existing contracts, and tests |
 | `bin/Ariadne.mjs` | Single installation and execution entry point |
+| `modules/ontology/` | File-based ontology model and search |
 | `modules/llm-wiki/` | Wiki promotion and relationship index |
 | `modules/loop/` | Foundations for contracts, file tools, transport, and manual handoffs |
 | `evaluation/` | Control group for evaluation tooling without model calls |

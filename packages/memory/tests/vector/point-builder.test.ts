@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildVectorPoint,
   type VectorPointInput,
-} from "../../src/vector/point-builder.js";
+} from "../../src/application/indexing/point-builder.js";
 
 const buildInput = (
   overrides: Partial<VectorPointInput> = {},

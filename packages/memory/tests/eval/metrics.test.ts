@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mrrAtK, recallAtK } from "../../src/eval/metrics.js";
+import { mrrAtK, recallAtK } from "../../src/domain/evaluation/metrics.js";
 
 type MetricCaller = (
   retrieved: unknown,

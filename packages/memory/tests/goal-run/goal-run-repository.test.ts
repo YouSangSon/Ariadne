@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createGoalRunRepository,
   GoalRunNotActiveError,
-} from "../../src/goal-run/goal-run-repository.js";
+} from "../../src/infrastructure/postgres/goal-run-repository.js";
 
 type SqlQueryCall = { sql: string; params: unknown[] };
 

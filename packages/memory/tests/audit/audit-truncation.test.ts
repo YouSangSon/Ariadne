@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createAuditLogRepository } from "../../src/audit/audit-log-repository.js";
+import { createAuditLogRepository } from "../../src/infrastructure/postgres/audit-log-repository.js";
 
 const MAX_ERROR_MESSAGE_LENGTH = 1024;
 

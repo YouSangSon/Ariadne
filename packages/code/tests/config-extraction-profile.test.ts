@@ -69,7 +69,12 @@ test('profile package guard rejects another package before loading a runtime', a
 test('profile runner records actual full-index phases and scan counts without timing thresholds', async () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const report = await profileConfigExtraction(root);
-  assert.equal(Object.keys(report.runtimeSha256).length, 5);
+  for (const owner of [
+    'dist/src/application/indexing/index-project.js',
+    'dist/src/infrastructure/filesystem/index-scan.js',
+    'dist/src/infrastructure/sqlite/indexing.js',
+    'dist/src/infrastructure/extractors/config-infra.js',
+  ]) assert.ok(owner in report.runtimeSha256, `missing implementation fingerprint: ${owner}`);
   assert.ok(Object.values(report.runtimeSha256).every((hash) => /^[0-9a-f]{64}$/.test(hash)));
   assert.deepEqual(report.observations.map((observation) => observation.phase), ['baseline', 'source-edit', 'config-edit']);
   for (const observation of report.observations) {

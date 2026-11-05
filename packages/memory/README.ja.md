@@ -221,12 +221,12 @@ curl -sX POST http://localhost:8787/v1/memory/context-pack \
 
 | レイヤー | 役割 |
 |-------|----------------|
-| MCPサーバー（`src/mcp/`） | 共通のMCPサーバー機能: ツール記述、スキーマ、レジストリ、ハンドラー |
-| HTTPサーバー（`src/app/`） | `/mcp`でMCP Streamable HTTPを、`/v1/*`でJSON HTTPを提供 |
-| 正本ストア（`src/store/memory-repository.ts`） | Postgres — レコード、ソース、取り込みジョブ、エンティティグラフ、監査 |
-| ベクトルインデックス（`src/vector/`） | Qdrant（既定）またはpgvector — チャンク化した埋め込みと類似検索。Postgresのみでデプロイするには`VECTOR_BACKEND=pgvector`を設定。 |
-| コンパクション（`src/compact/`） | 重複排除（完全一致・意味的一致）、減衰、アーカイブ、アーカイブ解除、スイーパー |
-| 埋め込み（`src/embedding/`） | `transformers`（無料のローカルONNX、既定）、`openai`（`text-embedding-3-small`）、または`local`（CI用の決定論的スタブ） |
+| MCPサーバー（`src/interfaces/mcp/`） | 共通のMCPサーバー機能: ツール記述、スキーマ、レジストリ、ハンドラー |
+| HTTPサーバー（`src/interfaces/http/`） | `/mcp`でMCP Streamable HTTPを、`/v1/*`でJSON HTTPを提供 |
+| 正本ストア（`src/infrastructure/postgres/memory-repository.ts`） | Postgres — レコード、ソース、取り込みジョブ、エンティティグラフ、監査 |
+| ベクトルインデックス（`src/infrastructure/vector/`） | Qdrant（既定）またはpgvector — チャンク化した埋め込みと類似検索。Postgresのみでデプロイするには`VECTOR_BACKEND=pgvector`を設定。 |
+| コンパクション（`src/application/usecases/`） | 重複排除（完全一致・意味的一致）、減衰、アーカイブ、アーカイブ解除、スイーパー |
+| 埋め込み（`src/infrastructure/embedding/`） | `transformers`（無料のローカルONNX、既定）、`openai`（`text-embedding-3-small`）、または`local`（CI用の決定論的スタブ） |
 
 データフロー: 呼び出し元が`add_memory`で書き込み → レコードをPostgresに保存し、エンティティへの言及を
 関連付け、内容をチャンク化・埋め込み生成して、使用中のベクトルバックエンドにupsertします。

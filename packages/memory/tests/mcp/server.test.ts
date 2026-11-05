@@ -1,4 +1,4 @@
-import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/store/memory-write-coordinator.js";
+import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/application/ports/memory-write.js";
 import { Client, type ClientOptions } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -9,21 +9,22 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it, vi } from "vitest";
 import * as z from "zod/v4";
-import { createMcpServer, createToolRegistry } from "../../src/mcp/server.js";
-import { createToolRegistry as createToolRegistryDirect } from "../../src/mcp/tool-registry.js";
-import type { AuditLogRepository } from "../../src/audit/audit-log-repository.js";
-import type { Logger } from "../../src/logger.js";
-import { TOOL_DESCRIPTORS } from "../../src/mcp/tool-schemas.js";
+import { createMcpServer, createToolRegistry } from "../../src/interfaces/mcp/server.js";
+import { createToolRegistry as createToolRegistryDirect } from "../../src/composition/runtime/tool-registry.js";
+import type { AuditLogRepository } from "../../src/application/ports/audit-log.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import { TOOL_DESCRIPTORS } from "../../src/interfaces/mcp/tool-schemas.js";
 import {
   POSTGRES_INTEGER_MAX,
   POSTGRES_INTEGER_MIN,
-} from "../../src/mcp/tool-utils.js";
+} from "../../src/application/tools/tool-utils.js";
 import type {
   CanonicalServices,
   ToolRegistry,
   WithCanonicalServices,
-} from "../../src/mcp/types.js";
-import type { MemoryRepository, SearchMemoryResult } from "../../src/types.js";
+} from "../../src/application/contracts/tools.js";
+import type { MemoryRepository } from "../../src/application/ports/memory-repositories.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 import {
   goalRunRegistryStubs,
   goalRunServicesStub,

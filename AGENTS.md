@@ -13,6 +13,13 @@ One product and checkout; `packages/memory` and
   to `packages/memory`; see its architecture/configuration docs before edits.
 - Code graph, evidence and local facts belong to `packages/code`; `.parallax`
   includes user memory and must not be treated as disposable cache.
+- Domain and application code depend inward on policies and ports. Concrete I/O
+  belongs in adapters; entrypoints compose them. See `docs/architecture.md` and
+  the root/package `architecture-map.json` files for ownership and check scope.
+- Ontology definitions and review freshness belong to `modules/ontology`.
+  See `docs/modular-ontology.md`; do not import another context's internals.
+- Select dependencies/gates with `--modules memory,ontology`; omitted selection
+  keeps the full product gate. Module selection never migrates or removes data.
 - Keep both internal lockfiles. Run tests from the owning package directory.
 - Root `.github/workflows` owns CI. Nested workflow/action files retain migration
   contract fixtures and provenance; they are not active root workflows.

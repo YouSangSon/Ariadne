@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMemoryArchiveRepository } from "../../src/store/memory-archive-repository.js";
-import type { PgPool, PgQueryResult } from "../../src/db/connection.js";
+import { createMemoryArchiveRepository } from "../../src/infrastructure/postgres/memory-archive-repository.js";
+import type { PgPool, PgQueryResult } from "../../src/infrastructure/postgres/connection.js";
 
 type QueryFn = (text: string, values?: readonly unknown[]) => Promise<PgQueryResult>;
 

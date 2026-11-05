@@ -12,8 +12,8 @@ import {
   createOAuthTokenVerifier,
   loadOAuthTokenVerifierConfig,
   requiredScopeKindForTool,
-} from "../../src/app/middleware/oauth-token-auth.js";
-import type { OAuthProtectedResourceConfig } from "../../src/app/oauth-protected-resource.js";
+} from "../../src/interfaces/http/middleware/oauth-token-auth.js";
+import type { OAuthProtectedResourceConfig } from "../../src/interfaces/http/oauth-protected-resource.js";
 
 const protectedResource: OAuthProtectedResourceConfig = {
   metadataUrl:

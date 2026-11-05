@@ -6,7 +6,7 @@ Parallax extracts its entity/relation graph through **semantic adapters**. Each 
 
 ## The adapter contract
 
-An adapter implements the `SemanticAdapter` interface (`src/adapters/types.ts`):
+An adapter implements the `SemanticAdapter` interface (`src/domain/indexing/adapter.ts`):
 
 - `id` — a unique, stable identifier. Registering two adapters with the same `id` throws.
 - `version` — the adapter version string (see [Versioning](#versioning-and-re-extraction)).
@@ -91,7 +91,7 @@ This enforces invariant **I-10** (see [invariants.md](invariants.md)): every imp
 
 ## Registration and selection order
 
-Adapters live in a registry (`src/adapters/registry.ts`) and are assembled by `createDefaultRegistry()` in `src/indexer.ts`. Selection is **first-match-wins** in registration order: `pickAdapter(file)` returns the first registered adapter whose `supports()` returns `true`.
+Adapters live in a registry (`src/domain/indexing/adapter-registry.ts`) and are assembled by `createDefaultRegistry()` in `src/composition/extractors.ts`. Selection is **first-match-wins** in registration order: `pickAdapter(file)` returns the first registered adapter whose `supports()` returns `true`.
 
 This makes registration order load-bearing. The default registry registers, in order: the build-system/package adapter, the config/infra adapter, the TypeScript/JavaScript adapter, the JVM/Spring adapter, the Python adapter, the Go adapter, the Rust adapter, and finally the multi-language regex adapter. That last adapter is a **catch-all** whose `supports()` always returns `true`, so it MUST be registered LAST — any adapter registered after a catch-all is unreachable. The registry enforces this ordering.
 

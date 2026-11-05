@@ -1,10 +1,3 @@
-export type CrossRepoEventTopology = {
-  providerAction: string;
-  counterpartyRole: 'consumer' | 'producer' | 'unknown';
-  pattern: string;
-};
 
-export type ConsumerEvidence = {
-  snippet: string;
-  eventTopology?: CrossRepoEventTopology;
-};
+
+export type { ConsumerEvidence,CrossRepoEventTopology } from "../domain/workspace/matching/types.js";

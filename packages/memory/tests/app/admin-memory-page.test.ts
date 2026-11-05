@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { renderMemoryAdminPage } from "../../src/app/admin-memory-page.js";
+import { renderMemoryAdminPage } from "../../src/interfaces/http/admin-memory-page.js";
 
 describe("memory admin page", () => {
   const html = renderMemoryAdminPage();

@@ -1,4 +1,4 @@
-import { EmbeddingInputTooLongError } from "../../src/embedding/transformers-embedding.js";
+import { EmbeddingInputTooLongError } from "../../src/infrastructure/embedding/transformers-embedding.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createConnection, type AddressInfo } from "node:net";
 import {
@@ -6,18 +6,18 @@ import {
   createOperatorServer,
   isLoopbackHost,
   selectDependencyProbes,
-} from "../../src/app/server.js";
+} from "../../src/interfaces/http/server.js";
 import {
   createTokenBucketLimiter,
   type RateLimiter,
-} from "../../src/app/middleware/rate-limit.js";
-import type { OAuthProtectedResourceConfig } from "../../src/app/oauth-protected-resource.js";
-import type { OAuthTokenVerifier } from "../../src/app/middleware/bearer-auth.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+} from "../../src/interfaces/http/middleware/rate-limit.js";
+import type { OAuthProtectedResourceConfig } from "../../src/interfaces/http/oauth-protected-resource.js";
+import type { OAuthTokenVerifier } from "../../src/interfaces/http/middleware/bearer-auth.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 import { goalRunRegistryStubs } from "../fixtures/goal-run-stubs.js";
-import type { Logger } from "../../src/logger.js";
-import type { PgPool } from "../../src/db/connection.js";
-import type { DependencyProbes } from "../../src/health/check-dependencies.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import type { DependencyProbes } from "../../src/infrastructure/health/check-dependencies.js";
 
 type ServerHandle = {
   baseUrl: string;
@@ -1394,7 +1394,7 @@ describe("createOperatorServer", () => {
     vi.resetModules();
     const defaultRegistry = buildRegistry();
     const createToolRegistryMock = vi.fn(() => defaultRegistry);
-    vi.doMock("../../src/mcp/server.js", () => ({
+    vi.doMock("../../src/interfaces/mcp/server.js", () => ({
       createToolRegistry: createToolRegistryMock,
     }));
 
@@ -1409,7 +1409,7 @@ describe("createOperatorServer", () => {
         oauthProtectedResource: null,
       });
     } finally {
-      vi.doUnmock("../../src/mcp/server.js");
+      vi.doUnmock("../../src/interfaces/mcp/server.js");
       vi.resetModules();
     }
 

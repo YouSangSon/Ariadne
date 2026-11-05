@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createPgPool } from "../../src/db/connection.js";
+import { createPgPool } from "../../src/infrastructure/postgres/connection.js";
 import {
   readPostgresMigrationSql,
   resolveMigrationDatabaseUrl,
   runMigrations,
-} from "../../src/db/migrate.js";
+} from "../../src/infrastructure/postgres/migrate.js";
 
 type InformationSchemaTableRow = {
   table_name: string;

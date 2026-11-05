@@ -252,7 +252,7 @@ async function listSourceFiles(root: string): Promise<string[]> {
 test('core src does not introduce an implicit HTTP daemon or websocket listener', async () => {
   const srcRoot = path.resolve('src');
   const explicitLocalServerModules = new Set([
-    path.resolve('src/ui.ts')
+    path.resolve('src/interfaces/ui/server.ts')
   ]);
   const forbiddenPatterns: Array<[RegExp, string]> = [
     [/\bnode:http\b/, 'node:http'],

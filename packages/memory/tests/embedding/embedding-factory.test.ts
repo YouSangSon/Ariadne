@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createEmbeddingProvider,
   isKnownEmbeddingProvider,
-} from "../../src/embedding/embedding-factory.js";
+} from "../../src/composition/runtime/embedding-factory.js";
 
 describe("createEmbeddingProvider", () => {
   it.each([

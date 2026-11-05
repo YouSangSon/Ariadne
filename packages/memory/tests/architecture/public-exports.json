@@ -1,0 +1,783 @@
+{
+  "baseline": "5a26b40",
+  "modules": {
+    "src/types.ts": [
+      "AddMemoryInput",
+      "CanonicalMemoryRepository",
+      "CloseGoalRunInput",
+      "Durability",
+      "GoalRun",
+      "GoalRunIteration",
+      "GoalRunIterationOutcome",
+      "GoalRunRepository",
+      "GoalRunScopeType",
+      "GoalRunStatus",
+      "GoalRunWithIterations",
+      "IngestJob",
+      "IngestJobQdrantStatus",
+      "IngestJobRepository",
+      "IngestJobStatus",
+      "ListGoalRunsInput",
+      "ListMemoryOptions",
+      "MemoryGraphEntity",
+      "MemoryGraphEntityRef",
+      "MemoryGraphRelationship",
+      "MemoryGraphView",
+      "MemoryRecord",
+      "MemoryRepository",
+      "MemorySource",
+      "MemorySourceInput",
+      "MemoryType",
+      "RecordIterationInput",
+      "ScopeRef",
+      "ScopeType",
+      "SearchMemoryInput",
+      "SearchMemoryResult",
+      "SourceType",
+      "StartGoalRunInput"
+    ],
+    "src/chunk/chunk-text.ts": [
+      "ChunkTextInput",
+      "TextChunk",
+      "chunkText"
+    ],
+    "src/entities/entity-extraction.ts": [
+      "ENTITY_KIND_VALUES",
+      "EntityKind",
+      "EntityMention",
+      "entityOverlapScore",
+      "extractEntityMentions"
+    ],
+    "src/compact/decay-score.ts": [
+      "DecayCandidate",
+      "DecayScoreInput",
+      "decayScore",
+      "findDecayCandidates"
+    ],
+    "src/compact/detect-duplicates.ts": [
+      "DuplicateGroup",
+      "RecordWithIdAndContent",
+      "findExactContentDuplicates"
+    ],
+    "src/compact/semantic-duplicates.ts": [
+      "SemanticRecord",
+      "cosineSimilarity",
+      "findSemanticDuplicates"
+    ],
+    "src/compact/compact-memory.ts": [
+      "BuildCompactionPlanInput",
+      "assertBuildCompactionPlanInput",
+      "buildCompactionPlan",
+      "shouldPromoteRecord"
+    ],
+    "src/search/lexical-score.ts": [
+      "LexicalMatch",
+      "normalizeForLexical",
+      "scoreLexicalMatch",
+      "tokenizeLexicalQuery"
+    ],
+    "src/search/rank-results.ts": [
+      "CandidateSource",
+      "RetrievedMemoryCandidate",
+      "ScoreSearchResultOptions",
+      "buildRetrievedMemoryCandidate",
+      "newestUpdatedAtFor",
+      "rankCandidates",
+      "rankResults",
+      "scoreSearchResult"
+    ],
+    "src/search/scored-candidate.ts": [
+      "CandidateSource",
+      "RetrievedMemoryCandidate"
+    ],
+    "src/context-pack/build-context-pack.ts": [
+      "BuildContextPackInput",
+      "ContextPack",
+      "ContextPackSectionName",
+      "ContextPackSections",
+      "ContextPackSelectionRationale",
+      "ContextPackSelectionReason",
+      "buildContextPack",
+      "renderContextPackSections"
+    ],
+    "src/goal-run/build-goal-context.ts": [
+      "BuildGoalContextPackInput",
+      "GoalContextPack",
+      "buildGoalContextPack"
+    ],
+    "src/goal-run/find-repeat-attempts.ts": [
+      "DEFAULT_REPEAT_THRESHOLD",
+      "FindRepeatAttemptsInput",
+      "PriorFailure",
+      "RepeatMatch",
+      "findRepeatAttempts"
+    ],
+    "src/store/assert-organization-id.ts": [
+      "assertOrganizationId"
+    ],
+    "src/store/memory-content.ts": [
+      "assertNonBlankMemoryContent",
+      "assertNonBlankText"
+    ],
+    "src/store/secret-scrub.ts": [
+      "SecretDetectedError",
+      "SecretDetection",
+      "assertNoSecrets",
+      "scanForSecrets"
+    ],
+    "src/vector/organization-id.ts": [
+      "assertOptionalVectorOrganizationId",
+      "assertVectorOrganizationId",
+      "assertVectorPointOrganizationIds",
+      "normalizeOptionalVectorOrganizationId"
+    ],
+    "src/jobs/retry-backoff.ts": [
+      "nextRetryDelayMs"
+    ],
+    "src/eval/metrics.ts": [
+      "hardNegativeOrderingAtK",
+      "mrrAtK",
+      "recallAtK"
+    ],
+    "src/eval/payload-metrics.ts": [
+      "ToolPayloadBytes",
+      "assertObservedPackBudget",
+      "measureToolPayloadBytes"
+    ],
+    "src/eval/retrieval-corpus.ts": [
+      "assertRetrievalCorpus",
+      "isAllowedEvalScope"
+    ],
+    "src/eval/types.ts": [
+      "EvalQuery",
+      "EvalScope",
+      "MetricSummary"
+    ],
+    "src/vector/vector-index.ts": [
+      "VectorDeleteOptions",
+      "VectorFilter",
+      "VectorHit",
+      "VectorIndex",
+      "VectorPoint"
+    ],
+    "src/embedding/embedding-provider.ts": [
+      "EmbeddingChunkingTokenizer",
+      "EmbeddingProvider",
+      "EmbeddingProviderConfig",
+      "EmbeddingProviderName"
+    ],
+    "src/compact/sweeper-metrics.ts": [
+      "SweeperMetricsRecorder",
+      "SweeperRowOutcome",
+      "SweeperTickObservation",
+      "SweeperTickStatus",
+      "SweeperWorker"
+    ],
+    "src/chunk/chunk-for-embedding.ts": [
+      "chunkForEmbedding"
+    ],
+    "src/vector/point-builder.ts": [
+      "VectorPointInput",
+      "buildVectorPoint"
+    ],
+    "src/compact/apply-compaction.ts": [
+      "ApplyCompactionDeps",
+      "ApplyCompactionInput",
+      "ApplyCompactionResult",
+      "ApplyRateLimitConfig",
+      "ApplyStats",
+      "CompactionRateLimitError",
+      "applyCompaction"
+    ],
+    "src/compact/ingest-sweeper.ts": [
+      "IngestSweepResult",
+      "RunIngestSweepInput",
+      "runIngestSweep"
+    ],
+    "src/compact/outbox-sweeper.ts": [
+      "RunOutboxSweepInput",
+      "SweepResult",
+      "runOutboxSweep"
+    ],
+    "src/compact/unarchive-compaction.ts": [
+      "UnarchiveCompactionDeps",
+      "UnarchiveCompactionInput",
+      "UnarchiveOutcome",
+      "UnarchiveResult",
+      "unarchiveCompaction"
+    ],
+    "src/search/retrieve-memory.ts": [
+      "RetrieveMemoryInput",
+      "retrieveMemory"
+    ],
+    "src/mcp/types.ts": [
+      "AbandonGoalRunToolInput",
+      "AbandonGoalRunToolResult",
+      "AddMemoryInteractiveToolInput",
+      "AddMemoryInteractiveToolResult",
+      "AddMemoryToolInput",
+      "AddMemoryToolResult",
+      "AuditLogEntryView",
+      "BuildContextPackToolInput",
+      "BuildContextPackToolResult",
+      "BuildGoalContextToolInput",
+      "BuildGoalContextToolResult",
+      "CanonicalServices",
+      "CheckRepeatAttemptToolInput",
+      "CheckRepeatAttemptToolResult",
+      "ClassifyMemoryCandidateToolInput",
+      "ClassifyMemoryCandidateToolResult",
+      "CompactMemoryToolInput",
+      "CompactMemoryToolResult",
+      "CompactionApplyStats",
+      "CompleteGoalRunToolInput",
+      "CompleteGoalRunToolResult",
+      "CreateMcpServerOptions",
+      "CreateToolRegistryOptions",
+      "DecayCandidateView",
+      "DeleteMemoryToolInput",
+      "DeleteMemoryToolResult",
+      "DuplicateGroupView",
+      "GetGoalRunToolInput",
+      "GetGoalRunToolResult",
+      "InspectMemoryGraphToolInput",
+      "InspectMemoryGraphToolResult",
+      "ListAuditLogToolInput",
+      "ListAuditLogToolResult",
+      "ListGoalRunsToolInput",
+      "ListGoalRunsToolResult",
+      "ListMemoryToolInput",
+      "ListMemoryToolResult",
+      "ListWorkspaceRootsToolInput",
+      "ListWorkspaceRootsToolResult",
+      "MaybePromise",
+      "McpToolAuthorizationInput",
+      "McpToolAuthorizer",
+      "MemoryClassificationView",
+      "RecordIterationToolInput",
+      "RecordIterationToolResult",
+      "ReindexMemoryToolInput",
+      "ReindexMemoryToolResult",
+      "RepeatAttemptMatchView",
+      "RetrieveMemoryService",
+      "RetrieveMemoryServiceInput",
+      "SearchMemoryToolInput",
+      "SearchMemoryToolResult",
+      "StartGoalRunToolInput",
+      "StartGoalRunToolResult",
+      "TagMemoryToolInput",
+      "TagMemoryToolResult",
+      "ToolRegistry",
+      "UnarchiveMemoryToolInput",
+      "UnarchiveMemoryToolResult",
+      "UnarchiveOutcomeView",
+      "UpdateMemoryToolInput",
+      "UpdateMemoryToolResult",
+      "WithCanonicalServices",
+      "WorkspaceRootView"
+    ],
+    "src/mcp/tool-handlers.ts": [
+      "createToolHandlers"
+    ],
+    "src/mcp/context-pack-result.ts": [
+      "ContextPackBudgetError",
+      "buildContextPackResult"
+    ],
+    "src/mcp/tool-repository-access.ts": [
+      "createRepositoryAccess"
+    ],
+    "src/mcp/memory-write-services.ts": [
+      "updateWithIndexIntent",
+      "withMemoryRecordWrite"
+    ],
+    "src/mcp/tool-registry-instrumentation.ts": [
+      "instrumentToolRegistry"
+    ],
+    "src/mcp/tool-registry-validation.ts": [
+      "assertCreateToolRegistryOptions",
+      "assertFunction",
+      "assertNonBlankString",
+      "assertObject"
+    ],
+    "src/mcp/tool-utils.ts": [
+      "POSTGRES_INTEGER_MAX",
+      "POSTGRES_INTEGER_MIN",
+      "ResolveUserScopeIdInput",
+      "SUPPORTED_DURABILITY_VALUES",
+      "SUPPORTED_GOAL_RUN_OUTCOMES",
+      "SUPPORTED_GOAL_RUN_STATUSES",
+      "SUPPORTED_MEMORY_KINDS",
+      "SUPPORTED_SCOPE_TYPES",
+      "assertAllowedValue",
+      "assertOptionalAllowedValue",
+      "assertOptionalNonNegativeFiniteNumber",
+      "assertOptionalPositiveFiniteNumber",
+      "assertOptionalPositiveInteger",
+      "assertOptionalPostgresInteger",
+      "assertPositiveInteger",
+      "assertPositiveIntegerArray",
+      "assertProvidedScopeIdentifiers",
+      "ensureGovernanceCanonicalMode",
+      "formatMemoryIdentifier",
+      "normalizeLimit",
+      "optionalNonBlankText",
+      "requireProjectKey",
+      "requireUserScopeId",
+      "resolveUserScopeId",
+      "summarize",
+      "toMemoryType"
+    ],
+    "src/audit/tool-handlers.ts": [
+      "createAuditToolHandlers"
+    ],
+    "src/compact/tool-handlers.ts": [
+      "createCompactionToolHandlers"
+    ],
+    "src/goal-run/tool-handlers.ts": [
+      "createGoalRunToolHandlers"
+    ],
+    "src/store/tool-handlers.ts": [
+      "createStoreToolHandlers"
+    ],
+    "src/db/connection.ts": [
+      "CreatePgPoolInput",
+      "DEFAULT_PG_POOL_OPTIONS",
+      "PgPool",
+      "PgPoolClient",
+      "PgPoolOptions",
+      "PgQueryResult",
+      "PgQueryRow",
+      "PgQueryable",
+      "createPgPool"
+    ],
+    "src/db/record-lock.ts": [
+      "withPgAdvisoryLock",
+      "withPgSession"
+    ],
+    "src/db/migrate.ts": [
+      "ReadPostgresMigrationSqlOptions",
+      "migrateFromEnv",
+      "readPostgresMigrationSql",
+      "resolveMigrationDatabaseUrl",
+      "runMigrations"
+    ],
+    "src/store/memory-repository.ts": [
+      "createMemoryRepository",
+      "parseStoredPostgresSourceRef"
+    ],
+    "src/store/memory-archive-repository.ts": [
+      "ApplyCompactionRecordInput",
+      "ApplyCompactionRecordResult",
+      "ArchiveReason",
+      "ArchiveRow",
+      "CompactionRunRow",
+      "CompactionRunStatus",
+      "CompleteCompactionRunInput",
+      "CreateCompactionRunInput",
+      "MemoryArchiveRepository",
+      "PendingQdrantCleanup",
+      "QdrantStatus",
+      "createMemoryArchiveRepository"
+    ],
+    "src/store/memory-write-coordinator.ts": [
+      "MemoryWriteCoordinator",
+      "MemoryWriteScope",
+      "createMemoryWriteCoordinator",
+      "createPendingIndexJob"
+    ],
+    "src/store/canonical-indexing.ts": [
+      "ChunkEmbeddingConfig",
+      "EmbeddingClient",
+      "ListChunksOptions",
+      "MemoryChunkRepository",
+      "ReindexableMemoryChunk",
+      "StoredMemoryChunk",
+      "WriteCanonicalMemoryInput",
+      "createMemoryChunkRepository",
+      "refreshCanonicalMemoryIndex",
+      "reindexCanonicalMemory",
+      "writeCanonicalMemory"
+    ],
+    "src/store/db-utils.ts": [
+      "requireSingleRow",
+      "toIsoString",
+      "toNumber"
+    ],
+    "src/jobs/ingest-job-repository.ts": [
+      "createIngestJobRepository"
+    ],
+    "src/goal-run/goal-run-repository.ts": [
+      "GoalRunNotActiveError",
+      "createGoalRunRepository"
+    ],
+    "src/audit/audit-log-repository.ts": [
+      "AuditLogEntry",
+      "AuditLogRepository",
+      "AuditOutcome",
+      "StoredAuditLogEntry",
+      "createAuditLogRepository"
+    ],
+    "src/app/background-queue-metrics.ts": [
+      "BackgroundQueue",
+      "BackgroundQueueBacklogSnapshot",
+      "BackgroundQueueMetricsCollector",
+      "BackgroundQueueRows",
+      "BackgroundQueueState",
+      "createBackgroundQueueMetricsCollector"
+    ],
+    "src/embedding/local-embedding.ts": [
+      "LocalEmbeddingClientInput",
+      "createLocalEmbeddingClient"
+    ],
+    "src/embedding/openai-embeddings.ts": [
+      "EmbeddingVector",
+      "EmbeddingsCreateClient",
+      "EmbeddingsCreateParams",
+      "EmbeddingsCreateResult",
+      "OpenAiEmbeddingClientInput",
+      "createOpenAiEmbeddingClient"
+    ],
+    "src/embedding/transformers-embedding.ts": [
+      "EmbeddingInputTooLongError",
+      "FeatureExtractor",
+      "FeatureExtractorOptions",
+      "TransformersEmbeddingClientInput",
+      "createTransformersEmbeddingClient"
+    ],
+    "src/qdrant/client.ts": [
+      "CreateQdrantClientInput",
+      "createQdrantClient"
+    ],
+    "src/vector/qdrant-index.ts": [
+      "createQdrantVectorIndex"
+    ],
+    "src/vector/pgvector-index.ts": [
+      "CreatePgVectorIndexOptions",
+      "createPgVectorIndex"
+    ],
+    "src/config.ts": [
+      "ResolveServiceConfigInput",
+      "ServiceConfig",
+      "resolvePostgresPoolConfig",
+      "resolveServiceConfig"
+    ],
+    "src/logger.ts": [
+      "LogLevel",
+      "Logger",
+      "RequestLoggerFields",
+      "createRequestLogger",
+      "resolveLogLevel",
+      "rootLogger"
+    ],
+    "src/health/check-dependencies.ts": [
+      "DependencyCheck",
+      "DependencyProbes",
+      "DependencyReport",
+      "DependencyStatus",
+      "buildOpenAiProbe",
+      "buildPostgresProbe",
+      "buildQdrantProbe",
+      "checkDependencies"
+    ],
+    "src/ingest/readers.ts": [
+      "CollectedProjectSource",
+      "collectProjectSources"
+    ],
+    "src/lifecycle/init.ts": [
+      "LifecycleInitFile",
+      "LifecycleInitInput",
+      "LifecycleInitResult",
+      "buildLifecycleFiles",
+      "writeLifecycleInit"
+    ],
+    "src/eval/client-ab.ts": [
+      "ClaudeStreamResult",
+      "ClientAbExperiment",
+      "ClientAbPreflight",
+      "ClientAbPreflightTask",
+      "ClientAbProfile",
+      "ClientAbRegistry",
+      "ClientAbRunInput",
+      "ClientAbRunSummary",
+      "ClientCommand",
+      "ClientCondition",
+      "ClientConditionResult",
+      "ClientExecutor",
+      "ClientPair",
+      "ClientPairSummary",
+      "ClientPrefetchPack",
+      "ClientPromptScope",
+      "ClientUsage",
+      "ClientVendor",
+      "ClientWorkspace",
+      "CodexSubscriptionStatus",
+      "LiveMcpServer",
+      "PreparedClientRecord",
+      "PreparedClientTask",
+      "ToolCall",
+      "aggregateClientPairs",
+      "assertClientContextPack",
+      "assertPaidClientExecutionAllowed",
+      "buildClientCommand",
+      "buildClientPrompt",
+      "clientAbRunPlan",
+      "createClientWorkspace",
+      "gradeClientAnswer",
+      "parseClaudeStream",
+      "parseCodexEvents",
+      "parseCodexFinalOutput",
+      "parseCodexSubscriptionStatus",
+      "prepareClientAbExperiment",
+      "readCodexSubscriptionStatus",
+      "runClientAb",
+      "runClientCommand",
+      "seedAndPreflightClientAb",
+      "verifyToolTrace",
+      "writeResultAtomically"
+    ],
+    "src/eval/client-cli-prefetch.ts": [
+      "prefetchCliContextPack"
+    ],
+    "src/mcp/canonical-services.ts": [
+      "CanonicalServicesResolverOptions",
+      "WithCanonicalServices",
+      "bootstrapCanonicalServices",
+      "createCanonicalServicesResolver",
+      "createServiceBackedAuditLog"
+    ],
+    "src/mcp/tool-registry.ts": [
+      "createToolRegistry"
+    ],
+    "src/embedding/embedding-factory.ts": [
+      "CreateEmbeddingProviderInput",
+      "createEmbeddingProvider",
+      "isKnownEmbeddingProvider"
+    ],
+    "src/app/background-workers.ts": [
+      "BackgroundWorkerName",
+      "BackgroundWorkerServices",
+      "BackgroundWorkersHandle",
+      "StartBackgroundWorkersOptions",
+      "startBackgroundWorkers"
+    ],
+    "src/ingest/ingest-project.ts": [
+      "IngestProjectArtifactsInput",
+      "ingestProjectArtifacts"
+    ],
+    "src/cli.ts": [
+      "ParsedCliArgs",
+      "parseCliArgs",
+      "runCli"
+    ],
+    "src/cli-args.ts": [
+      "ParsedCliArgs",
+      "parseCliArgs"
+    ],
+    "src/compact/ingest-sweeper-loop.ts": [
+      "IngestSweeperHandle",
+      "StartIngestSweeperInput",
+      "loadIngestSweepEnabled",
+      "loadIngestSweepIntervalMs",
+      "runIngestSweep",
+      "startIngestSweeper"
+    ],
+    "src/compact/sweeper-loop.ts": [
+      "BackgroundSweeperHandle",
+      "StartBackgroundSweeperInput",
+      "loadSweeperEnabled",
+      "loadSweeperIntervalMs",
+      "runOutboxSweep",
+      "startBackgroundSweeper"
+    ],
+    "src/app/oauth-protected-resource.ts": [
+      "OAuthProtectedResourceConfig",
+      "OAuthProtectedResourceMetadata",
+      "assertOAuthProtectedResourceConfig",
+      "buildOAuthInsufficientScopeHeader",
+      "buildOAuthWwwAuthenticateHeader",
+      "buildProtectedResourceMetadataUrl",
+      "isOAuthProtectedResourceMetadataPath",
+      "loadOAuthProtectedResourceConfig",
+      "sendOAuthProtectedResourceMetadata",
+      "setOAuthInsufficientScopeHeader",
+      "setOAuthWwwAuthenticateHeader"
+    ],
+    "src/app/mcp-http.ts": [
+      "HandleMcpHttpRequestOptions",
+      "handleMcpHttpRequest"
+    ],
+    "src/app/admin-memory-page.ts": [
+      "renderMemoryAdminPage"
+    ],
+    "src/app/server.ts": [
+      "CreateOperatorServerOptions",
+      "assertSafeAuthConfig",
+      "closeOperatorServer",
+      "createOperatorServer",
+      "isLoopbackHost",
+      "selectDependencyProbes",
+      "startOperatorServer"
+    ],
+    "src/app/metrics.ts": [
+      "HttpRequestObservation",
+      "METRICS_CONTENT_TYPE",
+      "MetricsRegistry",
+      "createMetricsRegistry",
+      "normalizeHttpMethod"
+    ],
+    "src/app/worker.ts": [
+      "RunWorkerProcessOptions",
+      "runWorkerProcess"
+    ],
+    "src/mcp/resources.ts": [
+      "registerAkashaResources"
+    ],
+    "src/mcp/prompts.ts": [
+      "registerAkashaPrompts"
+    ],
+    "src/mcp/tool-schemas.ts": [
+      "MCP_CONTEXT_TOOL_DESCRIPTORS",
+      "SERVICE_TOOL_DESCRIPTORS",
+      "ServiceToolName",
+      "TOOL_DESCRIPTORS",
+      "TOOL_ROUTES",
+      "ToolDescriptor",
+      "ToolInputValidation",
+      "ToolName",
+      "ToolRoute",
+      "descriptorForTool",
+      "nonBlankTextInputSchema",
+      "validateToolInput"
+    ],
+    "src/mcp/service-tools.ts": [
+      "registerServiceTools"
+    ],
+    "src/mcp/tool-result.ts": [
+      "toToolResult"
+    ],
+    "src/mcp/server.ts": [
+      "AddMemoryToolInput",
+      "AddMemoryToolResult",
+      "AuditLogEntryView",
+      "BuildContextPackToolInput",
+      "BuildContextPackToolResult",
+      "CanonicalServices",
+      "CompactMemoryToolInput",
+      "CompactMemoryToolResult",
+      "CreateMcpServerOptions",
+      "CreateToolRegistryOptions",
+      "DeleteMemoryToolInput",
+      "DeleteMemoryToolResult",
+      "ListAuditLogToolInput",
+      "ListAuditLogToolResult",
+      "ListMemoryToolInput",
+      "ListMemoryToolResult",
+      "ReindexMemoryToolInput",
+      "ReindexMemoryToolResult",
+      "RetrieveMemoryService",
+      "RetrieveMemoryServiceInput",
+      "SearchMemoryToolInput",
+      "SearchMemoryToolResult",
+      "TagMemoryToolInput",
+      "TagMemoryToolResult",
+      "ToolRegistry",
+      "UnarchiveMemoryToolInput",
+      "UnarchiveMemoryToolResult",
+      "UpdateMemoryToolInput",
+      "UpdateMemoryToolResult",
+      "createMcpServer",
+      "createToolRegistry",
+      "resolveStdioCwd",
+      "startStdioServer"
+    ],
+    "src/mcp/context-tools.ts": [
+      "registerMcpContextTools"
+    ],
+    "src/app/middleware/envelope.ts": [
+      "ApiFailure",
+      "ApiResponse",
+      "ApiSuccess",
+      "sendError",
+      "sendOk"
+    ],
+    "src/app/middleware/oauth-token-auth.ts": [
+      "OAuthScopeCheck",
+      "OAuthScopeKind",
+      "OAuthTokenVerifierConfig",
+      "OAuthTokenVerifierOptions",
+      "acceptedScopesForKind",
+      "checkOAuthScopes",
+      "createOAuthTokenVerifier",
+      "loadOAuthTokenVerifierConfig",
+      "requiredScopeKindForTool"
+    ],
+    "src/app/middleware/bearer-auth.ts": [
+      "BearerToken",
+      "OAuthTokenVerifier",
+      "authenticateBearer",
+      "loadBearerTokens",
+      "matchBearer"
+    ],
+    "src/app/middleware/organization-resolution.ts": [
+      "normalizeUnresolvedOrganizationId",
+      "resolveOrganizationId"
+    ],
+    "src/app/middleware/json-body.ts": [
+      "JsonBodyError",
+      "readJsonBody"
+    ],
+    "src/app/middleware/mcp-http-auth.ts": [
+      "createMcpToolAuthorizer",
+      "withAuthenticatedRegistry"
+    ],
+    "src/app/middleware/rate-limit.ts": [
+      "RateLimitDecision",
+      "RateLimiter",
+      "RateLimiterOptions",
+      "assertRateLimitDecision",
+      "createTokenBucketLimiter",
+      "loadRateLimitFromEnv"
+    ],
+    "src/app/routes/tool-handler.ts": [
+      "buildToolRouteHandler"
+    ],
+    "src/app/routes/types.ts": [
+      "Route",
+      "RouteContext"
+    ],
+    "src/app/routes/memory.ts": [
+      "Route",
+      "RouteContext",
+      "createMemoryRoutes",
+      "resolveOrganizationId"
+    ],
+    "scripts/backup-encryption.ts": [
+      "EncryptManifestArtifactsInput",
+      "decryptFile",
+      "encryptFile",
+      "encryptManifestArtifacts",
+      "loadBackupEncryptionKeepPlaintextFromEnv",
+      "loadBackupEncryptionKeyFromEnv",
+      "parseEncryptionKey"
+    ],
+    "scripts/backup-verify.ts": [
+      "VerifyBackupsInput",
+      "resolveBackupTargetDir",
+      "verifyBackups"
+    ],
+    "scripts/restore-smoke.ts": [
+      "BackupManifest",
+      "BuildRestoreSmokeCommandEnvInput",
+      "RestoreSmokeToolInput",
+      "RunRestoreSmokeInput",
+      "buildRestoreSmokeCommandEnv",
+      "buildRestoreSmokeToolInput",
+      "parseRestoreBackupManifest",
+      "readRestoreSmokeToolResult",
+      "resolveOptionalRestoreSmokeTextEnv",
+      "resolveRestoreAppPort",
+      "resolveRestoreSmokeTextEnv",
+      "runRestoreSmoke"
+    ]
+  }
+}

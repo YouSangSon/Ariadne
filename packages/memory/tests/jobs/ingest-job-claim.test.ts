@@ -8,9 +8,9 @@
 // end-to-end behaviour; this suite covers the SQL shape contract.
 
 import { describe, expect, it, vi } from "vitest";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
-import type { PgPool } from "../../src/db/connection.js";
-import type { IngestJobRepository } from "../../src/types.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import type { IngestJobRepository } from "../../src/application/ports/memory-repositories.js";
 
 function makeMockPool(rows: unknown[] = []): {
   pool: PgPool;

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   cosineSimilarity,
   findSemanticDuplicates,
-} from "../../src/compact/semantic-duplicates.js";
+} from "../../src/domain/policies/semantic-duplicates.js";
 
 describe("cosineSimilarity", () => {
   it("returns 1 for identical vectors", () => {

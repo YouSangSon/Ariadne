@@ -1,12 +1,15 @@
 // AC5 (p6-deploy): install --global-pointer — opt-in 주입, 멱등, uninstall 원상 복원
 // 실제 글로벌은 건드리지 않는다(D3) — HOME을 격리 tmpdir로 바꿔 스폰
-import { test } from 'node:test'
+import { test, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { rmSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+const temporaryDirectories = []
+after(() => { for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true }) })
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const run = (script, args, home) =>
@@ -19,6 +22,7 @@ const USER_CLAUDE_GLOBAL = '# 내 글로벌 규칙\n\n사용자가 직접 쓴 �
 
 function makeHome() {
   const home = mkdtempSync(join(tmpdir(), 'harness-p6-home-'))
+  temporaryDirectories.push(home)
   mkdirSync(join(home, '.claude'), { recursive: true })
   writeFileSync(join(home, '.claude', 'CLAUDE.md'), USER_CLAUDE_GLOBAL)
   return home
@@ -66,4 +70,39 @@ test('uninstall: 포인터 블록 제거 — 기존 파일은 원상, 생성 파
   assert.equal(r.status, 0, r.stderr)
   assert.equal(readFileSync(join(home, '.claude', 'CLAUDE.md'), 'utf8'), USER_CLAUDE_GLOBAL)
   assert.ok(!existsSync(join(home, '.codex', 'AGENTS.md')), '생성 파일이 남아 있음')
+})
+
+test('installed context entrypoint includes its runtime closure and uninstall preserves foreign files', () => {
+  const home = makeHome()
+  const prefix = join(home, '.harness')
+  const project = join(home, 'project')
+  mkdirSync(join(project, '.harness', 'reqs'), { recursive: true })
+  writeFileSync(join(project, '.harness', 'reqs', 'installed.yaml'), 'metadata:\n  req_id: installed\n  status: ready_for_routing\nrequirement:\n  user_intent: installed context works\n')
+  const installed = run('install.mjs', [], home)
+  assert.equal(installed.status, 0, installed.stderr)
+  const manifest = JSON.parse(readFileSync(join(prefix, 'manifest.json'), 'utf8'))
+  assert.ok(manifest.files.includes('lib/context-pack.mjs'))
+  assert.ok(manifest.files.includes('modules/context/application.mjs'))
+  const context = spawnSync(process.execPath, [join(prefix, 'lib/context-pack.mjs'), '--root', project, '--req', 'installed', '--budget', 'brief'], { cwd: home, encoding: 'utf8' })
+  assert.equal(context.status, 0, context.stderr)
+  assert.match(context.stdout, /installed context works/)
+  assert.match(context.stdout, /## project_summary/)
+  const foreign = join(prefix, 'modules/context/user-note.md')
+  writeFileSync(foreign, 'keep my note')
+  const removed = run('uninstall.mjs', [], home)
+  assert.equal(removed.status, 0, removed.stderr)
+  for (const path of manifest.files) assert.equal(existsSync(join(prefix, path)), false, path)
+  assert.equal(readFileSync(foreign, 'utf8'), 'keep my note')
+})
+
+test('repeated global-pointer installs retain the original restoration records', () => {
+  const home = makeHome()
+  for (const args of [['--global-pointer'], ['--global-pointer']]) {
+    const installed = run('install.mjs', args, home)
+    assert.equal(installed.status, 0, installed.stderr)
+  }
+  const removed = run('uninstall.mjs', [], home)
+  assert.equal(removed.status, 0, removed.stderr)
+  assert.equal(readFileSync(join(home, '.claude/CLAUDE.md'), 'utf8'), USER_CLAUDE_GLOBAL)
+  assert.equal(existsSync(join(home, '.codex/AGENTS.md')), false)
 })

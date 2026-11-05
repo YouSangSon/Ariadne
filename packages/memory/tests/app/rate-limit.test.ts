@@ -3,7 +3,7 @@ import {
   assertRateLimitDecision,
   createTokenBucketLimiter,
   loadRateLimitFromEnv,
-} from "../../src/app/middleware/rate-limit.js";
+} from "../../src/interfaces/http/middleware/rate-limit.js";
 
 // Tests use the `now` injection point built into the rate limiter to control
 // time deterministically without real timers or Date.now().

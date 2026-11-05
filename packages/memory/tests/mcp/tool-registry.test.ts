@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { createToolHandlers } from "../../src/mcp/tool-handlers.js";
-import { createToolRegistry } from "../../src/mcp/tool-registry.js";
+import { createToolRegistry } from "../../src/composition/runtime/tool-registry.js";
 
 describe("createToolRegistry", () => {
   it.each([

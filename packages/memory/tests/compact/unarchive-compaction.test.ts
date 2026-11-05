@@ -3,11 +3,8 @@ import {
   unarchiveCompaction,
   type UnarchiveCompactionDeps,
   type UnarchiveCompactionInput,
-} from "../../src/compact/unarchive-compaction.js";
-import type {
-  ArchiveRow,
-  MemoryArchiveRepository,
-} from "../../src/store/memory-archive-repository.js";
+} from "../../src/application/usecases/unarchive-compaction.js";
+import type { ArchiveRow, MemoryArchiveRepository } from "../../src/application/ports/memory-archive.js";
 
 const SILENT_LOGGER = {
   info: vi.fn(),

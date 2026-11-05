@@ -1,36 +1,30 @@
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { applyCompaction } from "../../src/compact/apply-compaction.js";
-import { runIngestSweep } from "../../src/compact/ingest-sweeper.js";
-import { unarchiveCompaction } from "../../src/compact/unarchive-compaction.js";
+import { applyCompaction } from "../../src/application/usecases/apply-compaction.js";
+import { runIngestSweep } from "../../src/application/usecases/ingest-sweeper.js";
+import { unarchiveCompaction } from "../../src/application/usecases/unarchive-compaction.js";
 import {
   createPgPool,
   type PgPool,
   type PgPoolClient,
   type PgQueryable,
   type PgQueryRow,
-} from "../../src/db/connection.js";
-import { runMigrations } from "../../src/db/migrate.js";
-import { createGoalRunRepository } from "../../src/goal-run/goal-run-repository.js";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
-import { rootLogger } from "../../src/logger.js";
-import {
-  createMemoryChunkRepository,
-  refreshCanonicalMemoryIndex,
-  writeCanonicalMemory,
-  type ChunkEmbeddingConfig,
-  type EmbeddingClient,
-} from "../../src/store/canonical-indexing.js";
-import { createMemoryArchiveRepository } from "../../src/store/memory-archive-repository.js";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
-import {
-  createMemoryWriteCoordinator,
-  createPendingIndexJob,
-  type MemoryWriteScope,
-} from "../../src/store/memory-write-coordinator.js";
-import type { AddMemoryInput, IngestJob } from "../../src/types.js";
-import { createPgVectorIndex } from "../../src/vector/pgvector-index.js";
-import type { VectorIndex, VectorPoint } from "../../src/vector/vector-index.js";
+} from "../../src/infrastructure/postgres/connection.js";
+import { runMigrations } from "../../src/infrastructure/postgres/migrate.js";
+import { createGoalRunRepository } from "../../src/infrastructure/postgres/goal-run-repository.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
+import { rootLogger } from "../../src/infrastructure/observability/logger.js";
+import { createMemoryChunkRepository } from "../../src/infrastructure/postgres/canonical-indexing.js";
+import { refreshCanonicalMemoryIndex, writeCanonicalMemory } from "../../src/application/indexing/canonical-indexing.js";
+import { type ChunkEmbeddingConfig, type EmbeddingClient } from "../../src/application/ports/indexing.js";
+import { createMemoryArchiveRepository } from "../../src/infrastructure/postgres/memory-archive-repository.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
+import { createMemoryWriteCoordinator } from "../../src/infrastructure/postgres/memory-write-coordinator.js";
+import { createPendingIndexJob } from "../../src/application/indexing/pending-index-job.js";
+import { type MemoryWriteScope } from "../../src/application/ports/memory-write.js";
+import type { AddMemoryInput, IngestJob } from "../../src/domain/model/memory.js";
+import { createPgVectorIndex } from "../../src/infrastructure/vector/pgvector-index.js";
+import type { VectorIndex, VectorPoint } from "../../src/application/ports/vector-index.js";
 
 // CI opts in explicitly; an opted-in connection/migration failure must fail.
 // PGVECTOR_TEST_URL selects the pgvector CI service when present.

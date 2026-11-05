@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { describe, expect, it } from "vitest";
-import { TOOL_ROUTES } from "../../src/mcp/tool-schemas.js";
+import { TOOL_ROUTES } from "../../src/interfaces/mcp/tool-schemas.js";
 
 function read(path: string): string {
   return fs.readFileSync(path, "utf8");
@@ -367,7 +367,7 @@ describe("public documentation drift checks", () => {
   });
 
   it("documents current secret scrubber coverage in public docs", () => {
-    const scrubber = read("src/store/secret-scrub.ts");
+    const scrubber = read("src/domain/policies/secret-scrub.ts");
     for (const category of [
       "aws-access-key",
       "github-token",
@@ -482,8 +482,8 @@ describe("public documentation drift checks", () => {
     );
 
     for (const path of [
-      "src/config.ts",
-      "src/embedding/transformers-embedding.ts",
+      "src/infrastructure/configuration/config.ts",
+      "src/infrastructure/embedding/transformers-embedding.ts",
       "docs/configuration.md",
       "docs/configuration.ko.md",
       "docs/architecture.md",
@@ -540,9 +540,9 @@ describe("public documentation drift checks", () => {
 
   it("documents current embedding provider module filenames", () => {
     for (const modulePath of [
-      "src/embedding/transformers-embedding.ts",
-      "src/embedding/openai-embeddings.ts",
-      "src/embedding/local-embedding.ts",
+      "src/infrastructure/embedding/transformers-embedding.ts",
+      "src/infrastructure/embedding/openai-embeddings.ts",
+      "src/infrastructure/embedding/local-embedding.ts",
     ]) {
       expect(fs.existsSync(modulePath)).toBe(true);
       expect(read("docs/architecture.md")).toContain(modulePath);
@@ -555,7 +555,7 @@ describe("public documentation drift checks", () => {
   });
 
   it("does not describe reindex orphan vectors as an open pgvector follow-up", () => {
-    expect(read("src/vector/pgvector-index.ts")).not.toContain(
+    expect(read("src/infrastructure/vector/pgvector-index.ts")).not.toContain(
       "ORPHAN VECTORS ON REINDEX (KNOWN FOLLOW-UP)",
     );
   });
@@ -563,7 +563,7 @@ describe("public documentation drift checks", () => {
   it("keeps compaction apply comments current in touched files", () => {
     const staleSignals = [
       {
-        path: "src/app/server.ts",
+        path: "src/interfaces/http/server.ts",
         text: "trigger destructive operations once compaction-apply ships in P17",
       },
       {
@@ -575,7 +575,7 @@ describe("public documentation drift checks", () => {
         text: "apply path lands in P17 step 3",
       },
       {
-        path: "src/compact/compact-memory.ts",
+        path: "src/domain/policies/compact-memory.ts",
         text: "apply-path code in P17 step 3 has a stable seam to extend",
       },
     ];
@@ -586,7 +586,7 @@ describe("public documentation drift checks", () => {
   });
 
   it("keeps ingest sweeper repository comments current", () => {
-    expect(read("src/jobs/ingest-job-repository.ts")).not.toContain(
+    expect(read("src/infrastructure/postgres/ingest-job-repository.ts")).not.toContain(
       "The sweeper PR will",
     );
   });
@@ -601,7 +601,7 @@ describe("public documentation drift checks", () => {
   });
 
   it("keeps memory archive repository comments current", () => {
-    const text = read("src/store/memory-archive-repository.ts");
+    const text = read("src/infrastructure/postgres/memory-archive-repository.ts");
     expect(text).not.toContain("P17 compaction");
     expect(text).not.toContain("P17 step 6");
     expect(text).not.toContain("P19.1 — unarchive recovery flow");
@@ -622,11 +622,11 @@ describe("public documentation drift checks", () => {
 
   it("keeps compaction apply, sweeper, and MCP type comments current", () => {
     const envExample = read(".env.example");
-    const applyCompaction = read("src/compact/apply-compaction.ts");
-    const compactMemory = read("src/compact/compact-memory.ts");
+    const applyCompaction = read("src/application/usecases/apply-compaction.ts");
+    const compactMemory = read("src/domain/policies/compact-memory.ts");
     const mcpServerTest = read("tests/mcp/server.test.ts");
-    const sweeperLoop = read("src/compact/sweeper-loop.ts");
-    const mcpTypes = read("src/mcp/types.ts");
+    const sweeperLoop = read("src/interfaces/worker/sweeper-loop.ts");
+    const mcpTypes = read("src/application/contracts/tools.ts");
 
     expect(envExample).not.toContain("P17 compaction-apply");
     expect(applyCompaction).not.toContain("destructive P17 apply path");
@@ -748,24 +748,24 @@ describe("public documentation drift checks", () => {
 
   it("documents the current audit instrumentation module in architecture docs", () => {
     expect(read("docs/architecture.md")).toContain(
-      "instrument()`\nwrapper in `src/mcp/tool-registry-instrumentation.ts`",
+      "instrument()`\nwrapper in `src/application/tools/tool-registry-instrumentation.ts`",
     );
     expect(read("docs/architecture.ko.md")).toContain(
-      "`src/mcp/tool-registry-instrumentation.ts` 의 `instrument()`",
+      "`src/application/tools/tool-registry-instrumentation.ts` 의 `instrument()`",
     );
-    expect(read("docs/architecture.md")).toContain("src/audit/tool-handlers.ts");
-    expect(read("docs/architecture.ko.md")).toContain("src/audit/tool-handlers.ts");
-    expect(read("docs/architecture.md")).toContain("src/compact/tool-handlers.ts");
-    expect(read("docs/architecture.ko.md")).toContain("src/compact/tool-handlers.ts");
-    expect(read("docs/architecture.md")).toContain("src/mcp/tool-repository-access.ts");
-    expect(read("docs/architecture.ko.md")).toContain("src/mcp/tool-repository-access.ts");
-    expect(read("docs/architecture.md")).toContain("src/store/tool-handlers.ts");
-    expect(read("docs/architecture.ko.md")).toContain("src/store/tool-handlers.ts");
+    expect(read("docs/architecture.md")).toContain("src/application/tools/audit-handlers.ts");
+    expect(read("docs/architecture.ko.md")).toContain("src/application/tools/audit-handlers.ts");
+    expect(read("docs/architecture.md")).toContain("src/application/tools/compact-handlers.ts");
+    expect(read("docs/architecture.ko.md")).toContain("src/application/tools/compact-handlers.ts");
+    expect(read("docs/architecture.md")).toContain("src/application/tools/tool-repository-access.ts");
+    expect(read("docs/architecture.ko.md")).toContain("src/application/tools/tool-repository-access.ts");
+    expect(read("docs/architecture.md")).toContain("src/application/tools/store-handlers.ts");
+    expect(read("docs/architecture.ko.md")).toContain("src/application/tools/store-handlers.ts");
     expect(read("docs/architecture.md")).not.toContain(
-      "instrument()`\nwrapper in `src/mcp/server.ts`",
+      "instrument()`\nwrapper in `src/interfaces/mcp/server.ts`",
     );
     expect(read("docs/architecture.ko.md")).not.toContain(
-      "`src/mcp/server.ts` 의 `instrument()` wrapper",
+      "`src/interfaces/mcp/server.ts` 의 `instrument()` wrapper",
     );
   });
 
@@ -1179,7 +1179,7 @@ describe("public documentation drift checks", () => {
       );
       expect(text).not.toContain("/collections/memory_chunks_v1/snapshots/upload");
     }
-    expect(read("scripts/restore-smoke.ts")).toContain(
+    expect(read("src/infrastructure/operations/restore-smoke.ts")).toContain(
       "RESTORE_SMOKE_QDRANT_COLLECTION_NAME",
     );
 

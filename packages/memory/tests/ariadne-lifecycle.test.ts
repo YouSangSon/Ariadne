@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, it } from 'vitest';
-import { runCli } from '../src/cli.js';
+import { runCli } from '../src/interfaces/cli/cli.js';
 
 it('generated hooks separate runtime paths from the caller workspace without copying credentials', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'ariadne-memory-relocation-'));

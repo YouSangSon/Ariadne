@@ -1,19 +1,12 @@
 import path from "node:path";
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { bootstrapCanonicalServices } from "../../src/mcp/canonical-services.js";
-import { createToolRegistry } from "../../src/mcp/tool-registry.js";
-import { createPgPool } from "../../src/db/connection.js";
-import { prefetchCliContextPack } from "../../src/eval/client-cli-prefetch.js";
-import {
-  assertPaidClientExecutionAllowed,
-  prepareClientAbExperiment,
-  runClientAb,
-  seedAndPreflightClientAb,
-  type ClientVendor,
-  type ClientAbProfile,
-  type LiveMcpServer,
-} from "../../src/eval/client-ab.js";
+import { bootstrapCanonicalServices } from "../../src/composition/runtime/canonical-services.js";
+import { createToolRegistry } from "../../src/composition/runtime/tool-registry.js";
+import { createPgPool } from "../../src/infrastructure/postgres/connection.js";
+import { prefetchCliContextPack } from "../../src/infrastructure/evaluation/client-cli-prefetch.js";
+import { assertPaidClientExecutionAllowed, type ClientVendor, type ClientAbProfile, type LiveMcpServer } from "../../src/application/evaluation/client-policy.js";
+import { prepareClientAbExperiment, runClientAb, seedAndPreflightClientAb } from "../../src/composition/runtime/client-evaluation.js";
 
 const FULL_SHA = /^[0-9a-f]{40}$/;
 const EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"]);

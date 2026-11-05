@@ -1,8 +1,8 @@
 import { EventEmitter } from "node:events";
-import { createMemoryWriteCoordinator } from "../../src/store/memory-write-coordinator.js";
+import { createMemoryWriteCoordinator } from "../../src/infrastructure/postgres/memory-write-coordinator.js";
 import { describe, expect, it, vi } from "vitest";
-import type { PgPool } from "../../src/db/connection.js";
-import { withPgAdvisoryLock, withPgSession } from "../../src/db/record-lock.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import { withPgAdvisoryLock, withPgSession } from "../../src/infrastructure/postgres/record-lock.js";
 
 const acquireSql = "SELECT pg_advisory_lock(hashtextextended($1, 0))";
 const unlockSql =

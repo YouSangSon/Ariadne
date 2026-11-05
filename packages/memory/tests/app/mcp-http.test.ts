@@ -5,17 +5,17 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { request as httpRequest } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveServiceConfig, type ServiceConfig } from "../../src/config.js";
+import { resolveServiceConfig, type ServiceConfig } from "../../src/infrastructure/configuration/config.js";
 import { goalRunRegistryStubs } from "../fixtures/goal-run-stubs.js";
-import type { BearerToken } from "../../src/app/middleware/bearer-auth.js";
-import type { OAuthTokenVerifier } from "../../src/app/middleware/bearer-auth.js";
+import type { BearerToken } from "../../src/interfaces/http/middleware/bearer-auth.js";
+import type { OAuthTokenVerifier } from "../../src/interfaces/http/middleware/bearer-auth.js";
 import {
   createTokenBucketLimiter,
   type RateLimiter,
-} from "../../src/app/middleware/rate-limit.js";
-import type { OAuthProtectedResourceConfig } from "../../src/app/oauth-protected-resource.js";
-import { createOperatorServer } from "../../src/app/server.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+} from "../../src/interfaces/http/middleware/rate-limit.js";
+import type { OAuthProtectedResourceConfig } from "../../src/interfaces/http/oauth-protected-resource.js";
+import { createOperatorServer } from "../../src/interfaces/http/server.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 
 type ServerHandle = { baseUrl: string; close: () => Promise<void> };
 type RawHttpResponse = { status: number; body: string };

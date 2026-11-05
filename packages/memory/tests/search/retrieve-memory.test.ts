@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   retrieveMemory,
   type RetrieveMemoryInput,
-} from "../../src/search/retrieve-memory.js";
+} from "../../src/application/usecases/retrieve-memory.js";
 
 const callRetrieveMemory = (input: unknown) =>
   retrieveMemory(input as RetrieveMemoryInput);

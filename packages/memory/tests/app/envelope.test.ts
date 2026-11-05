@@ -1,6 +1,6 @@
 import type { ServerResponse } from "node:http";
 import { describe, expect, it, vi } from "vitest";
-import { sendError, sendOk } from "../../src/app/middleware/envelope.js";
+import { sendError, sendOk } from "../../src/interfaces/http/middleware/envelope.js";
 
 function makeResponse(): ServerResponse {
   return {

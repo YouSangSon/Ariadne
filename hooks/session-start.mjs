@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { rootFromArgs, audit } from './hook-io.mjs'
-import { VERSION } from '../scripts/mirror-lib.mjs'
+import { VERSION } from '../modules/integration/domain.mjs'
 
 const root = rootFromArgs(process.argv)
 const manifest = join(homedir(), '.harness', 'manifest.json')

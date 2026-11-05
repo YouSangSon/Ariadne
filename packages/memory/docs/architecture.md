@@ -8,75 +8,86 @@ for env-var setup see [configuration.md](configuration.md).
 
 ## Layers
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│ Clients                                                         │
-│   • Claude Code / Codex CLI  (MCP stdio)                        │
-│   • MCP HTTP clients         (MCP Streamable HTTP)               │
-│   • curl / app code          (JSON HTTP)                         │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Transports                                                      │
-│   src/mcp/server.ts          → MCP SDK stdio                    │
-│   src/app/mcp-http.ts        → MCP Streamable HTTP at /mcp       │
-│   src/app/routes/memory.ts   → JSON HTTP under /v1/*             │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Tool descriptors + registry                                     │
-│   src/mcp/tool-schemas.ts     → shared zod schemas + routes     │
-│   src/mcp/service-tools.ts    → MCP service tool registration   │
-│   src/mcp/context-tools.ts    → MCP-only context tools          │
-│   src/mcp/resources.ts        → MCP resource templates          │
-│   src/mcp/prompts.ts          → MCP prompt templates            │
-│   src/mcp/tool-registry.ts    → registry assembly               │
-│   src/mcp/tool-registry-instrumentation.ts → audit wrappers     │
-│   src/mcp/tool-repository-access.ts → handler repo access        │
-│   src/mcp/tool-handlers.ts    → tool implementations            │
-│   src/audit/tool-handlers.ts  → audit-log read adapter          │
-│   src/compact/tool-handlers.ts → compaction tool adapters        │
-│   src/goal-run/tool-handlers.ts → goal-run tool adapter          │
-│   src/store/tool-handlers.ts  → canonical reindex adapter       │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Domain orchestrators                                            │
-│   src/compact/compact-memory.ts        plan builder             │
-│   src/compact/apply-compaction.ts      destructive apply path   │
-│   src/compact/unarchive-compaction.ts  recovery flow            │
-│   src/compact/outbox-sweeper.ts        Qdrant cleanup retry     │
-│   src/compact/sweeper-loop.ts          background scheduler     │
-│   src/app/background-workers.ts        shared worker lifecycle  │
-│   src/app/worker.ts                    dedicated worker process │
-│   src/context-pack/build-context-pack.ts  pack assembler        │
-│   src/goal-run/build-goal-context.ts      goal context pack     │
-│   src/goal-run/find-repeat-attempts.ts    retry loop detector   │
-│   src/search/retrieve-memory.ts        vector + PG hydrate       │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Repositories                                                    │
-│   src/store/memory-repository.ts          memory_records, sources│
-│   src/store/canonical-indexing.ts         memory_chunks + vector │
-│   src/store/memory-archive-repository.ts  compaction_runs +     │
-│                                           memory_archive        │
-│   src/jobs/ingest-job-repository.ts       ingest_jobs           │
-│   src/audit/audit-log-repository.ts       audit_log             │
-└────────────────┬────────────────────────────────────────────────┘
-                 │
-┌────────────────▼────────────────────────────────────────────────┐
-│ Persistence                                                     │
-│   Postgres 16  (compose container or external)                  │
-│   Qdrant or pgvector  (active vector backend)                   │
-│   Embeddings   (transformers local ONNX [default] / openai /   │
-│                 local deterministic)                            │
-└─────────────────────────────────────────────────────────────────┘
+The memory package is one bounded context. Memory, goal runs, entity mentions,
+retrieval, and compaction share its model and authorization rules. Folders within
+this context describe responsibilities, rather than independent services.
+
+| Owner | Responsibility |
+| --- | --- |
+| `src/domain/model/` | Memory, source, goal-run, compaction, and vector values. |
+| `src/domain/policies/`, `src/domain/evaluation/` | Secret rejection, scope validation, chunking, ranking, duplicate detection, decay, context selection, and deterministic evaluation metrics. |
+| `src/application/contracts/`, `src/application/ports/` | Transport-independent commands/results and typed capabilities for repositories, embeddings, vectors, writes, logging, identity, and project sources. |
+| `src/application/tools/`, `src/application/usecases/`, `src/application/indexing/` | Tool behavior, retrieval, canonical indexing, compaction, restore, and retry workflows. |
+| `src/application/lifecycle/`, `src/application/ingest/`, `src/application/evaluation/`, `src/application/operations/` | Lifecycle file planning, synchronous source ingestion, evaluation parsing/grading/receipt checks, and backup/restore validation. |
+| `src/infrastructure/` | PostgreSQL SQL and session ownership, vector and embedding adapters, files, process execution, configuration, identity lookup, health probes, and logging destinations. |
+| `src/interfaces/` | HTTP and MCP transport contracts, authentication, schemas, CLI/operator commands, and worker timers. |
+| `src/composition/runtime/` | Provider selection, canonical-service bootstrap, and default bindings for registries, workers, ingestion, and lifecycle writes. |
+
+Domain code imports only domain code. Application code imports only domain and
+application code. Infrastructure implements the inward ports. Transport adapters
+and composition roots connect those parts. Inner code never imports a historical
+facade, MCP/HTTP SDK, filesystem/process adapter, environment configuration, or a
+PostgreSQL pool/query interface. Pure path, hash, and comparison operations use
+`node:path`, `node:crypto`, and `node:util` in application code.
+
+`MemoryWriteCoordinator` exposes record, archive, create, and restore operations.
+Its PostgreSQL implementation reserves one session and creates all scoped
+repositories and the pgvector adapter from that same session. Advisory locks,
+transaction callbacks, indexing intent, compensation, and vector cleanup remain
+inside that capability. Passing a general SQL executor into a use case would
+break this guarantee. Application workflows instead consume typed repositories
+and the indivisible write scope.
+
+Service commands and results live in `application/contracts/tools.ts`. MCP-only
+roots, elicitation, sampling, and authorization DTOs live in
+`interfaces/mcp/contracts.ts`. HTTP and MCP continue to share service schemas and
+the same registry, including organization checks and error behavior.
+
+Evaluation corpus assembly, preflight seeding, profile and paid-execution guards,
+grading, fail-stop checks, evidence ordering, and workspace cleanup belong to
+`src/application/evaluation/`. Git revision reads, client processes, command
+translation, and evidence files are injected capabilities. Backup freshness,
+local/off-box integrity, artifact selection, encrypted-manifest idempotency,
+plaintext retention, and manifest ordering belong to
+`src/application/operations/`. Infrastructure retains the AES streams, checksums,
+files, and SSH mechanisms. The package allowlist excludes the relocated evaluation
+folders and their composition entry, preserving the original eval-only scope.
+
+Historical module paths remain outward compatibility facades. Existing commands
+still use `src/cli.ts`, `src/mcp/server.ts`, `src/app/server.ts`,
+`src/app/worker.ts`, `src/db/migrate.ts`, and the six files under `scripts/`.
+Migration SQL remains physically anchored at `src/db/migrations/` and
+`src/db/schema.sql`. Configuration keys, database schema, lockfile, and synchronous
+ingestion behavior are unchanged. This refactor does not activate the paused
+product dispatcher or automatic recovery runtime.
+
+[`../architecture-map.json`](../architecture-map.json) assigns every production
+`src/**/*.ts`, SQL asset, and `scripts/**/*.{ts,sh}` file to a layer and context.
+Tests, fixtures, documentation, installed dependencies, and generated `dist/`
+files are outside this production inventory. Add a map entry when adding a
+runtime file. The TypeScript AST gate checks type imports, re-exports, dynamic
+imports, local aliases, historical facades, cross-context dependencies, and
+inventory omissions. Its negative controls exercise those failures. The export
+snapshot records all 104 historical TypeScript modules from commit `5a26b40`.
+
+Run the local structure and compatibility checks with:
+
+```bash
+npm exec -- vitest run tests/architecture
+npm run typecheck
 ```
 
-MCP service tools are registered from `src/mcp/service-tools.ts`, using the
-shared descriptors in `src/mcp/tool-schemas.ts` and dispatching through the
-same registry used by JSON HTTP.
+Behavior checks remain the existing package suites. Real PostgreSQL and pgvector
+suites require their explicit test environment variables; a structure check or a
+unit test pass does not replace those integration results.
+
+MCP stdio, MCP Streamable HTTP at `/mcp`, and JSON HTTP under `/v1/*`
+share the service registry. `src/application/tools/tool-handlers.ts` combines
+memory behavior with `src/application/tools/audit-handlers.ts`,
+`src/application/tools/compact-handlers.ts`,
+`src/application/tools/goal-run-handlers.ts`, and
+`src/application/tools/store-handlers.ts`. Repository selection lives in
+`src/application/tools/tool-repository-access.ts`.
 
 ## Data flow: write
 
@@ -98,11 +109,11 @@ uses MCP form elicitation to collect user-confirmed memory details, then routes
 accepted input through the same `add_memory` write path above.
 `classify_memory_candidate` uses client sampling to suggest a memory kind and
 summary for candidate text without storing it.
-Those MCP-only context tools are registered from `src/mcp/context-tools.ts`.
-MCP resource templates are registered from `src/mcp/resources.ts`; they expose
+Those MCP-only context tools are registered from `src/interfaces/mcp/context-tools.ts`.
+MCP resource templates are registered from `src/interfaces/mcp/resources.ts`; they expose
 read-only recent memory and context-pack views backed by the same registry
 methods as the service tools.
-MCP prompts are registered from `src/mcp/prompts.ts`; they render context-pack
+MCP prompts are registered from `src/interfaces/mcp/prompts.ts`; they render context-pack
 startup and store-memory prompt templates without changing tool contracts.
 
 Write-ahead outbox: after chunks are committed to Postgres,
@@ -110,13 +121,13 @@ Write-ahead outbox: after chunks are committed to Postgres,
 `qdrant_next_retry_at` before touching Qdrant. If the process crashes between
 that point and `markQdrantCompleted`, the job row is left with
 `qdrant_status='pending'` and a non-null retry timestamp so the ingest sweeper
-(`src/compact/ingest-sweeper.ts`, opt-in via `INGEST_SWEEP_ENABLED`) can
+(`src/application/usecases/ingest-sweeper.ts`, opt-in via `INGEST_SWEEP_ENABLED`) can
 re-index the already-committed chunks. In-process failures still go through the
 catch block (option-A delete: CASCADE removes record + chunks + job + no orphan),
 so `add_memory` success/failure semantics are unchanged.
 
 Pre-write: `assertNoSecrets(content)` runs in
-`src/store/secret-scrub.ts` — refuses to persist content matching provider
+`src/domain/policies/secret-scrub.ts` — refuses to persist content matching provider
 API key, PEM, bearer/JWT, or credentialed database URL patterns. The check
 happens in `writeCanonicalMemory` before any store touch, so a positive
 detection short-circuits with no side effects.
@@ -152,7 +163,7 @@ an exact-match rescue/boost path alongside FTS and substring matching.
 ```
 compact_memory dryRun=false
   ↓
-applyCompaction (src/compact/apply-compaction.ts)
+applyCompaction (src/application/usecases/apply-compaction.ts)
   ├─ rate-limit check        (countRecentApplyRuns, 1/h/org default)
   ├─ createCompactionRun     (UUID idempotency_key, ON CONFLICT DO NOTHING)
   ├─ for each archive candidate:
@@ -167,7 +178,7 @@ applyCompaction (src/compact/apply-compaction.ts)
 
 Cross-store consistency: PG-first means a crash after PG commit but before
 Qdrant delete leaves an orphan vector in Qdrant. The sweeper
-(`src/compact/sweeper-loop.ts`, opt-in) reconciles. Reverse order would
+(`src/interfaces/worker/sweeper-loop.ts`, opt-in) reconciles. Reverse order would
 leave a live `memory_records` row pointing at a deleted Qdrant point — a
 user-visible "search hit vanishes" bug.
 
@@ -185,7 +196,7 @@ Operators can run these loops inside one HTTP replica or in a dedicated
 ```
 unarchive_memory
   ↓
-unarchiveCompaction (src/compact/unarchive-compaction.ts)
+unarchiveCompaction (src/application/usecases/unarchive-compaction.ts)
   ├─ findArchiveByIds         (org-scoped)
   ├─ for each archive row:
   │    ├─ skip if already_unarchived / org mismatch / missing source_id
@@ -283,7 +294,7 @@ Migrations live in `src/db/migrations/`. The current range is `001-015`;
 the runner applies `001` through `015` on bootstrap (each is idempotent,
 `CREATE … IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
 The source of truth is `MIGRATION_FILES` plus the mirrored
-`embeddedPostgresMigrationSql` fallback in `src/db/migrate.ts`; the older
+`embeddedPostgresMigrationSql` fallback in `src/infrastructure/postgres/migrate.ts`; the older
 `src/db/schema.sql` is a historical SQLite/FTS artifact, not the active
 Postgres schema.
 `009_memory_archive_qdrant_retry.sql` supplies archive Qdrant retry metadata,
@@ -315,7 +326,7 @@ the operator has not set `LEGACY_ANONYMOUS_SEARCH=true`. This means an
 unbound token (no `:org` in `MEMORY_API_TOKENS`, no `x-organization-id`
 header, no body org) cannot silently read across tenants — it receives a
 clear operational error describing all three remediation paths. The shared
-`assertOrganizationId` helper (`src/store/assert-organization-id.ts`)
+`assertOrganizationId` helper (`src/domain/policies/assert-organization-id.ts`)
 enforces this consistently across all three entry points.
 
 The `organization_id` written into `memory_archive` during apply is read
@@ -326,7 +337,7 @@ token's bound org disagrees with a record's org.
 ## Audit trail
 
 Every tool invocation produces an `audit_log` row via the `instrument()`
-wrapper in `src/mcp/tool-registry-instrumentation.ts`. The row captures org,
+wrapper in `src/application/tools/tool-registry-instrumentation.ts`. The row captures org,
 actor, tool name, project key, outcome (`ok`/`error`), error message, duration
 ms, request id, and (for destructive operations) `metadata` JSONB with
 structured detail (archived ids, run ids, etc.).
@@ -337,12 +348,12 @@ logged at error level so ops can detect audit-stream issues.
 
 ## Vector backend pluggability
 
-`src/mcp/canonical-services.ts` selects the vector backend via
+`src/composition/runtime/canonical-services.ts` selects the vector backend via
 `VECTOR_BACKEND` (default: `qdrant`):
 
-- `qdrant` **(default)** → `src/vector/qdrant-index.ts`, wraps
+- `qdrant` **(default)** → `src/infrastructure/vector/qdrant-index.ts`, wraps
   `@qdrant/js-client-rest`. Requires `QDRANT_URL` + `QDRANT_API_KEY`.
-- `pgvector` → `src/vector/pgvector-index.ts`, stores embeddings in
+- `pgvector` → `src/infrastructure/vector/pgvector-index.ts`, stores embeddings in
   Postgres using the `vector` extension. Reuses the existing PG pool —
   **no second service needed**. Qdrant credentials are not required.
   `ensureCollection(dims)` verifies the `vector` extension is already
@@ -350,7 +361,7 @@ logged at error level so ops can detect audit-stream issues.
   subsequent restarts are no-ops (`CREATE … IF NOT EXISTS`).
 
 Both adapters implement the `VectorIndex` interface
-(`src/vector/vector-index.ts`): `ensureCollection`, `upsert`, `query`,
+(`src/application/ports/vector-index.ts`): `ensureCollection`, `upsert`, `query`,
 `delete`. Filter translation (`VectorFilter` → Qdrant `must` / SQL
 `WHERE`) is encapsulated inside each adapter so no Qdrant or pgvector
 SQL dialect leaks into orchestration code.
@@ -375,18 +386,18 @@ vector dimensions and content topology differ between backends.
 
 ## Embedding pluggability
 
-`src/embedding/embedding-factory.ts` selects the provider via
+`src/composition/runtime/embedding-factory.ts` selects the provider via
 `EMBEDDING_PROVIDER` (default: `transformers`):
 
-- `transformers` **(default)** → `src/embedding/transformers-embedding.ts`,
+- `transformers` **(default)** → `src/infrastructure/embedding/transformers-embedding.ts`,
   free local ONNX inference via the installed `@huggingface/transformers`
   package.
   Default model `Xenova/all-MiniLM-L6-v2`, 384-dim. First call downloads
   ~22 MB to the HF cache; subsequent calls are fully offline. No API key
   required.
-- `openai` → `src/embedding/openai-embeddings.ts`,
+- `openai` → `src/infrastructure/embedding/openai-embeddings.ts`,
   `text-embedding-3-small`, 1536-dim. Requires `OPENAI_API_KEY`.
-- `local` → `src/embedding/local-embedding.ts`, deterministic SHA-256
+- `local` → `src/infrastructure/embedding/local-embedding.ts`, deterministic SHA-256
   hashing into 384-dim vectors. No external calls; intended for CI /
   air-gapped / offline use where semantic search is not needed.
 
