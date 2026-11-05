@@ -230,12 +230,12 @@ The optional `maxOutputBytes` context-pack input bounds the compact structured r
 
 | Layer | Responsibility |
 |-------|----------------|
-| MCP server (`src/mcp/`) | Shared MCP server surface: tool descriptors, schemas, registry, and handlers |
-| HTTP server (`src/app/`) | Serves MCP Streamable HTTP at `/mcp` plus JSON HTTP under `/v1/*` |
-| Canonical store (`src/store/memory-repository.ts`) | Postgres — records, sources, ingest jobs, entity graph, audit |
-| Vector index (`src/vector/`) | Qdrant (default) or pgvector — chunked embeddings + similarity search. Set `VECTOR_BACKEND=pgvector` for Postgres-only deploy. |
-| Compaction (`src/compact/`) | Dedup (exact + semantic), decay, archive, unarchive, sweeper |
-| Embeddings (`src/embedding/`) | `transformers` (free local ONNX, default), `openai` (`text-embedding-3-small`), or `local` (deterministic stub for CI) |
+| MCP server (`src/interfaces/mcp/`) | Shared MCP server surface: tool descriptors, schemas, registry, and handlers |
+| HTTP server (`src/interfaces/http/`) | Serves MCP Streamable HTTP at `/mcp` plus JSON HTTP under `/v1/*` |
+| Canonical store (`src/infrastructure/postgres/memory-repository.ts`) | Postgres — records, sources, ingest jobs, entity graph, audit |
+| Vector index (`src/infrastructure/vector/`) | Qdrant (default) or pgvector — chunked embeddings + similarity search. Set `VECTOR_BACKEND=pgvector` for Postgres-only deploy. |
+| Compaction (`src/application/usecases/`) | Dedup (exact + semantic), decay, archive, unarchive, sweeper |
+| Embeddings (`src/infrastructure/embedding/`) | `transformers` (free local ONNX, default), `openai` (`text-embedding-3-small`), or `local` (deterministic stub for CI) |
 
 Data flow: caller writes `add_memory` → record persisted to Postgres, entity
 mentions linked, content chunked + embedded + upserted to the active vector

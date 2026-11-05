@@ -2,32 +2,32 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { runCli } from "../src/cli.js";
-import { bootstrapCanonicalServices } from "../src/mcp/canonical-services.js";
-import type { ToolRegistry } from "../src/mcp/types.js";
+import { runCli } from "../src/interfaces/cli/cli.js";
+import { bootstrapCanonicalServices } from "../src/composition/runtime/canonical-services.js";
+import type { ToolRegistry } from "../src/application/contracts/tools.js";
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(), end: vi.fn(), createPool: vi.fn(), migrate: vi.fn(),
   ensureCollection: vi.fn(), embedding: vi.fn(), audit: vi.fn(),
 }));
-vi.mock("../src/db/connection.js", async (original) => ({
-  ...await original<typeof import("../src/db/connection.js")>(),
+vi.mock("../src/infrastructure/postgres/connection.js", async (original) => ({
+  ...await original<typeof import("../src/infrastructure/postgres/connection.js")>(),
   createPgPool: mocks.createPool,
 }));
-vi.mock("../src/db/migrate.js", () => ({ runMigrations: mocks.migrate }));
+vi.mock("../src/infrastructure/postgres/migrate.js", () => ({ runMigrations: mocks.migrate }));
 // The real constructor starts an asynchronous compatibility request before the
 // mocked vector adapter is used; keep unit cleanup tests free of that stray I/O.
-vi.mock("../src/qdrant/client.js", () => ({ createQdrantClient: () => ({}) }));
-vi.mock("../src/vector/qdrant-index.js", () => ({
+vi.mock("../src/infrastructure/vector/client.js", () => ({ createQdrantClient: () => ({}) }));
+vi.mock("../src/infrastructure/vector/qdrant-index.js", () => ({
   createQdrantVectorIndex: () => ({ ensureCollection: mocks.ensureCollection }),
 }));
-vi.mock("../src/vector/pgvector-index.js", () => ({
+vi.mock("../src/infrastructure/vector/pgvector-index.js", () => ({
   createPgVectorIndex: () => ({ ensureCollection: mocks.ensureCollection }),
 }));
-vi.mock("../src/embedding/embedding-factory.js", () => ({
+vi.mock("../src/composition/runtime/embedding-factory.js", () => ({
   createEmbeddingProvider: mocks.embedding,
 }));
-vi.mock("../src/audit/audit-log-repository.js", () => ({
+vi.mock("../src/infrastructure/postgres/audit-log-repository.js", () => ({
   createAuditLogRepository: () => ({ record: mocks.audit }),
 }));
 

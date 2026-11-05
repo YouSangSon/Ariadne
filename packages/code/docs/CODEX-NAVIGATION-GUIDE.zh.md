@@ -8,8 +8,8 @@
 
 ## 范围所有权
 
-- `src/indexer.ts`、`src/index_delta.ts`、`src/adapters/`：扫描、delta、adapter 与 persistence 契约
-- `src/store.ts`：additive SQLite schema 与 migration invariant
+- `src/application/indexing/index-project.ts`、`src/domain/indexing/index-delta.ts`、`src/infrastructure/extractors/`：扫描、delta、adapter 与 persistence 契约
+- `src/infrastructure/sqlite/store.ts`：additive SQLite schema 与 migration invariant
 - `src/ui*.ts`、`src/ui/`：本地 report workbench
 - `tests/`：确定性的 correctness 与 regression gate
 - `bench/`：确定性的 quality bench 与 advisory performance measurement

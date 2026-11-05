@@ -1,8 +1,5 @@
-import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
-import os from "node:os";
-import path from "node:path";
-import { promisify } from "node:util";
+import { createHash } from "node:crypto";
 import {
   access,
   chmod,
@@ -11,6 +8,9 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { promisify } from "node:util";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import {
   resolveBackupTargetDir,

@@ -2,11 +2,11 @@ import { once } from "node:events";
 import type { AddressInfo } from "node:net";
 import type { Server } from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { startOperatorServer } from "../../src/app/server.js";
-import type { ServiceConfig } from "../../src/config.js";
-import type { PgPool } from "../../src/db/connection.js";
-import type { Logger } from "../../src/logger.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+import { startOperatorServer } from "../../src/interfaces/http/server.js";
+import type { ServiceConfig } from "../../src/infrastructure/configuration/config.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 
 const servers: Server[] = [];
 const originalEnv = {

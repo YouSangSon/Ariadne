@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createPgPool,
   DEFAULT_PG_POOL_OPTIONS,
-} from "../../src/db/connection.js";
+} from "../../src/infrastructure/postgres/connection.js";
 
 type InspectablePgPool = {
   options: {

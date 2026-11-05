@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveServiceConfig } from "../../src/config.js";
-import { DEFAULT_PG_POOL_OPTIONS } from "../../src/db/connection.js";
+import { resolveServiceConfig } from "../../src/infrastructure/configuration/config.js";
+import { DEFAULT_PG_POOL_OPTIONS } from "../../src/infrastructure/postgres/connection.js";
 
 const BASE_ENV = {
   DATABASE_URL: "postgres://memory:memory@postgres:5432/memory_os",

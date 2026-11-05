@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import { describe, expect, it } from "vitest";
-import { scanForSecrets } from "../../src/store/secret-scrub.js";
+import { scanForSecrets } from "../../src/domain/policies/secret-scrub.js";
 
 type SecretFinding = {
   path: string;
@@ -9,7 +9,7 @@ type SecretFinding = {
 };
 
 const excludedFiles = new Set([
-  "src/store/secret-scrub.ts",
+  "src/domain/policies/secret-scrub.ts",
   "tests/store/secret-scrub.test.ts",
 ]);
 

@@ -8,8 +8,8 @@
 
 ## 영역 소유권
 
-- `src/indexer.ts`, `src/index_delta.ts`, `src/adapters/`: 스캔, delta, adapter, persistence 계약
-- `src/store.ts`: additive SQLite schema와 migration invariant
+- `src/application/indexing/index-project.ts`, `src/domain/indexing/index-delta.ts`, `src/infrastructure/extractors/`: 스캔, delta, adapter, persistence 계약
+- `src/infrastructure/sqlite/store.ts`: additive SQLite schema와 migration invariant
 - `src/ui*.ts`, `src/ui/`: 로컬 report workbench
 - `tests/`: 결정적 correctness와 regression gate
 - `bench/`: 결정적 quality bench와 advisory performance measurement

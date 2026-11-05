@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { createToolRegistry } from "../../src/mcp/server.js";
-import type { Logger } from "../../src/logger.js";
-import type { AuditLogRepository } from "../../src/audit/audit-log-repository.js";
-import type { CanonicalServices } from "../../src/mcp/types.js";
-import type { MemoryRepository, SearchMemoryResult } from "../../src/types.js";
+import { createToolRegistry } from "../../src/interfaces/mcp/server.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { AuditLogRepository } from "../../src/application/ports/audit-log.js";
+import type { CanonicalServices } from "../../src/application/contracts/tools.js";
+import type { MemoryRepository } from "../../src/application/ports/memory-repositories.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 function buildAuditLog(): AuditLogRepository {
   return {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { IncomingMessage } from "node:http";
-import { resolveOrganizationId } from "../../src/app/routes/memory.js";
+import { resolveOrganizationId } from "../../src/interfaces/http/routes/memory.js";
 
 // ---------------------------------------------------------------------------
 // Helpers

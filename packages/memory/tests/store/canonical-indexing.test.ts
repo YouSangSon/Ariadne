@@ -1,13 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  createMemoryChunkRepository,
-  refreshCanonicalMemoryIndex,
-  reindexCanonicalMemory,
-  writeCanonicalMemory,
-} from "../../src/store/canonical-indexing.js";
-import { SecretDetectedError } from "../../src/store/secret-scrub.js";
-import type { TextChunk } from "../../src/chunk/chunk-text.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+import { createMemoryChunkRepository } from "../../src/infrastructure/postgres/canonical-indexing.js";
+import { refreshCanonicalMemoryIndex, reindexCanonicalMemory, writeCanonicalMemory } from "../../src/application/indexing/canonical-indexing.js";
+import { SecretDetectedError } from "../../src/domain/policies/secret-scrub.js";
+import type { TextChunk } from "../../src/domain/policies/chunk-text.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 const exampleAwsAccessKey = ["AKIA", "IOSFODNN7EXAMPLE"].join("");
 const exampleGitHubToken = [

@@ -6,7 +6,7 @@ Parallax는 **semantic adapter**를 통해 entity/relation graph를 추출한다
 
 ## adapter 계약
 
-adapter는 `SemanticAdapter` 인터페이스(`src/adapters/types.ts`)를 구현한다:
+adapter는 `SemanticAdapter` 인터페이스(`src/domain/indexing/adapter.ts`)를 구현한다:
 
 - `id` — 고유하고 안정적인 식별자. 같은 `id`로 두 adapter를 등록하면 throw한다.
 - `version` — adapter 버전 문자열([버전 관리](#버전-관리와-재추출) 참고).
@@ -87,7 +87,7 @@ indexed path 하나를 제거하면 관계가 달라짐을 확인한다. 이 근
 
 ## 등록과 선택 순서
 
-adapter는 registry(`src/adapters/registry.ts`)에 살며 `src/indexer.ts`의 `createDefaultRegistry()`가 조립한다. 선택은 등록 순서에서 **first-match-wins**다 — `pickAdapter(file)`은 `supports()`가 `true`를 반환하는 첫 등록 adapter를 반환한다.
+adapter는 registry(`src/domain/indexing/adapter-registry.ts`)에 살며 `src/composition/extractors.ts`의 `createDefaultRegistry()`가 조립한다. 선택은 등록 순서에서 **first-match-wins**다 — `pickAdapter(file)`은 `supports()`가 `true`를 반환하는 첫 등록 adapter를 반환한다.
 
 이 때문에 등록 순서가 load-bearing이다. 기본 registry는 순서대로 등록한다: build-system/package adapter, config/infra adapter, TypeScript/JavaScript adapter, JVM/Spring adapter, Python adapter, Go adapter, Rust adapter, 그리고 마지막으로 multi-language regex adapter. 그 마지막 adapter는 `supports()`가 항상 `true`를 반환하는 **catch-all**이므로 반드시 LAST로 등록되어야 한다 — catch-all 뒤에 등록된 adapter는 도달 불가능하다. registry는 이 순서를 강제한다.
 

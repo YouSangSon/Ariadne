@@ -1,0 +1,34 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: full-architecture-refactor
+  title: Ariadne 전체 DDD·클린 아키텍처 리팩토링
+  status: verified
+requirement:
+  user_intent: 일부 모듈에 한정하지 않고 Ariadne 전체를 도메인 책임과 안쪽 의존 방향에 따라 리팩토링한다.
+  desired_outcome: 코어·메모리·코드·온톨로지·위키·실행 기반과 조립 경계의 책임을 분리하고 유지보수와 확장을 검사 가능한 구조로 만든다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: 모든 first-party 실행 코드와 도구의 소유 영역과 계층을 분류하고 누락 영역 없이 리팩토링한다.
+      verification: root와 memory·code architecture map의 전체 파일 목록 및 경계 검사를 통과한다.
+    - id: AC2
+      statement: 도메인 규칙과 유스케이스는 구체적인 저장소·전송·프레임워크 어댑터에 의존하지 않는다.
+      verification: 역방향 import·SQL capability·전역 I/O의 negative control과 실제 소스 검사를 통과한다.
+    - id: AC3
+      statement: 기존 CLI·HTTP·MCP·공개 export와 조직 권한·저장 데이터·설치 경로 계약을 보존한다.
+      verification: package 기존 export·회귀 검사와 Podman DB·동시성·제품 MCP 검사를 통과한다.
+    - id: AC4
+      statement: 모듈 간 내부 접근과 계층 역방향 의존을 자동 검사하고 실제 통합 동작을 검증한다.
+      verification: npm run verify와 의존성이 없는 소스 복사본의 선택 설치·문맥·온톨로지 실행을 확인한다.
+    - id: AC5
+      statement: 문서·번역·fixture·build·설치·검증 경로를 최종 구조와 일치시킨다.
+      verification: 문서 링크·mirror·schema 검사 및 실제 memory 패키지 초기화와 import 연결 검사를 통과한다.
+verification:
+  commands:
+    - npm run verify
+audit:
+  must_not_implement:
+    - 중지된 미완료 dispatcher의 기능 활성화
+    - 사용자 데이터 자동 이전 또는 삭제
+    - 승인되지 않은 push·merge·배포

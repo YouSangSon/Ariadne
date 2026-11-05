@@ -3,8 +3,8 @@ import {
   normalizeForLexical,
   scoreLexicalMatch,
   tokenizeLexicalQuery,
-} from "../../src/search/lexical-score.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+} from "../../src/domain/policies/lexical-score.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 describe("lexical scoring", () => {
   it("tokenizes unique letter and number terms", () => {

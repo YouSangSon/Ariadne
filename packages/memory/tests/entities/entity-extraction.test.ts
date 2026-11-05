@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   entityOverlapScore,
   extractEntityMentions,
-} from "../../src/entities/entity-extraction.js";
+} from "../../src/domain/policies/entity-extraction.js";
 
 describe("entity extraction", () => {
   it("extracts code symbols, paths, dates, urls, and proper nouns", () => {

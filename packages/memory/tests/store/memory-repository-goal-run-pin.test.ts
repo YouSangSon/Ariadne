@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
 
 const scopeRef = { scopeType: "project" as const, scopeId: "proj-x" };
 

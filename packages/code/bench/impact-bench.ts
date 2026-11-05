@@ -1,35 +1,24 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir,mkdtemp,rm,writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
+import { pathToFileURL } from 'node:url';
 
-import {
-  addWorkspaceRepo,
-  analyzeContractDiff,
-  analyzeDiff,
-  exportImpactGraph,
-  indexProject,
-  initProject,
-  initWorkspace,
-  ingestTraces,
-  queryCoChanges,
-  resolveCrossRepoContracts
-} from '../src/index.js';
-import { searchContextForRepo } from '../src/mcp.js';
-import { recallSemantic } from '../src/agent_memory.js';
-import type { EmbeddingResult } from '../src/embeddings.js';
-import {
-  GO_SEMANTIC_ADAPTER_ID,
-  JVM_SPRING_SEMANTIC_ADAPTER_ID,
-  MULTI_LANG_REGEX_ADAPTER_ID,
-  PYTHON_SEMANTIC_ADAPTER_ID,
-  RUST_SEMANTIC_ADAPTER_ID,
-  TS_JS_SEMANTIC_ADAPTER_ID
-} from '../src/adapters/multi-language-regex.js';
-import { BUILD_SYSTEM_PACKAGE_ADAPTER_ID } from '../src/adapters/build-system-package.js';
-import { CONFIG_INFRA_SEMANTIC_ADAPTER_ID } from '../src/adapters/config-infra.js';
+import { queryCoChanges } from "../src/composition/co-changes.js";
+import { searchContextForRepo } from "../src/composition/context-search.js";
+import { analyzeContractDiff } from "../src/composition/contract-diff.js";
+import { exportImpactGraph } from "../src/composition/graph.js";
+import { analyzeDiff } from "../src/composition/impact.js";
+import { indexProject } from "../src/composition/indexing.js";
+import { ingestTraces,initProject } from "../src/composition/project.js";
+import { resolveCrossRepoContracts } from "../src/composition/workspace-links.js";
+import { addWorkspaceRepo,initWorkspace } from "../src/composition/workspace.js";
+import type { EmbeddingResult } from "../src/domain/local-memory/embedding.js";
+import { BUILD_SYSTEM_PACKAGE_ADAPTER_ID } from "../src/infrastructure/extractors/build-system-package.js";
+import { CONFIG_INFRA_SEMANTIC_ADAPTER_ID } from "../src/infrastructure/extractors/config-infra.js";
+import { GO_SEMANTIC_ADAPTER_ID,JVM_SPRING_SEMANTIC_ADAPTER_ID,MULTI_LANG_REGEX_ADAPTER_ID,PYTHON_SEMANTIC_ADAPTER_ID,RUST_SEMANTIC_ADAPTER_ID,TS_JS_SEMANTIC_ADAPTER_ID } from "../src/infrastructure/extractors/multi-language-regex.js";
+import { recallSemantic } from "../src/infrastructure/sqlite/local-memory.js";
 
 const fixtureId = 'phase6b-multilanguage-v0';
 const schemaVersion = 7;

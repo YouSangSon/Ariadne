@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { hardNegativeOrderingAtK } from "../../src/eval/metrics.js";
-import { assertRetrievalCorpus, isAllowedEvalScope } from "../../src/eval/retrieval-corpus.js";
+import { hardNegativeOrderingAtK } from "../../src/domain/evaluation/metrics.js";
+import { assertRetrievalCorpus, isAllowedEvalScope } from "../../src/domain/evaluation/retrieval-corpus.js";
 import { loadRetrievalCorpus } from "./fixtures/retrieval-corpus.js";
 
 describe("contrast ordering and scope grading", () => {

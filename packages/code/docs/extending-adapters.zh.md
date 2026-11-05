@@ -6,7 +6,7 @@ Parallax 通过 **semantic adapter** 提取其 entity/relation graph。每个 ad
 
 ## adapter 契约
 
-adapter 实现 `SemanticAdapter` 接口（`src/adapters/types.ts`）：
+adapter 实现 `SemanticAdapter` 接口（`src/domain/indexing/adapter.ts`）：
 
 - `id` — 唯一且稳定的标识符。用相同 `id` 注册两个 adapter 会 throw。
 - `version` — adapter 版本字符串（见[版本管理](#版本管理与重新提取)）。
@@ -85,7 +85,7 @@ Dockerfile 关系。这只是有限的 adapter 事件证据，不是通用独立
 
 ## 注册与选择顺序
 
-adapter 存放于 registry（`src/adapters/registry.ts`），由 `src/indexer.ts` 中的 `createDefaultRegistry()` 组装。选择在注册顺序中是 **first-match-wins**——`pickAdapter(file)` 返回首个 `supports()` 为 `true` 的已注册 adapter。
+adapter 存放于 registry（`src/domain/indexing/adapter-registry.ts`），由 `src/composition/extractors.ts` 中的 `createDefaultRegistry()` 组装。选择在注册顺序中是 **first-match-wins**——`pickAdapter(file)` 返回首个 `supports()` 为 `true` 的已注册 adapter。
 
 这使注册顺序 load-bearing。默认 registry 按以下顺序注册：build-system/package adapter、config/infra adapter、TypeScript/JavaScript adapter、JVM/Spring adapter、Python adapter、Go adapter、Rust adapter，最后是 multi-language regex adapter。最后那个 adapter 是一个 `supports()` 永远返回 `true` 的 **catch-all**，因此必须 LAST 注册——任何注册在 catch-all 之后的 adapter 都不可达。registry 会强制这一顺序。
 

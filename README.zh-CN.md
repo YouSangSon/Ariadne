@@ -111,7 +111,7 @@ node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --quer
 
 每次读取都会根据定义和来源文件重新计算审核摘要，并报告 `unreviewed`、`current` 或 `stale`。搜索是有界词汇搜索，不提供 LLM、SQL 或可回答性判断。审核状态不代表经过身份验证的批准。现有的 `knowledge promote` 和 `knowledge index` 处理独立的 Wiki 快照。
 
-记忆、代码和本体各自拥有自己的模型和存储。本体遵循领域驱动设计和整洁架构的边界，分为纯领域、协调端口的应用层，以及文件系统和 CLI 适配器。记忆和代码现有的内部实现保持不变。详见[模块与本体](docs/modular-ontology.md)。
+记忆、代码、需求、上下文、规则集成、Wiki、执行基础和本体各自拥有自己的规则和数据。领域层和应用层依赖端口，文件、数据库、HTTP 和进程适配器在外层接入。现有入口与存储契约保持兼容。所有权和边界检查见[架构](docs/architecture.md)，本体格式见[模块与本体](docs/modular-ontology.md)。
 
 在要处理的仓库中运行当前提供的代码分析和上下文命令。代码命令需要 `code` 模块的依赖。
 

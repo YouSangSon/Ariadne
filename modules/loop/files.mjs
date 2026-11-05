@@ -1,1 +1,1 @@
-export { readProjectFile, listProjectFiles, writeProjectFile } from '../../lib/project-files.mjs'
+export { readProjectFile, listProjectFiles, writeProjectFile } from '../../core/infrastructure/project-files.mjs'

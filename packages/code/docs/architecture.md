@@ -4,9 +4,11 @@
 
 Parallax is a local-first impact graph. A single SQLite database stores code structure, agent memory, search projections, context packs, and report metadata. This document explains the runtime path that contributors need before changing the indexer, adapters, analyzer, MCP server, or UI.
 
-Source checkout note: paths such as `src/indexer.ts` are maintainer source paths. They are reference names in the npm package docs and require a repository checkout to inspect directly.
+Source checkout note: paths such as `src/composition/indexing.ts` are maintainer source paths. They are reference names in the npm package docs and require a repository checkout to inspect directly.
 
 ## System map
+
+This sketch shows runtime data flow; the ownership table below defines import boundaries.
 
 ```mermaid
 flowchart TD
@@ -25,16 +27,25 @@ flowchart TD
 
 ## Runtime responsibilities
 
-| Layer | Primary files | Responsibility |
+Code remains one bounded context inside Ariadne. Impact, indexing, contracts, local memory, workspace and context are areas of the same model. They share the existing SQLite data ownership; they are not separate services.
+
+| Layer | Primary paths | Responsibility |
 | :--- | :--- | :--- |
-| Public API | `src/index.ts` | Re-exports the supported programmatic surface. |
-| CLI | `src/cli.ts` | Parses commands and calls the public API from the current repository root. |
-| Indexer | `src/indexer.ts` | Scans files, chooses adapters, persists entities, relations, evidence, coverage, and adapter run metadata. |
-| Adapters | `src/adapters/**` | Convert language or format-specific files into graph events. |
-| Store | `src/store.ts` | Owns SQLite schema creation, additive migrations, and database helpers. |
-| Analyzer | `src/analyzer.ts` | Reads the latest completed index and computes changed-to-affected impact reports. |
-| MCP | `src/mcp.ts`, `src/mcp_search.ts`, `src/context_pack.ts` | Exposes analysis, search, memory, doctor, and context-pack functions to coding agents. |
-| UI | `src/ui.ts`, `src/ui/**` | Serves the local report workbench and report/coverage APIs. |
+| Domain | `src/domain/**` | Impact traversal, confidence, index delta and ownership policy, contract comparison, fact identity, branch policy, context ranking and budgets. |
+| Application | `src/application/**` | Coordinate analysis, indexing, search, context reuse, workspace operations, memory/model work and UI snapshots through semantic ports. |
+| Infrastructure | `src/infrastructure/**` | SQLite repositories, filesystem containment and scanners, Git, parsers, model providers and atomic configuration writes. |
+| Interfaces | `src/interfaces/**` | CLI arguments, MCP registration and schemas, HTTP/HTML, source previews and report formatting. |
+| Composition | `src/composition/**` | Bind ports to adapters and assemble the default extractor registry in `src/composition/extractors.ts`. |
+| Compatibility | `src/index.ts`, `src/cli.ts`, earlier source paths | Preserve the public exports and executable path. Internal code imports the new owners. |
+| Tooling | `scripts/**`, `bench/**` | Schema/docs/dependency checks and package benchmarks. |
+
+`domain` depends only on domain code. `application` depends on application and domain code. Pure path and hash operations use the standard library; filesystem, process, environment, model and framework capabilities stay outside these layers. Ports describe operations such as reading inbound relations or publishing an index, rather than SQL statements or generic transactions.
+
+`AnalysisSession` reads graph neighbors through one handle. `IndexingSession` preserves the clean-index reader snapshot and the latest-run recheck after releasing it. Its publication operation retains the writer transaction, baseline validation and co-change savepoint. The local-memory repository commits facts, transaction parents, provenance, canonical embeddings, vector projections and branch heads together. Model work finishes before those writes. SCIP imports retain their serialized indexed-snapshot/augmentation scope.
+
+Graph exports begin with the saved report JSON. Only the existing legacy fallback reads canonical graph rows when a report lacks relation-bearing evidence. MCP tool/resource names, annotations, telemetry behavior, `parallax://` URIs and storage schema remain unchanged.
+
+The complete ownership list is [`architecture-map.json`](../architecture-map.json). `npm run test:architecture` checks every authored source/operator file, inward dependencies, runtime cycles and all 89 legacy module export sets against the recorded baseline. Negative controls prove that reverse type imports, exports, dynamic imports, hidden SQL and unclassified paths fail. The normal test command includes these checks.
 
 ## Indexing path
 
@@ -48,7 +59,7 @@ flowchart TD
 
 ## Adapter extension contract
 
-Adapters implement `SemanticAdapter` from `src/adapters/types.ts`. The important contract points are:
+Adapters implement `SemanticAdapter` from `src/domain/indexing/adapter.ts`. The important contract points are:
 
 | Field or method | Meaning |
 | :--- | :--- |
@@ -74,7 +85,7 @@ The database stores five related surfaces:
 | Context surface | `context_tool_runs`, `context_resource_accesses`, `context_packs` | Records MCP context-pack reuse and telemetry. |
 | Search | FTS5 projection tables | Supports keyword search across entities, evidence, and facts. |
 
-All migrations are additive. New DDL should follow the allowlisted migration style in `src/store.ts`.
+All migrations are additive. New DDL should follow the allowlisted migration style in `src/infrastructure/sqlite/store.ts`.
 
 ## Analysis path
 

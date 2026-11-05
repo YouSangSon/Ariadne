@@ -1,5 +1,8 @@
 # One Ariadne project
 
+Current context ownership, inward dependencies, and compatibility paths belong
+to the [architecture reference](architecture.md).
+
 Ariadne combines requirements, bounded context, durable memory, code impact,
 file-based ontology and wiki relationships in one checkout. Install with `npm run setup`, verify with
 `npm run verify`, and use `node bin/Ariadne.mjs` from any target repository.
@@ -56,12 +59,13 @@ TypeScript/test toolchains. A workspace-wide dependency rewrite was rejected
 because it would change dependency resolution and packaging guarantees during a
 source relocation. There are no independent package releases (`private: true`).
 
-Memory, code and ontology each own their models and storage. Ontology follows
-domain-driven design and clean architecture boundaries: a pure domain,
-application orchestration through ports, and filesystem and CLI
-adapters; the existing memory and code internals have not been refactored into
-those layers. See [modules and ontology](modular-ontology.md) for the boundary
-and file format.
+Memory, code, ontology, and the root capability contexts own their models and
+storage. Their domain rules and application use cases depend inward on policies
+and ports. Concrete storage, transport, model, and process adapters connect at
+composition boundaries. Historical entrypoints preserve their existing exports.
+See the [architecture reference](architecture.md) for the complete ownership and
+validation scope, and [modules and ontology](modular-ontology.md) for the ontology
+file format.
 
 Copy `packages/memory/.env.example` to root `.env` if using the memory service.
 Review the [memory configuration](../packages/memory/docs/configuration.md), then

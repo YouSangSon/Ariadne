@@ -3,7 +3,7 @@ import {
   DEFAULT_REPEAT_THRESHOLD,
   type FindRepeatAttemptsInput,
   findRepeatAttempts,
-} from "../../src/goal-run/find-repeat-attempts.js";
+} from "../../src/domain/policies/find-repeat-attempts.js";
 
 const callFindRepeatAttempts = (input: unknown) => () =>
   findRepeatAttempts(input as FindRepeatAttemptsInput);

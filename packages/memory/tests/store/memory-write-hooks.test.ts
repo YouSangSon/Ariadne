@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
-import type { AddMemoryInput, SearchMemoryResult } from "../../src/types.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
+import type { AddMemoryInput, SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 const scope = { scopeType: "project" as const, scopeId: "project-a" };
 const memoryInput: AddMemoryInput = {

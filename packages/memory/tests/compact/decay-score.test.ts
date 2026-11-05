@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   decayScore,
   findDecayCandidates,
-} from "../../src/compact/decay-score.js";
+} from "../../src/domain/policies/decay-score.js";
 
 const NOW = new Date("2026-04-25T12:00:00.000Z");
 const INVALID_NOW_VALUES: Array<[string, Date]> = [

@@ -8,11 +8,11 @@
  * The `--check` form runs in `npm run lint` so a changed report shape can never
  * ship without a regenerated, committed schema.
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync,writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { buildImpactReportJsonSchema } from '../src/report_schema.js';
+import { buildImpactReportJsonSchema } from "../src/interfaces/reporting/report-schema.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const artifactPath = path.resolve(here, '..', 'schemas', 'impact-report.schema.json');

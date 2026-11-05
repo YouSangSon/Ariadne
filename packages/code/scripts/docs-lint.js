@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { posix, resolve as resolveFsPath } from 'node:path';
+import { existsSync,readFileSync } from 'node:fs';
+import { posix,resolve as resolveFsPath } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 function gitFiles(args) {

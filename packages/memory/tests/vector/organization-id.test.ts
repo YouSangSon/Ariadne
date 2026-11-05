@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertOptionalVectorOrganizationId,
   assertVectorOrganizationId,
-} from "../../src/vector/organization-id.js";
+} from "../../src/domain/policies/organization-id.js";
 
 describe("vector organization id validation", () => {
   it("rejects non-string required organizationId with a clear message", () => {

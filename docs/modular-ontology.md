@@ -57,19 +57,18 @@ tests use real temporary files. A later adapter can supply the same input contra
 without changing vocabulary rules; adding one still requires its own permission,
 failure and resource contracts.
 
-The bounded file implementation lives in `lib/project-files.mjs`. The existing
+The bounded file implementation lives in `core/infrastructure/project-files.mjs`;
+`lib/project-files.mjs` preserves the public entrypoint. The existing
 loop file entry point re-exports only its original scrubbed-read, list and guarded
 write functions. Raw text is consumed inside the ontology file adapter and is not
 exposed as a loop tool. Moving this shared infrastructure does not activate the
 paused dispatcher or automatic execution runtime.
 
-`tests/module-boundaries.test.mjs` checks current literal static/dynamic imports
-and CommonJS loads across contexts, and inward dependencies of the new pure
-layers. Computed imports require explicit review. This is a source regression
-check, not a sandbox or a general JavaScript parser. New loader syntax or aliases
-require updating the check. Existing memory/code internals retain their current
-organization; this work does not claim to have converted every legacy class into
-a clean-architecture layer.
+The whole-product [architecture reference](architecture.md) owns context and layer
+boundaries, ownership maps, compatibility paths, and validation scope. Its root
+checks cover requirements, context packs, rules integration, wiki, execution
+foundations, ontology, product coordination, evaluation, and package production
+tools. Selected packages also run their AST boundary checks.
 
 ## Local ontology workflow
 

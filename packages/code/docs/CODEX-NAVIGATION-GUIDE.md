@@ -8,8 +8,8 @@ Read `goal.md` → `PLAN.md` → `GATES.md` → `CONTEXT.md` → `DESIGN.md`. Us
 
 ## Surface Ownership
 
-- `src/indexer.ts`, `src/index_delta.ts`, `src/adapters/`: scan, delta, adapter, and persistence contracts.
-- `src/store.ts`: additive SQLite schema and migration invariants.
+- `src/application/indexing/index-project.ts`, `src/domain/indexing/index-delta.ts`, `src/infrastructure/extractors/`: scan, delta, adapter, and persistence contracts.
+- `src/infrastructure/sqlite/store.ts`: additive SQLite schema and migration invariants.
 - `src/ui*.ts`, `src/ui/`: local report workbench.
 - `tests/`: deterministic correctness and regression gates.
 - `bench/`: deterministic quality bench and advisory performance measurement.

@@ -12,8 +12,8 @@ const guarded = ['POSTGRES_HOST', 'PGVECTOR_TEST_URL', 'AKASHA_WRITE_CONCURRENCY
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'ariadne-modules-'))
   t.after(() => rmSync(root, { recursive: true, force: true }))
-  for (const path of ['bin', 'lib', 'scripts', 'tests', 'tools', 'packages/memory', 'packages/code', 'modules/ontology']) mkdirSync(join(root, path), { recursive: true })
-  for (const path of ['bin/Ariadne.mjs', 'bin/code.mjs', 'lib/command.mjs', 'lib/scrub.mjs', 'lib/module-selection.mjs', 'scripts/product.mjs', 'scripts/verify.mjs', 'scripts/mirror-lib.mjs']) copyFileSync(join(source, path), join(root, path))
+  for (const path of ['bin', 'lib', 'scripts', 'tests', 'tools', 'core/domain', 'core/application', 'modules/integration', 'packages/memory', 'packages/code', 'modules/ontology']) mkdirSync(join(root, path), { recursive: true })
+  for (const path of ['bin/Ariadne.mjs', 'bin/code.mjs', 'lib/command.mjs', 'lib/scrub.mjs', 'lib/module-selection.mjs', 'scripts/product.mjs', 'scripts/verify.mjs', 'scripts/mirror-lib.mjs', 'core/domain/product.mjs', 'core/application/product.mjs', 'core/application/verification.mjs', 'core/domain/verification.mjs', 'core/domain/commit.mjs', 'modules/integration/application.mjs', 'modules/integration/domain.mjs', 'modules/integration/files.mjs', 'lib/caps.mjs']) copyFileSync(join(source, path), join(root, path))
   writeFileSync(join(root, 'scripts/check-mirror.mjs'), '')
   const record = `import { appendFileSync } from 'node:fs'; import test from 'node:test'; test('fixture', () => appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: KIND, cwd: process.cwd(), env: Object.fromEntries(${JSON.stringify(guarded)}.map(key => [key, Object.hasOwn(process.env, key)])) }) + '\\n'))`
   writeFileSync(join(root, 'tests/core.test.mjs'), record.replace('KIND', "'core'"))

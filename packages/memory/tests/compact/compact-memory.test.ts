@@ -3,8 +3,8 @@ import {
   buildCompactionPlan,
   type BuildCompactionPlanInput,
   shouldPromoteRecord,
-} from "../../src/compact/compact-memory.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+} from "../../src/domain/policies/compact-memory.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 const NOW = new Date("2026-04-25T12:00:00.000Z");
 const callBuildCompactionPlan = (input: unknown) => () =>

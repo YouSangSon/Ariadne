@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { createPgPool } from "../../src/db/connection.js";
-import { runMigrations } from "../../src/db/migrate.js";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
-import { SecretDetectedError } from "../../src/store/secret-scrub.js";
+import { createPgPool } from "../../src/infrastructure/postgres/connection.js";
+import { runMigrations } from "../../src/infrastructure/postgres/migrate.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
+import { SecretDetectedError } from "../../src/domain/policies/secret-scrub.js";
 
 type SqlQueryCall = { sql: string; params: unknown[] };
 

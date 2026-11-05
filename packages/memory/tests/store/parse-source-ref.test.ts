@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { parseStoredPostgresSourceRef } from "../../src/store/memory-repository.js";
-import * as loggerModule from "../../src/logger.js";
+import { parseStoredPostgresSourceRef } from "../../src/infrastructure/postgres/memory-repository.js";
+import * as loggerModule from "../../src/infrastructure/observability/logger.js";
 
 afterEach(() => {
   vi.restoreAllMocks();

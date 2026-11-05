@@ -12,7 +12,7 @@ import { databasePath } from '../src/store.js';
 // Dogfood guard: index Parallax's own source in an isolated temp repo and
 // assert the internal DEPENDS_ON graph survives. This catches a class of
 // regression that green unit tests cannot: real NodeNext `./x.js` imports
-// collapsing to external_entity, which once made `src/store.ts` report zero
+// collapsing to external_entity, which once made `src/infrastructure/sqlite/store.ts` report zero
 // code dependents while the whole unit suite stayed green. Floors (not exact
 // counts) keep the test stable across legit refactors; the discriminator is
 // the collapse to ~0, not the precise number.
@@ -39,7 +39,7 @@ function withDogfoodRepo(callback: (tempRoot: string) => Promise<void>): Promise
 test('dogfood: analyzeDiff reports proven src dependents for store.ts', async () => {
   await withDogfoodRepo(async (tempRoot) => {
     // Arrange + Act: real user path on Parallax's own source.
-    const report = await analyzeDiff({ repoRoot: tempRoot, changedFiles: ['src/store.ts'] });
+    const report = await analyzeDiff({ repoRoot: tempRoot, changedFiles: ['src/infrastructure/sqlite/store.ts'] });
 
     // Assert: the internal graph survives — many src dependents, all reachable
     // with proven confidence (not collapsed to external_entity).
@@ -48,13 +48,13 @@ test('dogfood: analyzeDiff reports proven src dependents for store.ts', async ()
     );
     assert.ok(
       provenSrcDependents.length >= MIN_PROVEN_SRC_DEPENDENTS,
-      `expected >= ${MIN_PROVEN_SRC_DEPENDENTS} proven src dependents for src/store.ts, got ${provenSrcDependents.length}`
+      `expected >= ${MIN_PROVEN_SRC_DEPENDENTS} proven src dependents for src/infrastructure/sqlite/store.ts, got ${provenSrcDependents.length}`
     );
     // Distinct from the count above: the report ranks proven > inferred >
     // heuristic, so the top-ranked affected file must itself be a proven src
     // dependent. This also guards the confidence-first ordering from regressing.
     const top = report.affectedFiles[0];
-    assert.ok(top, 'expected at least one affected file for src/store.ts');
+    assert.ok(top, 'expected at least one affected file for src/infrastructure/sqlite/store.ts');
     assert.equal(top.confidence, 'proven', `expected top affected file to be proven, got ${top.confidence}`);
     assert.ok(
       top.path.startsWith('src/'),
@@ -88,7 +88,7 @@ test('dogfood: internal DEPENDS_ON edges resolve to local src entities, not exte
            FROM relations r
            JOIN entities source ON source.id = r.source_entity_id
            WHERE r.kind = 'DEPENDS_ON'
-             AND r.target_entity_id = 'file:src/store.ts'
+             AND r.target_entity_id = 'file:src/infrastructure/sqlite/store.ts'
              AND r.confidence = 'proven'
              AND source.path LIKE 'src/%'`
         )
@@ -101,7 +101,7 @@ test('dogfood: internal DEPENDS_ON edges resolve to local src entities, not exte
       );
       assert.ok(
         storeDependents.count >= MIN_PROVEN_SRC_DEPENDENTS,
-        `expected >= ${MIN_PROVEN_SRC_DEPENDENTS} proven src dependents of src/store.ts, got ${storeDependents.count}`
+        `expected >= ${MIN_PROVEN_SRC_DEPENDENTS} proven src dependents of src/infrastructure/sqlite/store.ts, got ${storeDependents.count}`
       );
     } finally {
       db.close();

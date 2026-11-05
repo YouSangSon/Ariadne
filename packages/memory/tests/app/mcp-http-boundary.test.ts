@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { handleMcpHttpRequest } from "../../src/app/mcp-http.js";
-import type { HandleMcpHttpRequestOptions } from "../../src/app/mcp-http.js";
+import { handleMcpHttpRequest } from "../../src/interfaces/http/mcp-http.js";
+import type { HandleMcpHttpRequestOptions } from "../../src/interfaces/http/mcp-http.js";
 
 function baseOptions(): HandleMcpHttpRequestOptions {
   return {

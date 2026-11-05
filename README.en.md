@@ -111,7 +111,7 @@ node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --quer
 
 Each read recomputes a review digest from definitions and source files and reports `unreviewed`, `current`, or `stale`. Search is bounded lexical search; it provides no LLM, SQL, or answerability judgment. Review status is not authenticated approval. The existing `knowledge promote` and `knowledge index` commands handle separate wiki snapshots.
 
-Memory, code, and ontology own their respective models and storage. Ontology follows domain-driven design and clean architecture boundaries: a pure domain, an application that orchestrates ports, and filesystem and CLI adapters. The existing memory and code internals remain in place. See [modules and ontology](docs/modular-ontology.md) for details.
+Memory, code, requirements, context packs, rules integration, wiki, execution foundations, and ontology own their rules and data. Their domains and applications depend on ports; file, database, HTTP, and process adapters connect from the outside. Existing entrypoints and storage contracts remain compatible. See [architecture](docs/architecture.md) for ownership and boundary checks, and [modules and ontology](docs/modular-ontology.md) for the ontology format.
 
 Run the available code analysis and context commands from the repository where you are working. Code commands require the `code` module's dependencies.
 

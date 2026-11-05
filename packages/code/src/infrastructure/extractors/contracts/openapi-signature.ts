@@ -1,0 +1,483 @@
+import { OPENAPI_COMPAT_ANALYZER_ID, OPENAPI_COMPAT_SCHEMA_VERSION } from "../../../domain/contracts/formats/openapi.js";
+import type { OpenApiCompatibilitySignature, OpenApiCompatibilityOperation, OpenApiResponseSignature, OpenApiObjectSchemaSignature, OpenApiPropertySignature } from "../../../domain/contracts/formats/openapi.js";
+
+export const OPENAPI_METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'head', 'options', 'trace']);
+
+export const MAX_SCHEMA_SIGNATURE_DEPTH = 8;
+
+export type SchemaSignatureBuilder = {
+  required: Set<string>;
+  properties: Map<string, PropertySignatureBuilder>;
+};
+
+export type PropertySignatureBuilder = {
+  types: Set<string>;
+  formats: Set<string>;
+  nullable: boolean;
+  enumValues: Set<string>;
+};
+
+export type SchemaTraversalState = {
+  seenRefs: Set<string>;
+  activeSchemas: Set<Record<string, unknown>>;
+  depth: number;
+};
+
+export function extractOpenApiCompatibility(parsed: unknown): OpenApiCompatibilitySignature | undefined {
+  if (!isRecord(parsed)) return undefined;
+  const marker = parsed.openapi ?? parsed.swagger;
+  if (typeof marker !== 'string' || marker.length === 0) return undefined;
+  const paths = parsed.paths;
+  if (!isRecord(paths)) return undefined;
+
+  const operations: OpenApiCompatibilityOperation[] = [];
+  for (const [routePath, pathItem] of Object.entries(paths)) {
+    if (!routePath.startsWith('/') || !isRecord(pathItem)) continue;
+    for (const [method, operation] of Object.entries(pathItem)) {
+      const normalizedMethod = method.toLowerCase();
+      if (!OPENAPI_METHODS.has(normalizedMethod)) continue;
+      if (!isRecord(operation)) return undefined;
+      operations.push(operationSignature(parsed, routePath, normalizedMethod.toUpperCase(), operation));
+    }
+  }
+
+  operations.sort(compareOperations);
+  return {
+    schemaVersion: OPENAPI_COMPAT_SCHEMA_VERSION,
+    analyzer: OPENAPI_COMPAT_ANALYZER_ID,
+    operations
+  };
+}
+
+export function operationSignature(
+  root: Record<string, unknown>,
+  routePath: string,
+  method: string,
+  operation: Record<string, unknown>
+): OpenApiCompatibilityOperation {
+  const requestBody = requestBodySignature(root, operation);
+  const responses = responseSignatures(root, operation);
+  return {
+    method,
+    path: routePath,
+    ...(requestBody !== undefined ? { requestBody } : {}),
+    responses
+  };
+}
+
+export function requestBodySignature(
+  root: Record<string, unknown>,
+  operation: Record<string, unknown>
+): OpenApiObjectSchemaSignature | undefined {
+  const requestBody = resolveMaybeRef(root, operation.requestBody);
+  if (!isRecord(requestBody)) return undefined;
+  return contentObjectSchemaSignature(root, requestBody);
+}
+
+export function responseSignatures(
+  root: Record<string, unknown>,
+  operation: Record<string, unknown>
+): OpenApiResponseSignature[] {
+  const responses = operation.responses;
+  if (!isRecord(responses)) return [];
+  const signatures: OpenApiResponseSignature[] = [];
+  for (const [status, responseValue] of Object.entries(responses)) {
+    const response = resolveMaybeRef(root, responseValue);
+    if (!isRecord(response)) continue;
+    const body = contentObjectSchemaSignature(root, response);
+    signatures.push({
+      status,
+      ...(body !== undefined ? { body } : {})
+    });
+  }
+  return signatures.sort((left, right) => left.status.localeCompare(right.status));
+}
+
+export function contentObjectSchemaSignature(
+  root: Record<string, unknown>,
+  holder: Record<string, unknown>
+): OpenApiObjectSchemaSignature | undefined {
+  const media = selectJsonMediaContent(holder.content);
+  if (!media) return undefined;
+  return objectSchemaSignature(root, media.schema, new Set());
+}
+
+export function selectJsonMediaContent(content: unknown): Record<string, unknown> | undefined {
+  if (!isRecord(content)) return undefined;
+  const entries = Object.entries(content);
+  const exact = entries.find(([mediaType]) => mediaType.toLowerCase() === 'application/json');
+  const suffixJson = entries.find(([mediaType]) => /\+json(?:\s*;|$)/i.test(mediaType));
+  const anyJson = entries.find(([mediaType]) => /json/i.test(mediaType));
+  const selected = exact ?? suffixJson ?? anyJson;
+  return selected && isRecord(selected[1]) ? selected[1] : undefined;
+}
+
+export function objectSchemaSignature(
+  root: Record<string, unknown>,
+  schemaValue: unknown,
+  seenRefs: Set<string>
+): OpenApiObjectSchemaSignature | undefined {
+  const builder: SchemaSignatureBuilder = {
+    required: new Set(),
+    properties: new Map()
+  };
+  collectObjectSchemaSignature(root, schemaValue, '', builder, {
+    seenRefs: new Set(seenRefs),
+    activeSchemas: new Set(),
+    depth: 0
+  });
+  if (builder.required.size === 0 && builder.properties.size === 0) return undefined;
+  return {
+    required: [...builder.required].sort((left, right) => left.localeCompare(right)),
+    properties: Object.fromEntries(
+      [...builder.properties.entries()].sort(([left], [right]) => left.localeCompare(right))
+        .map(([propertyName, property]) => [propertyName, propertySignature(property)])
+    )
+  };
+}
+
+export function collectObjectSchemaSignature(
+  root: Record<string, unknown>,
+  schemaValue: unknown,
+  pathPrefix: string,
+  builder: SchemaSignatureBuilder,
+  state: SchemaTraversalState
+): boolean {
+  if (state.depth > MAX_SCHEMA_SIGNATURE_DEPTH) return false;
+  const schema = resolveMaybeRef(root, schemaValue, state.seenRefs);
+  if (!isRecord(schema)) return false;
+  if (state.activeSchemas.has(schema)) return false;
+  state.activeSchemas.add(schema);
+  try {
+    let collected = false;
+    if (Array.isArray(schema.allOf)) {
+      for (const part of schema.allOf) {
+        if (collectObjectSchemaSignature(root, part, pathPrefix, builder, nextTraversalState(state))) {
+          collected = true;
+        }
+      }
+    }
+    if (Array.isArray(schema.oneOf) || Array.isArray(schema.anyOf)) {
+      recordPropertySignature(root, builder, pathPrefix || '$', schema, new Set(state.seenRefs));
+      collected = true;
+    }
+
+    if (Array.isArray(schema.required)) {
+      for (const propertyName of schema.required) {
+        if (typeof propertyName !== 'string') continue;
+        builder.required.add(appendPropertyPath(pathPrefix, propertyName));
+        collected = true;
+      }
+    }
+
+    if (isRecord(schema.properties)) {
+      for (const [propertyName, propertySchema] of Object.entries(schema.properties).sort(([left], [right]) => left.localeCompare(right))) {
+        const propertyPath = appendPropertyPath(pathPrefix, propertyName);
+        recordPropertySignature(root, builder, propertyPath, propertySchema, new Set(state.seenRefs));
+        collectNestedPropertySignature(root, propertySchema, propertyPath, builder, nextTraversalState(state));
+        collected = true;
+      }
+    }
+
+    if (schema.items !== undefined) {
+      const itemPath = `${pathPrefix}[]`;
+      recordPropertySignature(root, builder, itemPath, schema.items, new Set(state.seenRefs));
+      collectNestedPropertySignature(root, schema.items, itemPath, builder, nextTraversalState(state));
+      collected = true;
+    }
+
+    return collected;
+  } finally {
+    state.activeSchemas.delete(schema);
+  }
+}
+
+export function collectNestedPropertySignature(
+  root: Record<string, unknown>,
+  schemaValue: unknown,
+  propertyPath: string,
+  builder: SchemaSignatureBuilder,
+  state: SchemaTraversalState
+): void {
+  if (state.depth > MAX_SCHEMA_SIGNATURE_DEPTH) return;
+  const schema = resolveMaybeRef(root, schemaValue, state.seenRefs);
+  if (!isRecord(schema)) return;
+  if (Array.isArray(schema.allOf) || isRecord(schema.properties) || Array.isArray(schema.required)) {
+    collectObjectSchemaSignature(root, schemaValue, propertyPath, builder, nextTraversalState(state));
+  }
+  if (schema.items !== undefined) {
+    const itemPath = `${propertyPath}[]`;
+    recordPropertySignature(root, builder, itemPath, schema.items, new Set(state.seenRefs));
+    collectNestedPropertySignature(root, schema.items, itemPath, builder, nextTraversalState(state));
+  }
+}
+
+export function schemaType(root: Record<string, unknown>, schemaValue: unknown, seenRefs: Set<string>): string {
+  const schema = resolveMaybeRef(root, schemaValue, seenRefs);
+  if (!isRecord(schema)) return 'unknown';
+  const oneOfType = compositionSchemaType(root, schema, 'oneOf', seenRefs);
+  if (oneOfType !== undefined) return oneOfType;
+  const anyOfType = compositionSchemaType(root, schema, 'anyOf', seenRefs);
+  if (anyOfType !== undefined) return anyOfType;
+  const allOfType = allOfSchemaType(root, schema, seenRefs);
+  if (allOfType !== undefined) return allOfType;
+  const type = schema.type;
+  if (typeof type === 'string' && type.length > 0) return type;
+  if (Array.isArray(type)) {
+    const types = type.filter((item): item is string => typeof item === 'string').sort();
+    if (types.length > 0) return types.join('|');
+  }
+  if (isRecord(schema.properties)) return 'object';
+  if (schema.items !== undefined) return 'array';
+  if (Array.isArray(schema.enum)) return 'enum';
+  return 'unknown';
+}
+
+export function allOfSchemaType(root: Record<string, unknown>, schema: Record<string, unknown>, seenRefs: Set<string>): string | undefined {
+  if (!Array.isArray(schema.allOf) || schema.allOf.length === 0) return undefined;
+  const fingerprints = uniqueSorted(
+    schema.allOf.map((part) => schemaTypeFingerprint(root, part, new Set(seenRefs), 0))
+  );
+  if (fingerprints.some((fingerprint) => fingerprint.startsWith('object'))) return 'object';
+  return `allOf<${fingerprints.join('|')}>`;
+}
+
+export function compositionSchemaType(
+  root: Record<string, unknown>,
+  schema: Record<string, unknown>,
+  keyword: 'oneOf' | 'anyOf',
+  seenRefs: Set<string>
+): string | undefined {
+  const variants = schema[keyword];
+  if (!Array.isArray(variants) || variants.length === 0) return undefined;
+  const fingerprints = uniqueSorted(
+    variants.map((variant) => schemaTypeFingerprint(root, variant, new Set(seenRefs), 0))
+  );
+  return `${keyword}<${fingerprints.join('|')}>`;
+}
+
+export function schemaTypeFingerprint(
+  root: Record<string, unknown>,
+  schemaValue: unknown,
+  seenRefs: Set<string>,
+  depth: number
+): string {
+  if (depth > MAX_SCHEMA_SIGNATURE_DEPTH) return 'unknown';
+  const schema = resolveMaybeRef(root, schemaValue, seenRefs);
+  if (!isRecord(schema)) return 'unknown';
+  const oneOfType = compositionFingerprint(root, schema, 'oneOf', seenRefs, depth);
+  if (oneOfType !== undefined) return oneOfType;
+  const anyOfType = compositionFingerprint(root, schema, 'anyOf', seenRefs, depth);
+  if (anyOfType !== undefined) return anyOfType;
+  const allOfType = compositionFingerprint(root, schema, 'allOf', seenRefs, depth);
+  if (allOfType !== undefined) return allOfType;
+  const type = schema.type;
+  if (Array.isArray(type)) {
+    const types = type.filter((item): item is string => typeof item === 'string');
+    if (types.length > 0) return uniqueSorted(types).join('|');
+  }
+  if (isRecord(schema.properties) || Array.isArray(schema.required)) {
+    const entries = isRecord(schema.properties)
+      ? Object.entries(schema.properties)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([propertyName, propertySchema]) =>
+          `${propertyName}:${schemaTypeFingerprint(root, propertySchema, new Set(seenRefs), depth + 1)}`
+        )
+      : [];
+    return `object{required:${requiredFingerprint(schema.required)};properties:${entries.join(',')}}`;
+  }
+  if (schema.items !== undefined) {
+    return `array<${schemaTypeFingerprint(root, schema.items, new Set(seenRefs), depth + 1)}>`;
+  }
+  if (typeof type === 'string' && type.length > 0) return type;
+  if (Array.isArray(schema.enum)) return 'enum';
+  if (Array.isArray(schema.required)) return 'object';
+  return 'unknown';
+}
+
+export function requiredFingerprint(required: unknown): string {
+  if (!Array.isArray(required)) return '';
+  return uniqueSorted(required.filter((item): item is string => typeof item === 'string')).join('|');
+}
+
+export function compositionFingerprint(
+  root: Record<string, unknown>,
+  schema: Record<string, unknown>,
+  keyword: 'allOf' | 'oneOf' | 'anyOf',
+  seenRefs: Set<string>,
+  depth: number
+): string | undefined {
+  const variants = schema[keyword];
+  if (!Array.isArray(variants) || variants.length === 0) return undefined;
+  const fingerprints = uniqueSorted(
+    variants.map((variant) => schemaTypeFingerprint(root, variant, new Set(seenRefs), depth + 1))
+  );
+  return `${keyword}<${fingerprints.join('|')}>`;
+}
+
+export function appendPropertyPath(pathPrefix: string, propertyName: string): string {
+  return pathPrefix.length === 0 ? propertyName : `${pathPrefix}.${propertyName}`;
+}
+
+export function recordPropertySignature(
+  root: Record<string, unknown>,
+  builder: SchemaSignatureBuilder,
+  propertyPath: string,
+  schemaValue: unknown,
+  seenRefs: Set<string>
+): void {
+  const propertyType = schemaType(root, schemaValue, new Set(seenRefs));
+  const formats = schemaFormats(root, schemaValue, new Set(seenRefs));
+  const nullable = schemaNullable(root, schemaValue, new Set(seenRefs));
+  const enumValues = schemaEnumValues(root, schemaValue, new Set(seenRefs));
+  const existing = builder.properties.get(propertyPath);
+  if (existing) {
+    existing.types.add(propertyType);
+    for (const format of formats) existing.formats.add(format);
+    existing.nullable ||= nullable;
+    for (const enumValue of enumValues) existing.enumValues.add(enumValue);
+    return;
+  }
+  builder.properties.set(propertyPath, {
+    types: new Set([propertyType]),
+    formats: new Set(formats),
+    nullable,
+    enumValues: new Set(enumValues)
+  });
+}
+
+export function propertySignature(property: PropertySignatureBuilder): OpenApiPropertySignature {
+  const formats = uniqueSorted([...property.formats]);
+  const enumValues = uniqueSorted([...property.enumValues]);
+  return {
+    type: propertyTypeSignature(property.types),
+    ...(formats.length > 0 ? { format: propertyTypeSignature(new Set(formats)) } : {}),
+    ...(property.nullable ? { nullable: true } : {}),
+    ...(enumValues.length > 0 ? { enumValues } : {})
+  };
+}
+
+export function propertyTypeSignature(propertyTypes: Set<string>): string {
+  const types = uniqueSorted([...propertyTypes]);
+  return types.length === 1 ? types[0]! : `allOf<${types.join('|')}>`;
+}
+
+export function schemaFormats(root: Record<string, unknown>, schemaValue: unknown, seenRefs: Set<string>): string[] {
+  const schema = resolveMaybeRef(root, schemaValue, seenRefs);
+  if (!isRecord(schema)) return [];
+  const formats = typeof schema.format === 'string' && schema.format.length > 0 ? [schema.format] : [];
+  const composedFormats = ['allOf', 'oneOf', 'anyOf'].flatMap((keyword) => {
+    const variants = schema[keyword];
+    if (!Array.isArray(variants)) return [];
+    return variants.flatMap((variant) => schemaFormats(root, variant, new Set(seenRefs)));
+  });
+  return uniqueSorted([...formats, ...composedFormats]);
+}
+
+export function schemaNullable(root: Record<string, unknown>, schemaValue: unknown, seenRefs: Set<string>): boolean {
+  const schema = resolveMaybeRef(root, schemaValue, seenRefs);
+  if (!isRecord(schema)) return false;
+  if (schema.nullable === true) return true;
+  return ['allOf', 'oneOf', 'anyOf'].some((keyword) => {
+    const variants = schema[keyword];
+    return Array.isArray(variants) && variants.some((variant) => schemaNullable(root, variant, new Set(seenRefs)));
+  });
+}
+
+export function schemaEnumValues(root: Record<string, unknown>, schemaValue: unknown, seenRefs: Set<string>): string[] {
+  const schema = resolveMaybeRef(root, schemaValue, seenRefs);
+  if (!isRecord(schema)) return [];
+  if (Array.isArray(schema.enum)) {
+    return uniqueSorted(schema.enum.flatMap((value) => {
+      const fingerprint = enumValueFingerprint(value);
+      return fingerprint === undefined ? [] : [fingerprint];
+    }));
+  }
+  const allOfValues = compositionEnumValues(root, schema, 'allOf', seenRefs);
+  if (allOfValues !== undefined) return allOfValues;
+  return compositionEnumValues(root, schema, 'oneOf', seenRefs) ??
+    compositionEnumValues(root, schema, 'anyOf', seenRefs) ??
+    [];
+}
+
+export function compositionEnumValues(
+  root: Record<string, unknown>,
+  schema: Record<string, unknown>,
+  keyword: 'allOf' | 'oneOf' | 'anyOf',
+  seenRefs: Set<string>
+): string[] | undefined {
+  const variants = schema[keyword];
+  if (!Array.isArray(variants) || variants.length === 0) return undefined;
+  const values = variants.map((variant) => schemaEnumValues(root, variant, new Set(seenRefs)));
+  const nonEmptyValues = values.filter((item) => item.length > 0);
+  if (nonEmptyValues.length === 0) return [];
+  if (keyword !== 'allOf') return uniqueSorted(nonEmptyValues.flat());
+  const [first, ...rest] = nonEmptyValues;
+  return first!.filter((value) => rest.every((item) => item.includes(value)));
+}
+
+export function enumValueFingerprint(value: unknown): string | undefined {
+  if (typeof value === 'string') return `string:${JSON.stringify(value)}`;
+  if (typeof value === 'number' && Number.isFinite(value)) return `number:${JSON.stringify(value)}`;
+  if (typeof value === 'boolean') return `boolean:${JSON.stringify(value)}`;
+  if (value === null) return 'null:null';
+  return undefined;
+}
+
+export function nextTraversalState(state: SchemaTraversalState): SchemaTraversalState {
+  return {
+    seenRefs: new Set(state.seenRefs),
+    activeSchemas: state.activeSchemas,
+    depth: state.depth + 1
+  };
+}
+
+export function uniqueSorted(values: string[]): string[] {
+  return [...new Set(values)].sort((left, right) => left.localeCompare(right));
+}
+
+export function resolveMaybeRef(
+  root: Record<string, unknown>,
+  value: unknown,
+  seenRefs = new Set<string>()
+): unknown {
+  if (!isRecord(value)) return value;
+  const ref = value.$ref;
+  if (typeof ref !== 'string' || !ref.startsWith('#/')) return value;
+  if (seenRefs.has(ref)) return undefined;
+  const nextSeenRefs = new Set(seenRefs);
+  nextSeenRefs.add(ref);
+  return resolveMaybeRef(root, resolveJsonPointer(root, ref.slice(1)), nextSeenRefs);
+}
+
+export function resolveJsonPointer(root: Record<string, unknown>, pointer: string): unknown {
+  const segments = pointer
+    .split('/')
+    .filter((segment) => segment.length > 0)
+    .map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
+  let current: unknown = root;
+  for (const segment of segments) {
+    if (Array.isArray(current)) {
+      if (!/^(0|[1-9]\d*)$/.test(segment)) return undefined;
+      const index = Number(segment);
+      if (!Number.isSafeInteger(index) || index < 0 || index >= current.length) return undefined;
+      current = current[index];
+      continue;
+    }
+    if (!isRecord(current)) return undefined;
+    current = current[segment];
+  }
+  return current;
+}
+
+export function compareOperations(left: OpenApiCompatibilityOperation, right: OpenApiCompatibilityOperation): number {
+  return left.path.localeCompare(right.path) || left.method.localeCompare(right.method);
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

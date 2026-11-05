@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { repoRootFromArgs } from './mirror-lib.mjs'
 import { selectModules } from '../lib/module-selection.mjs'
+import { verifySources } from '../core/application/verification.mjs'
 import { scrub } from '../lib/scrub.mjs'
 
 const root = repoRootFromArgs(process.argv)
@@ -15,18 +16,6 @@ let modules
 try { modules = selectModules(args, ['core', 'ontology']) }
 catch (error) { console.error(`verify: ${error.message}`); process.exit(2) }
 const scriptsDir = dirname(fileURLToPath(import.meta.url))
-const REQ_LINE = /^REQ: ([a-z0-9][a-z0-9-]*|none \(.+\))$/m
-
-function step(name, fn) {
-  process.stdout.write(`verify: ${name} … `)
-  const err = fn()
-  if (err) {
-    console.log('FAIL')
-    console.error(`verify: ${name}: ${err}`)
-    process.exit(1)
-  }
-  console.log('ok')
-}
 
 function run(command, args) {
   const r = spawnSync(command, args, { cwd: root, encoding: 'utf8' })
@@ -35,26 +24,18 @@ function run(command, args) {
   return scrub((r.error ? [reason] : [reason, r.stdout, r.stderr]).filter(Boolean).join('\n')).text
 }
 
-step(modules.has('code') ? 'source tests + code integration' : 'source tests only', () => {
-  const tests = readdirSync(join(root, 'tests')).filter((name) => name.endsWith('.test.mjs') && name !== 'product-mcp.test.mjs' && (name !== 'product-code.test.mjs' || modules.has('code'))).sort()
-  if (!tests.length) return 'core tests가 없다'
-  if (modules.has('code') && !tests.includes('product-code.test.mjs')) return 'code integration test is missing'
-  return run(process.execPath, ['--test', ...tests.map((name) => join(root, 'tests', name))])
+process.exitCode = verifySources(modules, {
+  listTests: () => readdirSync(join(root, 'tests')),
+  runTests: (tests) => run(process.execPath, ['--test', ...tests.map((name) => join(root, 'tests', name))]),
+  checkMirrors: () => run(process.execPath, [join(scriptsDir, 'check-mirror.mjs'), '--root', root]),
+  commitLog() {
+    const result = spawnSync('git', ['log', '--format=%H%n%B%x00', '-n', '20'], { cwd: root, encoding: 'utf8' })
+    return result.status === 0 ? result.stdout : null
+  },
+  start: (name) => process.stdout.write(`verify: ${name} … `),
+  finish(name, error) {
+    console.log(error ? 'FAIL' : 'ok')
+    if (error) console.error(`verify: ${name}: ${error}`)
+  },
+  report: (message) => console.log(message),
 })
-
-step('check-mirror', () => {
-  return run(process.execPath, [join(scriptsDir, 'check-mirror.mjs'), '--root', root])
-})
-
-step('commit-req-invariant', () => {
-  const r = spawnSync('git', ['log', '--format=%H%n%B%x00', '-n', '20'], { cwd: root, encoding: 'utf8' })
-  if (r.status !== 0) return 'git log 실패 (git 리포 아님?)'
-  const bad = r.stdout
-    .split('\0')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .filter((msg) => !REQ_LINE.test(msg))
-  return bad.length === 0 ? null : `REQ 참조 없는 커밋 ${bad.length}개: ${bad.map((b) => b.slice(0, 7)).join(', ')}`
-})
-
-console.log('verify: green')

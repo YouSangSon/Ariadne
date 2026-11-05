@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveLogLevel } from "../src/logger.js";
+import { resolveLogLevel } from "../src/infrastructure/observability/logger.js";
 
 describe("resolveLogLevel", () => {
   it("defaults to info in production", () => {

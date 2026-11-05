@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createBackgroundQueueMetricsCollector } from "../../src/app/background-queue-metrics.js";
-import type { PgQueryResult, PgQueryable } from "../../src/db/connection.js";
+import { createBackgroundQueueMetricsCollector } from "../../src/infrastructure/postgres/background-queue-metrics.js";
+import type { PgQueryResult, PgQueryable } from "../../src/infrastructure/postgres/connection.js";
 
 type QueryFn = (
   text: string,

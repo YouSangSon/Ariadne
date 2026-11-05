@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseClaudeStream, parseCodexEvents } from "../../src/eval/client-ab.js";
-import { buildContextPackResult } from "../../src/mcp/context-pack-result.js";
-import { toToolResult } from "../../src/mcp/tool-result.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+import { parseClaudeStream, parseCodexEvents } from "../../src/application/evaluation/client-policy.js";
+import { buildContextPackResult } from "../../src/application/tools/context-pack-result.js";
+import { toToolResult } from "../../src/interfaces/mcp/tool-result.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 const jsonBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value), "utf8");
 const pack = { ok: true, packMarkdown: "한글 中文", selectedMemoryIds: ["project:p:1"] };

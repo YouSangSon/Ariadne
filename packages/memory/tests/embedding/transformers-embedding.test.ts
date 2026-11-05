@@ -3,7 +3,7 @@ import {
   createTransformersEmbeddingClient,
   EmbeddingInputTooLongError,
   type FeatureExtractor,
-} from "../../src/embedding/transformers-embedding.js";
+} from "../../src/infrastructure/embedding/transformers-embedding.js";
 
 describe("createTransformersEmbeddingClient", () => {
   it.each([

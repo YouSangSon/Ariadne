@@ -3,25 +3,9 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import {
-  aggregateClientPairs,
-  assertPaidClientExecutionAllowed,
-  buildClientCommand,
-  buildClientPrompt,
-  clientAbRunPlan,
-  createClientWorkspace,
-  gradeClientAnswer,
-  parseClaudeStream,
-  parseCodexFinalOutput,
-  parseCodexEvents,
-  parseCodexSubscriptionStatus,
-  readCodexSubscriptionStatus,
-  prepareClientAbExperiment,
-  runClientAb,
-  runClientCommand,
-  seedAndPreflightClientAb,
-  verifyToolTrace,
-} from "../../src/eval/client-ab.js";
+import { aggregateClientPairs, assertPaidClientExecutionAllowed, buildClientPrompt, clientAbRunPlan, gradeClientAnswer, parseClaudeStream, parseCodexFinalOutput, parseCodexEvents, parseCodexSubscriptionStatus, verifyToolTrace } from "../../src/application/evaluation/client-policy.js";
+import { buildClientCommand, createClientWorkspace, readCodexSubscriptionStatus, runClientCommand } from "../../src/infrastructure/evaluation/client-ab.js";
+import { prepareClientAbExperiment, runClientAb, seedAndPreflightClientAb } from "../../src/composition/runtime/client-evaluation.js";
 import { assertLocalPreflightEnvironment, parseClientAbArgs } from "./client-ab-runner.js";
 
 const fixtureRelativePath = "tests/eval/fixtures/client-ab.json";

@@ -1,10 +1,13 @@
-import { test } from 'node:test'
+import { test, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs'
+import { rmSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+const temporaryDirectories = []
+after(() => { for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true }) })
 
 const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts')
 const run = (script, args) =>
@@ -15,6 +18,7 @@ const USER_AGENTS = '# 팀 규칙\n\n사용자 소유 섹션이다.\n'
 
 function makeBrownfield({ withAgents = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'harness-p5-'))
+  temporaryDirectories.push(dir)
   writeFileSync(join(dir, 'CLAUDE.md'), USER_CLAUDE)
   if (withAgents) writeFileSync(join(dir, 'AGENTS.md'), USER_AGENTS)
   mkdirSync(join(dir, 'src'))
@@ -82,6 +86,7 @@ test('AC4: 왕복 원상복구 — remove 후 트리가 초기와 동일하고 .
 
 test('그린필드: AGENTS.md·CLAUDE.md가 없으면 생성하고, remove 시 삭제된다', () => {
   const dir = mkdtempSync(join(tmpdir(), 'harness-p5-green-'))
+  temporaryDirectories.push(dir)
   run('adapt-apply.mjs', ['--target', dir, '--verify-cmd', 'make check'])
   assert.equal(readFileSync(join(dir, 'CLAUDE.md'), 'utf8').split('\n')[0], '@AGENTS.md')
   // 실전(Parallax)에서 잡힌 버그: 블록으로 시작하는 파일의 재실행 churn

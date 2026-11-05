@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { prefetchCliContextPack } from "../../src/eval/client-cli-prefetch.js";
-import type { PgQueryable } from "../../src/db/connection.js";
-import type { ClientAbExperiment, ClientAbPreflight, ClientCommand } from "../../src/eval/client-ab.js";
+import { prefetchCliContextPack } from "../../src/infrastructure/evaluation/client-cli-prefetch.js";
+import type { PgQueryable } from "../../src/infrastructure/postgres/connection.js";
+import type { ClientAbExperiment, ClientAbPreflight, ClientCommand } from "../../src/application/evaluation/client-policy.js";
 
 const task = { id: "canonical-state", task: "Where is canonical state?", claimKeys: ["canonical_store", "vector_recovery"], contextRecords: [] };
 const experiment = { organizationId: "org-a", projectKey: "project-a", userScopeId: "user-a", tasks: [task] } as unknown as ClientAbExperiment;

@@ -1,54 +1,122 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync, readdirSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { Script } from 'node:vm'
+import { boundaryErrors, checkArchitecture, imports, ROOT_EXCLUSIONS, sourceFiles } from '../core/tooling/architecture.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const contexts = ['packages/memory', 'packages/code', 'modules/ontology', 'modules/loop', 'modules/llm-wiki']
-function owner(path) {
-  return contexts.find((context) => path.startsWith(`${context}/`))
-}
-function sources(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-    const path = join(directory, entry.name)
-    return entry.isDirectory() ? sources(path) : /\.(?:[cm]?js|tsx?)$/.test(entry.name) ? [path] : []
-  })
-}
-function imports(source) {
-  assert.doesNotMatch(source, /\b(?:import|require)\s*\(\s*(?!['"\s])/, 'computed imports require an explicit boundary review')
-  // shortcut: this checks literal JS/TS import forms; use an AST rule when introducing aliases or new loader syntax.
-  return [...source.matchAll(/\b(?:from\s+|import\s*(?:\(\s*)?|require\s*\(\s*)['"]([^'"]+)['"]/g)].map((match) => match[1])
-}
 
-test('bounded contexts do not import another context internals', () => {
-  const files = contexts.flatMap((context) => sources(join(root, context, context.startsWith('packages/') ? 'src' : '')))
-  for (const file of files) {
-    const sourceOwner = owner(relative(root, file))
-    for (const specifier of imports(readFileSync(file, 'utf8'))) {
-      if (!specifier.startsWith('.')) continue
-      const targetOwner = owner(relative(root, resolve(dirname(file), specifier)))
-      assert.ok(!targetOwner || targetOwner === sourceOwner, `${relative(root, file)} crosses into ${targetOwner}`)
-    }
-  }
+test('all inventoried production contexts and root validation sources obey their boundaries', () => {
+  assert.deepEqual(checkArchitecture(root), [])
 })
 
-test('ontology domain and use cases depend only on pure inward code', () => {
-  const pure = new Set(['modules/ontology/domain.mjs', 'modules/ontology/application.mjs', 'lib/scrub.mjs', 'lib/module-selection.mjs'])
-  for (const path of pure) {
-    const source = readFileSync(join(root, path), 'utf8')
-    assert.doesNotMatch(source, /\b(?:process|globalThis|fetch|XMLHttpRequest)\b/, path)
-    for (const specifier of imports(source)) {
-      assert.ok(specifier.startsWith('.'), `${path} imports platform/package dependency ${specifier}`)
-      const target = relative(root, resolve(root, dirname(path), specifier))
-      assert.ok(pure.has(target), `${path} depends outward on ${target}`)
-      if (path.endsWith('/domain.mjs')) assert.notEqual(target, 'modules/ontology/application.mjs')
-    }
-  }
+test('literal loader scanner covers exports, dynamic imports, CommonJS and TypeScript types', () => {
+  assert.deepEqual(imports(`import value from './a.js'; export { value } from './b.js'; await import('./c.js'); require('./d.js'); import './e.js'; type T = import('./f.js').T`),
+    ['./a.js', './b.js', './c.js', './d.js', './e.js', './f.js'].map((specifier) => ({ specifier })))
+  assert.deepEqual(imports(`// import('./comment.js')\nconst fields = ['from', 'type', 'to']; const example = "import('example')"; const pattern = /import\\(.*\\)/; const text = \`export * from 'example'\``), [])
+  assert.deepEqual(imports('import(selectedModule)'), [{ expression: 'selectedModule' }])
+  assert.deepEqual(imports("const names = ['require']; const render = () => ['require']"), [])
+  assert.throws(() => imports("import('escaped\\x2dmodule')"), /unescaped string/)
+  assert.deepEqual(imports(`import { createRequire } from 'node:module'; const require = createRequire(import.meta.url); require('pg')`), [{ specifier: 'node:module' }, { specifier: 'pg' }])
 })
 
-test('boundary scanner includes static exports, dynamic imports and CommonJS loads', () => {
-  assert.deepEqual(imports(`import value from './a.js'; export { value } from './b.js'; await import('./c.js'); require('./d.js'); import './e.js'`), ['./a.js', './b.js', './c.js', './d.js', './e.js'])
-  assert.deepEqual(imports("const fields = ['from', 'type', 'to']"), [])
-  assert.throws(() => imports('import(selectedModule)'), /computed imports/)
+test('runtime-valid unsupported CommonJS loaders fail the boundary gate', () => {
+  const files = {
+    'a/application.cjs': { layer: 'application', context: 'a' },
+    'a/files.cjs': { layer: 'infrastructure', context: 'a' },
+  }
+  for (const source of [
+    "module.require('./files.cjs')",
+    "const load = require; load('./files.cjs')",
+    "require?.('./files.cjs')",
+    "module['require']('./files.cjs')",
+    "require.call(null, './files.cjs')",
+  ]) {
+    assert.doesNotThrow(() => new Script(source))
+    assert.match(errors(files, { 'a/application.cjs': source }).join('\n'), /unsupported CommonJS loader/)
+  }
+  assert.throws(() => imports("import { createRequire } from 'node:module'; const load = createRequire(import.meta.url); load('./files.cjs')"), /unsupported CommonJS loader binding/)
+})
+
+function errors(entries, contents, actual = Object.keys(entries)) {
+  return boundaryErrors({ files: entries, actual, sources: (path) => contents[path] ?? '' })
+}
+
+test('negative controls reject reverse layers, compatibility facades and cross-context internals', () => {
+  const files = {
+    'a/domain.mjs': { layer: 'domain', context: 'a' },
+    'a/application.mjs': { layer: 'application', context: 'a' },
+    'a/files.mjs': { layer: 'infrastructure', context: 'a' },
+    'a/old.mjs': { layer: 'compatibility', context: 'a', target: 'a/domain.mjs' },
+    'b/domain.mjs': { layer: 'domain', context: 'b' },
+  }
+  for (const [path, specifier, reason] of [
+    ['a/domain.mjs', './application.mjs', /domain depends outward/],
+    ['a/application.mjs', './files.mjs', /application depends outward/],
+    ['a/application.mjs', './old.mjs', /application depends outward/],
+    ['a/domain.mjs', '../b/domain.mjs', /cross-context internal/],
+  ]) assert.ok(errors(files, { [path]: `import value from '${specifier}'` }).some((message) => reason.test(message)), `${path} ${specifier}`)
+  assert.deepEqual(errors(files, { 'a/application.mjs': "import value from './domain.mjs'" }), [])
+})
+
+test('negative controls reject unowned sources, stale records and false layer classifications', () => {
+  assert.match(errors({}, {}, ['new-source.mjs']).join('\n'), /unowned source/)
+  assert.match(errors({ 'removed.mjs': { layer: 'tooling', context: 'a' } }, {}, []).join('\n'), /stale ownership/)
+  assert.match(errors({ 'a/domain.mjs': { layer: 'infrastructure', context: 'a' } }, {}).join('\n'), /incorrect layer classification/)
+})
+
+test('new top-level tooling is discovered and cannot escape ownership coverage', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ariadne-boundaries-'))
+  t.after(() => rmSync(workspace, { recursive: true, force: true }))
+  for (const directory of ['new-tools', '.harness', 'packages/memory/src']) mkdirSync(join(workspace, directory), { recursive: true })
+  for (const path of ['new-tools/unowned.mjs', '.harness/evidence.mjs', 'packages/memory/src/owned-separately.ts']) writeFileSync(join(workspace, path), '')
+  const actual = sourceFiles(workspace, ['.'], ROOT_EXCLUSIONS)
+  assert.deepEqual(actual, ['new-tools/unowned.mjs'])
+  assert.match(errors({}, {}, actual).join('\n'), /unowned source new-tools\/unowned.mjs/)
+})
+
+test('root sources reject optional packages, unsupported aliases and unreviewed loaders', () => {
+  const files = { 'a/domain.mjs': { layer: 'domain', context: 'a' } }
+  for (const [source, reason] of [
+    ["import x from 'optional-model-package'", /optional package dependency/],
+    ["export * from '@/hidden-adapter'", /unsupported alias/],
+    ["import x from 'node:fs'", /inward layer imports platform/],
+    ['await import(selectedModule)', /unreviewed computed import/],
+    ['process.env.API_KEY', /runtime I\/O/],
+  ]) assert.match(errors(files, { 'a/domain.mjs': source }).join('\n'), reason)
+})
+
+test('runtime capability checks distinguish port members from global access', () => {
+  const files = { 'a/domain.mjs': { layer: 'domain', context: 'a' } }
+  for (const source of [
+    'run.process(file)',
+    'run?.process(file)',
+    'export interface AdapterRun { process(file: File): AsyncIterable<Event>; }',
+  ]) assert.deepEqual(errors(files, { 'a/domain.mjs': source }), [], source)
+  for (const source of [
+    'process.env.API_KEY',
+    'const host = process; host.env.API_KEY',
+    'globalThis.process.env.API_KEY',
+    'global.process.env.API_KEY',
+    'global.fetch(url)',
+    'async function run() { return fetch(url) }',
+    'const result = ready ? fetch(url) : fallback',
+  ]) assert.match(errors(files, { 'a/domain.mjs': source }).join('\n'), /runtime I\/O/, source)
+})
+
+test('shared pure exports are controlled and guarded filesystem I/O stays outward', () => {
+  const files = {
+    'a/domain.mjs': { layer: 'domain', context: 'a' },
+    'a/files.mjs': { layer: 'infrastructure', context: 'a' },
+    'lib/scrub.mjs': { layer: 'domain', context: 'shared' },
+    'core/infrastructure/project-files.mjs': { layer: 'infrastructure', context: 'workspace' },
+  }
+  assert.deepEqual(errors(files, {
+    'a/domain.mjs': "import { scrub } from '../lib/scrub.mjs'",
+    'a/files.mjs': "import { readProjectText } from '../core/infrastructure/project-files.mjs'",
+  }), [])
+  assert.match(errors(files, { 'a/domain.mjs': "import { readProjectText } from '../core/infrastructure/project-files.mjs'" }).join('\n'), /domain depends outward/)
 })

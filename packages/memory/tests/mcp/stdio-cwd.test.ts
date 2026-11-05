@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveStdioCwd } from "../../src/mcp/server.js";
+import { resolveStdioCwd } from "../../src/interfaces/mcp/server.js";
 
 const malformedDirectInputs: Array<{
   env: unknown;

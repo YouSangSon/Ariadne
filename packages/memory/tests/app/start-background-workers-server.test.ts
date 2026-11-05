@@ -5,12 +5,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   closeOperatorServer,
   startOperatorServer,
-} from "../../src/app/server.js";
-import type { ServiceConfig } from "../../src/config.js";
-import type { BackgroundWorkersHandle } from "../../src/app/background-workers.js";
-import type { PgPool } from "../../src/db/connection.js";
-import type { Logger } from "../../src/logger.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+} from "../../src/interfaces/http/server.js";
+import type { ServiceConfig } from "../../src/infrastructure/configuration/config.js";
+import type { BackgroundWorkersHandle } from "../../src/composition/runtime/background-workers.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 
 const servers: Server[] = [];
 

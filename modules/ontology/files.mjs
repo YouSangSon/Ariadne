@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { basename, dirname, resolve } from 'node:path'
-import { readProjectText } from '../../lib/project-files.mjs'
+import { readProjectText } from '../../core/infrastructure/project-files.mjs'
 
 export function ontologyFiles(file) {
   const absolute = resolve(file)

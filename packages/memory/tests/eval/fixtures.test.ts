@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import type { EvalQuery } from "../../src/eval/types.js";
+import type { EvalQuery } from "../../src/domain/evaluation/types.js";
 import { SEED_ENTRIES } from "./fixtures/seed.js";
 import { loadRetrievalCorpus } from "./fixtures/retrieval-corpus.js";
-import { scanForSecrets } from "../../src/store/secret-scrub.js";
+import { scanForSecrets } from "../../src/domain/policies/secret-scrub.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const queries = JSON.parse(

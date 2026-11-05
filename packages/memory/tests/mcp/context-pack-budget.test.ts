@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import * as z from "zod/v4";
-import { createToolRegistry } from "../../src/mcp/server.js";
-import { TOOL_DESCRIPTORS } from "../../src/mcp/tool-schemas.js";
-import type { BuildContextPackToolInput } from "../../src/mcp/types.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+import { createToolRegistry } from "../../src/interfaces/mcp/server.js";
+import { TOOL_DESCRIPTORS } from "../../src/interfaces/mcp/tool-schemas.js";
+import type { BuildContextPackToolInput } from "../../src/application/contracts/tools.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 function record(id: number, content: string, memoryType: SearchMemoryResult["memoryType"] = "fact"): SearchMemoryResult {
   return {

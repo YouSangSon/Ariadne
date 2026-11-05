@@ -46,6 +46,17 @@ test('trusted controls distinguish exact baseline failures from passing referenc
   }
 })
 
+test('probe preserves namespace receivers and awaits asynchronous fixture functions', (t) => {
+  const root = fixture(t, (suite) => {
+    const task = suite.tasks[0]
+    task.files[task.entry] = 'export const count = (messages) => messages.length; export async function unreadCount(messages) { return this.count(messages) }'
+    task.reference[task.entry] = 'export const count = (messages) => messages.filter((message) => !message.read).length; export async function unreadCount(messages) { return this.count(messages) }'
+  })
+  const result = run(root)
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(JSON.parse(result.stdout).status, 'verified_fixture_controls')
+})
+
 test('changed suite cannot reuse its old hash', (t) => {
   const root = fixture(t)
   writeFileSync(join(root, 'evaluation/suite.json'), readFileSync(join(root, 'evaluation/suite.json'), 'utf8') + '\n')

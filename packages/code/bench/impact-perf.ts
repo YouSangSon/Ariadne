@@ -12,15 +12,17 @@
  *   tsx bench/impact-perf.ts --scales 1000,10000      # custom scales
  *   tsx bench/impact-perf.ts --max-ms-per-kfile 2000  # fail if index cost/kfile exceeds the ceiling
  */
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp,rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 
-import { analyzeDiff, indexProject, initProject } from '../src/index.js';
-import type { IndexResult, IndexScanReads } from '../src/index.js';
-import { editSyntheticChangedFile, generateSyntheticRepo } from './synthetic-repo.js';
+import { analyzeDiff } from "../src/composition/impact.js";
+import { indexProject } from "../src/composition/indexing.js";
+import { initProject } from "../src/composition/project.js";
+import type { IndexResult,IndexScanReads } from "../src/domain/model.js";
+import { editSyntheticChangedFile,generateSyntheticRepo } from './synthetic-repo.js';
 
 export type PerfRow = {
   files: number;
