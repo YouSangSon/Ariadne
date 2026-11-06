@@ -77,6 +77,18 @@
       "layer": "application",
       "context": "evaluation"
     },
+    "evaluation/compare-cli.mjs": {
+      "layer": "composition",
+      "context": "evaluation"
+    },
+    "evaluation/comparison-example.json": {
+      "context": "evaluation",
+      "layer": "tooling"
+    },
+    "evaluation/comparison.mjs": {
+      "layer": "domain",
+      "context": "evaluation"
+    },
     "evaluation/domain.mjs": {
       "layer": "domain",
       "context": "evaluation"
@@ -138,6 +150,10 @@
       "layer": "domain",
       "context": "shared"
     },
+    "lib/skill-catalog.mjs": {
+      "layer": "composition",
+      "context": "context"
+    },
     "modules/context/application.mjs": {
       "layer": "application",
       "context": "context"
@@ -148,6 +164,10 @@
     },
     "modules/context/files.mjs": {
       "layer": "infrastructure",
+      "context": "context"
+    },
+    "modules/context/skills.mjs": {
+      "layer": "domain",
       "context": "context"
     },
     "modules/integration/application.mjs": {
@@ -316,6 +336,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "tests/evaluation-compare.test.mjs": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
     "tests/evaluation.test.mjs": {
       "layer": "tooling",
       "context": "validation"
@@ -383,6 +407,10 @@
     "tests/scrub.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/skill-catalog.test.mjs": {
+      "layer": "tooling",
+      "context": "context"
     },
     "tests/verify.test.mjs": {
       "layer": "tooling",

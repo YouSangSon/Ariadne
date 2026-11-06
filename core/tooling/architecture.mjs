@@ -9,7 +9,7 @@ const INNER = new Set(['domain', 'application'])
 const BUILTINS = new Set(builtinModules.map((name) => name.replace(/^node:/, '')))
 export const ROOT_EXCLUSIONS = ['packages', '.harness', '.ariadne']
 const PACKAGE_AREAS = ['src', 'scripts', 'bench']
-const ROOT_CONFIG = ['package.json', '.gitignore', '.gitleaks.toml', '.gitleaksignore', 'evaluation/suite.json', 'evaluation/suite.sha256', 'modules/ontology/example.json', 'templates/req.yaml']
+const ROOT_CONFIG = ['package.json', '.gitignore', '.gitleaks.toml', '.gitleaksignore', 'evaluation/suite.json', 'evaluation/suite.sha256', 'evaluation/comparison-example.json', 'modules/ontology/example.json', 'templates/req.yaml']
 const SHARED = new Set(['lib/scrub.mjs', 'lib/budget.mjs', 'lib/caps.mjs', 'lib/module-selection.mjs', 'core/domain/requirement-fields.mjs'])
 // These are shared guarded I/O and existing outward entrypoints, never inward dependencies.
 const PUBLIC = new Set(['core/infrastructure/project-files.mjs', 'hooks/hook-io.mjs', 'scripts/mirror-lib.mjs'])

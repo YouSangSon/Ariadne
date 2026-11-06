@@ -205,6 +205,19 @@ APIプロトコルの検査を、モデルの品質、サブスクリプショ�
 
 </details>
 
+<a id="harness-evidence"></a>
+
+## 選択したスキルと実行記録の比較
+
+`skills` は対象プロジェクトのスキル名・説明・内容の hash を表示します。`context --skill name@SHA256` は選択した本文だけを必須コンテキストの予算に含め、内容変更や予算超過を拒否します。`eval compare` は実行記録の条件・報告された結果・失敗時の費用を比較します。エージェントの自動実行や実際の節約率を認証する機能ではありません。
+
+```sh
+node bin/Ariadne.mjs skills --root /path/to/project
+node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+```
+
+[20 件の参照元・適用範囲・入力形式（韓国語）](docs/harness-engineering-adoption.md).
+
 <a id="license"></a>
 
 ## ライセンス

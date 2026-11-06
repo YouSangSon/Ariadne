@@ -205,6 +205,19 @@ node scripts/verify.mjs
 
 </details>
 
+<a id="harness-evidence"></a>
+
+## 按需选择技能与比较执行记录
+
+`skills` 显示目标项目的技能名称、描述和内容 hash。`context --skill name@SHA256` 仅将选中的完整正文纳入必需上下文预算，并拒绝内容变更或预算超限。`eval compare` 比较执行记录的条件、报告的结果及失败成本。它不会自动运行代理，也不能证明实际节省比例。
+
+```sh
+node bin/Ariadne.mjs skills --root /path/to/project
+node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+```
+
+[20 个来源的审查、应用范围与输入格式（韩语）](docs/harness-engineering-adoption.md).
+
 <a id="license"></a>
 
 ## 许可证

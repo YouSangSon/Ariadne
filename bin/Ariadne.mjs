@@ -15,6 +15,9 @@ const help = `Ariadne — integrated agent harness
   Ariadne verify [--modules list]      Verify selected modules (default: all)
                                      Modules: core,memory,code,ontology (core is always included)
   Ariadne context [--root path] [--req slug] [--budget brief|standard|deep]
+                  [--skill slug@sha256 ...]
+  Ariadne skills [--root path]        List local skill metadata and pinned selections
+  Ariadne eval compare --file path [--root path]  Compare recorded runs offline
   Ariadne code <command>               Code impact, local facts, MCP and UI (--help)
   Ariadne ontology <command>           Ontology operations (--help)
   Ariadne memory init|pack|remember|reindex <options>

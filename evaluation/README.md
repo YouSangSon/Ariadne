@@ -52,3 +52,31 @@ worker 정상 종료는 exit 0이며 비교 불일치는 반환 데이터로만 
 
 반환값이 같은 내부 리팩터링, 실제 지침 발동·준수, 승인 경계, REQ 증거와 handoff 보존은 이 11개 비교로 인증하지 않는다.
 유료 capability smoke, 실행 환경 격리, 실제 Stage 0와 held-out 평가는 기존 P8에 남아 있다.
+
+## 기록된 실행 비교
+
+기존 제어군 실행과 독립적으로, 이미 수집한 실행 기록의 비교 가능성과 비용을 검사한다. 모델이나 명령을 실행하지 않는다.
+
+```sh
+node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+```
+
+`comparison-example.json`은 합성 예제다. 실제 품질·사용량 측정 자료로 사용하지 않는다. 입력은 root 안의 상대 경로 JSON 파일이며 크기 상한은 1 MiB다. `--root`를 생략하면 현재 디렉터리를 사용한다. 결과의 `source.sha256`은 읽은 원본 바이트를 식별한다.
+
+| 입력 | 계약 |
+| --- | --- |
+| schema_version / baseline / candidate | `1` / `base` / `selected` 고정 |
+| runs | 최대 1000개. case_id와 variant 조합은 중복 불가 |
+| case_id | 하나의 과제·반복 회차. 반복 실험은 새 ID 사용 |
+| identity | input_sha256, verifier_sha256, model, effort, environment_sha256. 누락·null은 비교 불가이며 같은 누락끼리 일치하지 않음 |
+| harness_sha256 | variant 안에서는 동일하고 양쪽 variant는 다른 SHA-256 |
+| attempts | 1~100개. outcome은 pass/fail/error/unknown. pass는 마지막 시도에서만 허용 |
+| evidence_sha256 | pass에 필요한 보고된 검증 영수증 hash. 독립적인 실행 인증은 아님 |
+| input_tokens / output_tokens | 각 시도의 음이 아닌 안전 정수 또는 null/누락 |
+| cost_usd | 관측된 음이 아닌 유한 숫자 또는 null/누락. 토큰에서 임의 가격 환산하지 않음 |
+
+예상하지 않은 필드, 잘못된 숫자·hash·중복 기록은 exit 2로 실패하고 stdout을 남기지 않는다. 유효하지만 비교 조건이 부족한 기록은 exit 0 보고서의 `eligibility.comparable=false`와 사유로 나타낸다. 보고서 생성 성공은 실험 성공이 아니다.
+
+`variants`는 오류·실패를 포함한 전체 사례와 모든 시도의 비용을 집계한다. 필드별 관측 범위는 `coverage`다. 하나라도 사용량이 없으면 해당 전체 지표를 null로 유지한다. 성공 0건의 성공당 비용도 null이다. 비용에는 JavaScript 부동소수 반올림 오차가 있을 수 있다. 토큰 입력·합계는 안전 정수 범위를 벗어나면 거절한다.
+
+`paired.reported_regressions`는 조건이 일치하는 사례에서 기준선 pass가 후보의 비pass로 바뀐 경우다. 전체 비교 조건이 부족하면 `descriptive`는 null이다. 입력과 영수증은 사용자가 제공한 기록이며, 같은 hash만으로 인과성·통계적 우월성·실제 검증 실행을 보장하지 않는다. 원본 기법과 적용 판단은 [출처 검토](../docs/harness-engineering-adoption.md)를 따른다.

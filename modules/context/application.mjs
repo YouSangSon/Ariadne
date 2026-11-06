@@ -1,7 +1,23 @@
 import { fieldBlock } from '../../core/domain/requirement-fields.mjs'
 import { handoffSections, renderPack } from './domain.mjs'
+import { skillSelection } from './skills.mjs'
 
-export function buildPack({ store, budget = 'standard', reqSlug = null }) {
+export function skillCatalog(store) {
+  return { schema_version: 1, trust: 'untrusted_reference_not_permission', skills: store.listSkills().map((id) => {
+    const { name, description, path, sha256, chars } = store.readSkill(id)
+    return { name, description, path, sha256, chars, selection: `${name}@${sha256}` }
+  }) }
+}
+
+export function buildPack({ store, budget = 'standard', reqSlug = null, skills = [] }) {
+  if (!Array.isArray(skills) || skills.length > 20) throw new Error('select at most 20 skills')
+  const selected = skills.map(skillSelection)
+  if (new Set(selected.map(({ id }) => id)).size !== selected.length) throw new Error('duplicate skill selection')
+  const selectedSkills = selected.map(({ id, sha256 }) => {
+    const skill = store.readSkill(id)
+    if (skill.sha256 !== sha256) throw new Error(`skill ${id}: SHA changed; select again`)
+    return { ...skill, selection: `${id}@${sha256}` }
+  })
   if (reqSlug !== null && (typeof reqSlug !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(reqSlug))) {
     throw new Error('REQ slug는 소문자·숫자·하이픈만 허용한다')
   }
@@ -28,5 +44,5 @@ export function buildPack({ store, budget = 'standard', reqSlug = null }) {
     if (active.length > 1) throw new Error('활성 REQ가 여러 개다. --req <slug>로 선택한다')
     requirement = active[0]?.text ?? ''
   }
-  return renderPack({ requirement, handoff, decisions, budget })
+  return renderPack({ requirement, handoff, decisions, budget, selectedSkills })
 }

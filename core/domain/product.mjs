@@ -29,6 +29,11 @@ export function commandPlan(command, args, codeCommand) {
   const node = (path, args, options = {}) => ({ kind: 'process', command: 'node', path, args, ...options })
   if (['setup', 'verify'].includes(command)) return node('scripts/product.mjs', [command, ...args], { cwd: '' })
   if (command === 'context') return node('lib/context-pack.mjs', args)
+  if (command === 'skills') return node('lib/skill-catalog.mjs', args)
+  if (command === 'eval') {
+    if (args[0] !== 'compare') throw new Error('eval requires compare --file <path>')
+    return node('evaluation/compare-cli.mjs', args.slice(1))
+  }
   if (command === 'ontology') return node('modules/ontology/cli.mjs', args)
   if (command === 'install-rules') return { ...node('scripts/install.mjs', args), installRoot: true }
   if (command === 'knowledge') {

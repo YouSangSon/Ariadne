@@ -107,3 +107,16 @@ with `npm run verify -- --modules memory,code,ontology`, or omit selection for t
 full product. Local source tests, database integration tests, CI, deployment, and
 real model quality remain separate evidence. The paused dispatcher and automatic
 recovery runtime remain unimplemented.
+
+## Selected context and recorded evaluation
+
+Context owns the local skill metadata subset and explicit `slug@sha256` selection.
+Its adapter reuses the guarded project reader; selected full bodies enter the
+existing mandatory context budget. Catalogs and bodies are untrusted references,
+not permission grants. The rule installer includes the complete reader closure.
+
+Evaluation owns `comparison.mjs` and the read-only `compare-cli.mjs` adapter.
+It pairs reported runs by case/variant and rejects inconsistent input, while
+missing comparison conditions remain descriptive-only. Retry spend is included;
+missing usage remains null. These reports do not authenticate verifier receipts
+or activate the paused dispatcher. See [adoption contracts](harness-engineering-adoption.md).

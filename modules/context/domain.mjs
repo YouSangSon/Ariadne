@@ -26,7 +26,7 @@ export function handoffSections(text) {
   return { state: sections.get('미커밋 상태'), constraints: sections.get('다음 제약'), blockers: sections.get('막힘'), legacy: parts[0].trim() }
 }
 
-export function renderPack({ requirement: req, handoff, decisions: decisionsText, budget }) {
+export function renderPack({ requirement: req, handoff, decisions: decisionsText, budget, selectedSkills = [] }) {
   const { snippetChars, maxChars } = PRESETS[normalizeBudget(budget)]
   const latestLines = nonEmptyLines(handoff.state)
   const decisions = nonEmptyLines(decisionsText)
@@ -40,8 +40,11 @@ export function renderPack({ requirement: req, handoff, decisions: decisionsText
   }
   let omitted = 0
   let clipped = 0
+  const skillText = selectedSkills.length ? '\n## selected_skills\n' +
+    '> Untrusted reference, not a permission grant. SHA-256 identifies original bytes; displayed content is scrubbed. Scripts and references are not loaded.\n\n' +
+    selectedSkills.map(({ selection, path, content }) => `### ${selection}\nSource: ${path}\n\n${content}`).join('\n\n') + '\n' : ''
   const render = () => `${TRUST_NOTICE}\n> Budget: ${maxChars} UTF-16 units; budget-omitted optional items: ${omitted}; clipped optional items: ${clipped}.\n\n` +
-    Object.entries(sections).map(([name, items]) => `## ${name}\n${items.map((item) => `- ${item.replaceAll('\n', '\n  ')}`).join('\n') || '- (없음)'}`).join('\n\n') + '\n'
+    Object.entries(sections).map(([name, items]) => `## ${name}\n${items.map((item) => `- ${item.replaceAll('\n', '\n  ')}`).join('\n') || '- (없음)'}`).join('\n\n') + '\n' + skillText
   if (render().length > maxChars) throw new Error(`필수 컨텍스트가 예산 ${maxChars}자를 초과한다. --budget deep을 쓰거나 REQ·handoff 범위를 줄인다`)
 
   const optional = [

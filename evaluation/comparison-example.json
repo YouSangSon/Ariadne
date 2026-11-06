@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "baseline": "base",
+  "candidate": "selected",
+  "runs": [
+    {
+      "case_id": "synthetic-1",
+      "variant": "base",
+      "identity": {
+        "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "model": "synthetic-model",
+        "effort": "high",
+        "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "harness_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "attempts": [
+        {
+          "outcome": "fail",
+          "input_tokens": 12,
+          "output_tokens": 4,
+          "cost_usd": 0.002,
+          "evidence_sha256": null
+        },
+        {
+          "outcome": "pass",
+          "input_tokens": 10,
+          "output_tokens": 3,
+          "cost_usd": 0.001,
+          "evidence_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        }
+      ]
+    },
+    {
+      "case_id": "synthetic-1",
+      "variant": "selected",
+      "identity": {
+        "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "model": "synthetic-model",
+        "effort": "high",
+        "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "harness_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "attempts": [
+        {
+          "outcome": "pass",
+          "input_tokens": 9,
+          "output_tokens": 3,
+          "cost_usd": 0.001,
+          "evidence_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        }
+      ]
+    },
+    {
+      "case_id": "synthetic-2",
+      "variant": "base",
+      "identity": {
+        "input_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "model": "synthetic-model",
+        "effort": "high",
+        "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "harness_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "attempts": [
+        {
+          "outcome": "pass",
+          "input_tokens": 8,
+          "output_tokens": 3,
+          "cost_usd": 0.001,
+          "evidence_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+        }
+      ]
+    },
+    {
+      "case_id": "synthetic-2",
+      "variant": "selected",
+      "identity": {
+        "input_sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+        "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+        "model": "synthetic-model",
+        "effort": "high",
+        "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "harness_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "attempts": [
+        {
+          "outcome": "fail",
+          "input_tokens": 7,
+          "output_tokens": 2,
+          "cost_usd": 0.001,
+          "evidence_sha256": null
+        }
+      ]
+    }
+  ]
+}

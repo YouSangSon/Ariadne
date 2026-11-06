@@ -8,9 +8,10 @@ export const BLOCK_END = '<!-- harness:end -->'
 export const BLOCK_RE = /\n?<!-- harness:begin[\s\S]*?<!-- harness:end -->\n?/
 export const INSTALL_AREAS = ['core', 'skills', 'templates']
 export const INSTALL_RUNTIME_FILES = [
-  'lib/context-pack.mjs', 'lib/budget.mjs', 'lib/scrub.mjs',
+  'lib/context-pack.mjs', 'lib/skill-catalog.mjs', 'lib/budget.mjs', 'lib/scrub.mjs',
   'modules/context/domain.mjs', 'modules/context/application.mjs', 'modules/context/files.mjs',
-  'core/domain/requirement-fields.mjs',
+  'modules/context/skills.mjs', 'core/domain/requirement-fields.mjs',
+  'core/domain/project-files.mjs', 'core/infrastructure/project-files.mjs',
 ]
 const SRC_EXTS = new Set(['ts', 'tsx', 'js', 'jsx', 'mjs', 'py', 'go', 'rs', 'java'])
 const SKIP_DIRS = /(^|\/)(node_modules|\.git|dist|build|\.harness)(\/|$)/

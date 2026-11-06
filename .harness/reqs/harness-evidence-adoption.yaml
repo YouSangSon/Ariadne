@@ -1,0 +1,35 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: harness-evidence-adoption
+  title: 출처 기반 스킬 선택과 하네스 실행 비교
+  status: verified
+requirement:
+  user_intent: 지정한 20개 저장소를 조사하고 Ariadne에 유용한 하네스 기법을 실제로 적용한다.
+  desired_outcome: 필요한 스킬만 읽고, 비교 가능한 실행 근거로 품질과 전체 사용량을 평가한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: 20개 출처의 실제 파일·revision·라이선스와 채택·보류 근거를 기록한다.
+      verification: 출처 문서와 공식 저장소 원문을 대조한다.
+    - id: AC2
+      statement: 로컬 스킬 목록은 본문을 노출하지 않으며 명시 선택은 변경된 hash·위험 경로·예산 초과를 거절한다.
+      verification: 실제 CLI와 context 회귀·음성 대조를 실행한다.
+    - id: AC3
+      statement: 실행 비교는 작업·검증·모델·환경 동일성을 확인하고 누락된 사용량과 실패 비용을 숨기지 않는다.
+      verification: 비교 불가·품질 회귀·실패 비용·0 성공 시나리오를 검사한다.
+    - id: AC4
+      statement: 기존 설치와 필수 문맥 계약을 보존하고 실제 명령과 한계를 문서화한다.
+      verification: root 검증·설치 closure·문서 링크·최종 diff를 확인한다.
+verification:
+  commands:
+    - node scripts/verify.mjs
+    - node --test tests/skill-catalog.test.mjs tests/evaluation-compare.test.mjs
+classification:
+  category: feature
+audit:
+  must_not_implement:
+    - 중지된 dispatcher 자동 실행
+    - 외부 스킬 자동 설치 또는 권한 자동 부여
+    - 유료 모델 호출과 검증 없는 토큰 절약률 주장
+    - 기존 CodeQL 경고 해제·보호 규칙 우회

@@ -205,6 +205,19 @@ Existing installation data formats and identifiers, including `.harness/`, `~/.h
 
 </details>
 
+<a id="harness-evidence"></a>
+
+## Selected skills and run comparisons
+
+`skills` lists names, descriptions and content hashes from the target project. `context --skill name@SHA256` includes only selected bodies within the mandatory context budget and rejects changed content or overflow. `eval compare` compares conditions, reported outcomes and failure costs from recorded runs. It does not execute agents or certify real savings.
+
+```sh
+node bin/Ariadne.mjs skills --root /path/to/project
+node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+```
+
+[Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
+
 <a id="license"></a>
 
 ## License
