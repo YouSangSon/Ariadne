@@ -120,3 +120,8 @@ It pairs reported runs by case/variant and rejects inconsistent input, while
 missing comparison conditions remain descriptive-only. Retry spend is included;
 missing usage remains null. These reports do not authenticate verifier receipts
 or activate the paused dispatcher. See [adoption contracts](harness-engineering-adoption.md).
+
+The proposed combination of scoped context, evidence reuse, supervised continuity,
+and eventual task control is described in the [harness synthesis design](harness-synthesis-design.md).
+It preserves these owners and the existing execution policy; its future contracts
+are not implemented capabilities.
