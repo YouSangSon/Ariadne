@@ -4,11 +4,11 @@ import {
   buildRestoreSmokeCommandEnv,
   buildRestoreSmokeToolInput,
   parseRestoreBackupManifest,
+  readRestoreSmokeToolResult,
   resolveOptionalRestoreSmokeTextEnv,
   resolveRestoreAppPort,
   resolveRestoreSmokeTextEnv,
   runRestoreSmoke,
-  readRestoreSmokeToolResult,
 } from "../../scripts/restore-smoke.js";
 
 describe("runRestoreSmoke", () => {

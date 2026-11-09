@@ -1,10 +1,13 @@
-import { test } from 'node:test'
+import { test, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, existsSync, readFileSync } from 'node:fs'
+import { rmSync, mkdtempSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+const temporaryDirectories = []
+after(() => { for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true }) })
 
 const HOOKS = join(dirname(fileURLToPath(import.meta.url)), '..', 'hooks')
 
@@ -18,7 +21,7 @@ function runHook(script, stdinObj, root) {
 const commitCmd = (msg, extra = '') =>
   ({ tool_input: { command: `git commit ${extra} -m ${JSON.stringify(msg)}` } })
 
-const tmp = () => mkdtempSync(join(tmpdir(), 'harness-p4-'))
+const tmp = () => { const root = mkdtempSync(join(tmpdir(), 'harness-p4-')); temporaryDirectories.push(root); return root }
 
 test('commit-message: 형식+REQ 참조가 유효하면 통과', () => {
   const r = runHook('commit-message.mjs', commitCmd('feat: 기능 추가\n\nREQ: p1-core-rules'), tmp())

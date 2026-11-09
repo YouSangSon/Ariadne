@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { createQdrantVectorIndex } from "../../src/vector/qdrant-index.js";
+import { createQdrantVectorIndex } from "../../src/infrastructure/vector/qdrant-index.js";
 import type {
   VectorDeleteOptions,
   VectorFilter,
   VectorPoint,
-} from "../../src/vector/vector-index.js";
+} from "../../src/application/ports/vector-index.js";
 
 // FakeVectorIndex — a minimal in-memory VectorIndex for use by other tests.
 // Exported so downstream unit tests can import it instead of building their own.

@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createPgPool, type PgPool } from "../../src/db/connection.js";
-import { runMigrations } from "../../src/db/migrate.js";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
-import type { IngestJob } from "../../src/types.js";
+import { createPgPool, type PgPool } from "../../src/infrastructure/postgres/connection.js";
+import { runMigrations } from "../../src/infrastructure/postgres/migrate.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
+import type { IngestJob } from "../../src/domain/model/memory.js";
 
 const postgresPort = process.env.POSTGRES_PORT ?? "5432";
 const testDatabaseName = "memory_os_jobs_test";

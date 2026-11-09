@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
 
 function row() {
   return {

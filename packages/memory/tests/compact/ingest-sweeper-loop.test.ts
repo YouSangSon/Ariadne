@@ -3,10 +3,10 @@ import {
   loadIngestSweepEnabled,
   loadIngestSweepIntervalMs,
   startIngestSweeper,
-} from "../../src/compact/ingest-sweeper-loop.js";
-import type { IngestJobRepository } from "../../src/types.js";
-import type { MemoryChunkRepository } from "../../src/store/canonical-indexing.js";
-import type { StartIngestSweeperInput } from "../../src/compact/ingest-sweeper-loop.js";
+} from "../../src/interfaces/worker/ingest-sweeper-loop.js";
+import type { IngestJobRepository } from "../../src/application/ports/memory-repositories.js";
+import type { MemoryChunkRepository } from "../../src/application/ports/indexing.js";
+import type { StartIngestSweeperInput } from "../../src/interfaces/worker/ingest-sweeper-loop.js";
 
 const SILENT_LOGGER = {
   info: vi.fn(),

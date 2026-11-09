@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { assertRetrievalCorpus } from "../../../src/eval/retrieval-corpus.js";
+import { assertRetrievalCorpus } from "../../../src/domain/evaluation/retrieval-corpus.js";
 import { SEED_ENTRIES } from "./seed.js";
 import { ADDITIONAL_RETRIEVAL_SEEDS } from "./retrieval-seed.js";
 

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { unarchiveCompaction, type UnarchiveCompactionDeps } from "../../src/compact/unarchive-compaction.js";
-import type { PgPool } from "../../src/db/connection.js";
-import { createMemoryWriteCoordinator } from "../../src/store/memory-write-coordinator.js";
+import { unarchiveCompaction, type UnarchiveCompactionDeps } from "../../src/application/usecases/unarchive-compaction.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import { createMemoryWriteCoordinator } from "../../src/infrastructure/postgres/memory-write-coordinator.js";
 
 const timestamp = "2026-04-25T00:00:00.000Z";
 const updatedAt = "2026-04-25T01:00:00.000Z";
@@ -79,7 +79,7 @@ function fixture(options: { failAt?: string; archivePatch?: Record<string, unkno
     }
     if (sql.includes("INSERT INTO memory_records")) {
       step("canonical_insert");
-      expect(params.slice(-3)).toEqual([200, timestamp, updatedAt]);
+      expect(params.slice(10)).toEqual([200, timestamp, updatedAt, null]);
       transaction!.canonical = true;
       return { rows: [{ id: "999" }] };
     }

@@ -1,0 +1,1194 @@
+{
+  "schema_version": 1,
+  "files": {
+    "src/types.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/model/memory.ts"
+    },
+    "src/domain/model/memory.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/chunk/chunk-text.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/chunk-text.ts"
+    },
+    "src/domain/policies/chunk-text.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/entities/entity-extraction.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/entity-extraction.ts"
+    },
+    "src/domain/policies/entity-extraction.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/compact/decay-score.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/decay-score.ts"
+    },
+    "src/domain/policies/decay-score.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/compact/detect-duplicates.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/detect-duplicates.ts"
+    },
+    "src/domain/policies/detect-duplicates.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/compact/semantic-duplicates.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/semantic-duplicates.ts"
+    },
+    "src/domain/policies/semantic-duplicates.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/compact/compact-memory.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/compact-memory.ts"
+    },
+    "src/domain/policies/compact-memory.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/search/lexical-score.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/lexical-score.ts"
+    },
+    "src/domain/policies/lexical-score.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/search/rank-results.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/rank-results.ts"
+    },
+    "src/domain/policies/rank-results.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/search/scored-candidate.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/scored-candidate.ts"
+    },
+    "src/domain/policies/scored-candidate.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/context-pack/build-context-pack.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/build-context-pack.ts"
+    },
+    "src/domain/policies/build-context-pack.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/goal-run/build-goal-context.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/build-goal-context.ts"
+    },
+    "src/domain/policies/build-goal-context.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/goal-run/find-repeat-attempts.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/find-repeat-attempts.ts"
+    },
+    "src/domain/policies/find-repeat-attempts.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/store/assert-organization-id.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/assert-organization-id.ts"
+    },
+    "src/domain/policies/assert-organization-id.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/store/memory-content.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/memory-content.ts"
+    },
+    "src/domain/policies/memory-content.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/store/secret-scrub.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/secret-scrub.ts"
+    },
+    "src/domain/policies/secret-scrub.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/vector/organization-id.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/organization-id.ts"
+    },
+    "src/domain/policies/organization-id.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/jobs/retry-backoff.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/policies/retry-backoff.ts"
+    },
+    "src/domain/policies/retry-backoff.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/eval/metrics.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/evaluation/metrics.ts"
+    },
+    "src/domain/evaluation/metrics.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/eval/payload-metrics.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/evaluation/payload-metrics.ts"
+    },
+    "src/domain/evaluation/payload-metrics.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/eval/retrieval-corpus.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/evaluation/retrieval-corpus.ts"
+    },
+    "src/domain/evaluation/retrieval-corpus.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/eval/types.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/domain/evaluation/types.ts"
+    },
+    "src/domain/evaluation/types.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/vector/vector-index.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/ports/vector-index.ts"
+    },
+    "src/application/ports/vector-index.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/embedding/embedding-provider.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/ports/embedding-provider.ts"
+    },
+    "src/application/ports/embedding-provider.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/sweeper-metrics.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/ports/sweeper-metrics.ts"
+    },
+    "src/application/ports/sweeper-metrics.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/chunk/chunk-for-embedding.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/indexing/chunk-for-embedding.ts"
+    },
+    "src/application/indexing/chunk-for-embedding.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/vector/point-builder.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/indexing/point-builder.ts"
+    },
+    "src/application/indexing/point-builder.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/apply-compaction.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/usecases/apply-compaction.ts"
+    },
+    "src/application/usecases/apply-compaction.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/ingest-sweeper.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/usecases/ingest-sweeper.ts"
+    },
+    "src/application/usecases/ingest-sweeper.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/outbox-sweeper.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/usecases/outbox-sweeper.ts"
+    },
+    "src/application/usecases/outbox-sweeper.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/unarchive-compaction.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/usecases/unarchive-compaction.ts"
+    },
+    "src/application/usecases/unarchive-compaction.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/search/retrieve-memory.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/usecases/retrieve-memory.ts"
+    },
+    "src/application/usecases/retrieve-memory.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/types.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/contracts/tools.ts"
+    },
+    "src/application/contracts/tools.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/tool-handlers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/tool-handlers.ts"
+    },
+    "src/application/tools/tool-handlers.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/context-pack-result.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/context-pack-result.ts"
+    },
+    "src/application/tools/context-pack-result.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/tool-repository-access.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/tool-repository-access.ts"
+    },
+    "src/application/tools/tool-repository-access.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/memory-write-services.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/memory-write-services.ts"
+    },
+    "src/application/tools/memory-write-services.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/tool-registry-instrumentation.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/tool-registry-instrumentation.ts"
+    },
+    "src/application/tools/tool-registry-instrumentation.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/tool-registry-validation.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/tool-registry-validation.ts"
+    },
+    "src/application/tools/tool-registry-validation.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/mcp/tool-utils.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/tool-utils.ts"
+    },
+    "src/application/tools/tool-utils.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/audit/tool-handlers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/audit-handlers.ts"
+    },
+    "src/application/tools/audit-handlers.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/compact/tool-handlers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/compact-handlers.ts"
+    },
+    "src/application/tools/compact-handlers.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/goal-run/tool-handlers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/goal-run-handlers.ts"
+    },
+    "src/application/tools/goal-run-handlers.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/store/tool-handlers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/application/tools/store-handlers.ts"
+    },
+    "src/application/tools/store-handlers.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/db/connection.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/connection.ts"
+    },
+    "src/infrastructure/postgres/connection.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/db/record-lock.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/record-lock.ts"
+    },
+    "src/infrastructure/postgres/record-lock.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/db/migrate.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/migrate.ts"
+    },
+    "src/infrastructure/postgres/migrate.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/store/memory-repository.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/memory-repository.ts"
+    },
+    "src/infrastructure/postgres/memory-repository.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/store/memory-archive-repository.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/memory-archive-repository.ts"
+    },
+    "src/infrastructure/postgres/memory-archive-repository.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/store/memory-write-coordinator.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/memory-write-coordinator.ts"
+    },
+    "src/infrastructure/postgres/memory-write-coordinator.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/store/canonical-indexing.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/canonical-indexing.ts"
+    },
+    "src/infrastructure/postgres/canonical-indexing.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/store/db-utils.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/db-utils.ts"
+    },
+    "src/infrastructure/postgres/db-utils.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/jobs/ingest-job-repository.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/ingest-job-repository.ts"
+    },
+    "src/infrastructure/postgres/ingest-job-repository.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/goal-run/goal-run-repository.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/goal-run-repository.ts"
+    },
+    "src/infrastructure/postgres/goal-run-repository.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/audit/audit-log-repository.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/audit-log-repository.ts"
+    },
+    "src/infrastructure/postgres/audit-log-repository.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/app/background-queue-metrics.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/postgres/background-queue-metrics.ts"
+    },
+    "src/infrastructure/postgres/background-queue-metrics.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/embedding/local-embedding.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/embedding/local-embedding.ts"
+    },
+    "src/infrastructure/embedding/local-embedding.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/embedding/openai-embeddings.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/embedding/openai-embeddings.ts"
+    },
+    "src/infrastructure/embedding/openai-embeddings.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/embedding/transformers-embedding.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/embedding/transformers-embedding.ts"
+    },
+    "src/infrastructure/embedding/transformers-embedding.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/qdrant/client.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/vector/client.ts"
+    },
+    "src/infrastructure/vector/client.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/vector/qdrant-index.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/vector/qdrant-index.ts"
+    },
+    "src/infrastructure/vector/qdrant-index.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/vector/pgvector-index.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/vector/pgvector-index.ts"
+    },
+    "src/infrastructure/vector/pgvector-index.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/config.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/configuration/config.ts"
+    },
+    "src/infrastructure/configuration/config.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/logger.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/observability/logger.ts"
+    },
+    "src/infrastructure/observability/logger.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/health/check-dependencies.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/health/check-dependencies.ts"
+    },
+    "src/infrastructure/health/check-dependencies.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/ingest/readers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/files/readers.ts"
+    },
+    "src/infrastructure/files/readers.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/lifecycle/init.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/lifecycle.ts"
+    },
+    "src/infrastructure/files/init.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/eval/client-ab.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/client-evaluation.ts"
+    },
+    "src/infrastructure/evaluation/client-ab.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/eval/client-cli-prefetch.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/infrastructure/evaluation/client-cli-prefetch.ts"
+    },
+    "src/infrastructure/evaluation/client-cli-prefetch.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/mcp/canonical-services.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/canonical-services.ts"
+    },
+    "src/composition/runtime/canonical-services.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/mcp/tool-registry.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/tool-registry.ts"
+    },
+    "src/composition/runtime/tool-registry.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/embedding/embedding-factory.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/embedding-factory.ts"
+    },
+    "src/composition/runtime/embedding-factory.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/app/background-workers.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/background-workers.ts"
+    },
+    "src/composition/runtime/background-workers.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/ingest/ingest-project.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/composition/runtime/ingest-project.ts"
+    },
+    "src/composition/runtime/ingest-project.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/cli.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/cli/cli.ts"
+    },
+    "src/interfaces/cli/cli.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/cli-args.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/cli/arguments.ts"
+    },
+    "src/interfaces/cli/arguments.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/compact/ingest-sweeper-loop.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/worker/ingest-sweeper-loop.ts"
+    },
+    "src/interfaces/worker/ingest-sweeper-loop.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/compact/sweeper-loop.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/worker/sweeper-loop.ts"
+    },
+    "src/interfaces/worker/sweeper-loop.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/oauth-protected-resource.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/oauth-protected-resource.ts"
+    },
+    "src/interfaces/http/oauth-protected-resource.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/mcp-http.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/mcp-http.ts"
+    },
+    "src/interfaces/http/mcp-http.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/admin-memory-page.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/admin-memory-page.ts"
+    },
+    "src/interfaces/http/admin-memory-page.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/server.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/server.ts"
+    },
+    "src/interfaces/http/server.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/metrics.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/metrics.ts"
+    },
+    "src/interfaces/http/metrics.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/worker.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/worker.ts"
+    },
+    "src/interfaces/http/worker.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/resources.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/resources.ts"
+    },
+    "src/interfaces/mcp/resources.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/prompts.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/prompts.ts"
+    },
+    "src/interfaces/mcp/prompts.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/tool-schemas.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/tool-schemas.ts"
+    },
+    "src/interfaces/mcp/tool-schemas.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/service-tools.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/service-tools.ts"
+    },
+    "src/interfaces/mcp/service-tools.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/tool-result.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/tool-result.ts"
+    },
+    "src/interfaces/mcp/tool-result.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/server.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/server.ts"
+    },
+    "src/interfaces/mcp/server.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/mcp/context-tools.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/mcp/context-tools.ts"
+    },
+    "src/interfaces/mcp/context-tools.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/envelope.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/envelope.ts"
+    },
+    "src/interfaces/http/middleware/envelope.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/oauth-token-auth.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/oauth-token-auth.ts"
+    },
+    "src/interfaces/http/middleware/oauth-token-auth.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/bearer-auth.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/bearer-auth.ts"
+    },
+    "src/interfaces/http/middleware/bearer-auth.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/organization-resolution.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/organization-resolution.ts"
+    },
+    "src/interfaces/http/middleware/organization-resolution.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/json-body.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/json-body.ts"
+    },
+    "src/interfaces/http/middleware/json-body.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/mcp-http-auth.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/mcp-http-auth.ts"
+    },
+    "src/interfaces/http/middleware/mcp-http-auth.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/middleware/rate-limit.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/middleware/rate-limit.ts"
+    },
+    "src/interfaces/http/middleware/rate-limit.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/routes/tool-handler.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/routes/tool-handler.ts"
+    },
+    "src/interfaces/http/routes/tool-handler.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/routes/types.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/routes/types.ts"
+    },
+    "src/interfaces/http/routes/types.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/app/routes/memory.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/http/routes/memory.ts"
+    },
+    "src/interfaces/http/routes/memory.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/db/schema.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/009_memory_archive_qdrant_retry.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/011_entity_temporal_graph.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/007_ingest_jobs_qdrant_outbox.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/010_postgres_full_text_search.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/015_background_queue_metrics_indexes.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/008_chunks_fk_index.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/002_add_organization.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/005_add_compaction_archive.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/001_initial.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/003_add_audit_log.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/004_add_cascade_indexes.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/012_memory_governance_tags.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/013_add_goal_runs.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/006_add_archive_unarchive.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "src/db/migrations/014_add_goal_run_close_note.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    },
+    "scripts/backup-encryption.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/operators/backup-encryption.ts"
+    },
+    "scripts/create-backup.sh": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "scripts/backup-postgres.sh": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "scripts/restore-smoke.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/operators/restore-smoke.ts"
+    },
+    "scripts/backup-verify.ts": {
+      "layer": "compatibility",
+      "context": "memory",
+      "target": "src/interfaces/operators/backup-verify.ts"
+    },
+    "scripts/snapshot-qdrant.sh": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "src/interfaces/operators/backup-encryption.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/interfaces/operators/restore-smoke.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/interfaces/operators/backup-verify.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/interfaces/mcp/contracts.ts": {
+      "layer": "interfaces",
+      "context": "memory"
+    },
+    "src/domain/policies/scope.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/domain/model/compaction.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/infrastructure/identity/user-scope.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/infrastructure/operations/backup-encryption.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/infrastructure/operations/restore-smoke.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/infrastructure/operations/backup-verify.ts": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "src/application/tools/canonical-services.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/contracts/embedding-settings.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ingest/project-ingest.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/lifecycle/init.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/operations/backup-verify-policy.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/operations/restore-smoke-policy.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/operations/backup-encryption-policy.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/evaluation/client-policy.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/evaluation/prefetch-context-pack.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/indexing/canonical-indexing.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/indexing/pending-index-job.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/memory-repositories.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/memory-write.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/indexing.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/project-sources.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/tool-runtime.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/memory-archive.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/logger.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/audit-log.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/composition/runtime/lifecycle.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/composition/runtime/tool-runtime.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/domain/model/vector.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/application/operations/encrypt-backups.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/operations/verify-backups.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/evaluation/run-client-ab.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/evaluation/prepare-experiment.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/application/ports/backup-artifacts.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/composition/runtime/client-evaluation.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/composition/runtime/backup-operations.ts": {
+      "layer": "composition",
+      "context": "memory"
+    },
+    "src/application/evaluation/ports.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/domain/policies/memory-revalidation.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/application/tools/memory-revalidation.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/db/migrations/016_memory_revalidation.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
+    }
+  }
+}

@@ -77,7 +77,7 @@ job에서 실행합니다.
 ### 마이그레이션
 
 SQL 파일은 `src/db/migrations/NNN_*.sql` 에 있습니다. 현재 마이그레이션 파일은
-`001-015` 범위이며, 다음 마이그레이션은 `016_*.sql` 이어야 합니다. 이후 schema
+`001-016` 범위이며, 다음 마이그레이션은 `017_*.sql` 이어야 합니다. 이후 schema
 변경은 현재 범위 뒤의 다음 미사용 번호를 붙이고, `src/db/migrate.ts` 의
 `MIGRATION_FILES` 배열과 production fallback용 임베디드 SQL 문자열에도 추가하세요.
 모든 마이그레이션은 idempotent (`CREATE … IF NOT EXISTS`,

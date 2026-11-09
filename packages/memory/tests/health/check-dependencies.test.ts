@@ -4,7 +4,7 @@ import {
   buildPostgresProbe,
   buildQdrantProbe,
   checkDependencies,
-} from "../../src/health/check-dependencies.js";
+} from "../../src/infrastructure/health/check-dependencies.js";
 
 afterEach(() => {
   vi.restoreAllMocks();

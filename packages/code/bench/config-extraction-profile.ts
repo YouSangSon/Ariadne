@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto';
-import { readFile, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
-import { cpus, release, tmpdir, totalmem } from 'node:os';
+import { mkdir,mkdtemp,readFile,rm,writeFile } from 'node:fs/promises';
+import { cpus,release,tmpdir,totalmem } from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { pathToFileURL } from 'node:url';
 
-import type { AdapterRun, SemanticAdapter } from '../src/adapters/types.js';
-import type { IndexScanReads } from '../src/types.js';
-import { editSyntheticChangedFile, generateSyntheticRepo } from './synthetic-repo.js';
+import type { AdapterRun,SemanticAdapter } from "../src/domain/indexing/adapter.js";
+import type { IndexScanReads } from "../src/domain/model.js";
+import { editSyntheticChangedFile,generateSyntheticRepo } from './synthetic-repo.js';
 
 export type ExtractionSample = {
   phase: 'start' | 'process' | 'dispose';
@@ -65,17 +65,23 @@ export async function profileConfigExtraction(packageRoot: string) {
   const root = path.resolve(packageRoot);
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8')) as { name?: string; version?: string };
   if (pkg.name !== 'parallax') throw new Error('expected a built Parallax package root');
-  const runtimeFiles = ['init', 'indexer', 'store', 'adapters/registry', 'adapters/config-infra'];
+  const runtimeFiles = [
+    'composition/project', 'application/indexing/init-project', 'infrastructure/filesystem/init',
+    'composition/indexing', 'composition/extractors', 'application/indexing/index-project',
+    'domain/indexing/index-policy', 'domain/indexing/index-delta', 'domain/indexing/adapter-registry',
+    'infrastructure/filesystem/index-scan', 'infrastructure/sqlite/indexing', 'infrastructure/sqlite/store',
+    'infrastructure/extractors/config-infra'
+  ];
   const runtimeSha256: Record<string, string> = {};
   for (const file of runtimeFiles) {
     runtimeSha256[`dist/src/${file}.js`] = createHash('sha256')
       .update(await readFile(path.join(root, 'dist/src', `${file}.js`))).digest('hex');
   }
   const load = (file: string) => import(pathToFileURL(path.join(root, 'dist/src', `${file}.js`)).href);
-  const { initProject } = await load('init') as typeof import('../src/init.js');
-  const { createDefaultRegistry, indexProjectWithRegistryForTest } = await load('indexer') as typeof import('../src/indexer.js');
-  const { AdapterRegistry } = await load('adapters/registry') as typeof import('../src/adapters/registry.js');
-  const { CONFIG_INFRA_SEMANTIC_ADAPTER_ID } = await load('adapters/config-infra') as typeof import('../src/adapters/config-infra.js');
+  const { initProject } = await load('composition/project') as typeof import('../src/composition/project.js');
+  const { createDefaultRegistry, indexProjectWithRegistryForTest } = await load('composition/indexing') as typeof import('../src/composition/indexing.js');
+  const { AdapterRegistry } = await load('domain/indexing/adapter-registry') as typeof import('../src/domain/indexing/adapter-registry.js');
+  const { CONFIG_INFRA_SEMANTIC_ADAPTER_ID } = await load('infrastructure/extractors/config-infra') as typeof import('../src/infrastructure/extractors/config-infra.js');
   const fixture = await mkdtemp(path.join(tmpdir(), 'parallax-config-profile-'));
   try {
     const info = await generateSyntheticRepo(fixture, { files: 20 });

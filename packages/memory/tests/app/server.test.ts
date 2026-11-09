@@ -1,4 +1,5 @@
-import { EmbeddingInputTooLongError } from "../../src/embedding/transformers-embedding.js";
+import { MemoryRecordConflictError } from "../../src/application/tools/memory-revalidation.js";
+import { EmbeddingInputTooLongError } from "../../src/infrastructure/embedding/transformers-embedding.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createConnection, type AddressInfo } from "node:net";
 import {
@@ -6,18 +7,18 @@ import {
   createOperatorServer,
   isLoopbackHost,
   selectDependencyProbes,
-} from "../../src/app/server.js";
+} from "../../src/interfaces/http/server.js";
 import {
   createTokenBucketLimiter,
   type RateLimiter,
-} from "../../src/app/middleware/rate-limit.js";
-import type { OAuthProtectedResourceConfig } from "../../src/app/oauth-protected-resource.js";
-import type { OAuthTokenVerifier } from "../../src/app/middleware/bearer-auth.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
+} from "../../src/interfaces/http/middleware/rate-limit.js";
+import type { OAuthProtectedResourceConfig } from "../../src/interfaces/http/oauth-protected-resource.js";
+import type { OAuthTokenVerifier } from "../../src/interfaces/http/middleware/bearer-auth.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
 import { goalRunRegistryStubs } from "../fixtures/goal-run-stubs.js";
-import type { Logger } from "../../src/logger.js";
-import type { PgPool } from "../../src/db/connection.js";
-import type { DependencyProbes } from "../../src/health/check-dependencies.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { PgPool } from "../../src/infrastructure/postgres/connection.js";
+import type { DependencyProbes } from "../../src/infrastructure/health/check-dependencies.js";
 
 type ServerHandle = {
   baseUrl: string;
@@ -80,6 +81,7 @@ function buildRegistry(): ToolRegistry {
       scopeId: "p",
       memories: [],
     }),
+    inspect_memory_impact: vi.fn(),
     inspect_memory_graph: vi.fn().mockResolvedValue({
       ok: true,
       scopeType: "project",
@@ -201,6 +203,18 @@ describe("createOperatorServer", () => {
 
   afterEach(async () => {
     await handle.close();
+  });
+
+  it("authenticates correction-impact reads and validates revalidation CAS writes", async () => {
+    vi.mocked(registry.inspect_memory_impact).mockResolvedValue({ok:true,scopeType:"project",scopeId:"p",affectedMemoryIds:[],registeredDerivatives:[],coverage:"known_only",dependenciesComplete:false,registered_scan_complete:true,truncated:false,unresolved_dependencies:0,broader_review_required:true,sourceCurrentness:"unknown",basis:"reported"});
+    const impact = await fetch(`${handle.baseUrl}/v1/memory/impact`, {method:"POST",headers:{authorization:"Bearer token-aaa","content-type":"application/json","x-organization-id":"org-a"},body:JSON.stringify({scope:"project",projectKey:"p",changedSourceRefs:["source:api"]})});
+    expect(impact.status).toBe(200);
+    expect(registry.inspect_memory_impact).toHaveBeenCalledWith({organizationId:"org-a",scope:"project",projectKey:"p",changedSourceRefs:["source:api"]});
+    const missingCas=await fetch(`${handle.baseUrl}/v1/memory/update`,{method:"POST",headers:{authorization:"Bearer token-aaa","content-type":"application/json"},body:JSON.stringify({memoryId:1,revalidation:null})});
+    expect(missingCas.status).toBe(400);expect(registry.update_memory).not.toHaveBeenCalled();
+    vi.mocked(registry.update_memory).mockRejectedValueOnce(new MemoryRecordConflictError());
+    const conflict=await fetch(`${handle.baseUrl}/v1/memory/update`,{method:"POST",headers:{authorization:"Bearer token-aaa","content-type":"application/json"},body:JSON.stringify({memoryId:1,revalidation:null,expectedRecordDigest:"a".repeat(64)})});
+    expect(conflict.status).toBe(409);
   });
 
   it("GET /healthz returns 200 with envelope without bearer", async () => {
@@ -1394,7 +1408,7 @@ describe("createOperatorServer", () => {
     vi.resetModules();
     const defaultRegistry = buildRegistry();
     const createToolRegistryMock = vi.fn(() => defaultRegistry);
-    vi.doMock("../../src/mcp/server.js", () => ({
+    vi.doMock("../../src/interfaces/mcp/server.js", () => ({
       createToolRegistry: createToolRegistryMock,
     }));
 
@@ -1409,7 +1423,7 @@ describe("createOperatorServer", () => {
         oauthProtectedResource: null,
       });
     } finally {
-      vi.doUnmock("../../src/mcp/server.js");
+      vi.doUnmock("../../src/interfaces/mcp/server.js");
       vi.resetModules();
     }
 

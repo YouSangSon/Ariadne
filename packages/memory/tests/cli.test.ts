@@ -2,9 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { parseCliArgs, runCli } from "../src/cli.js";
-import { writeLifecycleInit } from "../src/lifecycle/init.js";
-import type { ToolRegistry } from "../src/mcp/server.js";
+import { parseCliArgs, runCli } from "../src/interfaces/cli/cli.js";
+import { writeLifecycleInit } from "../src/composition/runtime/lifecycle.js";
+import type { ToolRegistry } from "../src/interfaces/mcp/server.js";
 import { goalRunRegistryStubs } from "./fixtures/goal-run-stubs.js";
 
 function expectDirectoryToBeEmpty(dir: string): void {
@@ -31,7 +31,7 @@ describe("parseCliArgs", () => {
   });
 
   it("can import public MCP server exports after module split", async () => {
-    const module = await import("../src/mcp/server.js");
+    const module = await import("../src/interfaces/mcp/server.js");
     expect(typeof module.createMcpServer).toBe("function");
     expect(typeof module.createToolRegistry).toBe("function");
   });
@@ -378,6 +378,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -420,6 +421,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -467,6 +469,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -510,6 +513,7 @@ describe("parseCliArgs", () => {
       }),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -556,6 +560,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -592,6 +597,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -628,6 +634,7 @@ describe("parseCliArgs", () => {
       add_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -748,6 +755,7 @@ describe("parseCliArgs", () => {
       }),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),

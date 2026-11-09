@@ -1,0 +1,43 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: memory-evolution-design
+  title: 근거 기반 기억 구성과 정비 상세 설계 및 main 반영
+  status: ready_for_routing
+requirement:
+  user_intent: 앞서 제안한 기억 확장 기능을 상세 설계하고 기존 작업과 함께 GitHub main에 병합한다.
+  desired_outcome: 모듈과 데이터 및 API와 실패 처리와 검증을 연결한 설계 문서를 작성하고 보호 규칙을 지켜 게시한다.
+  confirmed_facts:
+    - 사용자가 설계부터 작성하고 GitHub main에 머지하라고 명시했다.
+    - Rust와 다른 언어의 가능성은 검토 질문이며 전면 재작성 승인이 아니다.
+    - 현재 main과 작업 브랜치 사이에는 이전 모듈 리팩토링과 기억 구현도 포함된다.
+classification:
+  category: docs
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      passes: true
+      priority: P0
+      statement: 여덟 추가 항목의 소유권과 데이터 및 호출 계약과 실패 및 호환 조건을 상세 설계한다.
+      verification: 현재 코드 대조와 ME-D 및 ME-S 시나리오 연결과 독립 리뷰를 완료한다.
+    - id: AC2
+      passes: true
+      priority: P0
+      statement: 구현된 기능과 설계된 기능 및 언어 전환 검토를 구분한다.
+      verification: 문서 상태 및 링크와 현재 구현 근거 및 언어 대안의 손익을 확인한다.
+    - id: AC3
+      passes: null
+      priority: P0
+      statement: 정확한 작업 소유 문서를 커밋하고 기존 PR에 반영한 뒤 필수 검사가 통과하면 main에 병합한다.
+      verification: 게시된 HEAD와 필수 검사 및 merge 결과를 확인하고 차단이면 정확한 원인과 재개 조건을 남긴다.
+code_mapping:
+  boundary_rules:
+    - 새 기능 구현과 DB migration 및 전면 언어 재작성을 시작하지 않는다.
+    - 현재 Memory와 Context 및 Wiki와 Ontology의 정본 소유권을 보존한다.
+verification:
+  verify_gate_required: true
+audit:
+  must_not_implement:
+    - CodeQL 경고 무시와 보호 규칙 완화
+    - 유료 모델 호출과 자동 정비 실행
+    - 전면 언어 재작성과 새 인프라 설치

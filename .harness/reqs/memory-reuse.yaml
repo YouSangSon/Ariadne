@@ -1,0 +1,107 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: memory-reuse
+  title: 기억의 재확인 방법과 정정 영향 및 효용 비교
+  status: verified
+requirement:
+  user_intent: 기억과 재확인 방법을 함께 보관하고 정정 영향을 표시하며 실제 도움이 되는 기억을 비교한다.
+  desired_outcome: 기존 메모리 도구에서 재확인 정보를 보존하고 등록된 영향을 조회하며 기억 하나의 포함과 제외를 오프라인 비교할 수 있다.
+  confirmed_facts:
+    - 사용자가 세 아이디어를 모두 적용하라고 명시했다.
+    - 기준 HEAD는 3f1db36이며 기존 메모리와 문맥 및 평가 계약을 유지한다.
+    - 재확인 설명은 실행 권한이 아니며 외부 자료의 현재 상태를 자동 확인하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      passes: true
+      statement: 재확인 방법과 근거 연결을 메모리에 저장하고 현재 본문과의 일치 여부를 표시한다.
+      verification: 도메인 및 저장소와 문맥 출력 검사에서 보고된 근거와 현재성 미확인을 구분한다.
+    - id: AC2
+      priority: P0
+      passes: true
+      statement: 메타데이터 수정과 제거는 이전 기록 상태를 대조하고 충돌 시 덮어쓰지 않는다.
+      verification: 실제 PostgreSQL에서 메타데이터만 바뀐 경합과 기존 본문 수정 후 불일치를 검사한다.
+    - id: AC3
+      priority: P0
+      passes: true
+      statement: 같은 조직과 범위의 등록된 의존 관계를 따라 정정 영향을 조회하고 누락과 상한을 표시한다.
+      verification: 순환과 누락 및 조직 격리와 보관 및 복구된 식별자의 사례를 검사한다.
+    - id: AC4
+      priority: P0
+      passes: true
+      statement: 기존 HTTP와 MCP 호출에서 재확인 정보와 영향 조회를 사용할 수 있고 권한을 유지한다.
+      verification: 도구 계약과 입력 검증 및 인증 분류와 실제 연결 검사를 수행한다.
+    - id: AC5
+      priority: P0
+      passes: true
+      statement: 선택 기억 하나만 다른 두 조건의 기록을 비교하고 누락 및 품질 회귀와 전체 비용을 표시한다.
+      verification: 고정 과제와 선택 해시 및 필수 기억 보존과 비용 미측정 및 재시도 사례를 검사한다.
+    - id: AC6
+      priority: P0
+      passes: true
+      statement: 기존 기록과 보관 및 복구 흐름을 유지하고 변경 범위 문서와 실행 근거를 남긴다.
+      verification: 모듈별 필수 검사와 Podman 통합 검증 및 작업 소유 리소스 정리를 확인한다.
+classification:
+  category: feature
+code_mapping:
+  boundary_rules:
+    - 영속 메모리는 packages/memory가 소유하고 외부 산출물 원본을 직접 수정하지 않는다.
+    - 기존 평가 v1을 유지하고 기억 비교는 별도 envelope로 연결한다.
+verification:
+  verify_gate_required: true
+  commands:
+    - npm run verify -- --modules memory,ontology
+    - Memory scoped regression and typecheck after diagnosed failures
+    - Podman PostgreSQL integration and reserved pgvector connection
+  evidence:
+    - criterion_id: AC1
+      check: domain transport and canonical PostgreSQL revalidation checks
+      result: passed
+      exit_code: 0
+      artifact: .harness/handoff/memory-reuse/transport.log
+      source_state: 3f1db36 plus task changes recorded in private source-manifest.json
+    - criterion_id: AC2
+      check: concurrent metadata CAS and stale body binding in PostgreSQL
+      result: passed
+      exit_code: 0
+      artifact: .harness/handoff/memory-reuse/postgres.log
+      source_state: 3f1db36 plus task persistence changes unchanged since this check
+    - criterion_id: AC3
+      check: scoped bounded impact cycle unresolved and archive restore checks
+      result: passed
+      exit_code: 0
+      artifact: .harness/handoff/memory-reuse/postgres.log
+      source_state: 3f1db36 plus task changes recorded in private source-manifest.json
+    - criterion_id: AC4
+      check: actual HTTP and in-memory MCP transport with schema and authorization checks
+      result: passed
+      exit_code: 0
+      artifact: .harness/handoff/memory-reuse/final-scoped-fix.log
+      source_state: 3f1db36 plus final task sources
+    - criterion_id: AC5
+      check: root source gate and offline ablation plus actual product CLI
+      result: passed
+      exit_code: 0
+      artifact: .harness/handoff/memory-reuse/product-cli.log
+      source_state: 3f1db36 plus task evaluation sources unchanged since root gate
+    - criterion_id: AC6
+      check: broad checks plus diagnosed scoped corrections typecheck audit and resource cleanup
+      result: passed
+      exit_code: null
+      artifact: docs/memory-reuse.md
+      source_state: 3f1db36 plus final task sources
+  attempts:
+    - gate: memory full suite
+      failure_kind: docs conventions and positional restore fixture
+      blocker: nine failures across three files
+      evidence: .harness/handoff/memory-reuse/verify.log
+      changed_input: aligned migration and route docs typed catch and explicit appended JSONB fixture
+
+audit:
+  must_not_implement:
+    - 재확인 방법 자동 실행과 유료 모델 호출
+    - 기억의 사실성 인증과 자동 승격 및 전역 규칙 수정
+    - 자동 dispatcher 또는 백그라운드 dreaming 활성화
+    - 사용자 DB migration과 외부 게시 및 push와 merge

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createQdrantClient } from "../../src/qdrant/client.js";
+import { createQdrantClient } from "../../src/infrastructure/vector/client.js";
 
 vi.mock("@qdrant/js-client-rest", () => ({
   QdrantClient: class FakeQdrantClient {

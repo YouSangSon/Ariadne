@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { runWorkerProcess } from "../../src/app/worker.js";
-import type { Logger } from "../../src/logger.js";
-import type { RunWorkerProcessOptions } from "../../src/app/worker.js";
+import { runWorkerProcess } from "../../src/interfaces/http/worker.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import type { RunWorkerProcessOptions } from "../../src/interfaces/http/worker.js";
 
 describe("runWorkerProcess", () => {
   it.each([null, "input", 12, true, []])(

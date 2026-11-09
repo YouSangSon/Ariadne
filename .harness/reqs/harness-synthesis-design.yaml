@@ -1,0 +1,47 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: harness-synthesis-design
+  title: 20개 출처의 장점 결합과 약점 보완을 위한 통합 하네스 설계
+  status: verified
+requirement:
+  user_intent: 두 기능에 한정하지 않고 기존 프로젝트 계약 안에서 하네스 개선을 종합 설계한다.
+  desired_outcome: 출처별 적용 판단과 상호 보완 구조, 새로운 실험, 계약, 실패 시나리오, 검증과 구현 순서를 찾을 수 있다.
+  confirmed_facts:
+    - 사용자는 설계부터 요청했으며 무조건 복제하지 않고 장점 결합과 단점 상쇄를 요구했다.
+    - 기준 구현은 c39065d이며 스킬 선택과 기록 비교는 이미 구현된 일부 기능이다.
+    - 자동 dispatcher와 복구 및 완료 봉인은 제품 적용 미완료다.
+    - 후속 요청에 따라 다음 행동과 정정 영향 및 수신 문맥의 설계를 보완하고 조합 효과와 반례 실험을 추가했다.
+    - 후속 검토 기준은 7ad256f이며 제품 코드는 변경하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: 20개 출처를 채택 원리와 보완 및 제외 이유, 설계와 단계에 연결한다.
+      verification: 기존 고정 revision 표와 합성 설계 부록 A의 20개 항목을 일대일 대조한다.
+    - id: AC2
+      statement: 기존 소유권과 사용자 정책을 유지한 서로 다른 구조 대안을 비교하고 합성한다.
+      verification: 실제 호출 경로와 기존 정본, 독립 후보 및 중요 설계 리뷰를 대조한다.
+    - id: AC3
+      statement: 문맥과 근거, 승인과 실행, 위임과 재시도, 비용과 정리의 정상 및 실패 계약을 정의한다.
+      verification: HS-D와 HS-S의 양방향 연결 및 미구현 상태를 검토한다.
+    - id: AC4
+      statement: 새 조합의 실험마다 반증과 중단 기준을 두고 기존 기능을 보존하는 구현 순서를 제시한다.
+      verification: HS-X와 P0부터 P6까지의 선행 조건 및 단계별 인수 기준을 대조한다.
+    - id: AC5
+      statement: 설계 문서와 관련 링크만 변경하고 제품 구현과 원격 게시를 시작하지 않는다.
+      verification: 문서 링크와 REQ 파싱, 최종 작업 소유 diff를 확인한다.
+classification:
+  category: docs
+code_mapping:
+  boundary_rules:
+    - 제품 코드와 설정 및 테스트는 변경하지 않는다.
+    - 기존 제품과 실행 정책의 정본을 대체하거나 새 권한을 부여하지 않는다.
+verification:
+  verify_gate_required: false
+  verify_gate_reason: 문서 전용 변경으로 링크와 계약 및 REQ 파싱을 검증하며 기존 제품 검사를 반복하지 않는다.
+audit:
+  must_not_implement:
+    - dispatcher 자동 실행 또는 구현 재개
+    - 외부 스킬 설치와 유료 모델 호출
+    - push와 merge 및 보호 규칙 변경
+    - 사용자 또는 공유 리소스 삭제

@@ -143,7 +143,7 @@ See [memory governance](docs/operations.md) for the operator workflow.
 
 Conversations with coding agents lose context the moment the session ends.
 Akasha is the place those agents save what's worth remembering and
-read it back next time. The same 20 service tools are exposed over MCP
+read it back next time. The same 21 service tools are exposed over MCP
 stdio, MCP Streamable HTTP at `POST /mcp`, and JSON-HTTP under `/v1/*` — full
 request/response schemas live in
 [docs/api-reference.md](docs/api-reference.md).
@@ -161,6 +161,7 @@ the connected client advertises those capabilities.
 | `reindex_memory` | Rebuild vectors from retained Postgres chunks | `POST /v1/memory/reindex` |
 | `list_memory` | Review canonical records with tag / archived filters | `POST /v1/memory/list` |
 | `inspect_memory_graph` | Inspect persisted entity mentions and relationships | `POST /v1/memory/graph` |
+| `inspect_memory_impact` | Inspect registered correction dependencies; coverage remains unknown | `POST /v1/memory/impact` |
 | `update_memory` | Edit one canonical record and refresh its vector state | `POST /v1/memory/update` |
 | `delete_memory` | Governance archive of one record plus vector cleanup | `POST /v1/memory/delete` |
 | `tag_memory` | Replace governance tags on one record | `POST /v1/memory/tag` |
@@ -230,12 +231,12 @@ The optional `maxOutputBytes` context-pack input bounds the compact structured r
 
 | Layer | Responsibility |
 |-------|----------------|
-| MCP server (`src/mcp/`) | Shared MCP server surface: tool descriptors, schemas, registry, and handlers |
-| HTTP server (`src/app/`) | Serves MCP Streamable HTTP at `/mcp` plus JSON HTTP under `/v1/*` |
-| Canonical store (`src/store/memory-repository.ts`) | Postgres — records, sources, ingest jobs, entity graph, audit |
-| Vector index (`src/vector/`) | Qdrant (default) or pgvector — chunked embeddings + similarity search. Set `VECTOR_BACKEND=pgvector` for Postgres-only deploy. |
-| Compaction (`src/compact/`) | Dedup (exact + semantic), decay, archive, unarchive, sweeper |
-| Embeddings (`src/embedding/`) | `transformers` (free local ONNX, default), `openai` (`text-embedding-3-small`), or `local` (deterministic stub for CI) |
+| MCP server (`src/interfaces/mcp/`) | Shared MCP server surface: tool descriptors, schemas, registry, and handlers |
+| HTTP server (`src/interfaces/http/`) | Serves MCP Streamable HTTP at `/mcp` plus JSON HTTP under `/v1/*` |
+| Canonical store (`src/infrastructure/postgres/memory-repository.ts`) | Postgres — records, sources, ingest jobs, entity graph, audit |
+| Vector index (`src/infrastructure/vector/`) | Qdrant (default) or pgvector — chunked embeddings + similarity search. Set `VECTOR_BACKEND=pgvector` for Postgres-only deploy. |
+| Compaction (`src/application/usecases/`) | Dedup (exact + semantic), decay, archive, unarchive, sweeper |
+| Embeddings (`src/infrastructure/embedding/`) | `transformers` (free local ONNX, default), `openai` (`text-embedding-3-small`), or `local` (deterministic stub for CI) |
 
 Data flow: caller writes `add_memory` → record persisted to Postgres, entity
 mentions linked, content chunked + embedded + upserted to the active vector

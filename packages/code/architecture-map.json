@@ -1,0 +1,1380 @@
+{
+  "schema_version": 1,
+  "context": "code",
+  "scope": {
+    "include": [
+      "src/**",
+      "scripts/**",
+      "bench/**"
+    ],
+    "extensions": [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".mts",
+      ".cts",
+      ".sh"
+    ],
+    "exclude": [
+      "tests/**",
+      "fixtures/**",
+      "dist/**",
+      "node_modules/**"
+    ],
+    "exclusion_reason": "Tests and indexed fixtures validate behavior and public compatibility; generated build output and installed dependencies are not authored production sources."
+  },
+  "files": {
+    "bench/config-extraction-profile.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "bench/impact-bench-report.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "bench/impact-bench.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "bench/impact-perf.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "bench/synthetic-repo.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "scripts/dependency-audit.js": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "scripts/docs-lint.js": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "scripts/generate-report-schema.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "src/adapters/build-system-package.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system-package.ts"
+    },
+    "src/adapters/build-system/cargo.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/cargo.ts"
+    },
+    "src/adapters/build-system/go.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/go.ts"
+    },
+    "src/adapters/build-system/gradle.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/gradle.ts"
+    },
+    "src/adapters/build-system/maven.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/maven.ts"
+    },
+    "src/adapters/build-system/npm.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/npm.ts"
+    },
+    "src/adapters/build-system/python.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/python.ts"
+    },
+    "src/adapters/build-system/shared.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/shared.ts"
+    },
+    "src/adapters/build-system/types.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/build-system/types.ts"
+    },
+    "src/adapters/config-infra.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/config-infra.ts"
+    },
+    "src/adapters/multi-language-regex.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/multi-language-regex.ts"
+    },
+    "src/adapters/registry.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/indexing/adapter-registry.ts"
+    },
+    "src/adapters/text-evidence.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/infrastructure/extractors/text-evidence.ts"
+    },
+    "src/adapters/types.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/indexing/adapter.ts"
+    },
+    "src/agent_config.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/agent_memory.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/analyzer.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/composition/impact.ts"
+    },
+    "src/application/context/co-change-partners.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/co-changes.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/context-for-change.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/errors.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/explain-entity.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/impact-lanes.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/pack-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/persist-pack.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/query-graph.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/repo-map.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/report-comparison.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/report-delta.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/request.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/resource-model.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/resource-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/resource-projection.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/search-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/search.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/ui-graph.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/ui-model.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/ui-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/ui-projection.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/context/ui-snapshot.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/contracts/analyze-diff.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/contracts/ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/impact/analyze.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/impact/export-graph.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/impact/promote-traces.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/doctor-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/doctor.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/index-project.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/init-project.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/indexing/scip.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/import-session.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/operations.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/profile-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/profile.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/reflection-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/reflection.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/local-memory/session-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/agent-setup.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/catalog.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/git-hooks.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/links-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/links.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/resolve-contracts.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/resolver-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/resource-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/resources.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/application/workspace/setup-ports.ts": {
+      "layer": "application",
+      "context": "code"
+    },
+    "src/artifacts.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/artifacts.ts"
+    },
+    "src/asyncapi_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/avro_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/branch_gc.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/branding.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/cli.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/cli.ts"
+    },
+    "src/co-change.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/co_change_query.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/composition/agent-setup.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/branches.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/co-changes.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/context-for-change.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/context-pack.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/context-resources.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/context-search.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/contract-diff.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/extractors.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/graph.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/impact.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/indexing.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/local-memory.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/profile.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/project.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/public-api.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/reflection.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/repo-map.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/scip.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/session-import.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/ui.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/workspace-links.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/composition/workspace.ts": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "src/confidence.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/impact/confidence.ts"
+    },
+    "src/context_pack.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/asyncapi.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/avro.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/graphql.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/json_schema.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/openapi.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/protobuf.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/contract_diff/shared.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/contracts/diff/shared.ts"
+    },
+    "src/contract_diff/types.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/contracts/diff/types.ts"
+    },
+    "src/cross_repo/asyncapi.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/asyncapi.ts"
+    },
+    "src/cross_repo/graphql.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/graphql.ts"
+    },
+    "src/cross_repo/http.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/http.ts"
+    },
+    "src/cross_repo/protobuf.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/protobuf.ts"
+    },
+    "src/cross_repo/shared.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/shared.ts"
+    },
+    "src/cross_repo/types.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/matching/types.ts"
+    },
+    "src/cross_repo_impact.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/cross_repo_links.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/cross_repo_resolver.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/doctor.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/domain/branding.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/co-change.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/context-pack.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/evidence.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/graph-query.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/repo-map.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/search.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/telemetry.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/context/work-artifacts.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/contract-diff.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/asyncapi.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/avro.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/graphql.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/json_schema.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/openapi.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/protobuf.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/shared.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/diff/types.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/asyncapi.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/avro.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/graphql.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/json-schema.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/openapi.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/contracts/formats/protobuf.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/identity.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/impact/analysis.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/impact/confidence.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/impact/graph-pagination.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/impact/graph.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/impact/traces.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/adapter-registry.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/adapter.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/co-change.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/diagnostics-state.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/diagnostics.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/entity-classification.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/git-snapshot.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/index-delta.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/index-model.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/index-policy.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/indexing/scip.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/branches.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/embedding.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/facts.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/model.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/profile.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/reflection.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/session.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/local-memory/summarizer.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/model.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/security/redaction.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/agent-setup.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/artifacts.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/catalog.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/cross-repo-impact-policy.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/cross-repo-impact.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/git-hooks.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/links.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/asyncapi.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/graphql.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/http.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/protobuf.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/shared.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/matching/types.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/resolution.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/domain/workspace/resources.ts": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "src/embeddings.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/entity_classification.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/indexing/entity-classification.ts"
+    },
+    "src/git-snapshot.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/git_hooks.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/graph.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/composition/graph.ts"
+    },
+    "src/graph_pagination.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/impact/graph-pagination.ts"
+    },
+    "src/graph_query.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/graphql_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/index.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/composition/public-api.ts"
+    },
+    "src/index_delta.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/indexing/index-delta.ts"
+    },
+    "src/indexer.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/infrastructure/config/agent-config.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/config/branding.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/config/reflection.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system-package.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/cargo.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/go.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/gradle.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/maven.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/npm.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/python.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/shared.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/build-system/types.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/config-infra.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/asyncapi-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/asyncapi-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/asyncapi.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/avro-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/avro-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/graphql-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/graphql-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/json-schema-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/json-schema-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/openapi-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/openapi-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/openapi.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/parse-current.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/protobuf-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/contracts/protobuf-signature.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/multi-language-regex.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/extractors/text-evidence.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/context-sources.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/contract-sources.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/impact-sources.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/index-scan.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/init.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/package-roots.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/scip-input.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/security.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/session-import.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/filesystem/ui-config.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/git/co-change.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/git/hooks.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/git/scip-snapshot.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/git/snapshot.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/models/embeddings.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/models/llm.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/reporting/markdown.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/branch-gc.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/co-change-query.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/context-packs.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/context-resources.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/context-search.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/context-telemetry.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/contract-diff.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/cross-repo-impact.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/cross-repo-links.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/cross-repo-resolver.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/doctor.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/graph-query.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/graph.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/impact.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/indexing.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/local-memory.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/profile.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/reflection.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/resource-readers.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/scip.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/session-import.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/store.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/trace-ingest.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/ui-read-model.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/workspace-catalog.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/sqlite/workspace-resources.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/infrastructure/workspace/catalog.ts": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "src/init.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/composition/project.ts"
+    },
+    "src/interfaces/cli.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/mcp/graph-resources.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/mcp/output-schemas.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/mcp/resources.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/mcp/server.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/reporting/report-schema.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/reporting/sarif.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/client.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/impact_map.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/panels.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/report_delta.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/server.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/shared.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/interfaces/ui/styles.ts": {
+      "layer": "interfaces",
+      "context": "code"
+    },
+    "src/json_schema_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/llm.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/mcp.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/mcp_output_schemas.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/mcp/output-schemas.ts"
+    },
+    "src/mcp_resources.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/mcp_search.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/mcp_shared.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/openapi_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/profile.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/protobuf_compat.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/reflection.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/repo_map.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/report_schema.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/reporting/report-schema.ts"
+    },
+    "src/sarif.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/reporting/sarif.ts"
+    },
+    "src/scip.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/security.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/session_import.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/store.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/trace_promotion.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/types.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/model.ts"
+    },
+    "src/ui.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/ui/client.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/ui/client.ts"
+    },
+    "src/ui/data.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/ui/impact_map.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/ui/impact_map.ts"
+    },
+    "src/ui/panels.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/ui/report_delta.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/ui/shared.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/ui/styles.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/interfaces/ui/styles.ts"
+    },
+    "src/work_artifacts.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/context/work-artifacts.ts"
+    },
+    "src/workspace.ts": {
+      "layer": "compatibility",
+      "context": "code"
+    },
+    "src/workspace_resources.ts": {
+      "layer": "compatibility",
+      "context": "code",
+      "target": "src/domain/workspace/resources.ts"
+    }
+  }
+}

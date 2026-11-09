@@ -1,0 +1,32 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: modular-ontology
+  title: 선택 설치와 근거를 확인할 수 있는 로컬 온톨로지
+  status: verified
+requirement:
+  user_intent: Ariadne 하나에서 필요한 모듈만 사용하고 NVIDIA auto-ontology의 유용한 개념을 적용한다.
+  desired_outcome: 메모리·코드 의존성을 선택 설치하고 용어·동의어·유형 관계·근거·검토 상태를 모델 호출 없이 조회한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      statement: setup/build/test/verify는 명시한 모듈과 코어만 처리하며 무인자 호출은 기존 전체 범위를 보존한다.
+    - id: AC2
+      statement: 코어·온톨로지만 사용할 때 메모리·코드 패키지 설치나 DB가 필요하지 않으며 선택 검증 범위를 출력한다.
+    - id: AC3
+      statement: 온톨로지는 유효한 용어·동의어·유형 관계와 상대 경로 근거만 허용하고 중복 ID·끊어진 관계·위험한 경로를 거절한다.
+    - id: AC4
+      statement: 정의 또는 근거 내용 변경은 이전 검토 지문과 불일치하며 조회는 상태·모호성·결과 제한을 드러낸다.
+    - id: AC5
+      statement: 네 언어 README는 같은 선택 설치·검증·온톨로지 명령과 실제 지원 범위를 설명한다.
+    - id: AC6
+      statement: 각 모듈은 데이터와 규칙을 소유하며 온톨로지 도메인·유스케이스는 CLI와 파일 어댑터에 의존하지 않는다. 의존 방향과 다른 모듈 내부 접근 금지를 검사한다.
+verification:
+  commands:
+    - node --test tests/modules.test.mjs tests/ontology.test.mjs
+    - npm run verify
+audit:
+  must_not_implement:
+    - 미완료 dispatcher의 활성화 또는 기존 중지 Goal 재개
+    - SQL 자동 실행·외부 모델 호출·새 서버·기존 저장소 스키마 변경
+    - 이번 변경의 승인되지 않은 push 또는 merge

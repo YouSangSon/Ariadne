@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createLocalEmbeddingClient } from "../../src/embedding/local-embedding.js";
+import { createLocalEmbeddingClient } from "../../src/infrastructure/embedding/local-embedding.js";
 
 describe("createLocalEmbeddingClient", () => {
   it.each([

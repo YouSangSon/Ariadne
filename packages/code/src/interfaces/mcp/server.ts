@@ -1,0 +1,1378 @@
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { typedMcpError, typedMcpErrorEnvelope } from "../../application/context/errors.js";
+import type { McpContext } from "../../application/context/request.js";
+import { abandonBranchOnRepo, createBranchOnRepo, gcBranchesOnRepo, mergeBranchesOnRepo, restoreBranchOnRepo, traceOnRepo } from "../../composition/branches.js";
+import { queryCoChanges } from "../../composition/co-changes.js";
+import { contextForChange } from "../../composition/context-for-change.js";
+import { searchContext, searchContextSemanticEmbedding } from "../../composition/context-search.js";
+import { executeGraphQuery } from "../../composition/graph.js";
+import { recallOnRepo, rememberOnRepo } from "../../composition/local-memory.js";
+import { profileEntity } from "../../composition/profile.js";
+import { doctorProject } from "../../composition/project.js";
+import { reflectFacts } from "../../composition/reflection.js";
+import { buildRepoMap } from "../../composition/repo-map.js";
+import { normalizeContextBudget } from "../../domain/context/context-pack.js";
+import { byteLength } from "../../domain/context/evidence.js";
+import { explainEntityTelemetry, indexRunIdOf, omittedCountsOf, resourceCountOf, sanitizeTelemetryText, searchContextTelemetry } from "../../domain/context/telemetry.js";
+import type { ToolTelemetryInput } from "../../domain/context/telemetry.js";
+import { redactDoctorReportForMcp } from "../../domain/indexing/diagnostics.js";
+import type { RememberValue } from "../../domain/local-memory/model.js";
+import type { WorkspaceSummary } from "../../domain/workspace/catalog.js";
+import type { CrossRepoConsumer, CrossRepoConsumersResult, CrossRepoProvider, CrossRepoProvidersResult } from "../../domain/workspace/links.js";
+import type { CrossRepoContractLink, ResolveCrossRepoContractsResult } from "../../domain/workspace/resolution.js";
+import type { WorkspaceResourceUris } from "../../domain/workspace/resources.js";
+import { normalizeRepoRoot } from "../../infrastructure/filesystem/security.js";
+import { contextTelemetry, recordContextResourceAccess, recordContextToolRun } from "../../infrastructure/sqlite/context-telemetry.js";
+import { repairReflections } from "../../infrastructure/sqlite/reflection.js";
+import { MCP_OUTPUT_SCHEMAS } from "./output-schemas.js";
+import type { McpOutputToolName } from "./output-schemas.js";
+import { explainEntity, graphFormatVariable, graphResourceText, listContextPackResources, listEntityResources, listEvidenceResources, listGraphResources, listReportResources, listWorkspaceContractResources, listWorkspaceCrossRepoLinkResources, listWorkspaceResources, parseGraphFormat, readContextPack, readEntity, readEvidence, readLatestCoverage, readReport, readWorkspaceContractsResource, readWorkspaceCrossRepoLinksResource, readWorkspaceResource, workspaceResources } from "./resources.js";
+
+export type { McpContext } from "../../application/context/request.js";
+export { searchContextForRepo } from '../../composition/context-search.js';
+export type { SearchContextForRepoOptions } from '../../composition/context-search.js';
+
+export function createMcpServer(context: McpContext): McpServer {
+  const server = new McpServer({
+    name: 'parallax',
+    version: '0.1.0'
+  });
+  patchToolErrorFactory(server);
+
+  server.registerTool(
+    'parallax_analyze_diff',
+    {
+      title: 'Analyze Parallax diff',
+      description: 'Analyze changed files against the latest completed Parallax index.',
+      inputSchema: {
+        changedFiles: z.array(z.string()).min(1),
+        maxDepth: z.number().int().min(1).max(8).optional(),
+        maxFanout: z.number().int().min(1).max(2_000).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_analyze_diff,
+      annotations: {
+        title: 'Analyze Parallax diff',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ changedFiles, maxDepth, maxFanout }) => {
+      try {
+        const { analyzeDiff } = await import('../../composition/impact.js');
+        const report = await analyzeDiff({
+          repoRoot: context.repoRoot,
+          changedFiles,
+          persistReport: false,
+          readOnly: true,
+          ...(maxDepth === undefined ? {} : { maxDepth }),
+          ...(maxFanout === undefined ? {} : { maxFanout })
+        });
+        return toolJsonResponse(context, 'parallax_analyze_diff', report, {
+          indexRunId: report.indexRunId,
+          changedFiles: report.changedFiles
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_context_for_change',
+    {
+      title: 'Build compact context for a change',
+      description:
+        'Return a budgeted context pack for changed files so coding agents get ranked impact paths, evidence refs, git co-change advisories, and resource links without the full report payload.',
+      inputSchema: {
+        changedFiles: z.array(z.string()).min(1),
+        budget: z.enum(['brief', 'standard', 'deep']).optional(),
+        reusePolicy: z.enum(['auto', 'full', 'reference']).optional(),
+        maxDepth: z.number().int().min(1).max(8).optional(),
+        maxFanout: z.number().int().min(1).max(2_000).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_context_for_change,
+      annotations: {
+        title: 'Build compact context for a change',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ changedFiles, budget, reusePolicy, maxDepth, maxFanout }) => {
+      try {
+        const result = await contextForChange({
+          repoRoot: context.repoRoot, changedFiles,
+          ...(budget === undefined ? {} : { budget }),
+          ...(reusePolicy === undefined ? {} : { reusePolicy }),
+          ...(maxDepth === undefined ? {} : { maxDepth }),
+          ...(maxFanout === undefined ? {} : { maxFanout })
+        });
+        const response = result.response;
+        return toolJsonResponse(context, 'parallax_context_for_change', response, {
+          indexRunId: response.indexRunId,
+          budget: response.budget,
+          changedFiles: result.changedFiles,
+          resourceCount: resourceCountOf(response),
+          omitted: omittedCountsOf(response)
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_search_context',
+    {
+      title: 'Search indexed context',
+      description:
+        'Search the latest Parallax index by keyword, path, symbol, relation provenance, or evidence snippet and return ranked entity context with resource links.',
+      inputSchema: {
+        query: z.string().trim().min(1),
+        k: z.number().int().min(1).max(50).optional(),
+        includeEvidence: z.boolean().optional(),
+        budget: z.enum(['brief', 'standard', 'deep']).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_search_context,
+      annotations: {
+        title: 'Search indexed context',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ query, k, includeEvidence, budget }) => {
+      try {
+        const normalizedBudget = budget === undefined ? null : normalizeContextBudget(budget);
+        const semanticEmbedding = await searchContextSemanticEmbedding(context, query);
+        const result = searchContext(context, {
+          query,
+          k: k ?? 10,
+          includeEvidence: includeEvidence ?? true,
+          budget: normalizedBudget,
+          disabledStreams: new Set(),
+          semanticEmbedding
+        });
+        const telemetry = searchContextTelemetry(result);
+        return toolJsonResponse(context, 'parallax_search_context', result, {
+          indexRunId: telemetry.indexRunId,
+          query,
+          budget: normalizedBudget,
+          resourceCount: telemetry.resourceCount
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_repo_map',
+    {
+      title: 'Build repo map context card',
+      description:
+        'Return a token-budgeted repo map/context card for changed files, including ranked affected files, tests, docs, config, work artifacts, evidence refs, verification actions, resources, and confidence disclosures.',
+      inputSchema: {
+        changedFiles: z.array(z.string()).min(1),
+        query: z.string().trim().min(1).optional(),
+        budget: z.number().int().min(200).max(50_000).optional(),
+        maxDepth: z.number().int().min(1).max(8).optional(),
+        maxFanout: z.number().int().min(1).max(2_000).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_repo_map,
+      annotations: {
+        title: 'Build repo map context card',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ changedFiles, query, budget, maxDepth, maxFanout }) => {
+      try {
+        const map = await buildRepoMap({
+          repoRoot: context.repoRoot,
+          changedFiles,
+          ...(query === undefined ? {} : { query }),
+          ...(budget === undefined ? {} : { budgetTokens: budget }),
+          ...(maxDepth === undefined ? {} : { maxDepth }),
+          ...(maxFanout === undefined ? {} : { maxFanout })
+        });
+        return toolJsonResponse(context, 'parallax_repo_map', map, {
+          indexRunId: map.indexRunId,
+          budget: String(map.budget.requestedTokens),
+          query: query ?? null,
+          changedFiles: map.changedFiles,
+          resourceCount: resourceCountOf(map),
+          omitted: map.omittedCounts
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_contract_diff',
+    {
+      title: 'Analyze workspace contract diff',
+      description:
+        'Compare a current OpenAPI contract file against the latest indexed workspace baseline and return compact breaking-change impact with workspace resource links.',
+      inputSchema: {
+        contractPath: z.string().trim().min(1),
+        workspaceName: z.string().trim().min(1).optional(),
+        providerServiceName: z.string().trim().min(1).optional(),
+        providerRepoPath: z.string().trim().min(1).optional(),
+        persist: z.boolean().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_contract_diff,
+      annotations: {
+        title: 'Analyze workspace contract diff',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ contractPath, workspaceName, providerServiceName, providerRepoPath, persist }) => {
+      try {
+        const { analyzeContractDiff } = await import('../../composition/contract-diff.js');
+        const diff = analyzeContractDiff({
+          repoRoot: context.repoRoot,
+          contractPath,
+          ...(workspaceName !== undefined ? { workspaceName } : {}),
+          ...(providerServiceName !== undefined ? { providerServiceName } : {}),
+          ...(providerRepoPath !== undefined ? { providerRepoPath } : {}),
+          ...(persist !== undefined ? { persist } : {})
+        });
+        const response = {
+          ...diff,
+          resources: workspaceResources(diff.workspace.name)
+        };
+        return toolJsonResponse(context, 'parallax_contract_diff', response, {
+          indexRunId: diff.contract.indexRunId,
+          query: contractPath,
+          resourceCount: resourceCountOf(response)
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_cross_repo_consumers',
+    {
+      title: 'Find cross-repo consumers',
+      description:
+        'Query persisted workspace cross-repo links and return consumers of a provider service, contract, method, or route without mutating workspace links.',
+      inputSchema: {
+        workspaceName: z.string().trim().min(1).optional(),
+        providerServiceName: z.string().trim().min(1),
+        providerContractPath: z.string().trim().min(1).optional(),
+        method: z.string().trim().min(1).optional(),
+        routePath: z.string().trim().min(1).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_cross_repo_consumers,
+      annotations: {
+        title: 'Find cross-repo consumers',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ workspaceName, providerServiceName, providerContractPath, method, routePath }) => {
+      try {
+        const { consumersOf } = await import('../../composition/workspace-links.js');
+        const result = consumersOf({
+          repoRoot: context.repoRoot,
+          providerServiceName,
+          syncCatalog: false,
+          ...(workspaceName !== undefined ? { workspaceName } : {}),
+          ...(providerContractPath !== undefined ? { providerContractPath } : {}),
+          ...(method !== undefined ? { method } : {}),
+          ...(routePath !== undefined ? { routePath } : {})
+        });
+        const response = compactMcpCrossRepoConsumersResult(result);
+        return toolJsonResponse(context, 'parallax_cross_repo_consumers', response, {
+          query: providerServiceName,
+          resourceCount: resourceCountOf(response)
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_cross_repo_providers',
+    {
+      title: 'Find cross-repo providers',
+      description:
+        'Query persisted workspace cross-repo links and return providers used by a consumer service or file without mutating workspace links.',
+      inputSchema: {
+        workspaceName: z.string().trim().min(1).optional(),
+        consumerServiceName: z.string().trim().min(1),
+        consumerPath: z.string().trim().min(1).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_cross_repo_providers,
+      annotations: {
+        title: 'Find cross-repo providers',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ workspaceName, consumerServiceName, consumerPath }) => {
+      try {
+        const { providersFor } = await import('../../composition/workspace-links.js');
+        const result = providersFor({
+          repoRoot: context.repoRoot,
+          consumerServiceName,
+          syncCatalog: false,
+          ...(workspaceName !== undefined ? { workspaceName } : {}),
+          ...(consumerPath !== undefined ? { consumerPath } : {})
+        });
+        const response = compactMcpCrossRepoProvidersResult(result);
+        return toolJsonResponse(context, 'parallax_cross_repo_providers', response, {
+          query: consumerServiceName,
+          resourceCount: resourceCountOf(response)
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_resolve_cross_repo_contracts',
+    {
+      title: 'Preview cross-repo contract links',
+      description:
+        'Preview cross-repo provider/consumer contract links for a workspace without clearing or inserting cross_repo_links rows.',
+      inputSchema: {
+        workspaceName: z.string().trim().min(1).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_resolve_cross_repo_contracts,
+      annotations: {
+        title: 'Preview cross-repo contract links',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ workspaceName }) => {
+      try {
+        const { resolveCrossRepoContracts } = await import('../../composition/workspace-links.js');
+        const result = resolveCrossRepoContracts({
+          repoRoot: context.repoRoot,
+          ...(workspaceName !== undefined ? { workspaceName } : {}),
+          syncCatalog: false,
+          persist: false
+        });
+        const response = compactMcpResolveCrossRepoContractsResult(result);
+        return toolJsonResponse(context, 'parallax_resolve_cross_repo_contracts', response, {
+          query: result.workspace.name,
+          resourceCount: resourceCountOf(response)
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_remember',
+    {
+      title: 'Remember a fact',
+      description:
+        'Persist an agent observation as a content-addressable fact on the given branch (default main).',
+      inputSchema: {
+        entity: z.string().min(1),
+        attribute: z.string().min(1),
+        value: z.unknown(),
+        evidenceFactIds: z.array(z.string()).optional(),
+        supersedesFactIds: z.array(z.string()).optional(),
+        branch: z.string().optional(),
+        agent: z.string().optional(),
+        op: z.enum(['assert', 'retract']).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_remember,
+      annotations: {
+        title: 'Remember a fact',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ entity, attribute, value, evidenceFactIds, supersedesFactIds, branch, agent, op }) => {
+      const result = await rememberOnRepo(context.repoRoot, {
+        entity,
+        attribute,
+        value: value as RememberValue,
+        ...(evidenceFactIds !== undefined ? { evidenceFactIds } : {}),
+        ...(supersedesFactIds !== undefined ? { supersedesFactIds } : {}),
+        ...(branch !== undefined ? { branch } : {}),
+        ...(agent !== undefined ? { agent } : {}),
+        ...(op !== undefined ? { op } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_recall',
+    {
+      title: 'Recall facts',
+      description:
+        'Query facts by entity, attribute, and branch. Phase 1 returns structured filter results only.',
+      inputSchema: {
+        query: z.string().optional(),
+        entity: z.string().optional(),
+        attribute: z.string().optional(),
+        branch: z.string().optional(),
+        k: z.number().int().min(1).max(100).optional(),
+        asOfTx: z.string().optional(),
+        currentOnly: z.boolean().optional(),
+        semantic: z.boolean().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_recall,
+      annotations: {
+        title: 'Recall facts',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ query, entity, attribute, branch, k, asOfTx, currentOnly, semantic }) => {
+      const result = await recallOnRepo(context.repoRoot, {
+        ...(query !== undefined ? { query } : {}),
+        ...(entity !== undefined ? { entity } : {}),
+        ...(attribute !== undefined ? { attribute } : {}),
+        ...(branch !== undefined ? { branch } : {}),
+        ...(k !== undefined ? { k } : {}),
+        ...(asOfTx !== undefined ? { asOfTx } : {}),
+        ...(currentOnly !== undefined ? { currentOnly } : {}),
+        ...(semantic !== undefined ? { semantic } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_query',
+    {
+      title: 'Query the graph',
+      description:
+        'Run a read-only Cypher subset over the indexed entity/relation graph: a relationship hop (forward, reverse, or variable-length *min..max), node labels, WHERE equality/CONTAINS, projection, COUNT(<var>) aggregation with implicit grouping, ORDER BY a projected column (ASC/DESC), and LIMIT. Write, procedure, projection (WITH/UNWIND), COUNT(*), and bidirectional clauses are rejected. Returns columns/rows plus the indexRunId queried and resources.entities (navigable parallax://entities ids — populated when a node id is projected, e.g. RETURN a or RETURN a.id).',
+      inputSchema: {
+        query: z.string().min(1)
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_query,
+      annotations: {
+        title: 'Query the graph',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ query }) => {
+      const result = executeGraphQuery(context.repoRoot, query);
+      return toolJsonResponse(context, 'parallax_query', result, { query });
+    }
+  );
+
+  server.registerTool(
+    'parallax_co_change',
+    {
+      title: 'Rank co-changing files',
+      description:
+        'Return files historically coupled to the given file via git co-change (CO_CHANGES), ranked by coupling strength. Surfaces correlational couplings the static graph misses (config<->code, test<->impl) at heuristic confidence. Read-only; partners are navigable entity resources.',
+      inputSchema: {
+        file: z.string().min(1),
+        limit: z.number().int().positive().max(200).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_co_change,
+      annotations: {
+        title: 'Rank co-changing files',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ file, limit }) => {
+      const result = queryCoChanges(context.repoRoot, file, limit !== undefined ? { limit } : {});
+      return toolJsonResponse(context, 'parallax_co_change', result, { query: file });
+    }
+  );
+
+  server.registerTool(
+    'parallax_branch',
+    {
+      title: 'Create a branch',
+      description: 'Create a new branch forking from an existing branch (default main). No data copied.',
+      inputSchema: {
+        name: z.string().min(1),
+        from: z.string().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_branch,
+      annotations: {
+        title: 'Create a branch',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ name, from }) => {
+      const result = createBranchOnRepo(context.repoRoot, {
+          name,
+          ...(from !== undefined ? { from } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_merge',
+    {
+      title: 'Merge a branch into another',
+      description:
+        'Create a merge transaction on the target branch with both branch heads as parents. No fact copy needed (content-addressable); recall on target now walks both DAGs.',
+      inputSchema: {
+        target: z.string().min(1),
+        source: z.string().min(1),
+        agent: z.string().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_merge,
+      annotations: {
+        title: 'Merge a branch into another',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ target, source, agent }) => {
+      const result = mergeBranchesOnRepo(context.repoRoot, {
+          target,
+          source,
+          ...(agent !== undefined ? { agent } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_reflect',
+    {
+      title: 'Reflect facts into a summary',
+      description:
+        'Group older facts on a branch by entity and ask the configured LLM to summarize each group. Original facts are preserved; a new summary fact is added with provenance edges marked kind=summary.',
+      inputSchema: {
+        branch: z.string().optional(),
+        olderThanDays: z.number().int().min(1).max(3_650).optional(),
+        entity: z.string().optional(),
+        agent: z.string().optional(),
+        dryRun: z.boolean().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_reflect,
+      annotations: {
+        title: 'Reflect facts into a summary',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true
+      }
+    },
+    async ({ branch, olderThanDays, entity, agent, dryRun }) => {
+      const result = await reflectFacts(context.repoRoot, {
+        ...(branch !== undefined ? { branch } : {}),
+        ...(olderThanDays !== undefined ? { olderThanDays } : {}),
+        ...(entity !== undefined ? { entity } : {}),
+        ...(agent !== undefined ? { agent } : {}),
+        ...(dryRun !== undefined ? { dryRun } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_abandon_branch',
+    {
+      title: 'Abandon a branch',
+      description:
+        'Mark a branch as abandoned. Subsequent gc-branches passes will archive its transactions. The main branch cannot be abandoned.',
+      inputSchema: {
+        name: z.string().min(1)
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_abandon_branch,
+      annotations: {
+        title: 'Abandon a branch',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ name }) => {
+      const result = abandonBranchOnRepo(context.repoRoot, { name });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_gc_branches',
+    {
+      title: 'GC abandoned branches',
+      description:
+        'Archive transactions of all abandoned branches so recall and recallSemantic stop surfacing their facts. Facts themselves are never deleted (content-addressable). dryRun reports without writing. When maxAgeDays is set, the pass first auto-abandons every active non-main branch with no activity newer than now − maxAgeDays days (Phase 4 P4 / ADR D-017).',
+      inputSchema: {
+        dryRun: z.boolean().optional(),
+        maxAgeDays: z.number().int().min(0).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_gc_branches,
+      annotations: {
+        title: 'GC abandoned branches',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ dryRun, maxAgeDays }) => {
+      const result = gcBranchesOnRepo(context.repoRoot, {
+          ...(dryRun !== undefined ? { dryRun } : {}),
+          ...(maxAgeDays !== undefined ? { maxAgeDays } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_profile',
+    {
+      title: 'Profile an entity',
+      description:
+        'Aggregate facts about an entity into a three-bucket profile (staticFacts from indexer code relations, dynamicFacts from agent activity, summaryFacts from Phase 3 reflective consolidation). Branch-scoped (default main); archived transactions excluded. Use as an agent prompt-context primer to inject "what does the system know about X" in one call.',
+      inputSchema: {
+        entity: z.string().min(1),
+        branch: z.string().optional(),
+        k: z.number().int().min(1).max(200).optional(),
+        asOfTx: z.string().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_profile,
+      annotations: {
+        title: 'Profile an entity',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ entity, branch, k, asOfTx }) => {
+      const result = await profileEntity(context.repoRoot, {
+        entity,
+        ...(branch !== undefined ? { branch } : {}),
+        ...(k !== undefined ? { k } : {}),
+        ...(asOfTx !== undefined ? { asOfTx } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_explain_entity',
+    {
+      title: 'Explain an entity',
+      description:
+        'Return compact direct relation and evidence context for one indexed entity, with resource links for full evidence details.',
+      inputSchema: {
+        entity: z.string().min(1),
+        relationLimit: z.number().int().min(1).max(100).optional(),
+        evidenceLimit: z.number().int().min(0).max(50).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_explain_entity,
+      annotations: {
+        title: 'Explain an entity',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: false
+      }
+    },
+    async ({ entity, relationLimit, evidenceLimit }) => {
+      try {
+        const result = explainEntity(context, {
+          entityId: entity,
+          relationLimit: relationLimit ?? 20,
+          evidenceLimit: evidenceLimit ?? 10
+        });
+        const telemetry = explainEntityTelemetry(result);
+        return toolJsonResponse(context, 'parallax_explain_entity', result, {
+          indexRunId: telemetry.indexRunId,
+          query: entity,
+          resourceCount: telemetry.resourceCount
+        });
+      } catch (error) {
+        return typedToolErrorResponse(error);
+      }
+    }
+  );
+
+  server.registerTool(
+    'parallax_context_telemetry',
+    {
+      title: 'Inspect context telemetry',
+      description:
+        'Return recent local MCP context tool runs and resource reads so agents and UI can measure which compact context was actually expanded.',
+      inputSchema: {
+        limit: z.number().int().min(1).max(100).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_context_telemetry,
+      annotations: {
+        title: 'Inspect context telemetry',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ limit }) => {
+      const telemetry = contextTelemetry(context, limit ?? 20);
+      return toolStructuredResponse(telemetry);
+    }
+  );
+
+  server.registerTool(
+    'parallax_doctor',
+    {
+      title: 'Inspect Parallax health',
+      description:
+        'Return a read-only local health report covering database schema, latest index, coverage, adapter runs, vector state, and context telemetry availability.',
+      inputSchema: {},
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_doctor,
+      annotations: {
+        title: 'Inspect Parallax health',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async () => {
+      const report = doctorProject({ repoRoot: context.repoRoot });
+      return toolStructuredResponse(redactDoctorReportForMcp(report));
+    }
+  );
+
+  server.registerTool(
+    'parallax_repair_reflections',
+    {
+      title: 'Repair orphan reflection facts',
+      description:
+        'Sweep reflection facts on a branch and restore the provenance kind=summary edges and reflections audit row for any that lost them mid-write. Idempotent. dryRun reports orphans without writing.',
+      inputSchema: {
+        branch: z.string().optional(),
+        dryRun: z.boolean().optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_repair_reflections,
+      annotations: {
+        title: 'Repair orphan reflection facts',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ branch, dryRun }) => {
+      const result = await repairReflections(context.repoRoot, {
+        ...(branch !== undefined ? { branch } : {}),
+        ...(dryRun !== undefined ? { dryRun } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_restore_branch',
+    {
+      title: 'Restore an abandoned branch',
+      description:
+        'Move an abandoned branch back to active state and un-archive its transactions so recall surfaces its facts again. Idempotent on already-active branches.',
+      inputSchema: {
+        name: z.string().min(1)
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_restore_branch,
+      annotations: {
+        title: 'Restore an abandoned branch',
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ name }) => {
+      const result = restoreBranchOnRepo(context.repoRoot, { name });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerTool(
+    'parallax_trace',
+    {
+      title: 'Trace causal chain',
+      description: 'Walk fact_provenance edges from the given fact back through its evidence chain.',
+      inputSchema: {
+        factId: z.string().min(1),
+        depth: z.number().int().min(1).max(20).optional()
+      },
+      outputSchema: MCP_OUTPUT_SCHEMAS.parallax_trace,
+      annotations: {
+        title: 'Trace causal chain',
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false
+      }
+    },
+    async ({ factId, depth }) => {
+      const result = traceOnRepo(context.repoRoot, {
+          factId,
+          ...(depth !== undefined ? { depth } : {})
+      });
+      return toolStructuredResponse(result);
+    }
+  );
+
+  server.registerResource(
+    'parallax_reports',
+    new ResourceTemplate('parallax://reports/{reportId}', {
+      list: () => ({ resources: listReportResources(context) })
+    }),
+    {
+      title: 'Parallax Reports',
+      description: 'Persisted Parallax report JSON documents.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const reportId = String(variables.reportId);
+      return telemetryJsonResource(context, uri.toString(), 'report', reportId, readReport(context, reportId));
+    }
+  );
+
+  server.registerResource(
+    'parallax_entities',
+    new ResourceTemplate('parallax://entities/{entityId}', {
+      list: () => ({ resources: listEntityResources(context) })
+    }),
+    {
+      title: 'Parallax Entities',
+      description: 'Canonical indexed entities from the latest completed index run.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const entityId = decodeURIComponent(String(variables.entityId));
+      return telemetryJsonResource(context, uri.toString(), 'entity', entityId, readEntity(context, entityId));
+    }
+  );
+
+  server.registerResource(
+    'parallax_evidence',
+    new ResourceTemplate('parallax://evidence/{evidenceId}', {
+      list: () => ({ resources: listEvidenceResources(context) })
+    }),
+    {
+      title: 'Parallax Evidence',
+      description: 'Relation evidence with source span, redacted snippet, and source/target relation context.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const evidenceId = decodeURIComponent(String(variables.evidenceId));
+      return telemetryJsonResource(context, uri.toString(), 'evidence', evidenceId, readEvidence(context, evidenceId));
+    }
+  );
+
+  server.registerResource(
+    'parallax_context_packs',
+    new ResourceTemplate('parallax://context-packs/{contextPackId}', {
+      list: () => ({ resources: listContextPackResources(context) })
+    }),
+    {
+      title: 'Parallax Context Packs',
+      description: 'Persisted compact context packs keyed by content hash for repeated MCP reuse.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const contextPackId = decodeURIComponent(String(variables.contextPackId));
+      return telemetryJsonResource(
+        context,
+        uri.toString(),
+        'context_pack',
+        contextPackId,
+        readContextPack(context, contextPackId)
+      );
+    }
+  );
+
+  server.registerResource(
+    'parallax_workspaces',
+    new ResourceTemplate('parallax://workspaces/{workspaceName}', {
+      list: () => ({ resources: listWorkspaceResources(context) })
+    }),
+    {
+      title: 'Parallax Workspaces',
+      description: 'Workspace catalog membership and compact links to contract and cross-repo impact resources.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const workspaceName = decodeURIComponent(String(variables.workspaceName));
+      return telemetryJsonResource(
+        context,
+        uri.toString(),
+        'workspace',
+        workspaceName,
+        readWorkspaceResource(context, workspaceName)
+      );
+    }
+  );
+
+  server.registerResource(
+    'parallax_workspace_contracts',
+    new ResourceTemplate('parallax://workspaces/{workspaceName}/contracts', {
+      list: () => ({ resources: listWorkspaceContractResources(context) })
+    }),
+    {
+      title: 'Parallax Workspace Contracts',
+      description: 'Latest indexed contract baselines across the local workspace catalog.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const workspaceName = decodeURIComponent(String(variables.workspaceName));
+      return telemetryJsonResource(
+        context,
+        uri.toString(),
+        'workspace_contracts',
+        workspaceName,
+        readWorkspaceContractsResource(context, workspaceName)
+      );
+    }
+  );
+
+  server.registerResource(
+    'parallax_workspace_cross_repo_links',
+    new ResourceTemplate('parallax://workspaces/{workspaceName}/cross-repo-links', {
+      list: () => ({ resources: listWorkspaceCrossRepoLinkResources(context) })
+    }),
+    {
+      title: 'Parallax Workspace Cross-Repo Links',
+      description: 'Workspace-scoped provider/consumer and breaking contract impact links.',
+      mimeType: 'application/json'
+    },
+    async (uri, variables) => {
+      const workspaceName = decodeURIComponent(String(variables.workspaceName));
+      return telemetryJsonResource(
+        context,
+        uri.toString(),
+        'workspace_cross_repo_links',
+        workspaceName,
+        readWorkspaceCrossRepoLinksResource(context, workspaceName)
+      );
+    }
+  );
+
+  server.registerResource(
+    'parallax_graphs',
+    new ResourceTemplate('parallax://reports/{reportId}/graph/{format}', {
+      list: () => ({ resources: listGraphResources(context) })
+    }),
+    {
+      title: 'Parallax Graphs',
+      description: 'Report-scoped relationship graph projections in Mermaid, JSON, or DOT.',
+      mimeType: 'text/plain'
+    },
+    async (uri, variables) => {
+      const reportId = String(variables.reportId);
+      try {
+        const format = parseGraphFormat(graphFormatVariable(String(variables.format)));
+        const { exportImpactGraph } = await import('../../composition/graph.js');
+        const graph = await exportImpactGraph({
+          repoRoot: context.repoRoot,
+          reportId,
+          format
+        });
+        const text = graphResourceText(uri, graph, format);
+        recordContextResourceAccess(context, {
+          uri: uri.toString(),
+          resourceKind: 'graph',
+          resourceId: `${reportId}:${format}`,
+          indexRunId: graph.indexRunId,
+          returnedBytes: byteLength(text)
+        });
+        return {
+          contents: [
+            {
+              uri: uri.toString(),
+              mimeType: format === 'json' ? 'application/json' : 'text/plain',
+              text
+            }
+          ]
+        };
+      } catch (error) {
+        throw typedMcpError(error);
+      }
+    }
+  );
+
+  server.registerResource(
+    'parallax_coverage_latest',
+    'parallax://coverage/latest',
+    {
+      title: 'Parallax Latest Coverage',
+      description: 'Index coverage rows for the latest completed index run.',
+      mimeType: 'application/json'
+    },
+    async (uri) => {
+      try {
+        return telemetryJsonResource(context, uri.toString(), 'coverage', 'latest', readLatestCoverage(context));
+      } catch (error) {
+        throw typedMcpError(error);
+      }
+    }
+  );
+
+  registerWorkflowPrompts(server);
+
+  return server;
+}
+
+/**
+ * Workflow prompts teach an agent how to chain the read-only Parallax tools into
+ * a coherent investigation. They are templates, not tool calls: each returns a
+ * user message that sequences analyze -> context -> query/co-change -> remember,
+ * and biases toward high-confidence (proven > inferred > heuristic) signal.
+ */
+function registerWorkflowPrompts(server: McpServer): void {
+  const changedFilesClause = (changedFiles?: string): string =>
+    changedFiles && changedFiles.trim().length > 0
+      ? ` for these changed files: ${changedFiles.trim()}`
+      : '';
+
+  server.registerPrompt(
+    'impact_workflow',
+    {
+      title: 'Map the impact of a change',
+      description:
+        'Chain the Parallax tools to map the full blast radius of a change end to end.',
+      argsSchema: { changedFiles: z.string().optional() }
+    },
+    ({ changedFiles }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: [
+              `Map the full blast radius of a code change with Parallax${changedFilesClause(changedFiles)}.`,
+              'Prefer high-confidence signal (proven > inferred > heuristic) and cite evidence. Follow this sequence:',
+              '',
+              '1. Call `parallax_analyze_diff` to get affected files, suggested verify/review actions, and per-relation confidence.',
+              '2. Call `parallax_context_for_change` to assemble a focused context pack (changed entities plus their highest-confidence dependents) before reading code.',
+              '3. Widen the search: `parallax_query` for the transitive dependency closure (e.g. `MATCH (x)-[:DEPENDS_ON*1..3]->(d) WHERE x.path = ... RETURN d.path`), and `parallax_co_change` for files that historically change together but have no structural edge.',
+              '4. Persist what you learned with `parallax_remember` (decisions, risky areas, verification outcomes) so the next session inherits it.',
+              '',
+              'Report the affected set grouped by confidence, the actions to run, and any co-change coupling that structural analysis alone would miss.'
+            ].join('\n')
+          }
+        }
+      ]
+    })
+  );
+
+  server.registerPrompt(
+    'triage_change',
+    {
+      title: 'Triage the risk of a change',
+      description:
+        'Quickly triage whether a change is risky and decide what to verify, using Parallax.',
+      argsSchema: { changedFiles: z.string().optional() }
+    },
+    ({ changedFiles }) => ({
+      messages: [
+        {
+          role: 'user',
+          content: {
+            type: 'text',
+            text: [
+              `Triage whether a change is risky and what to verify with Parallax${changedFilesClause(changedFiles)}. Be fast and decisive:`,
+              '',
+              '1. Call `parallax_analyze_diff`. Focus on the highest-confidence affected files and the suggested verify/review actions.',
+              '2. Call `parallax_co_change` on the changed files to catch hidden coupling (files that co-change in git history without a structural edge).',
+              '3. Decide which checks to run now (from the suggested actions) and which areas a human should review. Treat heuristic-confidence impact as "investigate", not "ignore".',
+              '4. Record the triage verdict with `parallax_remember` so the rationale is auditable later.',
+              '',
+              'Output a short risk verdict (low/medium/high), the concrete verify actions, and the review hotspots.'
+            ].join('\n')
+          }
+        }
+      ]
+    })
+  );
+}
+
+export async function serveMcp(context: McpContext): Promise<void> {
+  const server = createMcpServer(context);
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+}
+
+type ToolResponse = {
+  content: Array<{ type: 'text'; text: string }>;
+  structuredContent?: Record<string, unknown>;
+  isError?: boolean;
+};
+
+type CompactMcpWorkspace = {
+  name: string;
+  repos: Array<{ serviceName: string }>;
+};
+
+type CompactMcpCrossRepoRow = {
+  linkId: string;
+  kind: CrossRepoConsumer['kind'];
+  confidence: CrossRepoConsumer['confidence'];
+  consumerService: string;
+  consumerPath: string;
+  providerService: string;
+  providerContractPath: string;
+  httpMethod: string;
+  routePath: string;
+};
+
+type CompactMcpCrossRepoConsumersResult = {
+  version: CrossRepoConsumersResult['version'];
+  workspace: CompactMcpWorkspace;
+  consumers: CompactMcpCrossRepoRow[];
+  warnings: string[];
+  resources: WorkspaceResourceUris;
+};
+
+type CompactMcpCrossRepoProvidersResult = {
+  version: CrossRepoProvidersResult['version'];
+  workspace: CompactMcpWorkspace;
+  providers: CompactMcpCrossRepoRow[];
+  warnings: string[];
+  resources: WorkspaceResourceUris;
+};
+
+type CompactMcpCrossRepoPreviewLink = {
+  kind: CrossRepoContractLink['kind'];
+  confidence: CrossRepoContractLink['confidence'];
+  consumerService: string;
+  consumerPath: string;
+  providerService: string;
+  providerContractPath: string;
+  providerEndpointId: string;
+  httpMethod: string;
+  routePath: string;
+  eventTopology?: CrossRepoContractLink['eventTopology'];
+};
+
+type CompactMcpResolveCrossRepoContractsResult = {
+  workspace: CompactMcpWorkspace;
+  links: CompactMcpCrossRepoPreviewLink[];
+  warnings: string[];
+  resources: WorkspaceResourceUris;
+};
+
+function compactMcpCrossRepoConsumersResult(
+  result: CrossRepoConsumersResult
+): CompactMcpCrossRepoConsumersResult {
+  return {
+    version: result.version,
+    workspace: compactMcpWorkspace(result.workspace),
+    consumers: result.consumers.map(compactMcpCrossRepoRow),
+    warnings: compactMcpWorkspaceWarnings(result.warnings, result.workspace),
+    resources: result.resources
+  };
+}
+
+function compactMcpCrossRepoProvidersResult(
+  result: CrossRepoProvidersResult
+): CompactMcpCrossRepoProvidersResult {
+  return {
+    version: result.version,
+    workspace: compactMcpWorkspace(result.workspace),
+    providers: result.providers.map(compactMcpCrossRepoRow),
+    warnings: compactMcpWorkspaceWarnings(result.warnings, result.workspace),
+    resources: result.resources
+  };
+}
+
+function compactMcpResolveCrossRepoContractsResult(
+  result: ResolveCrossRepoContractsResult
+): CompactMcpResolveCrossRepoContractsResult {
+  return {
+    workspace: compactMcpWorkspace(result.workspace),
+    links: result.links.map(compactMcpCrossRepoPreviewLink),
+    warnings: compactMcpWorkspaceWarnings(result.warnings, result.workspace),
+    resources: workspaceResources(result.workspace.name)
+  };
+}
+
+function compactMcpWorkspace(workspace: WorkspaceSummary): CompactMcpWorkspace {
+  return {
+    name: workspace.name,
+    repos: workspace.repos.map((repo) => ({ serviceName: repo.serviceName }))
+  };
+}
+
+function compactMcpCrossRepoRow(row: CrossRepoConsumer | CrossRepoProvider): CompactMcpCrossRepoRow {
+  return {
+    linkId: row.linkId,
+    kind: row.kind,
+    confidence: row.confidence,
+    consumerService: row.consumerService,
+    consumerPath: row.consumerPath,
+    providerService: row.providerService,
+    providerContractPath: row.providerContractPath,
+    httpMethod: row.httpMethod,
+    routePath: row.routePath
+  };
+}
+
+function compactMcpCrossRepoPreviewLink(link: CrossRepoContractLink): CompactMcpCrossRepoPreviewLink {
+  return {
+    kind: link.kind,
+    confidence: link.confidence,
+    consumerService: link.consumerService,
+    consumerPath: link.consumerPath,
+    providerService: link.providerService,
+    providerContractPath: link.providerContractPath,
+    providerEndpointId: link.providerEndpointId,
+    httpMethod: link.httpMethod,
+    routePath: link.routePath,
+    ...(link.eventTopology !== undefined ? { eventTopology: link.eventTopology } : {})
+  };
+}
+
+function compactMcpWorkspaceWarnings(warnings: string[], workspace: WorkspaceSummary): string[] {
+  const replacements = workspace.repos
+    .flatMap((repo) => workspacePathReplacementCandidates(repo.localPath, repo.serviceName))
+    .sort((left, right) => right.path.length - left.path.length);
+  if (replacements.length === 0) return warnings;
+  return warnings.map((warning) => replacements.reduce(
+    (text, replacement) => text.split(replacement.path).join(replacement.serviceName),
+    warning
+  ));
+}
+
+function workspacePathReplacementCandidates(localPath: string, serviceName: string): Array<{ path: string; serviceName: string }> {
+  const paths = new Set([localPath]);
+  try {
+    paths.add(normalizeRepoRoot(localPath));
+  } catch {
+    // Keep warning scrubbing best-effort; the compact payload must still return.
+  }
+  return [...paths]
+    .filter((pathValue) => pathValue.length > 0)
+    .map((pathValue) => ({ path: pathValue, serviceName }));
+}
+
+function patchToolErrorFactory(server: McpServer): void {
+  const errorFactory = server as unknown as {
+    createToolError?: (errorMessage: string) => ToolResponse;
+  };
+  errorFactory.createToolError = (errorMessage: string) => typedToolErrorResponse(new Error(errorMessage));
+}
+
+function toolJsonResponse(
+  context: McpContext,
+  toolName: McpOutputToolName,
+  value: unknown,
+  telemetry: ToolTelemetryInput = {}
+): ToolResponse {
+  const text = JSON.stringify(value);
+  recordContextToolRun(context, {
+    toolName,
+    indexRunId: telemetry.indexRunId ?? indexRunIdOf(value),
+    budget: telemetry.budget ?? null,
+    query: sanitizeTelemetryText(telemetry.query),
+    changedFiles: telemetry.changedFiles ?? [],
+    returnedBytes: byteLength(text),
+    resourceCount: telemetry.resourceCount ?? resourceCountOf(value),
+    omitted: telemetry.omitted ?? omittedCountsOf(value)
+  });
+  return {
+    structuredContent: value as Record<string, unknown>,
+    content: [
+      {
+        type: 'text',
+        text
+      }
+    ]
+  };
+}
+
+function toolStructuredResponse(value: unknown): ToolResponse {
+  return {
+    structuredContent: value as Record<string, unknown>,
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(value)
+      }
+    ]
+  };
+}
+
+function typedToolErrorResponse(error: unknown): ToolResponse {
+  return {
+    isError: true,
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(typedMcpErrorEnvelope(error))
+      }
+    ]
+  };
+}
+
+function telemetryJsonResource(
+  context: McpContext,
+  uri: string,
+  resourceKind: string,
+  resourceId: string | null,
+  value: unknown
+): { contents: Array<{ uri: string; mimeType: string; text: string }> } {
+  const text = JSON.stringify(value, null, 2);
+  recordContextResourceAccess(context, {
+    uri,
+    resourceKind,
+    resourceId,
+    indexRunId: indexRunIdOf(value),
+    returnedBytes: byteLength(text)
+  });
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text
+      }
+    ]
+  };
+}

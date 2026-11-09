@@ -138,7 +138,7 @@ HTTPサーバーの起動後、[http://localhost:8787/admin/memory](http://local
 
 コーディングエージェントとの会話は、セッションが終わるとコンテキストを失います。
 Akashaは、エージェントが覚えておく価値のあることを保存し、次回読み返すための場所です。
-同じ20個のサービスツールを、MCP stdio、`POST /mcp`のMCP Streamable HTTP、
+同じ21個のサービスツールを、MCP stdio、`POST /mcp`のMCP Streamable HTTP、
 `/v1/*`のJSON-HTTPで公開しています。完全なリクエスト・レスポンススキーマは
 [docs/api-reference.md](docs/api-reference.md)を参照してください。
 HTTPとMCPはサービスのスキーマを共有しているため、両トランスポートで検証とペイロードの構造が一致します。
@@ -154,6 +154,7 @@ HTTPとMCPはサービスのスキーマを共有しているため、両トラ�
 | `reindex_memory` | Postgresに残っているチャンクからベクトルを再構築 | `POST /v1/memory/reindex` |
 | `list_memory` | タグ・アーカイブ状態で絞り込んで正本レコードを確認 | `POST /v1/memory/list` |
 | `inspect_memory_graph` | 保存済みのエンティティへの言及と関係を確認 | `POST /v1/memory/graph` |
+| `inspect_memory_impact` | Inspect registered correction dependencies; coverage remains unknown | `POST /v1/memory/impact` |
 | `update_memory` | 正本レコード1件を編集し、そのベクトル状態を更新 | `POST /v1/memory/update` |
 | `delete_memory` | 管理操作としてレコード1件をアーカイブし、ベクトルを削除 | `POST /v1/memory/delete` |
 | `tag_memory` | レコード1件の管理用タグを置き換え | `POST /v1/memory/tag` |
@@ -221,12 +222,12 @@ curl -sX POST http://localhost:8787/v1/memory/context-pack \
 
 | レイヤー | 役割 |
 |-------|----------------|
-| MCPサーバー（`src/mcp/`） | 共通のMCPサーバー機能: ツール記述、スキーマ、レジストリ、ハンドラー |
-| HTTPサーバー（`src/app/`） | `/mcp`でMCP Streamable HTTPを、`/v1/*`でJSON HTTPを提供 |
-| 正本ストア（`src/store/memory-repository.ts`） | Postgres — レコード、ソース、取り込みジョブ、エンティティグラフ、監査 |
-| ベクトルインデックス（`src/vector/`） | Qdrant（既定）またはpgvector — チャンク化した埋め込みと類似検索。Postgresのみでデプロイするには`VECTOR_BACKEND=pgvector`を設定。 |
-| コンパクション（`src/compact/`） | 重複排除（完全一致・意味的一致）、減衰、アーカイブ、アーカイブ解除、スイーパー |
-| 埋め込み（`src/embedding/`） | `transformers`（無料のローカルONNX、既定）、`openai`（`text-embedding-3-small`）、または`local`（CI用の決定論的スタブ） |
+| MCPサーバー（`src/interfaces/mcp/`） | 共通のMCPサーバー機能: ツール記述、スキーマ、レジストリ、ハンドラー |
+| HTTPサーバー（`src/interfaces/http/`） | `/mcp`でMCP Streamable HTTPを、`/v1/*`でJSON HTTPを提供 |
+| 正本ストア（`src/infrastructure/postgres/memory-repository.ts`） | Postgres — レコード、ソース、取り込みジョブ、エンティティグラフ、監査 |
+| ベクトルインデックス（`src/infrastructure/vector/`） | Qdrant（既定）またはpgvector — チャンク化した埋め込みと類似検索。Postgresのみでデプロイするには`VECTOR_BACKEND=pgvector`を設定。 |
+| コンパクション（`src/application/usecases/`） | 重複排除（完全一致・意味的一致）、減衰、アーカイブ、アーカイブ解除、スイーパー |
+| 埋め込み（`src/infrastructure/embedding/`） | `transformers`（無料のローカルONNX、既定）、`openai`（`text-embedding-3-small`）、または`local`（CI用の決定論的スタブ） |
 
 データフロー: 呼び出し元が`add_memory`で書き込み → レコードをPostgresに保存し、エンティティへの言及を
 関連付け、内容をチャンク化・埋め込み生成して、使用中のベクトルバックエンドにupsertします。

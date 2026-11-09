@@ -7,8 +7,8 @@ import {
   scoreSearchResult,
   type RetrievedMemoryCandidate,
   type ScoreSearchResultOptions,
-} from "../../src/search/rank-results.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+} from "../../src/domain/policies/rank-results.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 type ResultOverrides = Partial<Omit<SearchMemoryResult, "source">> & {
   source?: Partial<SearchMemoryResult["source"]>;

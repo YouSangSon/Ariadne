@@ -1,10 +1,13 @@
-import { test } from 'node:test'
+import { test, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+const temporaryDirectories = []
+after(() => { for (const directory of temporaryDirectories) rmSync(directory, { recursive: true, force: true }) })
 
 const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), '..', 'scripts')
 
@@ -20,6 +23,7 @@ description: 데모 스킬.
 
 function makeFixtureRepo() {
   const root = mkdtempSync(join(tmpdir(), 'harness-p2-'))
+  temporaryDirectories.push(root)
   mkdirSync(join(root, 'skills', 'demo'), { recursive: true })
   writeFileSync(join(root, 'skills', 'demo', 'SKILL.md'), SKILL_SRC)
   mkdirSync(join(root, 'core'), { recursive: true })
@@ -71,6 +75,7 @@ test('check-mirror: 빈 HOME(클린 환경)에서도 통과한다', () => {
   const root = makeFixtureRepo()
   run('generate-mirrors.mjs', ['--root', root])
   const emptyHome = mkdtempSync(join(tmpdir(), 'harness-home-'))
+  temporaryDirectories.push(emptyHome)
   assert.equal(run('check-mirror.mjs', ['--root', root], { HOME: emptyHome }).status, 0)
 })
 
@@ -78,6 +83,7 @@ test('install: 멱등 — 2회차는 전부 skipped, 수정 후엔 updated', () 
   const root = makeFixtureRepo()
   run('generate-mirrors.mjs', ['--root', root])
   const prefix = mkdtempSync(join(tmpdir(), 'harness-prefix-'))
+  temporaryDirectories.push(prefix)
 
   const r1 = run('install.mjs', ['--root', root, '--prefix', prefix])
   assert.equal(r1.status, 0, r1.stderr)
@@ -97,6 +103,7 @@ test('uninstall: manifest 기재 파일만 제거하고 외부 파일은 보존�
   const root = makeFixtureRepo()
   run('generate-mirrors.mjs', ['--root', root])
   const prefix = mkdtempSync(join(tmpdir(), 'harness-prefix-'))
+  temporaryDirectories.push(prefix)
   run('install.mjs', ['--root', root, '--prefix', prefix])
 
   const foreign = join(prefix, 'user-note.md')
@@ -112,6 +119,7 @@ test('uninstall: manifest 기재 파일만 제거하고 외부 파일은 보존�
 
 test('uninstall: manifest 없으면 명확한 에러로 비정상 종료', () => {
   const empty = mkdtempSync(join(tmpdir(), 'harness-prefix-'))
+  temporaryDirectories.push(empty)
   const r = run('uninstall.mjs', ['--prefix', empty])
   assert.notEqual(r.status, 0)
   assert.match(r.stderr, /manifest/)

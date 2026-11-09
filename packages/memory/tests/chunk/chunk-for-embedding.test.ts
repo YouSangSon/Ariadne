@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { chunkForEmbedding } from "../../src/chunk/chunk-for-embedding.js";
-import { chunkText, type ChunkTextInput, type TextChunk } from "../../src/chunk/chunk-text.js";
-import type { EmbeddingChunkingTokenizer } from "../../src/embedding/embedding-provider.js";
+import { chunkForEmbedding } from "../../src/application/indexing/chunk-for-embedding.js";
+import { chunkText, type ChunkTextInput, type TextChunk } from "../../src/domain/policies/chunk-text.js";
+import type { EmbeddingChunkingTokenizer } from "../../src/application/ports/embedding-provider.js";
 
 const characters: EmbeddingChunkingTokenizer = {
   maxInputTokens: 8,

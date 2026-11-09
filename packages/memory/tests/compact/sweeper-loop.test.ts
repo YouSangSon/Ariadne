@@ -3,8 +3,8 @@ import {
   loadSweeperEnabled,
   loadSweeperIntervalMs,
   startBackgroundSweeper,
-} from "../../src/compact/sweeper-loop.js";
-import type { MemoryArchiveRepository } from "../../src/store/memory-archive-repository.js";
+} from "../../src/interfaces/worker/sweeper-loop.js";
+import type { MemoryArchiveRepository } from "../../src/application/ports/memory-archive.js";
 
 const SILENT_LOGGER = {
   info: vi.fn(),

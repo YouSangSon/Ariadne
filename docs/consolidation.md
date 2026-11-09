@@ -1,7 +1,10 @@
 # One Ariadne project
 
-Ariadne combines requirements, bounded context, durable memory, code impact and
-wiki relationships in one checkout. Install with `npm run setup`, verify with
+Current context ownership, inward dependencies, and compatibility paths belong
+to the [architecture reference](architecture.md).
+
+Ariadne combines requirements, bounded context, durable memory, code impact,
+file-based ontology and wiki relationships in one checkout. Install with `npm run setup`, verify with
 `npm run verify`, and use `node bin/Ariadne.mjs` from any target repository.
 No sibling checkout, global package installation or model subscription is required
 for the local harness and code graph.
@@ -11,12 +14,17 @@ for the local harness and code graph.
 | Akasha | `packages/memory` | `Ariadne memory …` |
 | Context-forge | Already renamed into Akasha; context-pack implementation is in memory and core | `Ariadne context …`, `Ariadne memory pack …` |
 | Parallax | `packages/code` | `Ariadne code …` |
-| Ontology | Generic wiki relationship index in `modules/llm-wiki`; original enterprise design retained privately | `Ariadne knowledge index …` |
+| Ontology design | Original enterprise design retained privately; new file-based module in `modules/ontology`, plus a separate wiki relationship index in `modules/llm-wiki` | `Ariadne ontology inspect …`, `Ariadne ontology search …`, `Ariadne knowledge index …` |
 
-Ontology was a design collection, not an implemented enterprise service. The wiki
-index resolves relationships and reports unresolved links; it does not implement
-an enterprise ontology server, graph database or approval system. Original raw
-enterprise documents and unfinished source changes are not public imports.
+The former ontology was a design collection, not an implemented enterprise
+service. The new module reads user-authored JSON terms, synonyms, typed
+relationships and source paths. Each read recomputes a review digest from the
+definitions and source files and reports `unreviewed`, `current` or `stale`.
+It provides bounded lexical search, not an LLM, SQL, an answerability judgment
+or authenticated approval. Separately, the wiki index is a snapshot that resolves
+relationships and reports unresolved links when regenerated. Neither implements
+an enterprise ontology server or graph database. Original raw enterprise
+documents and unfinished source changes are not public imports.
 
 ## Installation and configuration
 
@@ -26,11 +34,38 @@ node bin/Ariadne.mjs --help
 npm run verify
 ```
 
-Setup installs each internal lockfile and builds each package in its own cwd.
+Omitting `--modules` selects every module. Pass comma-separated names from `core`,
+`ontology`, `memory` and `code` to install or verify a selection; `core` is always
+included. The source checkout still contains all modules. For example:
+
+```sh
+npm run setup -- --modules core
+npm run setup -- --modules ontology
+npm run setup -- --modules memory,ontology
+npm run verify -- --modules memory,ontology
+node bin/Ariadne.mjs ontology inspect --file modules/ontology/example.json
+node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --query memory --limit 5
+```
+
+Core and ontology use source files without external databases or npm package
+dependencies. Memory needs its existing PostgreSQL and vector configuration;
+code uses local SQLite. Setup installs only the selected packages' dependencies
+and builds them in their own cwd. A selection is not persisted, does not remove
+previously installed dependencies and does not hide commands. Pass it again on
+each setup or verification run.
+
 Two internal lockfiles preserve tested dependency versions and isolate the two
 TypeScript/test toolchains. A workspace-wide dependency rewrite was rejected
 because it would change dependency resolution and packaging guarantees during a
 source relocation. There are no independent package releases (`private: true`).
+
+Memory, code, ontology, and the root capability contexts own their models and
+storage. Their domain rules and application use cases depend inward on policies
+and ports. Concrete storage, transport, model, and process adapters connect at
+composition boundaries. Historical entrypoints preserve their existing exports.
+See the [architecture reference](architecture.md) for the complete ownership and
+validation scope, and [modules and ontology](modular-ontology.md) for the ontology
+file format.
 
 Copy `packages/memory/.env.example` to root `.env` if using the memory service.
 Review the [memory configuration](../packages/memory/docs/configuration.md), then
@@ -110,8 +145,10 @@ consolidation neither starts an unknown deployment nor changes its credentials.
 
 ## Verification and learning
 
-The root gate runs core tests, mirror/REQ checks, memory typecheck/tests/audit and
-the code package's full canonical gate. Memory PostgreSQL/pgvector and transformer
+The full root gate runs core and ontology source tests, mirror/REQ checks, memory
+typecheck/tests/audit and the code package's full canonical gate. The source-only
+`node scripts/verify.mjs` needs no package dependencies and includes the shared
+ontology source tests; selecting `core` also runs those tests. Memory PostgreSQL/pgvector and transformer
 retrieval jobs remain separate root CI jobs; local non-PG tests do not establish
 those outcomes. Root tests exercise the CLI from a different repository, including
 affected-file output and the original nonzero impact-gate exit status.
@@ -132,12 +169,11 @@ SQLite repo lookups, matching production indexing (`/var` may resolve to
 
 ## File and configuration concurrency
 
-Source previews open the approved file without following a replaced leaf symlink,
-compare its descriptor identity, and bound reads to one megabyte. Replaced
-ancestors and file growth are rejected in the tested interleavings. This portable
-Node implementation is not a filesystem sandbox against a malicious process
-changing ancestor directories during every validation step. Keep the local UI
-on a trusted workspace; stronger namespace isolation requires OS support.
+Live source-file previews in the web UI are disabled. `/source` returns HTTP 410
+without inspecting or opening the requested path. The UI still shows indexed
+snippets, file paths and line numbers; open full source files in a local editor.
+This removes the ancestor-directory replacement race from the preview endpoint.
+It does not make the remaining local UI an OS-level filesystem sandbox.
 
 Project initialization uses exclusive config creation. MCP installers serialize
 on the canonical target, preserve ordinary symlinks and permission bits, and

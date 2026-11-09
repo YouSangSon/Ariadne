@@ -4,9 +4,11 @@
 
 Parallax는 local-first impact graph다. 단일 SQLite 데이터베이스가 코드 구조, 에이전트 메모리, 검색 projection, context pack, report metadata를 저장한다. 이 문서는 indexer, adapter, analyzer, MCP 서버, UI를 바꾸기 전에 알아야 할 실행 경로를 설명한다.
 
-Source checkout 참고: `src/indexer.ts` 같은 경로는 maintainer source path다. npm package 문서에서는 reference name으로만 쓰이며, 직접 열어보려면 repository checkout이 필요하다.
+Source checkout 참고: `src/composition/indexing.ts` 같은 경로는 maintainer source path다. npm package 문서에서는 reference name으로만 쓰이며, 직접 열어보려면 repository checkout이 필요하다.
 
 ## 시스템 맵
+
+아래 그림은 실행 중 데이터 흐름이다. import 경계는 다음 소유권 표가 정의한다.
 
 ```mermaid
 flowchart TD
@@ -25,16 +27,25 @@ flowchart TD
 
 ## 런타임 책임
 
-| 계층 | 주요 파일 | 책임 |
+Code는 Ariadne 안의 단일 경계 컨텍스트다. 영향 분석, 인덱싱, 계약, 로컬 메모리, 워크스페이스, 문맥은 같은 모델의 업무 영역이다. 기존 SQLite 데이터 소유권을 공유하며 별도 서비스로 나누지 않는다.
+
+| 계층 | 주요 경로 | 책임 |
 | :--- | :--- | :--- |
-| Public API | `src/index.ts` | 지원하는 프로그래밍 표면을 re-export한다. |
-| CLI | `src/cli.ts` | 현재 저장소 루트에서 명령을 파싱하고 public API를 호출한다. |
-| Indexer | `src/indexer.ts` | 파일을 스캔하고, adapter를 고르고, entity, relation, evidence, coverage, adapter run metadata를 저장한다. |
-| Adapter | `src/adapters/**` | 언어 또는 파일 형식별 파일을 graph event로 바꾼다. |
-| Store | `src/store.ts` | SQLite schema 생성, additive migration, DB helper를 책임진다. |
-| Analyzer | `src/analyzer.ts` | 최신 completed index를 읽고 changed-to-affected impact report를 계산한다. |
-| MCP | `src/mcp.ts`, `src/mcp_search.ts`, `src/context_pack.ts` | 분석, 검색, 메모리, doctor, context-pack 기능을 코딩 에이전트에 노출한다. |
-| UI | `src/ui.ts`, `src/ui/**` | 로컬 report workbench와 report/coverage API를 제공한다. |
+| 도메인 | `src/domain/**` | 영향 탐색, 신뢰도, 인덱스 변경·출력 소유권 정책, 계약 비교, 사실 ID, 브랜치 정책, 문맥 순위·예산을 계산한다. |
+| 애플리케이션 | `src/application/**` | 의미 있는 연산을 정의한 포트로 분석, 인덱싱, 검색, 문맥 재사용, 워크스페이스, 메모리·모델 작업과 UI 스냅샷을 조율한다. |
+| 인프라 | `src/infrastructure/**` | SQLite 저장소, 파일 경계·스캐너, Git, 파서, 모델 제공자, 설정 파일의 원자적 쓰기를 구현한다. |
+| 인터페이스 | `src/interfaces/**` | CLI 인자, MCP 등록·스키마, HTTP·HTML, 소스 미리보기와 보고서 출력을 담당한다. |
+| 조립 | `src/composition/**` | 포트에 어댑터를 연결한다. 기본 추출기 등록 순서는 `src/composition/extractors.ts`가 소유한다. |
+| 호환 경로 | `src/index.ts`, `src/cli.ts`, 기존 소스 경로 | 공개 export와 실행 경로를 유지한다. 내부 코드는 새 소유 모듈을 참조한다. |
+| 도구 | `scripts/**`, `bench/**` | 스키마·문서·의존성 검사와 패키지 벤치마크를 실행한다. |
+
+도메인은 도메인에만 의존한다. 애플리케이션은 애플리케이션과 도메인에 의존한다. 경로·해시의 순수 계산에는 표준 라이브러리를 쓰고, 파일·프로세스·환경변수·모델·프레임워크 접근은 외곽에 둔다. 포트는 SQL이나 범용 트랜잭션 대신 인접 관계 읽기, 인덱스 공개 같은 업무 연산을 표현한다.
+
+`AnalysisSession`은 같은 연결로 그래프 이웃을 읽는다. `IndexingSession`은 인덱스 재사용을 검증하는 읽기 스냅샷과 해제 후 최신 실행 재확인을 보존한다. 인덱스 공개는 기존 쓰기 트랜잭션·기준 상태 검증·co-change savepoint를 유지한다. 로컬 메모리 저장소는 사실, 트랜잭션 부모, 출처, 원본 임베딩, 벡터 검색 사본과 브랜치 head를 함께 커밋한다. 모델 작업은 쓰기 전에 끝낸다. SCIP 가져오기도 인덱스 스냅샷과 증강을 직렬화하는 기존 범위를 유지한다.
+
+그래프 내보내기는 저장된 보고서 JSON에서 시작한다. 관계 근거가 없는 과거 보고서에만 기존 canonical graph 보완 경로를 사용한다. MCP 도구·리소스 이름, annotation, telemetry 동작, `parallax://` URI와 저장 스키마는 유지한다.
+
+전체 소유권은 [`architecture-map.json`](../architecture-map.json)에 있다. `npm run test:architecture`는 모든 실행 소스·도구 파일, 의존 방향, 실행 시 순환과 기존 89개 모듈의 export 집합을 검사한다. 역방향 타입 import·export·동적 import, 숨긴 SQL과 미분류 경로를 넣은 음성 대조도 실패해야 한다. 기본 테스트 명령에도 이 검사가 포함된다.
 
 ## 인덱싱 경로
 
@@ -48,7 +59,7 @@ flowchart TD
 
 ## Adapter 확장 계약
 
-Adapter는 `src/adapters/types.ts`의 `SemanticAdapter`를 구현한다. 중요한 계약은 다음과 같다.
+Adapter는 `src/domain/indexing/adapter.ts`의 `SemanticAdapter`를 구현한다. 중요한 계약은 다음과 같다.
 
 | 필드 또는 메서드 | 의미 |
 | :--- | :--- |
@@ -74,7 +85,7 @@ Multi-language regex adapter는 catch-all이므로 기본 registry의 마지막�
 | Context surface | `context_tool_runs`, `context_resource_accesses`, `context_packs` | MCP context-pack 재사용과 telemetry를 기록한다. |
 | Search | FTS5 projection table | entity, evidence, fact에 대한 keyword search를 지원한다. |
 
-모든 migration은 additive다. 새 DDL은 `src/store.ts`의 allowlist migration 스타일을 따라야 한다.
+모든 migration은 additive다. 새 DDL은 `src/infrastructure/sqlite/store.ts`의 allowlist migration 스타일을 따라야 한다.
 
 ## 분석 경로
 

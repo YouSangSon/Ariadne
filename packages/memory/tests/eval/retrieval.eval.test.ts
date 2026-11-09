@@ -1,29 +1,24 @@
-import { createMemoryWriteCoordinator } from "../../src/store/memory-write-coordinator.js";
+import { createMemoryWriteCoordinator } from "../../src/infrastructure/postgres/memory-write-coordinator.js";
 import { performance } from "node:perf_hooks";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { resolveServiceConfig } from "../../src/config.js";
-import { buildContextPack } from "../../src/context-pack/build-context-pack.js";
-import { createPgPool, type PgPool } from "../../src/db/connection.js";
-import { runMigrations } from "../../src/db/migrate.js";
-import { createEmbeddingProvider } from "../../src/embedding/embedding-factory.js";
-import { hardNegativeOrderingAtK, mrrAtK, recallAtK } from "../../src/eval/metrics.js";
-import { isAllowedEvalScope } from "../../src/eval/retrieval-corpus.js";
-import { buildContextPackResult } from "../../src/mcp/context-pack-result.js";
-import type { EvalQuery } from "../../src/eval/types.js";
-import { createIngestJobRepository } from "../../src/jobs/ingest-job-repository.js";
-import { createQdrantClient } from "../../src/qdrant/client.js";
-import { retrieveMemory } from "../../src/search/retrieve-memory.js";
-import {
-  createMemoryChunkRepository,
-  writeCanonicalMemory,
-} from "../../src/store/canonical-indexing.js";
-import { createMemoryRepository } from "../../src/store/memory-repository.js";
-import type {
-  AddMemoryInput,
-  CanonicalMemoryRepository,
-  SearchMemoryResult,
-} from "../../src/types.js";
-import { createQdrantVectorIndex } from "../../src/vector/qdrant-index.js";
+import { resolveServiceConfig } from "../../src/infrastructure/configuration/config.js";
+import { buildContextPack } from "../../src/domain/policies/build-context-pack.js";
+import { createPgPool, type PgPool } from "../../src/infrastructure/postgres/connection.js";
+import { runMigrations } from "../../src/infrastructure/postgres/migrate.js";
+import { createEmbeddingProvider } from "../../src/composition/runtime/embedding-factory.js";
+import { hardNegativeOrderingAtK, mrrAtK, recallAtK } from "../../src/domain/evaluation/metrics.js";
+import { isAllowedEvalScope } from "../../src/domain/evaluation/retrieval-corpus.js";
+import { buildContextPackResult } from "../../src/application/tools/context-pack-result.js";
+import type { EvalQuery } from "../../src/domain/evaluation/types.js";
+import { createIngestJobRepository } from "../../src/infrastructure/postgres/ingest-job-repository.js";
+import { createQdrantClient } from "../../src/infrastructure/vector/client.js";
+import { retrieveMemory } from "../../src/application/usecases/retrieve-memory.js";
+import { createMemoryChunkRepository } from "../../src/infrastructure/postgres/canonical-indexing.js";
+import { writeCanonicalMemory } from "../../src/application/indexing/canonical-indexing.js";
+import { createMemoryRepository } from "../../src/infrastructure/postgres/memory-repository.js";
+import type { AddMemoryInput, SearchMemoryResult } from "../../src/domain/model/memory.js";
+import type { CanonicalMemoryRepository } from "../../src/application/ports/memory-repositories.js";
+import { createQdrantVectorIndex } from "../../src/infrastructure/vector/qdrant-index.js";
 import { resolveEvalThreshold } from "./env.js";
 import { loadRetrievalCorpus } from "./fixtures/retrieval-corpus.js";
 

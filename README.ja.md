@@ -51,6 +51,7 @@ Ariadneは、**ユーザーの目標を実行と検証につなぐ統合エー�
 | **必須コンテキストの保持** | 確定した事実と検証を優先して保持し、必須情報が予算を超えた場合は出力せずに失敗 |
 | **永続メモリ** | PostgreSQLを正本とし、Qdrantまたはpgvectorによる検索、組織単位の権限、HTTP・MCPツールを提供 |
 | **コード影響分析** | ローカルSQLiteグラフ、変更の影響、検証対象、根拠、MCP、UI |
+| **オントロジー** | ユーザー定義の用語・関係・出典ファイルを読み、限定的な語彙検索とレビュー状態の確認を提供 |
 | **知識の関係** | 作業記録のWiki昇格とリンク・未解決の関係のインデックス |
 | **共通ルールとスキル** | 単一の原本からCodex・Claude Code向けミラーを生成し、一致を検査 |
 | **変更検知の基盤** | すべての受け入れ基準（AC）と不変スコープを含む契約ハッシュ、およびdirty・untracked・modeを含むソース指紋 |
@@ -67,7 +68,7 @@ Ariadneは、**ユーザーの目標を実行と検証につなぐ統合エー�
 
 ## はじめに
 
-製品全体のインストールと実行には**Node.js 24.22.2以降**が必要です。ファイルベースのコアは外部DBなしで利用できます。永続メモリサービスにはPostgreSQLと選択したベクトルストアが必要です。
+製品全体のインストールと実行には**Node.js 24.22.2以降**が必要です。ファイルベースのコアは外部DBなしで利用できます。永続メモリサービスにはPostgreSQLと選択したベクトルストアが必要です。以下は全体のインストール例です。必要なモジュールだけを使う場合は、クローン後に[モジュールの選択](#module-selection)に従ってください。
 
 ```sh
 git clone https://github.com/YouSangSon/Ariadne.git
@@ -77,7 +78,42 @@ npm run verify
 node bin/Ariadne.mjs --help
 ```
 
-現在利用できるコード分析とコンテキストのコマンドは、作業対象のリポジトリで実行します。
+<a id="module-selection"></a>
+
+### モジュールの選択
+
+ソースのチェックアウトには常にすべてのモジュールが含まれます。`setup`と`verify`の`--modules`に次の名前をカンマ区切りで指定します。`core`は常に含まれ、オプションを省略すると全体をインストール・検証します。
+
+| モジュール | 役割と必要な環境 |
+| --- | --- |
+| `core` | 共通ハーネス。外部DBとnpmパッケージ依存関係は不要 |
+| `ontology` | JSONの用語・関係・出典の検索とレビュー。外部DBとnpmパッケージ依存関係は不要 |
+| `memory` | 永続メモリ。PostgreSQLと選択したベクトルストアの設定が必要 |
+| `code` | コード影響分析。対象リポジトリのローカルSQLiteを使用 |
+
+```sh
+# コアのみ、またはオントロジーのみを選択
+npm run setup -- --modules core
+npm run setup -- --modules ontology
+# メモリとオントロジーを一緒にインストール・検証
+npm run setup -- --modules memory,ontology
+npm run verify -- --modules memory,ontology
+```
+
+選択したパッケージの依存関係のみをインストールします。選択は保存されないため、次回の実行時にもオプションを指定してください。既存の依存関係の削除や、他のモジュールのコマンドの非表示は行いません。
+
+オントロジーは、ユーザーが作成したJSONの用語、同義語、型付きの関係、出典パスを使います。
+
+```sh
+node bin/Ariadne.mjs ontology inspect --file modules/ontology/example.json
+node bin/Ariadne.mjs ontology search --file modules/ontology/example.json --query memory --limit 5
+```
+
+読み込みのたびに定義と出典ファイルからレビューダイジェストを再計算し、`unreviewed`、`current`、`stale`を表示します。検索は限定的な語彙検索であり、LLM・SQL・回答可能性の判定は提供しません。レビュー状態は認証済みの承認ではありません。既存の`knowledge promote`と`knowledge index`は別のWikiスナップショットを扱います。
+
+メモリ、コード、要件、コンテキスト、ルール連携、Wiki、実行基盤、オントロジーは、それぞれの規則とデータを所有します。ドメインとアプリケーションはポートに依存し、ファイル、DB、HTTP、プロセスのアダプターを外側で接続します。既存のエントリーポイントと保存契約は維持します。所有範囲と境界検査は[アーキテクチャ](docs/architecture.md)、オントロジーの形式は[モジュールとオントロジー](docs/modular-ontology.md)を参照してください。
+
+現在利用できるコード分析とコンテキストのコマンドは、作業対象のリポジトリで実行します。コードコマンドには`code`モジュールの依存関係が必要です。
 
 ```sh
 node /path/to/Ariadne/bin/Ariadne.mjs code init
@@ -86,7 +122,7 @@ node /path/to/Ariadne/bin/Ariadne.mjs code analyze --changed src/example.ts --fa
 node /path/to/Ariadne/bin/Ariadne.mjs context --root . --req my-task
 ```
 
-メモリを使うには、`packages/memory/.env.example`をルートの`.env`にコピーし、DBとベクトルの設定を確認します。実際の値はGitに含めません。デフォルトのtransformerモデルはローカルで実行され、初回実行時に重みをダウンロードする場合があります。APIキーや有料プロバイダーは自動設定されません。
+メモリを使うには、`memory`モジュールの依存関係をインストールし、`packages/memory/.env.example`をルートの`.env`にコピーして、DBとベクトルの設定を確認します。実際の値はGitに含めません。デフォルトのtransformerモデルはローカルで実行され、初回実行時に重みをダウンロードする場合があります。APIキーや有料プロバイダーは自動設定されません。
 
 ```sh
 node --env-file=.env bin/Ariadne.mjs memory serve
@@ -136,9 +172,11 @@ node scripts/install.mjs
 
 ```sh
 npm run verify
-# コアのみを確認する場合
+# パッケージ依存関係なしでコアのソースを確認する場合
 node scripts/verify.mjs
 ```
+
+全体の`npm run verify`は既存のパッケージ検査を維持します。選択したモジュールを検証するには、setupと同様に`--modules`を指定します。コアのソース検査は`core`のみの選択でも共通のオントロジーソーステストを含みます。
 
 検査では実際のファイル、一時プロジェクト、テストが起動するHTTPサーバーを使用します。CIのPostgreSQL・pgvector・ローカルtransformer検索の検証は別のジョブとして実行します。モデルの呼び出しは不要です。
 APIプロトコルの検査を、モデルの品質、サブスクリプション節約率、実サービスの性能の根拠として解釈しません。
@@ -157,6 +195,7 @@ APIプロトコルの検査を、モデルの品質、サブスクリプショ�
 | `lib/`, `scripts/`, `tests/` | 決定論的な検査と回帰の根拠 |
 | `packages/memory/`, `packages/code/` | 内部実装、固定された依存関係、既存の契約とテスト |
 | `bin/Ariadne.mjs` | 単一のインストール・実行エントリーポイント |
+| `modules/ontology/` | ファイルベースのオントロジーモデルと検索 |
 | `modules/llm-wiki/` | Wiki昇格と関係インデックス |
 | `modules/loop/` | 契約、ファイルツール、転送、手動引き継ぎの基盤 |
 | `evaluation/` | モデル呼び出しのない評価装置の対照群 |
@@ -165,6 +204,24 @@ APIプロトコルの検査を、モデルの品質、サブスクリプショ�
 既存のインストールデータ形式`.harness/`、`~/.harness`、`harness-*`識別子は維持します。
 
 </details>
+
+<a id="harness-evidence"></a>
+
+## 選択したスキルと実行記録の比較
+
+`skills` は対象プロジェクトのスキル名・説明・内容の hash を表示します。`context --skill name@SHA256` は選択した本文だけを必須コンテキストの予算に含め、内容変更や予算超過を拒否します。`eval compare` は実行記録の条件・報告された結果・失敗時の費用を比較します。エージェントの自動実行や実際の節約率を認証する機能ではありません。
+
+```sh
+node bin/Ariadne.mjs skills --root /path/to/project
+node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-example.json
+```
+
+記憶に再確認の方法・条件と報告された出典を関連付けられます。`inspect_memory_impact` は同じ組織・範囲に登録された訂正の影響を調べます。`eval memory-ablation` は任意の記憶一つを含む場合と除いた場合の実行記録・総費用を比較します。再確認・修正・昇格は自動実行せず、未登録の依存関係や実際の有用性には別の検証が必要です。[契約と利用範囲](docs/memory-reuse.md)を参照してください。
+
+出典の位置、選択取得、訂正候補、上限付き保守の[詳細設計](docs/memory-evolution-design.md)は今後の実装対象です。
+
+[20 件の参照元・適用範囲・入力形式（韓国語）](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>
 

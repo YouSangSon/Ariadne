@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildContextPack,
   type BuildContextPackInput,
-} from "../../src/context-pack/build-context-pack.js";
-import type { SearchMemoryResult } from "../../src/types.js";
+} from "../../src/domain/policies/build-context-pack.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 type ResultOverrides = Partial<Omit<SearchMemoryResult, "source">> & {
   source?: Partial<SearchMemoryResult["source"]>;

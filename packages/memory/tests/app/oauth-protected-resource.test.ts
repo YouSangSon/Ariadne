@@ -5,7 +5,7 @@ import {
   buildProtectedResourceMetadataUrl,
   isOAuthProtectedResourceMetadataPath,
   loadOAuthProtectedResourceConfig,
-} from "../../src/app/oauth-protected-resource.js";
+} from "../../src/interfaces/http/oauth-protected-resource.js";
 
 describe("loadOAuthProtectedResourceConfig", () => {
   it("returns null when authorization servers are not configured", () => {

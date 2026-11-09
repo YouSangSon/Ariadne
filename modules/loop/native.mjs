@@ -1,4 +1,4 @@
-import { AdapterError } from './api.mjs'
+import { AdapterError } from './domain.mjs'
 
 const COMMANDS = new Set(['codex', 'claude', 'gemini'])
 

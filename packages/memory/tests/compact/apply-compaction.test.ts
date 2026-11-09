@@ -4,13 +4,10 @@ import {
   CompactionRateLimitError,
   type ApplyCompactionDeps,
   type ApplyCompactionInput,
-} from "../../src/compact/apply-compaction.js";
-import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/store/memory-write-coordinator.js";
-import type { SearchMemoryResult } from "../../src/types.js";
-import type {
-  CompactionRunRow,
-  MemoryArchiveRepository,
-} from "../../src/store/memory-archive-repository.js";
+} from "../../src/application/usecases/apply-compaction.js";
+import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/application/ports/memory-write.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
+import type { CompactionRunRow, MemoryArchiveRepository } from "../../src/application/ports/memory-archive.js";
 
 const NOW = new Date("2026-04-25T12:00:00.000Z");
 const callApplyCompaction = (input: unknown, deps: unknown) =>

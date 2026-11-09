@@ -1,0 +1,436 @@
+{
+  "schema_version": 1,
+  "files": {
+    ".github/workflows/codeql.yml": {
+      "layer": "tooling",
+      "context": "automation"
+    },
+    ".github/workflows/memory.yml": {
+      "layer": "tooling",
+      "context": "automation"
+    },
+    ".github/workflows/security.yml": {
+      "layer": "tooling",
+      "context": "automation"
+    },
+    ".github/workflows/verify.yml": {
+      "layer": "tooling",
+      "context": "automation"
+    },
+    ".gitignore": {
+      "layer": "tooling",
+      "context": "core"
+    },
+    ".gitleaks.toml": {
+      "layer": "tooling",
+      "context": "security"
+    },
+    ".gitleaksignore": {
+      "layer": "tooling",
+      "context": "security"
+    },
+    "bin/Ariadne.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "bin/code.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "core/application/product.mjs": {
+      "layer": "application",
+      "context": "core"
+    },
+    "core/application/verification.mjs": {
+      "layer": "application",
+      "context": "core"
+    },
+    "core/domain/commit.mjs": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "core/domain/product.mjs": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "core/domain/project-files.mjs": {
+      "layer": "domain",
+      "context": "workspace"
+    },
+    "core/domain/requirement-fields.mjs": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "core/domain/verification.mjs": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "core/infrastructure/project-files.mjs": {
+      "layer": "infrastructure",
+      "context": "workspace"
+    },
+    "core/tooling/architecture.mjs": {
+      "layer": "tooling",
+      "context": "architecture"
+    },
+    "evaluation/application.mjs": {
+      "layer": "application",
+      "context": "evaluation"
+    },
+    "evaluation/compare-cli.mjs": {
+      "layer": "composition",
+      "context": "evaluation"
+    },
+    "evaluation/comparison-example.json": {
+      "context": "evaluation",
+      "layer": "tooling"
+    },
+    "evaluation/comparison.mjs": {
+      "layer": "domain",
+      "context": "evaluation"
+    },
+    "evaluation/domain.mjs": {
+      "layer": "domain",
+      "context": "evaluation"
+    },
+    "evaluation/files.mjs": {
+      "layer": "infrastructure",
+      "context": "evaluation"
+    },
+    "evaluation/memory-ablation-cli.mjs": {
+      "layer": "composition",
+      "context": "evaluation"
+    },
+    "evaluation/memory-ablation-example.json": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "evaluation/memory-ablation.mjs": {
+      "layer": "domain",
+      "context": "evaluation"
+    },
+    "evaluation/suite.json": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "evaluation/suite.sha256": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "hooks/commit-message.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "hooks/handoff-check.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "hooks/hook-io.mjs": {
+      "layer": "infrastructure",
+      "context": "shared"
+    },
+    "hooks/session-start.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "lib/budget.mjs": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "lib/caps.mjs": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "lib/command.mjs": {
+      "layer": "infrastructure",
+      "context": "core"
+    },
+    "lib/context-pack.mjs": {
+      "layer": "composition",
+      "context": "context"
+    },
+    "lib/module-selection.mjs": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "lib/project-files.mjs": {
+      "layer": "compatibility",
+      "context": "workspace",
+      "target": "core/infrastructure/project-files.mjs"
+    },
+    "lib/scrub.mjs": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "lib/skill-catalog.mjs": {
+      "layer": "composition",
+      "context": "context"
+    },
+    "modules/context/application.mjs": {
+      "layer": "application",
+      "context": "context"
+    },
+    "modules/context/domain.mjs": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "modules/context/files.mjs": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "modules/context/skills.mjs": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "modules/integration/application.mjs": {
+      "layer": "application",
+      "context": "integration"
+    },
+    "modules/integration/domain.mjs": {
+      "layer": "domain",
+      "context": "integration"
+    },
+    "modules/integration/files.mjs": {
+      "layer": "infrastructure",
+      "context": "integration"
+    },
+    "modules/llm-wiki/application.mjs": {
+      "layer": "application",
+      "context": "wiki"
+    },
+    "modules/llm-wiki/domain.mjs": {
+      "layer": "domain",
+      "context": "wiki"
+    },
+    "modules/llm-wiki/files.mjs": {
+      "layer": "infrastructure",
+      "context": "wiki"
+    },
+    "modules/llm-wiki/graph-index.mjs": {
+      "layer": "composition",
+      "context": "wiki"
+    },
+    "modules/llm-wiki/promote.mjs": {
+      "layer": "composition",
+      "context": "wiki"
+    },
+    "modules/loop/adapters/api-wire.mjs": {
+      "layer": "infrastructure",
+      "context": "execution"
+    },
+    "modules/loop/adapters/api.mjs": {
+      "layer": "infrastructure",
+      "context": "execution"
+    },
+    "modules/loop/api.mjs": {
+      "layer": "compatibility",
+      "context": "execution"
+    },
+    "modules/loop/contract.mjs": {
+      "layer": "compatibility",
+      "context": "requirements",
+      "target": "modules/requirements/application.mjs"
+    },
+    "modules/loop/domain.mjs": {
+      "layer": "domain",
+      "context": "execution"
+    },
+    "modules/loop/files.mjs": {
+      "layer": "compatibility",
+      "context": "workspace",
+      "target": "core/infrastructure/project-files.mjs"
+    },
+    "modules/loop/native.mjs": {
+      "layer": "domain",
+      "context": "execution"
+    },
+    "modules/ontology/application.mjs": {
+      "layer": "application",
+      "context": "ontology"
+    },
+    "modules/ontology/cli.mjs": {
+      "layer": "composition",
+      "context": "ontology"
+    },
+    "modules/ontology/domain.mjs": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "modules/ontology/example.json": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "modules/ontology/files.mjs": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "modules/requirements/application.mjs": {
+      "layer": "application",
+      "context": "requirements"
+    },
+    "modules/requirements/domain.mjs": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "modules/requirements/files.mjs": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "package.json": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "samples/hooks.codex.toml": {
+      "layer": "interfaces",
+      "context": "core"
+    },
+    "samples/settings.claude.json": {
+      "layer": "interfaces",
+      "context": "core"
+    },
+    "scripts/adapt-apply.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/adapt-remove.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/check-mirror.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/generate-mirrors.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/install.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/mirror-lib.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/product.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "scripts/uninstall.mjs": {
+      "layer": "composition",
+      "context": "integration"
+    },
+    "scripts/verify-evaluation.mjs": {
+      "layer": "composition",
+      "context": "evaluation"
+    },
+    "scripts/verify.mjs": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "templates/req.yaml": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "tests/adapt.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/caps.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/command.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/context-pack.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/evaluation-compare.test.mjs": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "tests/evaluation.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/generators.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/gitignore.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/hooks.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/install-pointer.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/llm-wiki.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/loop-api.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/loop-contract.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/loop-files.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/loop-native.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/memory-ablation.test.mjs": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "tests/module-boundaries.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/modules.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/ontology.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/product-cli.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/product-code.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/product-mcp.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/scrub.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/skill-catalog.test.mjs": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "tests/verify.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    }
+  }
+}

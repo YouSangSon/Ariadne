@@ -1,0 +1,841 @@
+// pgvector adapter implementing the VectorIndex port.
+//
+// All pgvector-specific concerns live here:
+//   - The VectorFilter → SQL WHERE dialect translation (mirrors buildQdrantMust logic)
+//   - Parameterized multi-row upsert with programmatic placeholder construction
+//   - Score conversion: pgvector <=> is cosine DISTANCE; Qdrant returns cosine
+//     SIMILARITY. We emit `1 - (embedding <=> $vec::vector)` so consumers
+//     (rankResults etc.) see the same similarity semantics as the Qdrant path.
+//   - BIGINT memory_record_id is returned as a string by node-postgres — convert
+//     back to Number so payload parity with the Qdrant path is maintained.
+//
+// Nothing outside this file should reference pgvector SQL syntax.
+//
+// ── Production hardening notes ──────────────────────────────────────────────
+//
+// MULTI-TENANT RECALL (HIGH 1):
+//   HNSW returns the global top-ef_search candidates, then filters by org. A
+//   small tenant's rows may never appear in the global top-ef_search, yielding
+//   0 results. Two mitigations applied:
+//   (a) Composite BTree indexes on (organization_id, scope_type, scope_id/key)
+//       so the planner can do an exact filtered scan for selective tenants.
+//   (b) `SET LOCAL hnsw.iterative_scan = 'strict_order'` inside a transaction
+//       before each ANN query (pgvector 0.8+), so the HNSW scan continues until
+//       limit rows pass the WHERE predicate, regardless of ef_search.
+//       Tune HNSW_EF_SEARCH (default 200) for the throughput/recall tradeoff.
+//
+// BATCH BIND-PARAM CAP (HIGH 2):
+//   Postgres caps bind params at 65535. Each row needs 8 params, so >8191 rows
+//   in a single INSERT overflows. upsert() chunks into UPSERT_BATCH_ROWS rows
+//   per INSERT and wraps all batches in one transaction.
+//
+// EXTENSION PREREQUISITE (HIGH 3):
+//   ensureCollection() no longer runs CREATE EXTENSION — that requires superuser
+//   and fails on managed Postgres (RDS, Cloud SQL, Supabase). Instead it checks
+//   pg_extension and throws a clear operator-facing error if the extension is
+//   absent. The Docker image (pgvector/pgvector:pg16) ships with the extension
+//   pre-installed; a DB admin only needs `CREATE EXTENSION vector;` once on
+//   managed hosts.
+//
+// DIMENSION MISMATCH GUARD (MEDIUM 4):
+//   After table creation, ensureCollection() reads the actual column dimension
+//   from pg_attribute and throws early if it ≠ the configured `dimensions`.
+//   This surfaces mismatches at startup rather than as a cryptic upsert error.
+//
+// EMBEDDING VECTOR GUARD (LOW 5):
+//   upsert() validates that every point's vector is non-empty and finite before
+//   building SQL — invalid literals such as "[]"::vector or "[NaN]"::vector
+//   would otherwise abort the entire batch without a useful error message.
+//
+import type {
+  VectorDeleteOptions,
+  VectorFilter,
+  VectorHit,
+  VectorIndex,
+  VectorPoint,
+} from "../../application/ports/vector-index.js";
+import {
+  assertVectorPointOrganizationIds,
+  normalizeOptionalVectorOrganizationId,
+} from "../../domain/policies/organization-id.js";
+import type { PgPool } from "../postgres/connection.js";
+
+// Max rows per INSERT batch — 14 params/row × 4000 = 56000 < 65535 cap.
+const UPSERT_BATCH_ROWS = 4000;
+
+// ef_search value used for iterative HNSW scanning. Higher values improve
+// recall for small/selective tenants at the cost of more candidates scanned.
+// Tune down if p99 query latency becomes a concern at high table cardinality.
+const HNSW_EF_SEARCH = 200;
+
+export type CreatePgVectorIndexOptions = {
+  tableName?: string;
+};
+
+type PgVectorQueryRow = {
+  point_id: string;
+  memory_record_id: number | string | null;
+  organization_id: string;
+  scope_type: string | null;
+  scope_id: string | null;
+  project_key: string | null;
+  kind: string | null;
+  durability: string | null;
+  title: string | null;
+  summary: string | null;
+  tags: string[] | null;
+  updated_at: string | null;
+  embedding_version: string | null;
+  score: number | string;
+};
+
+export function createPgVectorIndex(
+  pool: PgPool,
+  options: CreatePgVectorIndexOptions = {},
+): VectorIndex {
+  // tableName is a trusted-caller constant (table names can't be parameterized
+  // in SQL; callers supply either the production default or an isolated test table).
+  const tableName = options.tableName ?? "memory_vectors";
+
+  return {
+    async ensureCollection(dimensions: number): Promise<void> {
+      assertPgVectorPositiveSafeInteger(dimensions, "dimensions");
+      // HIGH 3: Do NOT create the extension — requires superuser, fails on managed
+      // Postgres (RDS, Cloud SQL, Supabase). Check it exists and guide the operator.
+      const extCheck = await pool.query<{ exists: number }>(
+        "SELECT 1 AS exists FROM pg_extension WHERE extname = 'vector'",
+      );
+      if (extCheck.rows.length === 0) {
+        throw new Error(
+          "The pgvector extension is required but not installed. " +
+          "Have a database admin run: CREATE EXTENSION vector; " +
+          "(On the Docker image pgvector/pgvector:pg16 this is done once with " +
+          "`psql -U postgres -c \"CREATE EXTENSION IF NOT EXISTS vector;\"`. " +
+          "On RDS/Cloud SQL/Supabase, use the managed extension panel or a " +
+          "superuser migration.)",
+        );
+      }
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS ${tableName} (
+          point_id            TEXT        PRIMARY KEY,
+          memory_record_id    BIGINT,
+          organization_id     TEXT        NOT NULL,
+          scope_type          TEXT,
+          scope_id            TEXT,
+          project_key         TEXT,
+          kind                TEXT,
+          durability          TEXT,
+          title               TEXT,
+          summary             TEXT,
+          tags                JSONB       NOT NULL DEFAULT '[]'::jsonb,
+          updated_at          TEXT,
+          embedding_version   TEXT,
+          embedding           vector(${dimensions})
+        )
+      `);
+
+      await pool.query(`
+        ALTER TABLE ${tableName}
+          ADD COLUMN IF NOT EXISTS durability TEXT,
+          ADD COLUMN IF NOT EXISTS title TEXT,
+          ADD COLUMN IF NOT EXISTS summary TEXT,
+          ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '[]'::jsonb,
+          ADD COLUMN IF NOT EXISTS updated_at TEXT,
+          ADD COLUMN IF NOT EXISTS embedding_version TEXT
+      `);
+
+      // HNSW index for cosine similarity — preferred over IVFFlat for recall
+      // without training; tolerates small tables well (no min-row requirement).
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS ${tableName}_embedding_hnsw_idx
+        ON ${tableName} USING hnsw (embedding vector_cosine_ops)
+      `);
+
+      // HIGH 1(a): Composite BTree indexes so the planner can do an exact
+      // filtered scan for selective tenants instead of relying on HNSW post-filter.
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_${tableName}_org_scope
+        ON ${tableName} (organization_id, scope_type, scope_id)
+      `);
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_${tableName}_org_project
+        ON ${tableName} (organization_id, scope_type, project_key)
+      `);
+
+      // MEDIUM 4: Verify the stored column dimension matches the configured one.
+      // CREATE TABLE IF NOT EXISTS is a no-op if the table exists with a different
+      // vector(N) — catch the mismatch here rather than at first upsert.
+      // For pgvector, atttypmod stores the dimension directly (confirmed empirically:
+      // `SELECT atttypmod FROM pg_attribute WHERE attname='embedding'` on a
+      // vector(3) column returns 3).
+      const dimResult = await pool.query<{ actual_dim: number }>(
+        `SELECT atttypmod AS actual_dim
+         FROM pg_attribute
+         WHERE attrelid = $1::regclass AND attname = 'embedding'`,
+        [`${tableName}`],
+      );
+      if (dimResult.rows.length > 0) {
+        const actualDim = dimResult.rows[0].actual_dim;
+        if (actualDim !== dimensions) {
+          throw new Error(
+            `Dimension mismatch on table "${tableName}": ` +
+            `column stores vector(${actualDim}) but configured dimensions=${dimensions}. ` +
+            "Drop and recreate the table (or run a reindex migration) before starting.",
+          );
+        }
+      }
+    },
+
+    async upsert(points: VectorPoint[]): Promise<void> {
+      assertVectorPointOrganizationIds(points);
+      if (points.length === 0) return;
+
+      for (const point of points) {
+        assertPgVectorPointId(point);
+        assertPgVectorEmbeddingVector(point);
+        assertPgVectorPointMemoryRecordId(point);
+        assertPgVectorPointScopeType(point);
+        assertPgVectorPointScopeId(point);
+        assertPgVectorPointProjectKey(point);
+        assertPgVectorPointKind(point);
+        assertPgVectorPointDurability(point);
+        assertPgVectorOptionalPayloadText(point.payload, "title");
+        assertPgVectorOptionalPayloadText(point.payload, "summary");
+        assertPgVectorOptionalPayloadText(point.payload, "updated_at");
+        assertPgVectorOptionalPayloadText(point.payload, "embedding_version");
+        assertPgVectorPointTags(point);
+      }
+
+      // HIGH 2: Chunk into batches of UPSERT_BATCH_ROWS to stay under the
+      // Postgres 65535 bind-param ceiling (8 params/row × 8000 = 64000).
+      // All batches run inside a single transaction for atomicity.
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+
+        for (let batchStart = 0; batchStart < points.length; batchStart += UPSERT_BATCH_ROWS) {
+          const batch = points.slice(batchStart, batchStart + UPSERT_BATCH_ROWS);
+
+          // Build INSERT ... ON CONFLICT DO UPDATE for this batch.
+          // Each row contributes 8 placeholders (point_id, memory_record_id,
+          // organization_id, scope_type, scope_id, project_key, kind, embedding).
+          // The embedding placeholder is cast to vector to prevent node-postgres
+          // from serialising a JS array as a Postgres array literal, which pgvector
+          // rejects. We pass the embedding as a JSON-style string "[x,y,z]".
+          const valueClauses: string[] = [];
+          const params: unknown[] = [];
+
+          for (const point of batch) {
+            const base = params.length;
+            valueClauses.push(
+              `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}::jsonb, $${base + 12}, $${base + 13}, $${base + 14}::vector)`,
+            );
+            const payload = point.payload;
+            params.push(
+              point.id,
+              payload.memory_record_id ?? null,
+              payload.organization_id ?? "",
+              payload.scope_type ?? null,
+              payload.scope_id ?? null,
+              payload.project_key ?? null,
+              payload.kind ?? null,
+              payload.durability ?? null,
+              payload.title ?? null,
+              payload.summary ?? null,
+              JSON.stringify(Array.isArray(payload.tags) ? payload.tags : []),
+              payload.updated_at ?? null,
+              payload.embedding_version ?? null,
+              // pgvector requires a bracketed JSON-array string, not a PG array.
+              `[${point.vector.join(",")}]`,
+            );
+          }
+
+          const sql = `
+            INSERT INTO ${tableName}
+              (
+                point_id,
+                memory_record_id,
+                organization_id,
+                scope_type,
+                scope_id,
+                project_key,
+                kind,
+                durability,
+                title,
+                summary,
+                tags,
+                updated_at,
+                embedding_version,
+                embedding
+              )
+            VALUES ${valueClauses.join(", ")}
+            ON CONFLICT (point_id) DO UPDATE SET
+              memory_record_id  = EXCLUDED.memory_record_id,
+              organization_id   = EXCLUDED.organization_id,
+              scope_type        = EXCLUDED.scope_type,
+              scope_id          = EXCLUDED.scope_id,
+              project_key       = EXCLUDED.project_key,
+              kind              = EXCLUDED.kind,
+              durability        = EXCLUDED.durability,
+              title             = EXCLUDED.title,
+              summary           = EXCLUDED.summary,
+              tags              = EXCLUDED.tags,
+              updated_at        = EXCLUDED.updated_at,
+              embedding_version = EXCLUDED.embedding_version,
+              embedding         = EXCLUDED.embedding
+          `;
+
+          await client.query(sql, params);
+        }
+
+        await client.query("COMMIT");
+      } catch (err: unknown) {
+        // Preserve and rethrow the original error even if ROLLBACK itself fails
+        // (a dead/dropped connection must not mask the real failure).
+        try {
+          await client.query("ROLLBACK");
+        } catch (_err: unknown) {
+          /* ignore rollback failure */
+        }
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
+    async query(vector: number[], filter: VectorFilter, limit: number): Promise<VectorHit[]> {
+      assertPgVectorQueryVector(vector);
+      assertPgVectorPositiveSafeInteger(limit, "limit");
+      assertPgVectorFilter(filter);
+      const organizationId =
+        normalizeOptionalVectorOrganizationId(filter.organizationId);
+      const scopes = normalizePgVectorFilterScopes(filter.scopes);
+      const projectKey = normalizePgVectorOptionalProjectKey(filter.projectKey);
+
+      // HIGH 1(b): Run inside a transaction so SET LOCAL is scoped to this query.
+      // hnsw.iterative_scan='strict_order' (pgvector 0.8+) makes HNSW keep
+      // scanning until `limit` rows pass the WHERE predicate — prevents the
+      // small-tenant recall hole where the tenant's rows never appear in the
+      // global top-ef_search candidates.
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // SET does not accept bind params — interpolate the numeric constant (safe).
+        await client.query(`SET LOCAL hnsw.ef_search = ${HNSW_EF_SEARCH}`);
+        await client.query("SET LOCAL hnsw.iterative_scan = 'strict_order'");
+
+        const params: unknown[] = [];
+
+        // Pass the query vector as a bracketed string and cast to vector in SQL —
+        // same reason as in upsert: prevents node-postgres array serialisation.
+        params.push(`[${vector.join(",")}]`);
+        const vecPlaceholder = `$${params.length}::vector`;
+
+        const whereClauses: string[] = [];
+
+        // Mirror buildQdrantMust: add org clause only when organizationId is non-empty.
+        if (organizationId) {
+          params.push(organizationId);
+          whereClauses.push(`organization_id = $${params.length}`);
+        }
+
+        // retrieve-memory.ts always passes exactly one scope, so this is a
+        // deterministic single-iteration loop (no OR branching needed in practice).
+        // We replicate the per-scope branching from buildQdrantMust exactly:
+        //   - scope_type = $n
+        //   - AND (scopeType==="project" && projectKey != null
+        //       ? project_key = $m
+        //       : scope_id    = $m)
+        for (const scope of scopes) {
+          params.push(scope.scopeType);
+          whereClauses.push(`scope_type = $${params.length}`);
+
+          if (scope.scopeType === "project" && projectKey != null) {
+            params.push(projectKey);
+            whereClauses.push(`project_key = $${params.length}`);
+          } else {
+            params.push(scope.scopeId);
+            whereClauses.push(`scope_id = $${params.length}`);
+          }
+        }
+
+        params.push(limit);
+        const limitPlaceholder = `$${params.length}`;
+
+        const whereSQL = whereClauses.length > 0
+          ? `WHERE ${whereClauses.join(" AND ")}`
+          : "";
+
+        const sql = `
+          SELECT
+            point_id,
+            memory_record_id,
+            organization_id,
+            scope_type,
+            scope_id,
+            project_key,
+            kind,
+            durability,
+            title,
+            summary,
+            tags,
+            updated_at,
+            embedding_version,
+            1 - (embedding <=> ${vecPlaceholder}) AS score
+          FROM ${tableName}
+          ${whereSQL}
+          ORDER BY embedding <=> ${vecPlaceholder}
+          LIMIT ${limitPlaceholder}
+        `;
+
+        const result = await client.query<PgVectorQueryRow>(sql, params);
+        const rows: unknown = result.rows;
+        assertPgVectorQueryRows(rows);
+        const hits = rows.map(mapPgVectorQueryRow);
+        await client.query("COMMIT");
+
+        return hits;
+      } catch (err: unknown) {
+        // Preserve and rethrow the original error even if ROLLBACK itself fails
+        // (a dead/dropped connection must not mask the real failure).
+        try {
+          await client.query("ROLLBACK");
+        } catch (_err: unknown) {
+          /* ignore rollback failure */
+        }
+        throw err;
+      } finally {
+        client.release();
+      }
+    },
+
+    async delete(ids: string[], options: VectorDeleteOptions = {}): Promise<void> {
+      const organizationId =
+        normalizeOptionalVectorOrganizationId(options.organizationId);
+
+      assertPgVectorPointIds(ids);
+      if (ids.length === 0) return;
+      if (organizationId) {
+        await pool.query(
+          `DELETE FROM ${tableName} WHERE point_id = ANY($1) AND organization_id = $2`,
+          [ids, organizationId],
+        );
+        return;
+      }
+      await pool.query(`DELETE FROM ${tableName} WHERE point_id = ANY($1)`, [ids]);
+    },
+
+    async deleteByRecordIds(
+      recordIds: number[],
+      options: VectorDeleteOptions = {},
+    ): Promise<void> {
+      const organizationId =
+        normalizeOptionalVectorOrganizationId(options.organizationId);
+
+      assertPgVectorRecordIds(recordIds);
+      if (recordIds.length === 0) return;
+      if (organizationId) {
+        await pool.query(
+          `DELETE FROM ${tableName} WHERE memory_record_id = ANY($1) AND organization_id = $2`,
+          [recordIds, organizationId],
+        );
+        return;
+      }
+      await pool.query(
+        `DELETE FROM ${tableName} WHERE memory_record_id = ANY($1)`,
+        [recordIds],
+      );
+    },
+  };
+}
+
+function mapPgVectorQueryRow(row: PgVectorQueryRow): VectorHit {
+  return {
+    id: toPgVectorNonEmptyString(row.point_id, "point_id"),
+    score: toPgVectorFiniteNumber(row.score, "score"),
+    payload: {
+      // node-postgres returns BIGINT (int8) as a string — coerce back to
+      // Number for parity with the Qdrant path (which sees it as a number).
+      memory_record_id:
+        row.memory_record_id == null
+          ? null
+          : toPgVectorPositiveSafeInteger(
+              row.memory_record_id,
+              "memory_record_id",
+            ),
+      organization_id: toPgVectorNonEmptyString(
+        row.organization_id,
+        "organization_id",
+      ),
+      scope_type: toPgVectorStringOrNull(row.scope_type, "scope_type"),
+      scope_id: toPgVectorStringOrNull(row.scope_id, "scope_id"),
+      project_key: toPgVectorStringOrNull(row.project_key, "project_key"),
+      kind: toPgVectorStringOrNull(row.kind, "kind"),
+      durability: toPgVectorStringOrNull(row.durability, "durability"),
+      title: toPgVectorStringOrNull(row.title, "title"),
+      summary: toPgVectorStringOrNull(row.summary, "summary"),
+      tags: toPgVectorStringArray(row.tags, "tags"),
+      updated_at: toPgVectorStringOrNull(row.updated_at, "updated_at"),
+      embedding_version: toPgVectorStringOrNull(
+        row.embedding_version,
+        "embedding_version",
+      ),
+    },
+  };
+}
+
+function assertPgVectorEmbeddingVector(point: VectorPoint): void {
+  if (!Array.isArray(point.vector)) {
+    throw new Error(`upsert: point "${point.id}" vector must be an array`);
+  }
+
+  if (point.vector.length === 0) {
+    throw new Error(
+      `upsert: point "${point.id}" has an empty embedding vector. ` +
+      "Ensure the embedding step produced a valid vector before calling upsert.",
+    );
+  }
+
+  assertPgVectorFiniteVectorComponents(point.vector, "vector");
+}
+
+function assertPgVectorPointId(point: VectorPoint): void {
+  assertPgVectorNonEmptyString(point.id, "point.id");
+}
+
+function assertPgVectorPointIds(ids: unknown): asserts ids is readonly string[] {
+  if (!Array.isArray(ids)) {
+    throw new Error("delete: ids must be an array");
+  }
+
+  for (const [index, id] of ids.entries()) {
+    assertPgVectorNonEmptyString(id, `ids[${index}]`);
+  }
+}
+
+function assertPgVectorPointMemoryRecordId(point: VectorPoint): void {
+  assertPgVectorPositiveSafeInteger(
+    point.payload.memory_record_id,
+    "point.payload.memory_record_id",
+  );
+}
+
+function assertPgVectorPointScopeType(point: VectorPoint): void {
+  assertPgVectorNonEmptyString(
+    point.payload.scope_type,
+    "point.payload.scope_type",
+  );
+  if (
+    point.payload.scope_type !== "user" &&
+    point.payload.scope_type !== "project"
+  ) {
+    throw new Error(
+      "point.payload.scope_type must be one of: user, project",
+    );
+  }
+}
+
+function assertPgVectorPointScopeId(point: VectorPoint): void {
+  if (
+    point.payload.scope_type !== "user" &&
+    !(
+      point.payload.scope_type === "project" &&
+      point.payload.project_key === null
+    )
+  ) {
+    return;
+  }
+  assertPgVectorNonEmptyString(
+    point.payload.scope_id,
+    "point.payload.scope_id",
+  );
+}
+
+function assertPgVectorPointProjectKey(point: VectorPoint): void {
+  const projectKey = point.payload.project_key;
+  if (projectKey === null) {
+    return;
+  }
+  if (typeof projectKey !== "string") {
+    throw new Error("point.payload.project_key must be a string or null");
+  }
+  assertPgVectorNonEmptyString(projectKey, "point.payload.project_key");
+}
+
+function assertPgVectorPointKind(point: VectorPoint): void {
+  assertPgVectorNonEmptyString(
+    point.payload.kind,
+    "point.payload.kind",
+  );
+  if (
+    point.payload.kind !== "decision" &&
+    point.payload.kind !== "summary" &&
+    point.payload.kind !== "fact"
+  ) {
+    throw new Error(
+      "point.payload.kind must be one of: decision, summary, fact",
+    );
+  }
+}
+
+function assertPgVectorPointDurability(point: VectorPoint): void {
+  const durability = point.payload.durability;
+  if (durability == null) {
+    return;
+  }
+  assertPgVectorNonEmptyString(durability, "point.payload.durability");
+  if (
+    durability !== "ephemeral" &&
+    durability !== "durable" &&
+    durability !== "archived"
+  ) {
+    throw new Error(
+      "point.payload.durability must be one of: ephemeral, durable, archived",
+    );
+  }
+}
+
+function assertPgVectorPointTags(point: VectorPoint): void {
+  const tags = point.payload.tags;
+  if (tags == null) {
+    return;
+  }
+  if (!Array.isArray(tags)) {
+    throw new Error("point.payload.tags must be an array");
+  }
+  for (const [index, tag] of tags.entries()) {
+    if (typeof tag !== "string") {
+      throw new Error(`point.payload.tags[${index}] must be a string`);
+    }
+    if (tag.trim().length === 0) {
+      throw new Error(
+        `point.payload.tags[${index}] must contain non-whitespace text`,
+      );
+    }
+  }
+}
+
+function assertPgVectorOptionalPayloadText(
+  payload: Record<string, unknown>,
+  key: "title" | "summary" | "updated_at" | "embedding_version",
+): void {
+  if (!(key in payload)) {
+    return;
+  }
+  const value = payload[key];
+  const fieldName = `point.payload.${key}`;
+  if (value === null) {
+    return;
+  }
+  if (typeof value !== "string") {
+    throw new Error(`${fieldName} must be a string or null`);
+  }
+  assertPgVectorNonEmptyString(value, fieldName);
+}
+
+function assertPgVectorNonEmptyString(
+  value: unknown,
+  fieldName: string,
+): asserts value is string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${fieldName} must be a non-empty string`);
+  }
+}
+
+function normalizePgVectorOptionalProjectKey(
+  value: unknown,
+): string | null | undefined {
+  if (value == null) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    throw new Error("filter.projectKey must be a string or null");
+  }
+  assertPgVectorNonEmptyString(value, "filter.projectKey");
+  return value.trim();
+}
+
+function assertPgVectorFilter(filter: unknown): asserts filter is VectorFilter {
+  if (typeof filter !== "object" || filter === null || Array.isArray(filter)) {
+    throw new Error("filter must be an object");
+  }
+}
+
+function assertPgVectorQueryVector(vector: unknown): asserts vector is readonly number[] {
+  if (!Array.isArray(vector)) {
+    throw new Error("query vector must be an array");
+  }
+
+  if (vector.length === 0) {
+    throw new Error("query vector must be a non-empty array");
+  }
+
+  assertPgVectorFiniteVectorComponents(vector, "query vector");
+}
+
+function assertPgVectorFiniteVectorComponents(
+  vector: readonly unknown[],
+  fieldName: string,
+): void {
+  for (const [index, component] of vector.entries()) {
+    if (typeof component !== "number" || !Number.isFinite(component)) {
+      throw new Error(`${fieldName}[${index}] must be a finite number`);
+    }
+  }
+}
+
+function assertPgVectorQueryRows(value: unknown): asserts value is PgVectorQueryRow[] {
+  if (!Array.isArray(value)) {
+    throw new Error("query rows must be an array");
+  }
+  value.forEach((row, index) => {
+    if (typeof row !== "object" || row === null || Array.isArray(row)) {
+      throw new Error(`query rows[${index}] must be an object`);
+    }
+  });
+}
+
+function toPgVectorNonEmptyString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${fieldName} must be a non-empty string`);
+  }
+  return value;
+}
+
+function toPgVectorStringOrNull(
+  value: unknown,
+  fieldName: string,
+): string | null {
+  if (typeof value === "string" || value === null) {
+    return value;
+  }
+  throw new Error(`${fieldName} must be a string or null`);
+}
+
+function toPgVectorStringArray(value: unknown, fieldName: string): string[] {
+  if (value === null) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an array`);
+  }
+  return value.map((entry, index) => {
+    if (typeof entry !== "string") {
+      throw new Error(`${fieldName}[${index}] must be a string`);
+    }
+    return entry;
+  });
+}
+
+function assertPgVectorPositiveSafeInteger(
+  value: unknown,
+  fieldName: string,
+): void {
+  if (
+    typeof value !== "number" ||
+    !Number.isSafeInteger(value) ||
+    value <= 0
+  ) {
+    throw new Error(`${fieldName} must be a positive safe integer`);
+  }
+}
+
+function assertPgVectorRecordIds(recordIds: unknown): asserts recordIds is readonly number[] {
+  if (!Array.isArray(recordIds)) {
+    throw new Error("deleteByRecordIds: recordIds must be an array");
+  }
+
+  for (const [index, recordId] of recordIds.entries()) {
+    assertPgVectorPositiveSafeInteger(recordId, `recordIds[${index}]`);
+  }
+}
+
+function normalizePgVectorFilterScopes(
+  scopes: unknown,
+): VectorFilter["scopes"] {
+  if (!Array.isArray(scopes)) {
+    throw new Error("filter.scopes must be an array");
+  }
+  if (scopes.length === 0) {
+    throw new Error("filter.scopes must be a non-empty array");
+  }
+
+  return scopes.map((scope, index) => {
+    if (typeof scope !== "object" || scope === null || Array.isArray(scope)) {
+      throw new Error(`filter.scopes[${index}] must be an object`);
+    }
+
+    const candidate = scope as Record<string, unknown>;
+    const scopeType = normalizePgVectorScopeType(
+      candidate.scopeType,
+      `filter.scopes[${index}].scopeType`,
+    );
+    const scopeId = normalizePgVectorNonEmptyString(
+      candidate.scopeId,
+      `filter.scopes[${index}].scopeId`,
+    );
+    return { scopeType, scopeId };
+  });
+}
+
+function normalizePgVectorNonEmptyString(
+  value: unknown,
+  fieldName: string,
+): string {
+  assertPgVectorNonEmptyString(value, fieldName);
+  return value.trim();
+}
+
+function normalizePgVectorScopeType(value: unknown, fieldName: string): string {
+  const scopeType = normalizePgVectorNonEmptyString(value, fieldName);
+  if (scopeType === "user" || scopeType === "project") {
+    return scopeType;
+  }
+  throw new Error(`${fieldName} must be one of: user, project`);
+}
+
+function toPgVectorFiniteNumber(value: unknown, fieldName: string): number {
+  if (typeof value !== "number" && typeof value !== "string") {
+    throw new Error(`${fieldName} must be a finite number`);
+  }
+
+  if (
+    typeof value === "string" &&
+    !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)
+  ) {
+    throw new Error(`${fieldName} must be a finite number`);
+  }
+
+  const numberValue = typeof value === "number" ? value : Number(value);
+  if (
+    !Number.isFinite(numberValue) ||
+    (typeof value === "string" && value.trim().length === 0)
+  ) {
+    throw new Error(`${fieldName} must be a finite number`);
+  }
+  return numberValue;
+}
+
+function toPgVectorPositiveSafeInteger(
+  value: unknown,
+  fieldName: string,
+): number {
+  if (typeof value !== "number" && typeof value !== "string") {
+    throw new Error(`${fieldName} must be a positive safe integer`);
+  }
+
+  if (typeof value === "string" && !/^[0-9]+$/.test(value)) {
+    throw new Error(`${fieldName} must be a positive safe integer`);
+  }
+
+  const numberValue = typeof value === "number" ? value : Number(value);
+  if (
+    !Number.isSafeInteger(numberValue) ||
+    numberValue <= 0 ||
+    (typeof value === "string" && value.trim().length === 0)
+  ) {
+    throw new Error(`${fieldName} must be a positive safe integer`);
+  }
+  return numberValue;
+}

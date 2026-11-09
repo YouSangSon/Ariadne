@@ -3,7 +3,7 @@ import {
   assertNoSecrets,
   scanForSecrets,
   SecretDetectedError,
-} from "../../src/store/secret-scrub.js";
+} from "../../src/domain/policies/secret-scrub.js";
 import { SEED_ENTRIES } from "../eval/fixtures/seed.js";
 
 // All literal "secret-shaped" strings below are synthetic. They must match

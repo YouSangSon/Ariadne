@@ -4,9 +4,11 @@
 
 Parallax 是一个 local-first impact graph。单个 SQLite 数据库存储代码结构、agent memory、搜索投影、context pack 和 report metadata。本文说明在修改 indexer、adapter、analyzer、MCP server 或 UI 之前需要理解的运行路径。
 
-Source checkout 说明：`src/indexer.ts` 等路径是 maintainer source path。在 npm package 文档中它们只是 reference name；若要直接查看，需要 repository checkout。
+Source checkout 说明：`src/composition/indexing.ts` 等路径是 maintainer source path。在 npm package 文档中它们只是 reference name；若要直接查看，需要 repository checkout。
 
 ## 系统地图
+
+下图表示运行时数据流；import 边界由下方所有权表定义。
 
 ```mermaid
 flowchart TD
@@ -25,16 +27,25 @@ flowchart TD
 
 ## 运行时职责
 
-| 层 | 主要文件 | 职责 |
+Code 在 Ariadne 内仍是一个限界上下文。影响分析、索引、契约、本地记忆、工作区和上下文是同一模型内的业务区域，共享现有 SQLite 数据所有权，不拆成独立服务。
+
+| 层 | 主要路径 | 职责 |
 | :--- | :--- | :--- |
-| Public API | `src/index.ts` | 重新导出受支持的编程接口。 |
-| CLI | `src/cli.ts` | 在当前仓库根目录解析命令并调用 public API。 |
-| Indexer | `src/indexer.ts` | 扫描文件、选择 adapter，并持久化 entity、relation、evidence、coverage 和 adapter run metadata。 |
-| Adapter | `src/adapters/**` | 将特定语言或格式的文件转换成 graph event。 |
-| Store | `src/store.ts` | 负责 SQLite schema 创建、additive migration 和 DB helper。 |
-| Analyzer | `src/analyzer.ts` | 读取最新 completed index，并计算 changed-to-affected impact report。 |
-| MCP | `src/mcp.ts`, `src/mcp_search.ts`, `src/context_pack.ts` | 向编码 agent 暴露分析、搜索、memory、doctor 和 context-pack 功能。 |
-| UI | `src/ui.ts`, `src/ui/**` | 提供本地 report workbench 和 report/coverage API。 |
+| 领域 | `src/domain/**` | 影响遍历、置信度、索引差异与输出所有权策略、契约比较、事实 ID、分支策略、上下文排序和预算。 |
+| 应用 | `src/application/**` | 通过语义端口协调分析、索引、搜索、上下文复用、工作区、记忆与模型工作及 UI 快照。 |
+| 基础设施 | `src/infrastructure/**` | SQLite 仓储、文件边界和扫描器、Git、解析器、模型提供者及配置文件原子写入。 |
+| 接口 | `src/interfaces/**` | CLI 参数、MCP 注册与 schema、HTTP/HTML、源码预览和报告输出。 |
+| 组装 | `src/composition/**` | 为端口绑定适配器。默认提取器顺序由 `src/composition/extractors.ts` 管理。 |
+| 兼容路径 | `src/index.ts`、`src/cli.ts` 和旧源码路径 | 保留公开 export 与可执行路径；内部代码引用新的所有者模块。 |
+| 工具 | `scripts/**`、`bench/**` | schema、文档、依赖检查和包基准测试。 |
+
+领域层只依赖领域层，应用层只依赖应用层和领域层。纯路径和哈希计算使用标准库；文件、进程、环境变量、模型和框架能力留在外层。端口描述读取入向关系或发布索引等语义操作，不暴露 SQL 或通用事务接口。
+
+`AnalysisSession` 使用同一连接读取图邻居。`IndexingSession` 保留干净索引复用时的读快照，以及释放快照后对最新执行的再次检查。发布操作保留写事务、基线验证和 co-change savepoint。本地记忆仓储一起提交事实、事务父节点、来源、原始 embedding、向量投影和分支 head；模型工作在写入前完成。SCIP 导入也保留索引快照与增补操作的串行范围。
+
+图导出从已保存的报告 JSON 开始。仅当旧报告缺少带关系的证据时，才沿用 canonical graph 补充路径。MCP 工具与资源名称、annotation、telemetry 行为、`parallax://` URI 和存储 schema 均保持不变。
+
+完整所有权清单见 [`architecture-map.json`](../architecture-map.json)。`npm run test:architecture` 检查所有运行源码与工具、依赖方向、运行时循环，以及旧有 89 个模块相对基线的 export 集合。负面对照确保反向 type import、export、动态 import、隐藏 SQL 和未分类路径会失败。默认测试命令也包含这些检查。
 
 ## 索引路径
 
@@ -48,7 +59,7 @@ flowchart TD
 
 ## Adapter 扩展契约
 
-Adapter 实现 `src/adapters/types.ts` 中的 `SemanticAdapter`。关键契约如下。
+Adapter 实现 `src/domain/indexing/adapter.ts` 中的 `SemanticAdapter`。关键契约如下。
 
 | 字段或方法 | 含义 |
 | :--- | :--- |
@@ -74,7 +85,7 @@ Multi-language regex adapter 是 catch-all，因此必须放在默认 registry �
 | Context surface | `context_tool_runs`, `context_resource_accesses`, `context_packs` | 记录 MCP context-pack 复用和 telemetry。 |
 | Search | FTS5 projection table | 支持对 entity、evidence 和 fact 的 keyword search。 |
 
-所有 migration 都是 additive。新的 DDL 应遵循 `src/store.ts` 中 allowlist migration 的风格。
+所有 migration 都是 additive。新的 DDL 应遵循 `src/infrastructure/sqlite/store.ts` 中 allowlist migration 的风格。
 
 ## 分析路径
 

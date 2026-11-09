@@ -1,15 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { runIngestSweep } from "../../src/compact/ingest-sweeper.js";
-import type { TextChunk } from "../../src/chunk/chunk-text.js";
-import {
-  createMemoryChunkRepository,
-  reindexCanonicalMemory,
-  writeCanonicalMemory,
-  type ChunkEmbeddingConfig,
-  type ReindexableMemoryChunk,
-} from "../../src/store/canonical-indexing.js";
-import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/store/memory-write-coordinator.js";
-import type { CanonicalMemoryRepository, IngestJob, ScopeRef, SearchMemoryResult } from "../../src/types.js";
+import { runIngestSweep } from "../../src/application/usecases/ingest-sweeper.js";
+import type { TextChunk } from "../../src/domain/policies/chunk-text.js";
+import { createMemoryChunkRepository } from "../../src/infrastructure/postgres/canonical-indexing.js";
+import { reindexCanonicalMemory, writeCanonicalMemory } from "../../src/application/indexing/canonical-indexing.js";
+import { type ChunkEmbeddingConfig, type ReindexableMemoryChunk } from "../../src/application/ports/indexing.js";
+import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/application/ports/memory-write.js";
+import type { CanonicalMemoryRepository } from "../../src/application/ports/memory-repositories.js";
+import type { IngestJob, ScopeRef, SearchMemoryResult } from "../../src/domain/model/memory.js";
 
 const scopeRef = { scopeType: "project" as const, scopeId: "project-a" };
 const now = new Date("2026-10-28T00:00:00.000Z");

@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildGoalContextPack,
   type BuildGoalContextPackInput,
-} from "../../src/goal-run/build-goal-context.js";
-import type { GoalRunIteration, GoalRunWithIterations } from "../../src/types.js";
+} from "../../src/domain/policies/build-goal-context.js";
+import type { GoalRunIteration, GoalRunWithIterations } from "../../src/domain/model/memory.js";
 
 function iteration(
   overrides: Partial<GoalRunIteration> & Pick<GoalRunIteration, "iterationIndex" | "outcome">,

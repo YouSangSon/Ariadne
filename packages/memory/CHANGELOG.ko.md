@@ -11,6 +11,8 @@ CHANGELOG에서 명시적으로 표기합니다.
 
 ## [Unreleased]
 
+- 재확인 방법과 보고된 의존성·파생 참조를 실행 없이 저장하고 레코드 digest로 동시 수정을 검사합니다. 읽기 전용 `inspect_memory_impact`는 원본 최신성과 의존성 범위의 미확인을 표시합니다. Migration 016은 물리 보관·복원에도 메타데이터를 보존합니다.
+
 - 한국어·일본어·중국어와 교차 언어 검색 측정 및 선택적 multilingual MPNet 설정을 추가합니다. MPNet은 새 질문 18개의 정답을 모두 상위 5개에 찾지만 중국어 질문 한 건에서 유사 오답을 먼저 반환해, 엄격한 다국어 품질 판정은 RED입니다.
 
 - 실제 토큰 한도에 맞춰 긴 본문을 나누고 원문 위치와 겹침을 보존합니다. 재색인은 기존 청크를 복구하며 정상 청크 ID를 유지합니다. 한도를 넘는 직접 임베딩 질의는 조용히 자르지 않고 HTTP 400을 반환합니다.
@@ -40,7 +42,7 @@ CHANGELOG에서 명시적으로 표기합니다.
   `complete_goal_run`, `abandon_goal_run`, `build_goal_context`,
   `check_repeat_attempt` 를 노출합니다. Active-run memory는 compaction에서
   pin 될 수 있고, close resolution/reason은 `goal_runs.close_note` 로 저장되며
-  현재 마이그레이션 범위는 `001-015` 입니다.
+  현재 마이그레이션 범위는 `001-016` 입니다.
 - Background sweeper observability: `/metrics` 가 이제 compaction/ingest
   sweeper tick counter, tick duration summary, row outcome counter를
   low-cardinality series로 노출하고, pending/due/failed ingest/compaction queue
@@ -107,7 +109,7 @@ CHANGELOG에서 명시적으로 표기합니다.
   `memory_archive` 경로로 archive하고 vector cleanup은 retry 가능하게 유지합니다.
   정적 `/admin/memory` 페이지는 compact한 브라우저 셸을 제공하되, 모든 데이터
   호출은 기존 인증된 `/v1/*` route 뒤에 둡니다. 현재 마이그레이션 범위는
-  org-scoped tag filter용 `memory_tags` 를 포함해 `001-015` 입니다.
+  org-scoped tag filter용 `memory_tags` 를 포함해 `001-016` 입니다.
 - **pgvector 백엔드 — Postgres 단독 배포 옵션** — `VectorIndex` 포트
   (`src/vector/vector-index.ts`) 가 벡터 백엔드를 추상화하여 시작 시
   `VECTOR_BACKEND` 로 Qdrant 또는 pgvector 를 선택할 수 있게 됨. 새
@@ -124,7 +126,7 @@ CHANGELOG에서 명시적으로 표기합니다.
   `entities`, `memory_entity_mentions` 에 추출하고, 같은 row의 co-mention 및
   date context를 `entity_relationships` 에 기록합니다. `search_memory` 는 이
   graph를 Postgres FTS, substring fallback, vector retrieval 옆의 exact
-  rescue/boost 경로로 사용합니다. 현재 마이그레이션 범위는 `001-015` 입니다.
+  rescue/boost 경로로 사용합니다. 현재 마이그레이션 범위는 `001-016` 입니다.
 - **MCP roots, elicitation, sampling helper** — MCP transport가 이제 클라이언트가
   광고한 `roots/list` 용 `list_workspace_roots` 와, form elicitation 후 수락된
   memory를 일반 `add_memory` 경로로 저장하는 `add_memory_interactive` 를

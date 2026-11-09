@@ -3,29 +3,23 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import {
-  aggregateClientPairs,
-  assertPaidClientExecutionAllowed,
-  buildClientCommand,
-  buildClientPrompt,
-  clientAbRunPlan,
-  createClientWorkspace,
-  gradeClientAnswer,
-  parseClaudeStream,
-  parseCodexFinalOutput,
-  parseCodexEvents,
-  parseCodexSubscriptionStatus,
-  readCodexSubscriptionStatus,
-  prepareClientAbExperiment,
-  runClientAb,
-  runClientCommand,
-  seedAndPreflightClientAb,
-  verifyToolTrace,
-} from "../../src/eval/client-ab.js";
+import { aggregateClientPairs, assertPaidClientExecutionAllowed, buildClientPrompt, clientAbRunPlan, gradeClientAnswer, parseClaudeStream, parseCodexFinalOutput, parseCodexEvents, parseCodexSubscriptionStatus, verifyToolTrace } from "../../src/application/evaluation/client-policy.js";
+import { buildClientCommand, createClientWorkspace, readCodexSubscriptionStatus, runClientCommand } from "../../src/infrastructure/evaluation/client-ab.js";
+import { prepareClientAbExperiment, runClientAb, seedAndPreflightClientAb } from "../../src/composition/runtime/client-evaluation.js";
 import { assertLocalPreflightEnvironment, parseClientAbArgs } from "./client-ab-runner.js";
 
 const fixtureRelativePath = "tests/eval/fixtures/client-ab.json";
 const tempRoots: string[] = [];
+
+it('passes script paths containing shell metacharacters as literal argv', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'akasha-argv-'));
+  tempRoots.push(root);
+  const script = path.join(root, 'fixture ; touch injected ; $(touch injected).mjs');
+  await writeFile(script, 'process.stdout.write(JSON.stringify(process.argv.slice(2)))');
+  const result = await runClientCommand({ binary: process.execPath, args: [script, 'literal ; $HOME'], cwd: root, env: {}, stdin: '', finalOutputPath: path.join(root, 'unused.json') });
+  expect(JSON.parse(result.stdout)).toEqual(['literal ; $HOME']);
+  await expect(readFile(path.join(root, 'injected'))).rejects.toMatchObject({ code: 'ENOENT' });
+});
 
 vi.setConfig({ testTimeout: 15_000 });
 

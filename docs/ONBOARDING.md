@@ -34,7 +34,7 @@ codex features list | grep -E "hooks|multi_agent|skill"
 ```bash
 git clone <Ariadne-repo> Ariadne && cd Ariadne
 node --test && node scripts/verify.mjs   # 받은 것이 green인지 먼저 확인
-node scripts/install.mjs                 # ~/.harness에 core/skills/templates 설치 (멱등)
+node scripts/install.mjs                 # ~/.harness에 core/skills/templates 및 context 실행 파일 설치 (멱등)
 ```
 
 기본 설치는 **글로벌 설정(~/.claude, ~/.codex)을 건드리지 않는다** (D3).

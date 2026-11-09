@@ -3,7 +3,7 @@ import {
   authenticateBearer,
   loadBearerTokens,
   matchBearer,
-} from "../../src/app/middleware/bearer-auth.js";
+} from "../../src/interfaces/http/middleware/bearer-auth.js";
 
 // ---------------------------------------------------------------------------
 // vi.mock must be hoisted to the top of the module (Vitest limitation with ESM).

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   chunkText,
   type ChunkTextInput,
-} from "../../src/chunk/chunk-text.js";
+} from "../../src/domain/policies/chunk-text.js";
 
 const callChunkText = (input: unknown) => () =>
   chunkText(input as ChunkTextInput);

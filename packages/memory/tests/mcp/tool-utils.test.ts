@@ -4,16 +4,8 @@ import os from "node:os";
 import path from "node:path";
 import { mkdtemp, rm } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  formatMemoryIdentifier,
-  normalizeLimit,
-  requireProjectKey,
-  requireUserScopeId,
-  resolveUserScopeId,
-  summarize,
-  toMemoryType,
-  type ResolveUserScopeIdInput,
-} from "../../src/mcp/tool-utils.js";
+import { formatMemoryIdentifier, normalizeLimit, requireProjectKey, requireUserScopeId, summarize, toMemoryType } from "../../src/application/tools/tool-utils.js";
+import { resolveUserScopeId, type ResolveUserScopeIdInput } from "../../src/infrastructure/identity/user-scope.js";
 
 const originalDeveloperMemoryUserId = process.env.DEVELOPER_MEMORY_USER_ID;
 const tempDirs: string[] = [];

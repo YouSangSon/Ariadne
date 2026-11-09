@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toIsoString, toNumber } from "../../src/store/db-utils.js";
+import { toIsoString, toNumber } from "../../src/infrastructure/postgres/db-utils.js";
 
 describe("toNumber", () => {
   it.each([

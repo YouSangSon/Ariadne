@@ -1,18 +1,18 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
-import type { Logger } from "../../src/logger.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
 import {
   TOOL_ROUTES,
   type ServiceToolName,
-} from "../../src/mcp/tool-schemas.js";
-import type { ToolRegistry } from "../../src/mcp/types.js";
-import { ContextPackBudgetError } from "../../src/mcp/context-pack-result.js";
+} from "../../src/interfaces/mcp/tool-schemas.js";
+import type { ToolRegistry } from "../../src/application/contracts/tools.js";
+import { ContextPackBudgetError } from "../../src/application/tools/context-pack-result.js";
 import {
   createMemoryRoutes,
   resolveOrganizationId,
   type RouteContext,
-} from "../../src/app/routes/memory.js";
+} from "../../src/interfaces/http/routes/memory.js";
 
 function makeRegistry(
   overrides: Partial<Record<ServiceToolName, unknown>> = {},

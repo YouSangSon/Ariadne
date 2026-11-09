@@ -1,0 +1,138 @@
+{
+  "schema_version": 1,
+  "target": {
+    "id": "synthetic-optional-memory",
+    "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+  },
+  "conditions": {
+    "base": {
+      "experiment_context": {
+        "organization_id": "synthetic-org",
+        "scope_type": "project",
+        "scope_id": "synthetic-project"
+      },
+      "configuration_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "required_memories": [
+        {
+          "id": "synthetic-required-protection",
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+        }
+      ],
+      "optional_memories": []
+    },
+    "selected": {
+      "experiment_context": {
+        "organization_id": "synthetic-org",
+        "scope_type": "project",
+        "scope_id": "synthetic-project"
+      },
+      "configuration_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "required_memories": [
+        {
+          "id": "synthetic-required-protection",
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+        }
+      ],
+      "optional_memories": [
+        {
+          "id": "synthetic-optional-memory",
+          "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+        }
+      ]
+    }
+  },
+  "plan": {
+    "cases": [
+      {
+        "case_id": "synthetic-1",
+        "identity": {
+          "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "model": "synthetic-model",
+          "effort": "high",
+          "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        }
+      }
+    ],
+    "max_attempts": 2,
+    "stop_rule": "pass_or_max_attempts",
+    "condition_sha256": {
+      "base": "ee3514f5793447fe8e358d6ca6ed6244614b7f8e574905584f384792a5c33424",
+      "selected": "5361f4cd9c78ea37df8a5aeb3fdc0936c6adbb1539eaf5499ef8d88265c32734"
+    }
+  },
+  "plan_sha256": "573b2e2848ea897cb6cdad89fac91e94f55df4eb58a322b8c78cfba05041e110",
+  "comparison": {
+    "schema_version": 1,
+    "baseline": "base",
+    "candidate": "selected",
+    "runs": [
+      {
+        "case_id": "synthetic-1",
+        "variant": "base",
+        "identity": {
+          "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "model": "synthetic-model",
+          "effort": "high",
+          "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "harness_sha256": "ee3514f5793447fe8e358d6ca6ed6244614b7f8e574905584f384792a5c33424",
+        "attempts": [
+          {
+            "outcome": "fail",
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "cost_usd": 0.01,
+            "evidence_sha256": null
+          },
+          {
+            "outcome": "fail",
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "cost_usd": 0.01,
+            "evidence_sha256": null
+          }
+        ]
+      },
+      {
+        "case_id": "synthetic-1",
+        "variant": "selected",
+        "identity": {
+          "input_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "verifier_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+          "model": "synthetic-model",
+          "effort": "high",
+          "environment_sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "harness_sha256": "5361f4cd9c78ea37df8a5aeb3fdc0936c6adbb1539eaf5499ef8d88265c32734",
+        "attempts": [
+          {
+            "outcome": "pass",
+            "input_tokens": 10,
+            "output_tokens": 5,
+            "cost_usd": 0.01,
+            "evidence_sha256": "4444444444444444444444444444444444444444444444444444444444444444"
+          }
+        ]
+      }
+    ]
+  },
+  "experiment_costs": {
+    "construction": {
+      "input_tokens": 10,
+      "output_tokens": 5,
+      "cost_usd": 0.01
+    },
+    "verification": {
+      "input_tokens": 10,
+      "output_tokens": 5,
+      "cost_usd": 0.01
+    },
+    "maintenance": {
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null
+    }
+  }
+}

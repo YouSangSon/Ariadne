@@ -1,0 +1,601 @@
+// applyCompaction — orchestrates the destructive compaction apply path.
+//
+// Order per record (matches design doc §4.2):
+//   1. PG: WITH deleted AS (DELETE FROM memory_records ...)
+//          INSERT INTO memory_archive ... (single CTE)
+//   2. Qdrant: deletePoints(collectionName, qdrant_point_ids)
+//   3. PG: UPDATE memory_archive SET qdrant_status='deleted'
+//
+// Cross-store consistency: PG-first means a crash after step 1 leaves an
+// orphan Qdrant vector, which the sweeper (src/compact/outbox-sweeper.ts)
+// reconciles. The reverse order would leave a live memory_records row whose
+// chunks point at a deleted Qdrant point — a user-visible bug.
+//
+// Concurrency: relies on memory_archive UNIQUE (compaction_run_id,
+// source_record_id) for record-level idempotency and on
+// compaction_runs.idempotency_key UNIQUE for run-level replay defense.
+// Production writers lock candidate and kept record IDs on one reserved
+// connection, then recheck the planning snapshot before archiving.
+
+import { randomUUID } from "node:crypto";
+import type { CompactMemoryToolResult, DuplicateGroupView } from "../../domain/model/compaction.js";
+import type { SearchMemoryResult } from "../../domain/model/memory.js";
+import {
+  assertBuildCompactionPlanInput,
+  buildCompactionPlan,
+  type BuildCompactionPlanInput,
+} from "../../domain/policies/compact-memory.js";
+import { assertNonBlankText } from "../../domain/policies/memory-content.js";
+import { findSemanticDuplicates } from "../../domain/policies/semantic-duplicates.js";
+import type { EmbeddingClient } from "../ports/indexing.js";
+import type { Logger } from "../ports/logger.js";
+import type { ArchiveReason, MemoryArchiveRepository } from "../ports/memory-archive.js";
+import type { MemoryWriteCoordinator } from "../ports/memory-write.js";
+import type { VectorIndex } from "../ports/vector-index.js";
+
+export type ApplyRateLimitConfig = {
+  // Window during which `maxRuns` applies cap the org. Set to 0 to disable
+  // the rate limit (tests, ops bypass).
+  windowMs: number;
+  maxRuns: number;
+};
+
+const DEFAULT_APPLY_RATE_LIMIT: ApplyRateLimitConfig = {
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxRuns: 1,
+};
+
+export class CompactionRateLimitError extends Error {
+  readonly retryAfterMs: number;
+  constructor(retryAfterMs: number) {
+    super(
+      `compaction apply is rate-limited; retry in ${Math.ceil(retryAfterMs / 1000)}s`,
+    );
+    this.name = "CompactionRateLimitError";
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
+export type ApplyCompactionDeps = {
+  writes?: MemoryWriteCoordinator;
+  archiveRepository: MemoryArchiveRepository;
+  vectorIndex: VectorIndex;
+  logger: Logger;
+  // Required only when input.semanticDedupThreshold is set; embeds each
+  // record's content for cosine clustering. Skipped on the dry-run /
+  // exact-match path to keep the cheap path cheap.
+  embeddings?: EmbeddingClient;
+  // Stricter limit on destructive runs (default: 1/hour/org). Pass
+  // { windowMs: 0 } to disable for tests or bulk-migration ops.
+  applyRateLimit?: ApplyRateLimitConfig;
+  // Test-injection points.
+  generateRunId?: () => string;
+  now?: () => Date;
+};
+
+export type ApplyCompactionInput = BuildCompactionPlanInput & {
+  organizationId: string; // mandatory in apply path; cross-tenant guard
+  actor: string;
+  // When set, replaces exact-match dedup with cosine clustering. Caller
+  // must also provide deps.embeddings. Threshold ∈ (0, 1]; recommended
+  // 0.95 for paraphrases.
+  semanticDedupThreshold?: number;
+};
+
+export type ApplyStats = {
+  archived: number;
+  skipped: number;
+  qdrantPointsDeleted: number;
+  qdrantPointsPending: number;
+  durationMs: number;
+};
+
+export type ApplyCompactionResult = CompactMemoryToolResult & {
+  compactionRunId: string;
+  applyStats: ApplyStats;
+};
+
+export async function applyCompaction(
+  input: Readonly<ApplyCompactionInput>,
+  deps: Readonly<ApplyCompactionDeps>,
+): Promise<ApplyCompactionResult> {
+  assertApplyCompactionInput(input);
+  assertApplyCompactionDeps(deps);
+
+  const startedAt = nowFromDeps(deps);
+  const idempotencyKey = (deps.generateRunId ?? randomUUID)();
+  assertNonBlankText(idempotencyKey, "compactionRunId");
+  const organizationId = input.organizationId.trim();
+
+  // Optional: semantic dedup REPLACES exact match when threshold is set
+  // (semantic with threshold ≤ 1.0 subsumes exact match anyway). Embedding
+  // is the cost; running it on dry-run is fine — the result is what the
+  // caller wants to preview.
+  let useSemanticGroups: DuplicateGroupView[] | undefined;
+  if (input.semanticDedupThreshold !== undefined) {
+    if (!deps.embeddings) {
+      throw new Error(
+        "applyCompaction: semanticDedupThreshold set but deps.embeddings missing",
+      );
+    }
+    useSemanticGroups = await computeSemanticGroups(
+      input.records,
+      deps.embeddings,
+      input.semanticDedupThreshold,
+      deps.logger,
+    );
+  }
+
+  const plan = buildCompactionPlan({ ...input, useSemanticGroups });
+
+  // Dry-run path: skip ALL destructive ops, return plan + zero stats.
+  if (input.dryRun) {
+    return {
+      ...plan,
+      compactionRunId: idempotencyKey,
+      applyStats: emptyStats(deps, startedAt),
+    };
+  }
+
+  const candidates = collectArchiveCandidates(plan);
+
+  // Apply-path rate limit. Default 1/hour/org; tests and bulk-migration ops
+  // can disable via { windowMs: 0 }.
+  const limit = deps.applyRateLimit ?? DEFAULT_APPLY_RATE_LIMIT;
+  if (limit.windowMs > 0) {
+    const recentCount = await deps.archiveRepository.countRecentApplyRuns(
+      organizationId,
+      limit.windowMs,
+    );
+    if (recentCount >= limit.maxRuns) {
+      throw new CompactionRateLimitError(limit.windowMs);
+    }
+  }
+
+  // Open or replay the run.
+  const run = await deps.archiveRepository.createCompactionRun({
+    organizationId,
+    actor: input.actor,
+    scopeType: input.scope,
+    scopeId: input.scopeLabel,
+    dryRun: false,
+    planGeneratedAt: startedAt,
+    idempotencyKey,
+  });
+
+  // Replay defense: a completed run with the same idempotency_key returns
+  // its prior outcome instead of re-executing.
+  if (run.status === "completed") {
+    deps.logger.info(
+      {
+        event: "compact.replay",
+        compactionRunId: idempotencyKey,
+        archived: run.archivedCount,
+      },
+      "compaction run already completed; returning prior outcome",
+    );
+    return {
+      ...plan,
+      compactionRunId: idempotencyKey,
+      summary: `Replay of completed compaction for ${input.scope} scope ${input.scopeLabel}: ${run.archivedCount} archived previously`,
+      applyStats: {
+        archived: run.archivedCount,
+        skipped: 0,
+        qdrantPointsDeleted: run.archivedCount,
+        qdrantPointsPending: run.qdrantFailed,
+        durationMs: 0,
+      },
+    };
+  }
+
+  let archivedCount = 0;
+  let skippedCount = 0;
+  let qdrantPointsDeleted = 0;
+  let qdrantPointsPending = 0;
+  let qdrantFailedRecords = 0;
+  const archivedIds: string[] = [];
+
+  for (const candidate of candidates) {
+    const applyCandidate = async (candidateDeps: ApplyCompactionDeps) => {
+      let archiveResult;
+      try {
+        archiveResult = await candidateDeps.archiveRepository.applyCompactionRecord({
+          runId: run.id,
+          organizationId,
+          recordId: candidate.recordId,
+          reason: candidate.reason,
+          decayScore: candidate.decayScore,
+          keptRecordId: candidate.keptRecordId,
+          planGeneratedAt: startedAt,
+        });
+      } catch (err: unknown) {
+        // PG failure aborts the run — leaves prior records archived (durable),
+        // and the run row stays status='pending'. Operator must investigate.
+        await markRunFailed(candidateDeps, run.id, err);
+        throw err;
+      }
+
+      if (!archiveResult.archived) {
+        // TOCTOU skip / org mismatch / concurrent run won.
+        skippedCount += 1;
+        return;
+      }
+
+      archivedCount += 1;
+      archivedIds.push(String(candidate.recordId));
+
+      if (
+        (!candidateDeps.writes && archiveResult.qdrantPointIds.length === 0) ||
+        archiveResult.archiveId === undefined
+      ) {
+        // No vectors to clean — mark deleted immediately (vacuous true).
+        if (archiveResult.archiveId !== undefined) {
+          await candidateDeps.archiveRepository.markQdrantStatus(
+            archiveResult.archiveId,
+            "deleted",
+          );
+        }
+        return;
+      }
+
+      // Sequential Qdrant deletes — see design §4.4.
+      try {
+        if (candidateDeps.writes) {
+          await candidateDeps.vectorIndex.deleteByRecordIds([candidate.recordId], { organizationId });
+        } else {
+          await candidateDeps.vectorIndex.delete(archiveResult.qdrantPointIds, { organizationId });
+        }
+        qdrantPointsDeleted += archiveResult.qdrantPointIds.length;
+        await candidateDeps.archiveRepository.markQdrantStatus(
+          archiveResult.archiveId,
+          "deleted",
+        );
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        candidateDeps.logger.warn(
+          {
+            event: "compact.qdrant_delete_failed",
+            archiveId: archiveResult.archiveId,
+            recordId: candidate.recordId,
+            err: errorMessage,
+          },
+          "qdrant delete failed; sweeper will retry",
+        );
+        qdrantFailedRecords += 1;
+        qdrantPointsPending += archiveResult.qdrantPointIds.length;
+        // Leave qdrant_status='pending' — the sweeper picks it up. Bumping
+        // attempt_count + last_error here is best-effort.
+        try {
+          await candidateDeps.archiveRepository.markQdrantStatus(
+            archiveResult.archiveId,
+            "pending",
+            errorMessage,
+          );
+        } catch (markErr: unknown) {
+          candidateDeps.logger.error(
+            { event: "compact.mark_pending_failed", archiveId: archiveResult.archiveId, err: markErr },
+            "failed to mark archive row as pending; row remains pending",
+          );
+        }
+      }
+    };
+
+    if (deps.writes) {
+      const ids = candidate.keptRecordId === undefined
+        ? [candidate.recordId]
+        : [candidate.recordId, candidate.keptRecordId];
+      await deps.writes.record(organizationId, ids, async (scope) => {
+        for (const id of ids) {
+          const planned = input.records.find((record) => record.id === id);
+          const current = await scope.repository.getMemoryRecordById(id, organizationId);
+          if (!planned || !current || !samePlanningSnapshot(planned, current)) {
+            skippedCount += 1;
+            return;
+          }
+        }
+        await applyCandidate({ ...deps, ...scope });
+      });
+    } else {
+      await applyCandidate(deps);
+    }
+  }
+
+  await deps.archiveRepository.completeCompactionRun({
+    runId: run.id,
+    status: "completed",
+    archivedCount,
+    duplicateCount: plan.duplicateGroups.reduce(
+      (sum, g) => sum + g.archiveIds.length,
+      0,
+    ),
+    decayCount: plan.decayCandidates.length,
+    qdrantFailed: qdrantFailedRecords,
+  });
+
+  const endedAt = nowFromDeps(deps);
+
+  return {
+    ...plan,
+    compactionRunId: idempotencyKey,
+    archivedIds,
+    summary: `Applied compaction for ${input.scope} scope ${input.scopeLabel}: ${archivedCount} archived, ${skippedCount} skipped${qdrantFailedRecords > 0 ? `, ${qdrantFailedRecords} qdrant pending` : ""}`,
+    applyStats: {
+      archived: archivedCount,
+      skipped: skippedCount,
+      qdrantPointsDeleted,
+      qdrantPointsPending,
+      durationMs: endedAt.getTime() - startedAt.getTime(),
+    },
+  };
+}
+
+function samePlanningSnapshot(planned: SearchMemoryResult, current: SearchMemoryResult): boolean {
+  return current.durability !== "archived" &&
+    current.organizationId === planned.organizationId &&
+    current.scopeType === planned.scopeType && current.scopeId === planned.scopeId &&
+    current.content === planned.content && current.memoryType === planned.memoryType &&
+    current.durability === planned.durability && current.importance === planned.importance &&
+    current.createdAt === planned.createdAt && current.updatedAt === planned.updatedAt;
+}
+
+type ArchiveCandidate = {
+  recordId: number;
+  reason: ArchiveReason;
+  decayScore?: number;
+  keptRecordId?: number;
+};
+
+// Build per-record archive candidates from the plan, deduplicating by id.
+// A record that appears in BOTH a duplicate group and the decay list is
+// archived once, with reason='duplicate' winning (more deterministic).
+function collectArchiveCandidates(
+  plan: CompactMemoryToolResult,
+): ArchiveCandidate[] {
+  const seen = new Set<string>();
+  const candidates: ArchiveCandidate[] = [];
+
+  for (const group of plan.duplicateGroups) {
+    const keptRecordId = parseIntStrict(group.keepId);
+    for (const archiveId of group.archiveIds) {
+      if (seen.has(archiveId)) continue;
+      seen.add(archiveId);
+      candidates.push({
+        recordId: parseIntStrict(archiveId),
+        reason: "duplicate",
+        keptRecordId,
+      });
+    }
+  }
+
+  for (const decay of plan.decayCandidates) {
+    if (seen.has(decay.id)) continue;
+    seen.add(decay.id);
+    candidates.push({
+      recordId: parseIntStrict(decay.id),
+      reason: "decay",
+      decayScore: decay.score,
+    });
+  }
+
+  return candidates;
+}
+
+function parseIntStrict(value: string): number {
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`Expected positive integer id, got: ${value}`);
+  }
+  const n = Number(value);
+  if (!Number.isSafeInteger(n) || n < 1) {
+    throw new Error(`Expected positive integer id, got: ${value}`);
+  }
+  return n;
+}
+
+function emptyStats(
+  deps: ApplyCompactionDeps,
+  startedAt: Date,
+): ApplyStats {
+  const endedAt = nowFromDeps(deps);
+  return {
+    archived: 0,
+    skipped: 0,
+    qdrantPointsDeleted: 0,
+    qdrantPointsPending: 0,
+    durationMs: endedAt.getTime() - startedAt.getTime(),
+  };
+}
+
+function assertApplyCompactionInput(
+  input: unknown,
+): asserts input is ApplyCompactionInput {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    throw new Error("applyCompaction input must be an object");
+  }
+
+  assertBuildCompactionPlanInput(input);
+
+  const candidate = input as Record<string, unknown>;
+  assertNonBlankText(candidate.organizationId, "organizationId");
+  assertNonBlankText(candidate.actor, "actor");
+  assertOptionalSemanticDedupThreshold(candidate.semanticDedupThreshold);
+}
+
+function assertApplyCompactionDeps(
+  deps: unknown,
+): asserts deps is ApplyCompactionDeps {
+  const candidate = assertObject(deps, "applyCompaction deps");
+  const archiveRepository = assertObject(
+    candidate.archiveRepository,
+    "deps.archiveRepository",
+  );
+  const vectorIndex = assertObject(candidate.vectorIndex, "deps.vectorIndex");
+  const logger = assertObject(candidate.logger, "deps.logger");
+
+  for (const method of [
+    "countRecentApplyRuns",
+    "createCompactionRun",
+    "applyCompactionRecord",
+    "markQdrantStatus",
+    "completeCompactionRun",
+  ]) {
+    assertFunction(
+      archiveRepository[method],
+      `deps.archiveRepository.${method}`,
+    );
+  }
+
+  assertFunction(vectorIndex.delete, "deps.vectorIndex.delete");
+
+  for (const method of ["info", "warn", "error"]) {
+    assertFunction(logger[method], `deps.logger.${method}`);
+  }
+
+  if (candidate.embeddings !== undefined) {
+    const embeddings = assertObject(candidate.embeddings, "deps.embeddings");
+    assertFunction(embeddings.embedBatch, "deps.embeddings.embedBatch");
+  }
+  assertOptionalFunction(candidate.generateRunId, "deps.generateRunId");
+  assertOptionalFunction(candidate.now, "deps.now");
+  assertOptionalApplyRateLimit(candidate.applyRateLimit);
+}
+
+function assertOptionalSemanticDedupThreshold(value: unknown): void {
+  if (value === undefined) {
+    return;
+  }
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value) ||
+    value <= 0 ||
+    value > 1
+  ) {
+    throw new Error("semanticDedupThreshold must be in (0, 1]");
+  }
+}
+
+function assertOptionalApplyRateLimit(value: unknown): void {
+  if (value === undefined) {
+    return;
+  }
+
+  const rateLimit = assertObject(value, "deps.applyRateLimit");
+  assertNonNegativeFiniteNumber(
+    rateLimit.windowMs,
+    "deps.applyRateLimit.windowMs",
+  );
+  assertPositiveSafeInteger(
+    rateLimit.maxRuns,
+    "deps.applyRateLimit.maxRuns",
+  );
+}
+
+function assertObject(
+  value: unknown,
+  fieldName: string,
+): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function assertFunction(value: unknown, fieldName: string): void {
+  if (typeof value !== "function") {
+    throw new Error(`${fieldName} must be a function`);
+  }
+}
+
+function assertOptionalFunction(value: unknown, fieldName: string): void {
+  if (value === undefined) {
+    return;
+  }
+  assertFunction(value, fieldName);
+}
+
+function assertNonNegativeFiniteNumber(value: unknown, fieldName: string): void {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new Error(`${fieldName} must be a non-negative finite number`);
+  }
+}
+
+function assertPositiveSafeInteger(value: unknown, fieldName: string): void {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${fieldName} must be a positive safe integer`);
+  }
+}
+
+function nowFromDeps(deps: ApplyCompactionDeps): Date {
+  const value = (deps.now ?? (() => new Date()))();
+  if (!(value instanceof Date) || !Number.isFinite(value.getTime())) {
+    throw new Error("deps.now result must be a valid Date");
+  }
+  return value;
+}
+
+async function computeSemanticGroups(
+  records: readonly SearchMemoryResult[],
+  embeddings: EmbeddingClient,
+  threshold: number,
+  logger: Logger,
+): Promise<DuplicateGroupView[]> {
+  const vectors = new Map<number, number[]>();
+
+  // Collapse N per-record embed() calls into a single embedBatch() round-trip.
+  // If the batch call throws, log once and leave vectors empty so
+  // findSemanticDuplicates returns [] — compaction still runs without semantic
+  // dedup rather than crashing. Note: unlike the per-record loop this loses
+  // partial results when the provider fails mid-batch, which is an accepted
+  // trade-off for the reduction in round-trips.
+  try {
+    const texts = records.map((r) => r.content);
+    const vecs = await embeddings.embedBatch(texts);
+    if (vecs.length !== texts.length) {
+      throw new Error(
+        `embedBatch returned ${vecs.length} vectors for ${texts.length} records`,
+      );
+    }
+    for (let i = 0; i < records.length; i += 1) {
+      const vec = vecs[i];
+      if (vec) {
+        vectors.set(records[i]!.id, vec);
+      }
+    }
+  } catch (err: unknown) {
+    logger.warn(
+      {
+        event: "compact.semantic_embed_failed",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "embedBatch failed; semantic dedup skipped for this run",
+    );
+  }
+
+  const groups = findSemanticDuplicates(records, vectors, threshold);
+  return groups.map((group) => ({
+    keepId: String(group.keep.id),
+    archiveIds: group.archive.map((r) => String(r.id)),
+  }));
+}
+
+async function markRunFailed(
+  deps: ApplyCompactionDeps,
+  runId: number,
+  err: unknown,
+): Promise<void> {
+  try {
+    await deps.archiveRepository.completeCompactionRun({
+      runId,
+      status: "failed",
+      archivedCount: 0,
+      duplicateCount: 0,
+      decayCount: 0,
+      qdrantFailed: 0,
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+  } catch (markErr: unknown) {
+    deps.logger.error(
+      { event: "compact.mark_run_failed", runId, err: markErr },
+      "failed to mark run as failed; row remains pending",
+    );
+  }
+}

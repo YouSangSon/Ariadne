@@ -3,8 +3,8 @@ import {
   startBackgroundWorkers,
   type BackgroundWorkerServices,
   type StartBackgroundWorkersOptions,
-} from "../../src/app/background-workers.js";
-import type { Logger } from "../../src/logger.js";
+} from "../../src/composition/runtime/background-workers.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
 
 type StartCompactionSweeper = NonNullable<
   StartBackgroundWorkersOptions["startCompactionSweeper"]

@@ -1,4 +1,4 @@
-import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/store/memory-write-coordinator.js";
+import type { MemoryWriteCoordinator, MemoryWriteScope } from "../../src/application/ports/memory-write.js";
 import { Client, type ClientOptions } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -9,21 +9,22 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { describe, expect, it, vi } from "vitest";
 import * as z from "zod/v4";
-import { createMcpServer, createToolRegistry } from "../../src/mcp/server.js";
-import { createToolRegistry as createToolRegistryDirect } from "../../src/mcp/tool-registry.js";
-import type { AuditLogRepository } from "../../src/audit/audit-log-repository.js";
-import type { Logger } from "../../src/logger.js";
-import { TOOL_DESCRIPTORS } from "../../src/mcp/tool-schemas.js";
+import { createMcpServer, createToolRegistry } from "../../src/interfaces/mcp/server.js";
+import { createToolRegistry as createToolRegistryDirect } from "../../src/composition/runtime/tool-registry.js";
+import type { AuditLogRepository } from "../../src/application/ports/audit-log.js";
+import type { Logger } from "../../src/infrastructure/observability/logger.js";
+import { TOOL_DESCRIPTORS } from "../../src/interfaces/mcp/tool-schemas.js";
 import {
   POSTGRES_INTEGER_MAX,
   POSTGRES_INTEGER_MIN,
-} from "../../src/mcp/tool-utils.js";
+} from "../../src/application/tools/tool-utils.js";
 import type {
   CanonicalServices,
   ToolRegistry,
   WithCanonicalServices,
-} from "../../src/mcp/types.js";
-import type { MemoryRepository, SearchMemoryResult } from "../../src/types.js";
+} from "../../src/application/contracts/tools.js";
+import type { MemoryRepository } from "../../src/application/ports/memory-repositories.js";
+import type { SearchMemoryResult } from "../../src/domain/model/memory.js";
 import {
   goalRunRegistryStubs,
   goalRunServicesStub,
@@ -1281,6 +1282,20 @@ describe("createToolRegistry", () => {
         }),
       ]),
     );
+  });
+
+  it("inspects registered correction impact with a bounded org and explicit scope snapshot", async () => {
+    const services = createCanonicalServices();
+    const root = createRecord({id:1,memoryType:"fact",content:"Root",sourceType:"document",externalId:"source:root"});
+    const linked = {...root,id:2,revalidation:{schemaVersion:1 as const,recheck:{method:"Read source",trigger:"Reuse",boundContentDigest:"a".repeat(64)},sourceObservations:[],dependencies:[{memoryId:1,contentDigest:"b".repeat(64)}],derivatives:[]}};
+    services.repository.listMemoryRevalidationSnapshot = vi.fn().mockResolvedValue({records:[root,linked],truncated:false});
+    const registry = createToolRegistry({resolveCanonicalServices:async()=>services});
+    const result = await registry.inspect_memory_impact({organizationId:" org-a ",scope:"project",projectKey:"project-alpha",changedMemoryIds:[1],limit:2});
+    expect(result).toMatchObject({ok:true,affectedMemoryIds:[2],coverage:"known_only",dependenciesComplete:false,broader_review_required:true});
+    expect(services.repository.listMemoryRevalidationSnapshot).toHaveBeenCalledWith({scopeType:"project",scopeId:"project-alpha"},{organizationId:"org-a",limit:2});
+    expect(services.repository.updateMemoryRecord).not.toHaveBeenCalled();
+    await expect(registry.inspect_memory_impact({scope:"project",projectKey:"project-alpha",changedMemoryIds:[]})).rejects.toThrow("changedMemoryIds");
+    await expect(registry.update_memory({memoryId:1,revalidation:null})).rejects.toThrow("expectedRecordDigest");
   });
 
   it("lists memory through canonical governance repository primitives", async () => {
@@ -2662,6 +2677,22 @@ describe("createToolRegistry", () => {
 });
 
 describe("createMcpServer", () => {
+  it("advertises structured revalidation metadata and executes the registered impact tool over MCP", async()=>{
+    const services=createCanonicalServices();
+    const server=createMcpServer({resolveCanonicalServices:async()=>services});
+    const client=await createInMemoryClient(server);
+    try{
+      const listed=await client.listTools();
+      const update=listed.tools.find((tool)=>tool.name === "update_memory")!;
+      expect(JSON.stringify(update.inputSchema.properties?.revalidation)).toContain("boundContentDigest");
+      expect(JSON.stringify(update.inputSchema.properties?.revalidation)).toContain("sourceObservations");
+      expect(JSON.stringify(update.outputSchema)).toContain("revalidationBinding");
+      const result=await client.callTool({name:"inspect_memory_impact",arguments:{organizationId:"org-a",scope:"project",projectKey:"project-alpha",changedMemoryIds:[1]}});
+      expect(result.isError).not.toBe(true);
+      expect(result.structuredContent).toMatchObject({ok:true,affectedMemoryIds:[],coverage:"known_only",unresolved_dependencies:1,broader_review_required:true});
+    }finally{await client.close();await server.close();}
+  });
+
   it("declares descriptors for service tools and MCP context tools", () => {
     const descriptorNames = TOOL_DESCRIPTORS.map((descriptor) => descriptor.name).sort();
     expect(descriptorNames).toEqual([
@@ -2677,6 +2708,7 @@ describe("createMcpServer", () => {
       "delete_memory",
       "get_goal_run",
       "inspect_memory_graph",
+      "inspect_memory_impact",
       "list_audit_log",
       "list_goal_runs",
       "list_memory",
@@ -2719,6 +2751,7 @@ describe("createMcpServer", () => {
         "reindex_memory",
         "compact_memory",
         "inspect_memory_graph",
+        "inspect_memory_impact",
         "list_memory",
         "update_memory",
         "delete_memory",
@@ -2794,6 +2827,7 @@ describe("createMcpServer", () => {
       }),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -2850,6 +2884,7 @@ describe("createMcpServer", () => {
       reindex_memory: vi.fn(),
       compact_memory: vi.fn(),
       list_memory: vi.fn(),
+      inspect_memory_impact: vi.fn(),
       inspect_memory_graph: vi.fn(),
       update_memory: vi.fn(),
       delete_memory: vi.fn(),
@@ -4278,6 +4313,7 @@ function buildRegistryForMcpProtocol(): ToolRegistry {
       scopeId: "project-alpha",
       memories: [],
     }),
+    inspect_memory_impact: vi.fn(),
     inspect_memory_graph: vi.fn().mockResolvedValue({
       ok: true,
       scopeType: "project",
@@ -4346,6 +4382,7 @@ function createCanonicalServices() {
       listMemory: vi.fn().mockResolvedValue([createdRecord]),
       getMemoryRecordsByIds: vi.fn().mockResolvedValue([createdRecord]),
       listMemoryForGovernance: vi.fn().mockResolvedValue([createdRecord]),
+      listMemoryRevalidationSnapshot: vi.fn().mockResolvedValue({records:[],truncated:false}),
       inspectMemoryGraph: vi.fn().mockResolvedValue({
         entities: [
           {

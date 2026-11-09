@@ -130,7 +130,7 @@ Compose 的默认凭据仅用于本地开发；在向其他机器开放服务之
 
 与编程智能体的对话会在会话结束时丢失上下文。
 Akasha 让智能体保存值得记住的内容，并在下次工作时读取。
-同一组 20 个服务工具通过 MCP stdio、`POST /mcp` 上的 MCP Streamable HTTP，
+同一组 21 个服务工具通过 MCP stdio、`POST /mcp` 上的 MCP Streamable HTTP，
 以及 `/v1/*` 下的 JSON-HTTP 提供。完整的请求/响应结构定义见
 [docs/api-reference.md](docs/api-reference.md)。
 HTTP 与 MCP 共享这些服务结构定义，因此两种传输方式的输入验证和载荷结构保持一致。
@@ -146,6 +146,7 @@ HTTP 与 MCP 共享这些服务结构定义，因此两种传输方式的输入�
 | `reindex_memory` | 从 Postgres 中保留的文本块重建向量 | `POST /v1/memory/reindex` |
 | `list_memory` | 按标签和归档状态筛选、查看权威记录 | `POST /v1/memory/list` |
 | `inspect_memory_graph` | 查看已持久化的实体提及及关系 | `POST /v1/memory/graph` |
+| `inspect_memory_impact` | Inspect registered correction dependencies; coverage remains unknown | `POST /v1/memory/impact` |
 | `update_memory` | 编辑一条权威记录并刷新其向量状态 | `POST /v1/memory/update` |
 | `delete_memory` | 对一条记录执行治理归档，并清理向量 | `POST /v1/memory/delete` |
 | `tag_memory` | 替换一条记录的治理标签 | `POST /v1/memory/tag` |
@@ -213,12 +214,12 @@ curl -sX POST http://localhost:8787/v1/memory/context-pack \
 
 | 层 | 职责 |
 |-------|----------------|
-| MCP 服务器（`src/mcp/`） | 共享的 MCP 服务接口：工具描述、结构定义、注册表和处理器 |
-| HTTP 服务器（`src/app/`） | 在 `/mcp` 提供 MCP Streamable HTTP，并在 `/v1/*` 下提供 JSON HTTP |
-| 权威存储（`src/store/memory-repository.ts`） | Postgres — 记录、来源、摄入任务、实体图谱和审计 |
-| 向量索引（`src/vector/`） | Qdrant（默认）或 pgvector — 分块嵌入与相似度搜索。设置 `VECTOR_BACKEND=pgvector` 可仅部署 Postgres。 |
-| 压缩整理（`src/compact/`） | 去重（精确与语义）、衰减、归档、取消归档和清扫任务 |
-| 嵌入（`src/embedding/`） | `transformers`（免费的本地 ONNX，默认）、`openai`（`text-embedding-3-small`）或 `local`（用于 CI 的确定性桩实现） |
+| MCP 服务器（`src/interfaces/mcp/`） | 共享的 MCP 服务接口：工具描述、结构定义、注册表和处理器 |
+| HTTP 服务器（`src/interfaces/http/`） | 在 `/mcp` 提供 MCP Streamable HTTP，并在 `/v1/*` 下提供 JSON HTTP |
+| 权威存储（`src/infrastructure/postgres/memory-repository.ts`） | Postgres — 记录、来源、摄入任务、实体图谱和审计 |
+| 向量索引（`src/infrastructure/vector/`） | Qdrant（默认）或 pgvector — 分块嵌入与相似度搜索。设置 `VECTOR_BACKEND=pgvector` 可仅部署 Postgres。 |
+| 压缩整理（`src/application/usecases/`） | 去重（精确与语义）、衰减、归档、取消归档和清扫任务 |
+| 嵌入（`src/infrastructure/embedding/`） | `transformers`（免费的本地 ONNX，默认）、`openai`（`text-embedding-3-small`）或 `local`（用于 CI 的确定性桩实现） |
 
 数据流：调用方通过 `add_memory` 写入 → 将记录持久化到 Postgres、关联实体提及、
 对内容分块并生成嵌入，再更新或插入到当前向量后端。

@@ -2,13 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import {
   runIngestSweep,
   type RunIngestSweepInput,
-} from "../../src/compact/ingest-sweeper.js";
-import { nextRetryDelayMs } from "../../src/jobs/retry-backoff.js";
-import type { IngestJob, IngestJobRepository } from "../../src/types.js";
-import type {
-  MemoryChunkRepository,
-  ReindexableMemoryChunk,
-} from "../../src/store/canonical-indexing.js";
+} from "../../src/application/usecases/ingest-sweeper.js";
+import { nextRetryDelayMs } from "../../src/domain/policies/retry-backoff.js";
+import type { IngestJob } from "../../src/domain/model/memory.js";
+import type { IngestJobRepository } from "../../src/application/ports/memory-repositories.js";
+import type { MemoryChunkRepository, ReindexableMemoryChunk } from "../../src/application/ports/indexing.js";
 
 const SILENT_LOGGER = {
   info: vi.fn(),

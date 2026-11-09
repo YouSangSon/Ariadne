@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   findExactContentDuplicates,
   type RecordWithIdAndContent,
-} from "../../src/compact/detect-duplicates.js";
+} from "../../src/domain/policies/detect-duplicates.js";
 
 const callFindExactContentDuplicates = (records: unknown) => () =>
   findExactContentDuplicates(records as RecordWithIdAndContent[]);
