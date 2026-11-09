@@ -3,7 +3,7 @@ import { evidenceLineAt, localPackage } from "./shared.js";
 import type { ParsedManifest } from "./types.js";
 
 export function mavenSyntaxDiagnostics(file: ScannedFile): string[] {
-  const withoutComments = stripXmlComments(file.content);
+  const withoutComments = maskXmlComments(file.content);
   if (/<project\b/i.test(withoutComments) && !/<\/project\s*>/i.test(withoutComments)) {
     return [`pom.xml parse failed: missing </project>: ${file.relativePath}`];
   }
@@ -168,10 +168,6 @@ function maskXmlBlocks(content: string, tagName: string): string {
 function xmlTagText(content: string, tagName: string): string | undefined {
   const match = new RegExp(`<${tagName}\\b[^>]*>\\s*([^<]+?)\\s*<\\/${tagName}>`).exec(content);
   return match?.[1]?.trim();
-}
-
-function stripXmlComments(content: string): string {
-  return content.replace(/<!--[\s\S]*?-->/g, '');
 }
 
 function maskXmlComments(content: string): string {

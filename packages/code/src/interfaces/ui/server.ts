@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { UiLanguage, UiMessages, UiServerOptions, UiSnapshot } from "../../application/context/ui-model.js";
-import { actionByTargetPath, errorMessage, workArtifactMetadataText } from "../../application/context/ui-projection.js";
+import { actionByTargetPath, workArtifactMetadataText } from "../../application/context/ui-projection.js";
 import { exportImpactGraph } from "../../composition/graph.js";
 import { buildUiSnapshot } from "../../composition/ui.js";
 import { PACKAGE_NAME } from "../../domain/branding.js";
@@ -18,15 +18,6 @@ import { evidenceCountByImpactPath, renderActionRow, renderImpactPathRow, render
 import { renderReportDeltaPanel } from "./report_delta.js";
 import { escapeHtml, evidenceSourceLocation } from "./shared.js";
 import { UI_STYLES_MAIN, UI_STYLES_SOURCE_VIEWER } from "./styles.js";
-
-class UiClientInputError extends Error {
-  readonly code = 'invalid_request';
-
-  constructor(message: string) {
-    super(message);
-    this.name = 'UiClientInputError';
-  }
-}
 
 const UI_LANGUAGES: readonly UiLanguage[] = ['en', 'ko', 'zh'];
 const UI_LANGUAGE_LABELS: Record<UiLanguage, string> = { en: 'English', ko: '한국어', zh: '中文' };
@@ -666,9 +657,9 @@ export async function startUiServer(options: UiServerOptions): Promise<{ server:
           const html = await renderSourceViewerHtml(options.repoRoot, url);
           response.writeHead(200, htmlHeaders());
           response.end(html);
-        } catch (error) {
+        } catch {
           response.writeHead(400, textHeaders());
-          response.end(errorMessage(error));
+          response.end('Unable to preview the requested source.');
         }
         return;
       }
@@ -698,13 +689,8 @@ export async function startUiServer(options: UiServerOptions): Promise<{ server:
         response.end(JSON.stringify({ error: { code: 'invalid_request', message: error.message } }));
         return;
       }
-      if (error instanceof UiClientInputError) {
-        response.writeHead(400, jsonHeaders());
-        response.end(JSON.stringify({ error: { code: error.code, message: error.message } }));
-        return;
-      }
       response.writeHead(500, jsonHeaders());
-      response.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
+      response.end(JSON.stringify({ error: 'Unable to complete the UI request.' }));
     }
   });
   const port = await listen(server, host, preferredPort, options.port === undefined);

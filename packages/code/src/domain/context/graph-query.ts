@@ -243,9 +243,9 @@ export function parseReturns(text: string): GraphQueryReturn[] {
     .map((item) => item.trim())
     .filter(Boolean)
     .map((item) => {
-      const countMatch = item.match(/^COUNT\s*\(\s*(.+?)\s*\)$/i);
+      const countMatch = item.match(/^COUNT\s*\(([^()]*)\)$/i);
       if (countMatch) {
-        const inner = countMatch[1]!;
+        const inner = countMatch[1]!.trim();
         const innerMatch = inner.match(/^([A-Za-z_]\w*)(?:\.([A-Za-z_]\w*))?$/);
         if (!innerMatch) {
           throw new Error(

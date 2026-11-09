@@ -5456,7 +5456,7 @@ function expandTsconfigAlias(alias: TsconfigAlias, specifier: string): string[] 
   if (!specifier.startsWith(prefix) || !specifier.endsWith(suffix)) return [];
   const captured = specifier.slice(prefix.length, specifier.length - suffix.length);
   return alias.targets.map((target) =>
-    normalizeTsconfigTarget(alias.configDir, alias.baseUrl, target.replace('*', captured))
+    normalizeTsconfigTarget(alias.configDir, alias.baseUrl, target.replaceAll('*', () => captured))
   );
 }
 

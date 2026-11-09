@@ -11,6 +11,16 @@ import { assertLocalPreflightEnvironment, parseClientAbArgs } from "./client-ab-
 const fixtureRelativePath = "tests/eval/fixtures/client-ab.json";
 const tempRoots: string[] = [];
 
+it('passes script paths containing shell metacharacters as literal argv', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'akasha-argv-'));
+  tempRoots.push(root);
+  const script = path.join(root, 'fixture ; touch injected ; $(touch injected).mjs');
+  await writeFile(script, 'process.stdout.write(JSON.stringify(process.argv.slice(2)))');
+  const result = await runClientCommand({ binary: process.execPath, args: [script, 'literal ; $HOME'], cwd: root, env: {}, stdin: '', finalOutputPath: path.join(root, 'unused.json') });
+  expect(JSON.parse(result.stdout)).toEqual(['literal ; $HOME']);
+  await expect(readFile(path.join(root, 'injected'))).rejects.toMatchObject({ code: 'ENOENT' });
+});
+
 vi.setConfig({ testTimeout: 15_000 });
 
 afterAll(() => {

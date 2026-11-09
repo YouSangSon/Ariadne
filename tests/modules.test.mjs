@@ -15,10 +15,10 @@ function fixture(t) {
   for (const path of ['bin', 'lib', 'scripts', 'tests', 'tools', 'core/domain', 'core/application', 'modules/integration', 'packages/memory', 'packages/code', 'modules/ontology']) mkdirSync(join(root, path), { recursive: true })
   for (const path of ['bin/Ariadne.mjs', 'bin/code.mjs', 'lib/command.mjs', 'lib/scrub.mjs', 'lib/module-selection.mjs', 'scripts/product.mjs', 'scripts/verify.mjs', 'scripts/mirror-lib.mjs', 'core/domain/product.mjs', 'core/application/product.mjs', 'core/application/verification.mjs', 'core/domain/verification.mjs', 'core/domain/commit.mjs', 'modules/integration/application.mjs', 'modules/integration/domain.mjs', 'modules/integration/files.mjs', 'lib/caps.mjs']) copyFileSync(join(source, path), join(root, path))
   writeFileSync(join(root, 'scripts/check-mirror.mjs'), '')
-  const record = `import { appendFileSync } from 'node:fs'; import test from 'node:test'; test('fixture', () => appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: KIND, cwd: process.cwd(), env: Object.fromEntries(${JSON.stringify(guarded)}.map(key => [key, Object.hasOwn(process.env, key)])) }) + '\\n'))`
-  writeFileSync(join(root, 'tests/core.test.mjs'), record.replace('KIND', "'core'"))
-  writeFileSync(join(root, 'tests/ontology.test.mjs'), record.replace('KIND', "'ontology'"))
-  writeFileSync(join(root, 'tests/product-code.test.mjs'), record.replace('KIND', "'code'"))
+  const record = (kind) => `import { appendFileSync } from 'node:fs'; import test from 'node:test'; test('fixture', () => appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: ${JSON.stringify(kind)}, cwd: process.cwd(), env: Object.fromEntries(${JSON.stringify(guarded)}.map(key => [key, Object.hasOwn(process.env, key)])) }) + '\\n'))`
+  writeFileSync(join(root, 'tests/core.test.mjs'), record('core'))
+  writeFileSync(join(root, 'tests/ontology.test.mjs'), record('ontology'))
+  writeFileSync(join(root, 'tests/product-code.test.mjs'), record('code'))
   writeFileSync(join(root, 'tests/product-mcp.test.mjs'), "throw new Error('MCP must run only in its dedicated gate')\n")
   writeFileSync(join(root, 'modules/ontology/cli.mjs'), 'console.log(JSON.stringify({ cwd: process.cwd(), args: process.argv.slice(2) }))\n')
   writeFileSync(join(root, 'tools/npm'), `#!${process.execPath}
