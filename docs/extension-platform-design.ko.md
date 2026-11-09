@@ -1,7 +1,7 @@
 # Ariadne 모듈과 사용자 확장 설계
 
 작성: YouSangSon의 요청을 바탕으로 Codex 작성 · 2026-11-09
-상태: 목표 설계 작성·독립 검토 완료. 후속 [E0 첫 구현](extension-implementation-plan.ko.md)은 계약·참조 projector·검사 CLI와 Go 경계 검사를 제공한다. 사용자 확장 registry·sandbox·설치/실행 CLI는 아직 구현하지 않았다.
+상태: 목표 설계 작성·독립 검토 완료. 후속 [E0 구현](extension-implementation-plan.ko.md)은 계약·참조 projector·검사 CLI·Go/Rust 경계 검사와 격리 실행 시험용 worker를 제공한다. 시험용 worker의 존재는 공개 실행 지원을 뜻하지 않는다. 사용자 확장 registry·sandbox·설치/실행 CLI는 아직 구현하지 않았다.
 기준: `568f970`. [요구사항](../.harness/reqs/extension-platform-design.yaml). [Go+Rust 전환 설계](go-rust-runtime-design.ko.md)의 업무 소유권·TDD와 [실행 정책](execution-policy.md)을 계승한다.
 
 ## 1. 원하는 결과와 범위
@@ -135,11 +135,11 @@ E0에서 고정한 Wasmtime feature allowlist를 적용하고 첫 profile에서�
 
 rootless cgroup·CPU/memory/swap 제한이 지원되지 않거나 적용을 확인할 수 없는 환경은 `UNSUPPORTED_RUNTIME`으로 닫는다. Docker Desktop이나 bare worker로 자동 전환하지 않는다. 컨테이너·WASM은 다층 제한이며 kernel/engine 취약점이나 모든 side channel을 제거한다는 보장이 아니다. 최초 지원은 단일 로컬 운영자이고 적대적 인터넷 다중 tenant 서비스는 별도 위협 모델·격리 검증 전까지 지원하지 않는다.
 
-입력/worker protocol은 `ariadne.extension-worker/1`이다. E1은 4byte big-endian 길이 + UTF-8 JSON request/response 한 번이다. envelope에 invocation ID·package digest·input digest·world·profile revision을 고정한다. raw WASM bytes는 host가 읽고 크기·digest 검증한 뒤 별도 길이 frame으로 전달한다. guest가 host 파일 path를 지정하지 않는다. manifest가 아니라 실제 component import/export·features를 검사하고 dynamic code/component loading은 금지한다.
+입력/worker protocol은 `ariadne.extension-worker/1`이다. E1은 4byte big-endian 길이 + UTF-8 JSON request/response 한 번이다. envelope에 invocation ID·package digest·input digest·artifact digest·world·profile revision을 고정한다. decoded input/output 한도와 JSON escaping 전송 한도를 분리하며, 외부 JSON frame은 decoded 한도의 6배 + 4 KiB 이하다. raw WASM 한도는 8 MiB다. package digest는 상관관계 값이고 host의 package 검증을 대신하지 않는다. raw WASM bytes는 host가 읽고 크기·digest 검증한 뒤 별도 길이 frame으로 전달한다. guest가 host 파일 path를 지정하지 않는다. manifest가 아니라 실제 component import/export·features를 검사하고 dynamic code/component loading은 금지한다.
 
 추가 frame·중복 key·unknown field·초과 길이·잘못된 상관관계는 거절한다. request/response의 byte schema·canonical digest fixture를 고정한다. 기존 compute/1과 이름만 바꿔 혼용하지 않는다. E1은 hostcall message를 받으면 protocol 오류다. E2의 양방향 capability 호출은 worker/2로 별도 정의한다.
 
-정상 순서는 admission/예산 예약 → container ID 저장 → raw WASM 검사/compile → 실행 → response frame 검증 → host stdin close → worker tail EOF/join → stdout EOF와 exit/컨테이너 종료 확인 → 결과 전달 → 소유 container 정리다. 입력 두 frame은 길이로 읽고 EOF를 기다려 실행하지 않는다. worker는 별도 tail-reader로 추가 byte/부모 EOF를 감시한다. response flush 전 EOF는 취소, flush 후 EOF는 정리로 처리한다. 추가 byte를 받았으면 response 이후라도 두 번째 frame 없이 nonzero 종료한다.
+정상 순서는 admission/예산 예약 → container ID 저장 → raw WASM 검사/compile → 실행 → response frame 검증 → host ACK `0x01` → host stdin close → worker tail EOF/join → stdout EOF와 exit/컨테이너 종료 확인 → 결과 전달 → 소유 container 정리다. 입력 두 frame은 길이로 읽고 EOF를 기다려 실행하지 않는다. worker는 별도 tail-reader로 추가 byte/부모 EOF를 감시한다. ACK 없는 EOF는 출력 write가 막혀 있어도 즉시 취소한다. host는 완전한 응답 검증 뒤에만 ACK 한 byte를 보내며, worker는 응답 시작 전 ACK·잘못된 ACK·ACK 뒤 추가 byte를 nonzero 종료로 거절한다. 출력 flush만으로 host의 수신·검증을 추정하지 않는다. 이 규칙은 output mutex 때문에 부모 EOF 감시가 막힌 실제 회귀 시험을 근거로 기존 flush 시점 판정을 대체한다.
 
 Go가 `podman run` 자식만 죽여도 컨테이너가 멈췄다고 간주하지 않는다. 생성 전에 invocation별 고유 이름·무작위 소유 nonce·label·Podman endpoint identity와 launch intent를 registry transaction에 남기고 reservation을 확보한다. CID 획득 뒤 같은 기록에 연결한다. CID 기록 전 crash는 미리 저장한 이름과 모든 label/nonce가 맞는 대상을 대조하며 이름만 같다는 이유로 종료하지 않는다. 중복 supervisor는 registry lease/CAS로 cleanup 소유권을 얻고 동일 대상에 대해서만 작업한다. endpoint가 바뀌거나 자원 소유권을 확인하지 못하면 unknown으로 보존한다.
 
@@ -182,15 +182,15 @@ worker/2는 단일 invocation 안에서 hostcall request ID·sequence·capabilit
 | E2 | 좁은 read capability와 worker/2 | Task 권한/예산 및 owner API 연결, 권한 취소·교차 org·late callback·반출 검사. 상세 v2 schema 확정 전 활성화 금지 |
 | E3 | 필요한 도구·workflow·event/쓰기 확장 | 개별 정책 결정과 외부 효과·멱등성·복구 설계 및 지원 조합 검증 |
 
-| 예정 경로 | 역할 |
+| 구현 또는 예정 경로 | 역할 |
 | --- | --- |
 | `contracts/extensions/v1/manifest.schema.json`, `projection-{input,output}.schema.json`, `report-projector.wit`, `fixtures/` | 하나의 공개 계약 정본과 부정 fixture |
 | `runtime/go/internal/extensions/{domain,application,adapters}/` | artifact·registry·실행 use case·SQLite/Podman adapter. 단계별 상세 파일은 구현 전 소유 map에 등록 |
 | `runtime/go/internal/evaluation/application/projection.go`, 내장 projection adapter | 원본 비교/판정 보호, 표준 계약으로 입력 선택·출력 렌더 |
-| `runtime/rust/crates/ariadne-extension-worker/` | compute와 별도 binary, Wasmtime compile/store·fuel/epoch·wire·EOF 수명 |
-| `sdk/extensions/`, `examples/extensions/team-report/` | WIT/schema 기반 최소 helper·author fixture·raw WASM 예제 빌드 절차 |
+| `runtime/rust/` (현재 E0) | compute와 별도 binary, Wasmtime compile/store·fuel/epoch·wire·ACK/EOF 수명. 향후 여러 crate가 필요할 때만 workspace 분리 |
+| `sdk/extensions/`, `examples/extensions/team-report/` (후속) | WIT/schema 기반 최소 helper·author fixture·raw WASM 예제 빌드 절차 |
 | `runtime/extensions/Containerfile`, image manifest | pin된 host runtime·native dependency·rootless hardening. extension source를 image build에 실행하지 않음 |
-| `tools/build.go`, `architecture-map.json`, package maps, CI | optional extension-runtime 패키징·소스 전수 소유·위반 import·Podman qualification gate |
+| `tools/`의 현재 qualification 도구, `architecture-map.json`, package maps, CI | optional extension-runtime 패키징·소스 전수 소유·위반 import·Podman qualification gate |
 | README 네 언어·운영 문서·`.gitignore` | 실제 E1 제공 시 설치 요구/미지원 환경/registry·cache·제거 동작 반영 |
 
 기존 공개 module 이름 네 개와 Node CLI는 이번 설계에서 바꾸지 않는다. extension-runtime은 별도 opt-in 배포 기능이며 기본 core-only 빌드가 Wasmtime·Podman image를 끌어오지 않는다. 사용자 패키지 설치는 product module 설치와 다른 수명이다. WIT 정본에서 binding/schema 일치 검사를 만들고 목록을 여러 군데 손으로 복제하지 않는다.
@@ -232,7 +232,7 @@ E0에서 선택할 항목은 안정 Wasmtime/Cargo/Go/SQLite driver 버전과 OS
 
 완료조건은 기존 owner·정책 대조, 대안 비교, 수명/권한/자원 경계와 EX-D/EX-S 연결, 독립 보안·설계 검토, REQ/링크/diff 검증이다. SDK 작성·TDD 실행·sandbox 보장·지원 OS·성능은 구현 뒤 실제 시험 결과로 별도 보고한다.
 
-독립 대안 검토로 Context 변환 대신 평가 표시 projection을 첫 사례로 선택했다. 독립 보안 리뷰의 Major 3건인 원시 컨테이너 로그·부모 사망 뒤 수명·ambient endpoint 선택 문제를 §7과 EX-S07/16에서 보완하고 재검토로 해소를 확인했다. 재검토 범위의 미해결 Blocker/Major는 없다. 초기 문서 검증은 관련 4개 문서의 상대 파일 링크 37개·fence, 실제 strict REQ parser의 AC 3개, EX-D 9개/EX-S 16개 연결과 최종 diff 확인이다. 이후 Go 계약 CLI 빌드·검사는 구현 계획의 근거로 추가됐지만 Rust runtime qualification·컨테이너·성능 시험은 아직 실행하지 않았다.
+독립 대안 검토로 Context 변환 대신 평가 표시 projection을 첫 사례로 선택했다. 독립 보안 리뷰의 Major 3건인 원시 컨테이너 로그·부모 사망 뒤 수명·ambient endpoint 선택 문제를 §7과 EX-S07/16에서 보완하고 재검토로 해소를 확인했다. 재검토 범위의 미해결 Blocker/Major는 없다. 초기 문서 검증은 관련 4개 문서의 상대 파일 링크 37개·fence, 실제 strict REQ parser의 AC 3개, EX-D 9개/EX-S 16개 연결과 최종 diff 확인이다. 이후 구현·실행 시험의 현재 상태와 미확인 항목은 구현 계획에서 관리한다. 이 설계의 독립 검토를 실행 적합성 결과로 대신하지 않는다.
 
 ## 13. 기술 근거
 

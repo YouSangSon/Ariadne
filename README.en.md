@@ -222,6 +222,7 @@ Memories can carry recheck instructions, triggers and reported sources. `inspect
 The [follow-up design](docs/memory-evolution-design.md) covers source anchors, selective retrieval, correction proposals and bounded maintenance; these additions are not implemented.
 
 Go extension contracts, a reference report projector and package inspection are [experimental](docs/extension-implementation-plan.ko.md). They run separately from the Node product and do not provide user-extension installation, execution or a qualified sandbox.
+The Rust worker and fixed Podman profile are separate qualification tooling; public user-extension execution remains unavailable.
 
 [Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
 

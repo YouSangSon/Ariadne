@@ -1,0 +1,43 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: extension-runtime-qualification
+  title: 격리 확장 worker와 실행 적합성 시험 도구
+  status: verified
+requirement:
+  user_intent: Go와 Rust 및 모듈식 확장 설계의 구현을 이어가고 검증된 단위마다 커밋 및 main 게시한다.
+  desired_outcome: 공개 실행을 켜지 않고 검증 가능한 worker 및 고정 Podman profile과 실험실 증거를 남긴다.
+  confirmed_facts:
+    - 사용자가 계속 진행과 중간 커밋 및 main 병합과 push를 명시했다.
+    - 과거 설계 전용 및 E0 계약 단계의 원격 게시 제외는 현재 게시 요청 범위에서 대체된다.
+    - rootless Podman 연결을 명시하고 기본 연결과 다른 작업의 자원을 보존한다.
+classification:
+  category: feature
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: raw component 전용 Rust worker의 계약과 자원 및 종료와 계층 경계를 검증한다.
+      verification: import 및 digest와 크기와 연산 및 memory 및 ACK와 EOF 및 AST 거절 검사와 독립 리뷰를 통과한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 고정 Podman profile과 명시된 실험실 도구로 실제 실행 및 실패와 소유 자원 회수를 관측한다.
+      verification: 실제 Linux image 및 rootless OS 제한과 worker 사례 및 로그와 부모 독립 종료와 cleanup 증거를 남긴다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 기존 제품과 공개 실행 금지를 보존하고 문서와 CI 정의 및 소유 자원 정리를 검증한다.
+      verification: 관련 로컬 gate와 독립 리뷰 및 최종 diff와 소유 자원 잔여를 대조하고 원격 CI 및 main 병합은 별도 게시 증거로 관리한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - Memory와 Code 및 Node 공개 CLI와 원본 자료 및 다른 작업의 자원을 보존한다.
+    - 환경 metadata와 일부 실행 시험을 전체 runtime 지원이나 공개 실행 권한으로 승격하지 않는다.
+verification:
+  verify_gate_required: true
+audit:
+  must_not_implement:
+    - 보호 규칙 우회 및 credential과 Podman 기본 환경 변경
+    - 임의 native 사용자 code와 자동 설치 및 공개 install과 run 활성화
+    - 사용자 자료와 공유 cache 및 불명확한 자원의 일괄 삭제

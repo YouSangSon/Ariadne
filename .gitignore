@@ -20,3 +20,7 @@ coverage/
 /runtime/go/Ariadne
 /runtime/go/check-architecture
 .DS_Store
+
+/runtime/rust/target/
+/runtime/go/qualification-profile
+/tools/__pycache__/

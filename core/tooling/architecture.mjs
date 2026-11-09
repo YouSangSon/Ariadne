@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { builtinModules } from 'node:module'
 import { dirname, extname, join, relative, resolve } from 'node:path'
 
-const SOURCE = /\.(?:[cm]?js|tsx?|sh|sql|go|rs|wit)$/
+const SOURCE = /\.(?:[cm]?js|tsx?|sh|sql|go|rs|wit|py)$/
 const JAVASCRIPT = /\.(?:[cm]?js|tsx?)$/
 const LAYERS = new Set(['domain', 'application', 'infrastructure', 'interfaces', 'composition', 'compatibility', 'tooling'])
 const INNER = new Set(['domain', 'application'])
@@ -150,6 +150,7 @@ export function sourceFiles(root, areas, excluded = [], pattern = SOURCE) {
   const walk = (directory) => !existsSync(directory) ? [] : readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (['node_modules', '.git'].includes(entry.name)) return []
     const path = join(directory, entry.name)
+    if (relative(root, path).split('\\').join('/') === 'runtime/rust/target') return []
     if (excluded.includes(relative(root, path).split(/[\\/]/)[0])) return []
     return entry.isDirectory() ? walk(path) : pattern.test(entry.name) ? [relative(root, path).split('\\').join('/')] : []
   })
@@ -162,6 +163,7 @@ export function readInventory(root) {
   const scopes = [['', ['.']], ['packages/memory', PACKAGE_AREAS], ['packages/code', PACKAGE_AREAS]]
   const actual = [...ROOT_CONFIG, ...sourceFiles(root, ['contracts'], [], /\.json$/)]
   if (existsSync(join(root, 'runtime/go/go.mod'))) actual.push('runtime/go/go.mod')
+  for (const path of ['runtime/rust/Cargo.toml', 'runtime/rust/Cargo.lock', 'runtime/extensions/Containerfile']) if (existsSync(join(root, path))) actual.push(path)
   for (const area of ['.github/workflows', 'samples']) {
     for (const entry of readdirSync(join(root, area), { withFileTypes: true })) {
       if (entry.isFile() && /\.(?:ya?ml|json|toml)$/.test(entry.name)) actual.push(`${area}/${entry.name}`)

@@ -476,6 +476,10 @@
       "layer": "composition",
       "context": "core"
     },
+    "runtime/extensions/Containerfile": {
+      "layer": "tooling",
+      "context": "extensions"
+    },
     "runtime/go/cmd/Ariadne/main.go": {
       "layer": "composition",
       "context": "core"
@@ -484,19 +488,19 @@
       "layer": "tooling",
       "context": "architecture"
     },
+    "runtime/go/cmd/qualification-profile/main.go": {
+      "layer": "tooling",
+      "context": "extensions"
+    },
     "runtime/go/go.mod": {
       "layer": "tooling",
       "context": "core"
-    },
-    "runtime/go/internal/architecture/check_test.go": {
-      "layer": "tooling",
-      "context": "validation"
     },
     "runtime/go/internal/architecture/check.go": {
       "layer": "tooling",
       "context": "architecture"
     },
-    "runtime/go/internal/composition/cli_test.go": {
+    "runtime/go/internal/architecture/check_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -504,7 +508,7 @@
       "layer": "composition",
       "context": "core"
     },
-    "runtime/go/internal/evaluation/application/projection_test.go": {
+    "runtime/go/internal/composition/cli_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -513,7 +517,7 @@
       "context": "evaluation",
       "public": true
     },
-    "runtime/go/internal/extensions/adapters/files/package_test.go": {
+    "runtime/go/internal/evaluation/application/projection_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -521,7 +525,15 @@
       "layer": "infrastructure",
       "context": "extensions"
     },
-    "runtime/go/internal/extensions/application/environment_test.go": {
+    "runtime/go/internal/extensions/adapters/files/package_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/adapters/podman/profile.go": {
+      "layer": "infrastructure",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/adapters/podman/profile_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -529,7 +541,7 @@
       "layer": "application",
       "context": "extensions"
     },
-    "runtime/go/internal/extensions/application/projection_contract_test.go": {
+    "runtime/go/internal/extensions/application/environment_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -538,7 +550,7 @@
       "context": "extensions",
       "public": true
     },
-    "runtime/go/internal/extensions/domain/contracts_test.go": {
+    "runtime/go/internal/extensions/application/projection_contract_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -546,9 +558,57 @@
       "layer": "domain",
       "context": "extensions"
     },
+    "runtime/go/internal/extensions/domain/contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/extensions/domain/strict_json.go": {
       "layer": "domain",
       "context": "extensions"
+    },
+    "runtime/rust/Cargo.lock": {
+      "layer": "tooling",
+      "context": "extensions"
+    },
+    "runtime/rust/Cargo.toml": {
+      "layer": "tooling",
+      "context": "extensions"
+    },
+    "runtime/rust/src/domain.rs": {
+      "layer": "domain",
+      "context": "extensions"
+    },
+    "runtime/rust/src/engine.rs": {
+      "layer": "infrastructure",
+      "context": "extensions"
+    },
+    "runtime/rust/src/lib.rs": {
+      "layer": "composition",
+      "context": "extensions"
+    },
+    "runtime/rust/src/main.rs": {
+      "layer": "composition",
+      "context": "extensions"
+    },
+    "runtime/rust/src/protocol.rs": {
+      "layer": "interfaces",
+      "context": "extensions"
+    },
+    "runtime/rust/tests/architecture.rs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/rust/tests/engine.rs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/rust/tests/protocol.rs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/rust/tests/worker.rs": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "samples/hooks.codex.toml": {
       "layer": "interfaces",
@@ -699,6 +759,14 @@
       "context": "context"
     },
     "tests/verify.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tools/qualify_extension_runtime.py": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tools/test_qualify_extension_runtime.py": {
       "layer": "tooling",
       "context": "validation"
     }
