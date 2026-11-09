@@ -28,29 +28,6 @@ test('Maven comment removal cannot assemble a closing project tag', () => {
   }).length, 1);
 });
 
-test('UI source errors hide filesystem details and source HTML escapes hostile text', async (t) => {
-  const root = await mkdtemp(path.join(tmpdir(), 'ariadne-security-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
-  await mkdir(path.join(root, 'src'));
-  const payload = '<img src=x onerror=alert(1)>';
-  const file = `src/${payload}.ts`;
-  await writeFile(path.join(root, file), '</code><script>alert(1)</script>');
-  const ui = await startUiServer({ repoRoot: root, port: 0 });
-  t.after(() => ui.close());
-  const missing = await fetch(new URL('/source?path=missing.ts', ui.url));
-  assert.equal(missing.status, 400);
-  assert.match(missing.headers.get('content-type')!, /^text\/plain/);
-  assert.equal(await missing.text(), 'Unable to preview the requested source.');
-  const response = await fetch(new URL(`/source?path=${encodeURIComponent(file)}`, ui.url));
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
-  const html = await response.text();
-  assert.ok(!html.includes(payload));
-  assert.ok(!html.includes('</code><script>alert(1)</script>'));
-  assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;'));
-  assert.ok(html.includes('&lt;/code&gt;&lt;script&gt;alert(1)&lt;/script&gt;'));
-});
-
 test('tsconfig alias substitution treats dollar sequences as literal filename characters', async (t) => {
   const root = await mkdtemp(path.join(tmpdir(), 'ariadne-alias-security-'));
   t.after(() => rm(root, { recursive: true, force: true }));

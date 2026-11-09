@@ -512,7 +512,7 @@ function renderInspectorSource(
   if (!evidence) return escapeHtml(m.noSourceSpanRecorded);
   const source = evidenceSourceLocation(evidence, sourceContext);
   if (!source) return escapeHtml(m.noSourceSpanRecorded);
-  return `<a class="source-link" href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(`${m.ariaOpenSourceLabel} ${source.label}`)}</a>`;
+  return `<span class="source-location">${escapeHtml(source.label)}</span>`;
 }
 
 function renderInspectorEvidenceList(
@@ -527,7 +527,7 @@ function renderInspectorEvidenceList(
       <li>
         <strong>${escapeHtml(item.file)}</strong>
         <span>${escapeHtml(item.kind)} · ${escapeHtml(item.confidence)}</span>
-        ${source ? `<a class="source-link" href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(source.label)}</a>` : ''}
+        ${source ? `<span class="source-location">${escapeHtml(source.label)}</span>` : ''}
         <pre>${escapeHtml(shortenMiddle(item.snippet, 120))}</pre>
       </li>
     `;

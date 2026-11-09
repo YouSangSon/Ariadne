@@ -1,7 +1,6 @@
 import { formatSignedDelta } from "../../application/context/report-delta.js";
 import type { UiMessages, UiReportComparison, UiReportComparisonAffectedFile, UiReportDeltaPolicy, UiReportDeltaPolicyPreset } from "../../application/context/ui-model.js";
-import { isCrossRepoImpactPath } from "../../application/context/ui-projection.js";
-import { escapeHtml, sourceHref } from "./shared.js";
+import { escapeHtml } from "./shared.js";
 import type { SourceLinkContext } from "./shared.js";
 
 export function renderReportDeltaPanel(
@@ -141,12 +140,6 @@ function renderDeltaPathRows(
 ): string {
   return paths.slice(0, 4).map((item) => {
     const pathValue = typeof item === 'string' ? item : item.path;
-    const isExternalImpact = typeof item === 'string'
-      ? isNonLocalImpactPath(pathValue)
-      : isCrossRepoImpactPath(item) || isNonLocalImpactPath(pathValue);
-    const sourceLink = isExternalImpact
-      ? ''
-      : `<a class="source-link" href="${escapeHtml(sourceHref(pathValue, 1, sourceContext))}" target="_blank" rel="noreferrer">${escapeHtml(m.source)}</a>`;
     if (mode === 'added') {
       return `
         <li class="delta-path-row" data-filter-text="${escapeHtml(`added impact ${pathValue}`)}">
@@ -154,21 +147,16 @@ function renderDeltaPathRows(
             <span>${escapeHtml(pathValue)}</span>
             <small>${escapeHtml(m.inspectImpact)}</small>
           </button>
-          ${sourceLink}
-        </li>
+          </li>
       `;
     }
     return `
       <li class="delta-path-row" data-filter-text="${escapeHtml(`removed impact ${pathValue}`)}">
         <span>${escapeHtml(pathValue)}</span>
         <small>${escapeHtml(m.noLongerAffected)}</small>
-        ${sourceLink}
       </li>
     `;
   }).join('');
 }
 
-function isNonLocalImpactPath(pathValue: string): boolean {
-  return pathValue.includes('\0') || /^[^/\\:]+:[^/\\]/.test(pathValue);
-}
 export { comparisonBucket,defaultReportDeltaPolicy,formatSignedDelta,policyNumberAt,reportDeltaPolicyPresets,reportDeltaPolicyReason,reportDeltaSummary,reportReviewLoad } from "../../application/context/report-delta.js";

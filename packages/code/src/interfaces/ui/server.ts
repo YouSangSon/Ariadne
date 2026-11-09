@@ -1,5 +1,4 @@
-import { constants, existsSync, lstatSync } from "node:fs";
-import { open, stat } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -9,7 +8,7 @@ import { exportImpactGraph } from "../../composition/graph.js";
 import { buildUiSnapshot } from "../../composition/ui.js";
 import { PACKAGE_NAME } from "../../domain/branding.js";
 import { GraphPaginationInputError, paginateGraph } from "../../domain/impact/graph-pagination.js";
-import { normalizeRepoRoot, resolveInsideRoot } from "../../infrastructure/filesystem/security.js";
+import { normalizeRepoRoot } from "../../infrastructure/filesystem/security.js";
 import { databasePath, getRepoId, openDatabase } from "../../infrastructure/sqlite/store.js";
 import { readContextPack, readLatestCoverage, readReport, readWorkspace } from "../../infrastructure/sqlite/ui-read-model.js";
 import { UI_CLIENT_JS } from "./client.js";
@@ -17,7 +16,7 @@ import { renderImpactMapPanel } from "./impact_map.js";
 import { evidenceCountByImpactPath, renderActionRow, renderImpactPathRow, renderImpactSummaryPanel, renderImpactTriageStrip } from "./panels.js";
 import { renderReportDeltaPanel } from "./report_delta.js";
 import { escapeHtml, evidenceSourceLocation } from "./shared.js";
-import { UI_STYLES_MAIN, UI_STYLES_SOURCE_VIEWER } from "./styles.js";
+import { UI_STYLES_MAIN } from "./styles.js";
 
 const UI_LANGUAGES: readonly UiLanguage[] = ['en', 'ko', 'zh'];
 const UI_LANGUAGE_LABELS: Record<UiLanguage, string> = { en: 'English', ko: '한국어', zh: '中文' };
@@ -345,11 +344,11 @@ export function renderUiHtml(snapshot: UiSnapshot, language: UiLanguage = 'en'):
   const evidenceRows = (report?.evidence ?? []).slice(0, 30).map((item) => {
     const source = evidenceSourceLocation(item, sourceContext);
     return `
-    <li class="evidence-row" data-impact-path="${escapeHtml(item.file)}" data-source-href="${escapeHtml(source?.href ?? '')}" data-source-label="${escapeHtml(source?.label ?? '')}" data-filter-text="${escapeHtml(`${item.file} ${item.kind} ${item.snippet}`)}">
+    <li class="evidence-row" data-impact-path="${escapeHtml(item.file)}" data-source-label="${escapeHtml(source?.label ?? '')}" data-filter-text="${escapeHtml(`${item.file} ${item.kind} ${item.snippet}`)}">
       <div class="evidence-meta">
         <strong>${escapeHtml(item.file)}</strong>
         <span>${escapeHtml(item.kind)} · ${escapeHtml(item.confidence)}</span>
-        ${source ? `<a class="source-link" href="${escapeHtml(source.href)}" target="_blank" rel="noreferrer">${escapeHtml(`${m.ariaOpenSourceLabel} ${source.label}`)}</a>` : ''}
+        ${source ? `<span class="source-location">${escapeHtml(source.label)}</span>` : ''}
         ${item.resourceUri ? `<small>${escapeHtml(item.resourceUri)}</small>` : ''}
       </div>
       <pre>${escapeHtml(item.snippet)}</pre>
@@ -557,82 +556,6 @@ ${UI_CLIENT_JS}
 </html>`;
 }
 
-async function renderSourceViewerHtml(repoRootInput: string, url: URL): Promise<string> {
-  const repoRoot = normalizeRepoRoot(repoRootInput);
-  const lang = normalizeUiLanguage(url.searchParams.get('lang'));
-  const m = UI_MESSAGES[lang];
-  const backHref = uiHomeHref({ report: url.searchParams.get('report'), lang });
-  const requestedPath = url.searchParams.get('path') ?? '';
-  const requestedLine = parseSourceLine(url.searchParams.get('line'));
-  const absolutePath = resolveInsideRoot(repoRoot, requestedPath);
-  const approved = lstatSync(absolutePath, { bigint: true });
-  const handle = await open(absolutePath, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
-  let content: string;
-  try {
-    const info = await handle.stat({ bigint: true });
-    if (!approved.isFile() || !info.isFile()) throw new Error('source path must be a file');
-    if (info.dev !== approved.dev || info.ino !== approved.ino) throw new Error('source changed while opening');
-    if (info.size > 1_000_000n) throw new Error('source file is too large for the UI preview');
-    if (normalizeRepoRoot(repoRoot) !== repoRoot) throw new Error('source root changed while opening');
-    const current = await stat(resolveInsideRoot(repoRoot, requestedPath), { bigint: true });
-    if (current.dev !== info.dev || current.ino !== info.ino) throw new Error('source changed while opening');
-    const buffer = Buffer.alloc(Number(info.size));
-    let offset = 0;
-    while (offset < buffer.length) {
-      const { bytesRead } = await handle.read(buffer, offset, buffer.length - offset, offset);
-      if (bytesRead === 0) break;
-      offset += bytesRead;
-    }
-    const after = await handle.stat({ bigint: true });
-    if (offset !== buffer.length || after.size !== info.size || after.mtimeNs !== info.mtimeNs || after.ctimeNs !== info.ctimeNs) {
-      throw new Error('source changed while reading');
-    }
-    content = buffer.toString('utf8');
-  } finally {
-    await handle.close();
-  }
-  const lines = content.split(/\r?\n/);
-  const targetLine = Math.min(requestedLine, Math.max(1, lines.length));
-  const startLine = Math.max(1, targetLine - 12);
-  const endLine = Math.min(lines.length, targetLine + 12);
-  const sourceRows = lines.slice(startLine - 1, endLine).map((line, index) => {
-    const lineNumber = startLine + index;
-    return `<li id="L${lineNumber}" class="${lineNumber === targetLine ? 'source-line-active' : ''}"><code>${escapeHtml(line || ' ')}</code></li>`;
-  }).join('');
-
-  return `<!doctype html>
-<html lang="${lang}">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${escapeHtml(requestedPath)}:${targetLine}</title>
-  <style>
-${UI_STYLES_SOURCE_VIEWER}
-  </style>
-</head>
-<body>
-  <header>
-    <a href="${escapeHtml(backHref)}">${escapeHtml(m.backToWorkbench)}</a>
-    <h1>${escapeHtml(requestedPath)}</h1>
-    <span>${escapeHtml(m.lineLabel)} ${targetLine} · ${escapeHtml(repoRoot)}</span>
-  </header>
-  <main>
-    <section class="source-card">
-      <div><span>${escapeHtml(requestedPath)}</span><span>L${startLine}-L${endLine}</span></div>
-      <ol start="${startLine}">${sourceRows}</ol>
-    </section>
-  </main>
-</body>
-</html>`;
-}
-
-function parseSourceLine(value: string | null): number {
-  if (value === null || value === '') return 1;
-  const line = Number(value);
-  if (!Number.isInteger(line) || line < 1) throw new Error('source line must be a positive integer');
-  return line;
-}
-
 export async function startUiServer(options: UiServerOptions): Promise<{ server: Server; url: string; close: () => Promise<void> }> {
   const host = options.host ?? '127.0.0.1';
   const preferredPort = options.port ?? 3717;
@@ -653,14 +576,8 @@ export async function startUiServer(options: UiServerOptions): Promise<{ server:
         return;
       }
       if (url.pathname === '/source') {
-        try {
-          const html = await renderSourceViewerHtml(options.repoRoot, url);
-          response.writeHead(200, htmlHeaders());
-          response.end(html);
-        } catch {
-          response.writeHead(400, textHeaders());
-          response.end('Unable to preview the requested source.');
-        }
+        response.writeHead(410, textHeaders());
+        response.end('Live source preview is disabled. Open the file in your local editor.');
         return;
       }
       const reportId = url.searchParams.get('report') ?? options.reportId;
@@ -685,7 +602,11 @@ export async function startUiServer(options: UiServerOptions): Promise<{ server:
       response.end('not found');
     } catch (error) {
       if (error instanceof GraphPaginationInputError) {
-        response.writeHead(400, jsonHeaders());
+        response.writeHead(400, {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff'
+        });
         response.end(JSON.stringify({ error: { code: 'invalid_request', message: error.message } }));
         return;
       }

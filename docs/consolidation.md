@@ -169,12 +169,11 @@ SQLite repo lookups, matching production indexing (`/var` may resolve to
 
 ## File and configuration concurrency
 
-Source previews open the approved file without following a replaced leaf symlink,
-compare its descriptor identity, and bound reads to one megabyte. Replaced
-ancestors and file growth are rejected in the tested interleavings. This portable
-Node implementation is not a filesystem sandbox against a malicious process
-changing ancestor directories during every validation step. Keep the local UI
-on a trusted workspace; stronger namespace isolation requires OS support.
+Live source-file previews in the web UI are disabled. `/source` returns HTTP 410
+without inspecting or opening the requested path. The UI still shows indexed
+snippets, file paths and line numbers; open full source files in a local editor.
+This removes the ancestor-directory replacement race from the preview endpoint.
+It does not make the remaining local UI an OS-level filesystem sandbox.
 
 Project initialization uses exclusive config creation. MCP installers serialize
 on the canonical target, preserve ordinary symlinks and permission bits, and

@@ -34,7 +34,7 @@ Code remains one bounded context inside Ariadne. Impact, indexing, contracts, lo
 | Domain | `src/domain/**` | Impact traversal, confidence, index delta and ownership policy, contract comparison, fact identity, branch policy, context ranking and budgets. |
 | Application | `src/application/**` | Coordinate analysis, indexing, search, context reuse, workspace operations, memory/model work and UI snapshots through semantic ports. |
 | Infrastructure | `src/infrastructure/**` | SQLite repositories, filesystem containment and scanners, Git, parsers, model providers and atomic configuration writes. |
-| Interfaces | `src/interfaces/**` | CLI arguments, MCP registration and schemas, HTTP/HTML, source previews and report formatting. |
+| Interfaces | `src/interfaces/**` | CLI arguments, MCP registration and schemas, HTTP/HTML and report formatting. Live source-file previews are disabled. |
 | Composition | `src/composition/**` | Bind ports to adapters and assemble the default extractor registry in `src/composition/extractors.ts`. |
 | Compatibility | `src/index.ts`, `src/cli.ts`, earlier source paths | Preserve the public exports and executable path. Internal code imports the new owners. |
 | Tooling | `scripts/**`, `bench/**` | Schema/docs/dependency checks and package benchmarks. |

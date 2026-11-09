@@ -1,10 +1,10 @@
 import { buildImpactLanes } from "../../application/context/impact-lanes.js";
 import type { UiEvidencePreview, UiMessages, UiReportPreview, UiSnapshot } from "../../application/context/ui-model.js";
-import { actionByTargetPath, compareAffectedFilesForUi, impactEvidenceMatchesPath, isCrossRepoImpactPath, topAffectedFilesForSummary } from "../../application/context/ui-projection.js";
+import { actionByTargetPath, compareAffectedFilesForUi, impactEvidenceMatchesPath, topAffectedFilesForSummary } from "../../application/context/ui-projection.js";
 import { PACKAGE_NAME } from "../../domain/branding.js";
 import type { ImpactAction } from "../../domain/model.js";
 import { buildImpactMap } from "./impact_map.js";
-import { actionCommandText, entityLabel, escapeHtml, shortenMiddle, sourceHref } from "./shared.js";
+import { actionCommandText, entityLabel, escapeHtml, shortenMiddle } from "./shared.js";
 import type { SourceLinkContext } from "./shared.js";
 
 export function renderImpactSummaryPanel(snapshot: UiSnapshot, m: UiMessages): string {
@@ -230,9 +230,6 @@ export function renderActionRow(item: ImpactAction, m: UiMessages, sourceContext
     targetLabel ? `target ${targetLabel}` : undefined,
     `${item.confidence} ${m.confidenceInline}`
   ].filter((value): value is string => Boolean(value)).join(' · ');
-  const sourceLink = targetPath
-    ? `<a class="source-link" href="${escapeHtml(sourceHref(targetPath, 1, sourceContext))}" target="_blank" rel="noreferrer">${escapeHtml(m.target)}</a>`
-    : '';
 
   return `
     <li class="action-row" data-filter-text="${escapeHtml(`${item.kind} ${heading} ${item.display} ${command ?? ''} ${targetLabel} ${item.confidence}`)}">
@@ -244,7 +241,6 @@ export function renderActionRow(item: ImpactAction, m: UiMessages, sourceContext
       </div>
       <div class="action-controls">
         ${command ? `<button class="copy-command" type="button" data-command="${escapeHtml(command)}" aria-label="${escapeHtml(`${m.ariaCopyConfigPrefix} ${kindLabel} ${m.ariaCopyCommandSuffix}`)}">${escapeHtml(m.copy)}</button>` : ''}
-        ${sourceLink}
       </div>
     </li>
   `;
@@ -267,9 +263,6 @@ export function renderImpactPathRow(
     evidenceCount ? `${evidenceCount} evidence` : '',
     actionCommand ?? ''
   ].filter(Boolean).join(' ');
-  const sourceLink = isCrossRepoImpactPath(item)
-    ? ''
-    : `<a class="source-link" href="${escapeHtml(sourceHref(item.path, 1, sourceContext))}" target="_blank" rel="noreferrer">${escapeHtml(m.source)}</a>`;
 
   return `
     <li class="impact-row impact-path-row" data-filter-text="${escapeHtml(filterText)}">
@@ -281,7 +274,6 @@ export function renderImpactPathRow(
       <div class="impact-path-meta">
         <span class="badge confidence-${escapeHtml(item.confidence)}">${escapeHtml(item.confidence)}</span>
         <span class="evidence-pill">${escapeHtml(String(evidenceCount))} ${escapeHtml(m.evidence)}</span>
-        ${sourceLink}
         ${actionCommand ? `<button class="copy-command" type="button" data-command="${escapeHtml(actionCommand)}" aria-label="${escapeHtml(`${m.ariaCopyVerifyForPrefix} ${item.path}`)}">${escapeHtml(m.copyVerify)}</button>` : ''}
       </div>
     </li>

@@ -69,17 +69,6 @@ export const UI_CLIENT_JS = `    const snapshot = JSON.parse(document.getElement
       const element = document.getElementById(id);
       if (element) element.textContent = value;
     }
-    function sourceHrefFor(file, line) {
-      const query = new URLSearchParams();
-      query.set('path', file);
-      query.set('line', String(line));
-      const current = new URL(window.location.href);
-      const report = current.searchParams.get('report');
-      const lang = current.searchParams.get('lang');
-      if (report) query.set('report', report);
-      if (lang) query.set('lang', lang);
-      return '/source?' + query.toString();
-    }
     function evidenceSourceLabel(evidence) {
       const line = Number.isInteger(evidence.startLine) && evidence.startLine > 0 ? evidence.startLine : 1;
       const endLine = Number.isInteger(evidence.endLine) && evidence.endLine > line ? evidence.endLine : undefined;
@@ -266,18 +255,14 @@ export const UI_CLIENT_JS = `    const snapshot = JSON.parse(document.getElement
         file.textContent = item.file;
         const meta = document.createElement('span');
         meta.textContent = item.kind + ' · ' + item.confidence;
-        const line = Number.isInteger(item.startLine) && item.startLine > 0 ? item.startLine : 1;
         const snippet = document.createElement('pre');
         snippet.textContent = String(item.snippet || '').length > 120
           ? String(item.snippet || '').slice(0, 117) + '...'
           : String(item.snippet || '');
         row.append(file, meta);
         if (evidenceHasLocalSource(item)) {
-          const link = document.createElement('a');
-          link.className = 'source-link';
-          link.href = sourceHrefFor(item.file, line);
-          link.target = '_blank';
-          link.rel = 'noreferrer';
+          const link = document.createElement('span');
+          link.className = 'source-location';
           link.textContent = evidenceSourceLabel(item);
           row.append(link);
         }
@@ -378,18 +363,14 @@ export const UI_CLIENT_JS = `    const snapshot = JSON.parse(document.getElement
       renderInspectorEvidence(matchingEvidence);
       const firstEvidence = Array.from(document.querySelectorAll('.evidence-row'))
         .find((row) => row.getAttribute('data-impact-path') === path);
-      const sourceHref = firstEvidence?.getAttribute('data-source-href') || '';
       const sourceLabel = firstEvidence?.getAttribute('data-source-label') || '';
       const sourceTarget = document.getElementById('inspectorSource');
       if (sourceTarget) {
         sourceTarget.replaceChildren();
-        if (sourceHref) {
-          const link = document.createElement('a');
-          link.className = 'source-link';
-          link.href = sourceHref;
-          link.target = '_blank';
-          link.rel = 'noreferrer';
-          link.textContent = uiMessage('ariaOpenSourceLabel', 'Open source') + ' ' + sourceLabel;
+        if (sourceLabel) {
+          const link = document.createElement('span');
+          link.className = 'source-location';
+          link.textContent = sourceLabel;
           sourceTarget.append(link);
         } else {
           sourceTarget.textContent = uiMessage('noSourceSpanRecorded', 'No source span recorded');

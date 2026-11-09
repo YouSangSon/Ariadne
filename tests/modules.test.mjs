@@ -15,17 +15,20 @@ function fixture(t) {
   for (const path of ['bin', 'lib', 'scripts', 'tests', 'tools', 'core/domain', 'core/application', 'modules/integration', 'packages/memory', 'packages/code', 'modules/ontology']) mkdirSync(join(root, path), { recursive: true })
   for (const path of ['bin/Ariadne.mjs', 'bin/code.mjs', 'lib/command.mjs', 'lib/scrub.mjs', 'lib/module-selection.mjs', 'scripts/product.mjs', 'scripts/verify.mjs', 'scripts/mirror-lib.mjs', 'core/domain/product.mjs', 'core/application/product.mjs', 'core/application/verification.mjs', 'core/domain/verification.mjs', 'core/domain/commit.mjs', 'modules/integration/application.mjs', 'modules/integration/domain.mjs', 'modules/integration/files.mjs', 'lib/caps.mjs']) copyFileSync(join(source, path), join(root, path))
   writeFileSync(join(root, 'scripts/check-mirror.mjs'), '')
-  const record = (kind) => `import { appendFileSync } from 'node:fs'; import test from 'node:test'; test('fixture', () => appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: ${JSON.stringify(kind)}, cwd: process.cwd(), env: Object.fromEntries(${JSON.stringify(guarded)}.map(key => [key, Object.hasOwn(process.env, key)])) }) + '\\n'))`
-  writeFileSync(join(root, 'tests/core.test.mjs'), record('core'))
-  writeFileSync(join(root, 'tests/ontology.test.mjs'), record('ontology'))
-  writeFileSync(join(root, 'tests/product-code.test.mjs'), record('code'))
+  writeFileSync(join(root, 'guarded.json'), JSON.stringify(guarded))
+  const record = `import { appendFileSync, readFileSync } from 'node:fs'; import test from 'node:test'; import { basename } from 'node:path'; import { fileURLToPath } from 'node:url';
+const guarded = JSON.parse(readFileSync(new URL('../guarded.json', import.meta.url), 'utf8'));
+const kinds = { 'core.test.mjs': 'core', 'ontology.test.mjs': 'ontology', 'product-code.test.mjs': 'code' };
+test('fixture', () => appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: kinds[basename(fileURLToPath(import.meta.url))], cwd: process.cwd(), env: Object.fromEntries(guarded.map(key => [key, Object.hasOwn(process.env, key)])) }) + '\\n'))`
+  for (const name of ['core', 'ontology', 'product-code']) writeFileSync(join(root, 'tests', name + '.test.mjs'), record)
   writeFileSync(join(root, 'tests/product-mcp.test.mjs'), "throw new Error('MCP must run only in its dedicated gate')\n")
   writeFileSync(join(root, 'modules/ontology/cli.mjs'), 'console.log(JSON.stringify({ cwd: process.cwd(), args: process.argv.slice(2) }))\n')
   writeFileSync(join(root, 'tools/npm'), `#!${process.execPath}
-const { appendFileSync } = require('node:fs')
+const { appendFileSync, readFileSync } = require('node:fs')
+const guarded = JSON.parse(readFileSync(require('node:path').join(__dirname, '../guarded.json'), 'utf8'))
 const { basename } = require('node:path')
 const args = process.argv.slice(2)
-appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: 'npm', cwd: process.cwd(), args, env: Object.fromEntries(${JSON.stringify(guarded)}.map(key => [key, Object.hasOwn(process.env, key)])), onnx: process.env.ONNXRUNTIME_NODE_INSTALL }) + '\\n')
+appendFileSync(process.env.MODULE_TEST_LOG, JSON.stringify({ kind: 'npm', cwd: process.cwd(), args, env: Object.fromEntries(guarded.map(key => [key, Object.hasOwn(process.env, key)])), onnx: process.env.ONNXRUNTIME_NODE_INSTALL }) + '\\n')
 if (process.env.MODULE_TEST_FAIL === basename(process.cwd()) + ':' + args.join(' ')) process.exit(17)
 `, { mode: 0o755 })
   for (const args of [['init', '-q'], ['-c', 'core.hooksPath=/dev/null', '-c', 'user.name=fixture', '-c', 'user.email=fixture@example.test', 'commit', '--allow-empty', '-qm', 'test: fixture\n\nREQ: none (isolated fixture)']]) {
