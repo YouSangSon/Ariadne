@@ -1,0 +1,65 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "type": "integer"
+    },
+    "extensionId": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^(0|[1-9][0-9]*)[.](0|[1-9][0-9]*)[.](0|[1-9][0-9]*)$"
+    },
+    "world": {
+      "const": "ariadne:extensions/report-projector@1.0.0",
+      "type": "string"
+    },
+    "artifactSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sdkMajor": {
+      "const": 1,
+      "type": "integer"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 8192,
+      "x-maxUtf8Bytes": 8192,
+      "minLength": 1,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+    },
+    "requestedCapabilities": {
+      "type": "array",
+      "maxItems": 0,
+      "items": {
+        "type": "string"
+      }
+    },
+    "license": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9.+-]*$"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "extensionId",
+    "version",
+    "world",
+    "artifactSha256",
+    "sdkMajor",
+    "description",
+    "requestedCapabilities",
+    "license"
+  ],
+  "x-maxBytes": 32768,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ariadne.local/contracts/extensions/v1/manifest.schema.json"
+}

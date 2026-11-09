@@ -18,6 +18,8 @@ Ariadne는 사용자가 원하는 결과를 얻도록 목표, 문맥, 도구, �
 
 제품 방향의 원본은 [product-direction.md](product-direction.md), 현재 파일 배치의 참고 문서는 [architecture.md](architecture.md)다. 이 문서는 목표 구조와 이행 기준을 소유한다.
 
+후속 [Go + Rust 전환 설계](go-rust-runtime-design.ko.md)는 이 소유권을 유지하면서 Go 모듈 호스트·선택적 Rust 계산 엔진·호환 전환·빌드와 검증 순서를 정의한다. 언어 전환은 별도 목표이며 아래 R 단계의 완료나 H/D 단계의 구현 상태를 바꾸지 않는다.
+
 ## 2. 사용자가 보는 기능 선택
 
 현재 제공되는 설치·검증 선택은 그대로 유지한다.

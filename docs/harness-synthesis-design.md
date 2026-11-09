@@ -104,6 +104,8 @@ const result = await runtime.complete(taskId)
 
 새 공유 framework는 만들지 않는다. 모듈 간에는 작고 version이 있는 값과 명시한 application 포트를 전달한다. 안쪽 모듈이 기존 façade를 역으로 import하지 않으며 `architecture-map.json`의 소유·의존성 검사를 확장한다. 도메인별 내부 transaction·SQL·HTTP 객체를 공통 타입에 노출하지 않는다.
 
+후속 [사용자 확장 설계](extension-platform-design.ko.md)는 검증된 별도 패키지 등록·호출 경계를 추가하는 목표다. 위의 금지는 composition에서 문자열로 임의 native code를 로드하는 경우에 계속 적용한다. 확장의 표시 결과나 capability 요청은 공통 Task 권위·허가·완료 근거를 생성하지 않는다. SDK와 sandbox의 현재 구현을 뜻하지 않는다.
+
 ## 5. 상세 계약
 
 ### 5.1 목표와 입력을 고정한다 — HS-D10

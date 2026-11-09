@@ -1,0 +1,32 @@
+name: Native contracts
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  native-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: runtime/go/go.mod
+          cache: false
+      - name: Check experimental Go contracts and boundaries
+        working-directory: runtime/go
+        env:
+          GOTOOLCHAIN: local
+          GOFLAGS: -mod=readonly
+          GOCACHE: ${{ runner.temp }}/ariadne-native-cache
+          GOTMPDIR: ${{ runner.temp }}/ariadne-native-tmp
+          GOPATH: ${{ runner.temp }}/ariadne-native-deps
+        run: |
+          mkdir -p "$GOCACHE" "$GOTMPDIR" "$GOPATH"
+          trap 'rm -rf "$GOCACHE" "$GOTMPDIR" "$GOPATH"' EXIT
+          test -z "$(gofmt -l .)"
+          go run ./cmd/check-architecture --root ../..
+          go test -race ./...
+          go vet ./...

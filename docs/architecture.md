@@ -10,6 +10,20 @@ refactor from future task execution and distributed deployment. Named multi-reso
 bindings, Kafka/RabbitMQ adapters, and MSA deployment are target contracts, not
 features enabled by moving the existing implementation into layers.
 
+The [Go + Rust transition design](go-rust-runtime-design.ko.md) proposes a Go
+module host and an optional Rust computation executable. It preserves these
+owners and existing public contracts. The experimental Go contract CLI is
+separate; a Go/Rust product replacement and user-extension execution runtime
+are not implemented yet.
+
+The [extension-platform design](extension-platform-design.ko.md) adds proposed
+public extension contracts and a separate untrusted execution boundary. Module
+ownership, trusted native computation, and user extensions remain distinct;
+selection at installation alone does not establish modularity. The first
+[experimental Go contract implementation](extension-implementation-plan.ko.md)
+includes parsers, reference projection, inspection and AST boundary checks.
+It does not implement a user-extension runner or establish sandbox support.
+
 ## Context owners
 
 | Context | Domain and application | External adapters and composition |
@@ -109,6 +123,13 @@ with `npm run verify -- --modules memory,code,ontology`, or omit selection for t
 full product. Local source tests, database integration tests, CI, deployment, and
 real model quality remain separate evidence. The paused dispatcher and automatic
 recovery runtime remain unimplemented.
+
+The E0 addition also inventories Go, Rust, WIT and contract JSON. The separate
+Go AST gate checks all Go sources against the same map, inward imports, public
+application packages, package cycles and business-context cycles. Composition
+roots may bind adapters across contexts. This is an import/ownership check, not
+a runtime sandbox or a Rust AST gate. `public: true` opens a Go application
+package rather than selected symbols. Native tests are classified as tooling.
 
 ## Selected context and recorded evaluation
 

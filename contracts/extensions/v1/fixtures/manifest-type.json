@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1",
+  "extensionId": "ariadne/team-report",
+  "version": "1.0.0",
+  "world": "ariadne:extensions/report-projector@1.0.0",
+  "artifactSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "sdkMajor": 1,
+  "description": "Team evaluation summary",
+  "requestedCapabilities": [],
+  "license": "MIT"
+}

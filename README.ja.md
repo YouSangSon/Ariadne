@@ -221,6 +221,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 出典の位置、選択取得、訂正候補、上限付き保守の[詳細設計](docs/memory-evolution-design.md)は今後の実装対象です。
 
+Go の拡張契約、参照用レポート変換、パッケージ検査は[実験段階](docs/extension-implementation-plan.ko.md)です。既存の Node 製品とは別に実行し、ユーザー拡張のインストール・実行や検証済み sandbox は提供しません。
+
 [20 件の参照元・適用範囲・入力形式（韓国語）](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>

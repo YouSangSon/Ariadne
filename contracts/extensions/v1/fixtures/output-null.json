@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "sections": [
+    {
+      "title": "Evaluation summary",
+      "body": "Reported data only; unknown values remain unknown.",
+      "sourceIds": [
+        "comparison-01"
+      ],
+      "table": null
+    }
+  ]
+}

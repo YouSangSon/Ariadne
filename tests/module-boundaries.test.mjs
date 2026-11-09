@@ -78,6 +78,15 @@ test('new top-level tooling is discovered and cannot escape ownership coverage',
   assert.match(errors({}, {}, actual).join('\n'), /unowned source new-tools\/unowned.mjs/)
 })
 
+test('native sources and WIT interfaces cannot escape the root inventory', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ariadne-native-boundaries-'))
+  t.after(() => rmSync(workspace, { recursive: true, force: true }))
+  for (const name of ['unowned.go', 'unowned.rs', 'interface.wit']) writeFileSync(join(workspace, name), '')
+  const actual = sourceFiles(workspace, ['.'])
+  assert.deepEqual(actual, ['interface.wit', 'unowned.go', 'unowned.rs'])
+  assert.equal(errors({}, {}, actual).length, 3)
+})
+
 test('root sources reject optional packages, unsupported aliases and unreviewed loaders', () => {
   const files = { 'a/domain.mjs': { layer: 'domain', context: 'a' } }
   for (const [source, reason] of [

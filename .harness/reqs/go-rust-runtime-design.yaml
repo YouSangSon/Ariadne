@@ -1,0 +1,49 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-rust-runtime-design
+  title: Go 중심 하네스와 선택적 Rust 계산 엔진 전환 설계
+  status: verified
+requirement:
+  user_intent: Go와 Rust를 함께 사용하는 Ariadne의 구조와 빌드 및 전환을 설계한다.
+  desired_outcome: 기존 계약과 데이터 소유권을 유지하는 상세 설계와 검증 시나리오를 완성한다.
+  confirmed_facts:
+    - 사용자가 Go와 Rust 조합의 설계를 요청하고 중단 후 재개했다.
+    - 현재 요청은 설계이며 언어 전환 구현이나 데이터 이전 및 원격 게시가 아니다.
+    - 선택 모듈과 DDD 및 클린 아키텍처와 향후 복수 인프라 확장 요구를 유지한다.
+    - 사용자가 TDD와 DDD 및 클린 아키텍처와 모듈화 및 확장성을 후속 요청으로 재확인했다.
+classification:
+  category: docs
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      passes: true
+      priority: P0
+      statement: Go와 Rust 및 기존 TS의 책임과 소유 데이터와 호환 계약을 실제 경로에 연결한다.
+      verification: 기존 아키텍처와 실제 계산 및 저장 호출 경로를 대조한다.
+    - id: AC2
+      passes: true
+      priority: P0
+      statement: 통신과 종료 및 실패와 빌드 및 모듈 선택과 전환 계획을 완성한다.
+      verification: GR-D 결정과 GR-S 시나리오 및 독립 리뷰를 대조한다.
+    - id: AC3
+      passes: true
+      priority: P0
+      statement: 현재 구현과 설계를 구분하고 문서 검증 뒤 작업 소유 변경만 로컬 커밋한다.
+      verification: 링크와 REQ 형식 및 최종 diff와 커밋을 확인한다.
+    - id: AC4
+      passes: true
+      priority: P0
+      statement: 원래 요구한 DDD와 클린 아키텍처 및 모듈 확장과 TDD 절차를 구현 기준으로 명시한다.
+      verification: GR-D09와 계층 의존 및 확장 표와 TDD 순서 및 GR-S16과 GR-S17을 기존 설계와 대조한다.
+code_mapping:
+  boundary_rules:
+    - 기존 Memory와 Code의 쓰기 및 인증 경계를 보존한다.
+    - 이번 작업은 설계 문서와 관련 요구사항만 변경한다.
+verification:
+  verify_gate_required: true
+audit:
+  must_not_implement:
+    - Go와 Rust 제품 소스 및 런타임 활성화
+    - 데이터 이전과 기존 캐시 및 Podman 환경 삭제
+    - 보호 규칙 변경과 유료 모델 호출 및 원격 게시
