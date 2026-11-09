@@ -16,7 +16,7 @@ describe("reported memory revalidation",()=>{
  it("rejects executable fields, oversized metadata and secrets in refs",()=>{
   expect(()=>validateMemoryRevalidation({...recipe,recheck:{...recipe.recheck,command:"rm -rf /"}})).toThrow();
   expect(()=>validateMemoryRevalidation({...recipe,recheck:{...recipe.recheck,method:"x".repeat(5000)}})).toThrow();
-  expect(()=>validateMemoryRevalidation({...recipe,sourceObservations:[{ref:"postgres://u:password@host/db",digest}]})).toThrow();
+  expect(()=>validateMemoryRevalidation({...recipe,sourceObservations:[{ref:"postgres://user:pass@host/db",digest}]})).toThrow();
   expect(validateMemoryRevalidation(recipe)).toEqual(recipe);
  });
  it("separates content binding from metadata and governance CAS state",()=>{
