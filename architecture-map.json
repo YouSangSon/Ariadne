@@ -9,6 +9,10 @@
       "layer": "tooling",
       "context": "automation"
     },
+    ".github/workflows/native.yml": {
+      "layer": "tooling",
+      "context": "core"
+    },
     ".github/workflows/security.yml": {
       "layer": "tooling",
       "context": "automation"
@@ -36,6 +40,198 @@
     "bin/code.mjs": {
       "layer": "composition",
       "context": "core"
+    },
+    "contracts/extensions/v1/fixtures/cases.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-comparable.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-cost-underflow-negative.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-cost-underflow-positive.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-fractional-tokens.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-known-missing.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-negative-cost.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-nested-duplicate.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-null.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-status.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-token-integer-decimal.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-token-integer-exponent.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-token-integer-shifted.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-token-precision.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-unknown-value.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-unknown.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/input-unsafe-integer.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-capability.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-case-alias.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-duplicate-key.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-hash.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-id.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-invalid-utf8.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-lone-surrogate.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-major.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-missing.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-null.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-schema-version.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-type.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-unknown-field.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-valid.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/manifest-world.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-cells-limit.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-control.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-duplicate-source.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-forged-receipt.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-missing-source.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-multibyte-limit.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-null.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-ragged-table.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-sections-limit.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-source-reference.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-string-limit.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/fixtures/output-valid.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/extensions/v1/manifest.schema.json": {
+      "layer": "interfaces",
+      "context": "extensions"
+    },
+    "contracts/extensions/v1/projection-input.schema.json": {
+      "layer": "interfaces",
+      "context": "extensions"
+    },
+    "contracts/extensions/v1/projection-output.schema.json": {
+      "layer": "interfaces",
+      "context": "extensions"
+    },
+    "contracts/extensions/v1/report-projector.wit": {
+      "layer": "interfaces",
+      "context": "extensions"
     },
     "core/application/product.mjs": {
       "layer": "application",
@@ -279,6 +475,80 @@
     "package.json": {
       "layer": "composition",
       "context": "core"
+    },
+    "runtime/go/cmd/Ariadne/main.go": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "runtime/go/cmd/check-architecture/main.go": {
+      "layer": "tooling",
+      "context": "architecture"
+    },
+    "runtime/go/go.mod": {
+      "layer": "tooling",
+      "context": "core"
+    },
+    "runtime/go/internal/architecture/check_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/architecture/check.go": {
+      "layer": "tooling",
+      "context": "architecture"
+    },
+    "runtime/go/internal/composition/cli_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/composition/cli.go": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "runtime/go/internal/evaluation/application/projection_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/evaluation/application/projection.go": {
+      "layer": "application",
+      "context": "evaluation",
+      "public": true
+    },
+    "runtime/go/internal/extensions/adapters/files/package_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/adapters/files/package.go": {
+      "layer": "infrastructure",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/application/environment_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/application/environment.go": {
+      "layer": "application",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/application/projection_contract_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/application/projection_contract.go": {
+      "layer": "application",
+      "context": "extensions",
+      "public": true
+    },
+    "runtime/go/internal/extensions/domain/contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/domain/contracts.go": {
+      "layer": "domain",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/domain/strict_json.go": {
+      "layer": "domain",
+      "context": "extensions"
     },
     "samples/hooks.codex.toml": {
       "layer": "interfaces",

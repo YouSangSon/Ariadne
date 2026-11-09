@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "comparison-01",
+  "sourceDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "comparison": {
+    "status": "descriptive-only",
+    "base": {
+      "reportedPasses": 2,
+      "totalTokens": {
+        "status": "unknown"
+      },
+      "costUSD": {
+        "status": "unknown"
+      }
+    },
+    "selected": {
+      "reportedPasses": 1,
+      "totalTokens": {
+        "status": "known",
+        "value": 1.5
+      },
+      "costUSD": {
+        "status": "known",
+        "value": 0.04
+      }
+    }
+  }
+}

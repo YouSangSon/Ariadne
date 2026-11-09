@@ -1,0 +1,217 @@
+[
+  {
+    "file": "manifest-valid.json",
+    "kind": "manifest",
+    "valid": true
+  },
+  {
+    "file": "input-unknown.json",
+    "kind": "input",
+    "valid": true
+  },
+  {
+    "file": "input-comparable.json",
+    "kind": "input",
+    "valid": true
+  },
+  {
+    "file": "output-valid.json",
+    "kind": "output",
+    "valid": true
+  },
+  {
+    "file": "manifest-unknown-field.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-null.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-capability.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-world.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-major.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-id.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-hash.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-schema-version.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-type.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-missing.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-case-alias.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "input-status.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-null.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-unknown-value.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-known-missing.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-fractional-tokens.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-negative-cost.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-unsafe-integer.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "output-forged-receipt.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-source-reference.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-duplicate-source.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-missing-source.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-null.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-ragged-table.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-sections-limit.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-cells-limit.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-string-limit.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-multibyte-limit.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "output-control.json",
+    "kind": "output",
+    "valid": false
+  },
+  {
+    "file": "manifest-duplicate-key.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "input-nested-duplicate.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "manifest-invalid-utf8.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "manifest-lone-surrogate.json",
+    "kind": "manifest",
+    "valid": false
+  },
+  {
+    "file": "input-token-precision.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-cost-underflow-negative.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-cost-underflow-positive.json",
+    "kind": "input",
+    "valid": false
+  },
+  {
+    "file": "input-token-integer-decimal.json",
+    "kind": "input",
+    "valid": true
+  },
+  {
+    "file": "input-token-integer-exponent.json",
+    "kind": "input",
+    "valid": true
+  },
+  {
+    "file": "input-token-integer-shifted.json",
+    "kind": "input",
+    "valid": true
+  }
+]

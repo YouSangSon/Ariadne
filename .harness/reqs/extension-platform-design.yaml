@@ -1,0 +1,42 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: extension-platform-design
+  title: 안정적 코어와 모듈 및 안전한 사용자 확장 설계
+  status: verified
+requirement:
+  user_intent: 공개 확장 계약으로 사용자 기능을 추가하는 Ariadne 아키텍처를 설계한다.
+  desired_outcome: 기존 업무 소유권과 실행 권위를 유지하는 확장 수명 및 격리와 단계별 검증 설계를 완성한다.
+  confirmed_facts:
+    - 사용자가 모듈화 설명을 지적하고 확장 소프트웨어 글을 읽은 뒤 설계를 요청했다.
+    - Go와 Rust 및 DDD와 클린 아키텍처와 모듈화 및 TDD 요구를 유지한다.
+    - 이번 요청은 설계이며 제품 구현과 런타임 설치 및 원격 게시를 승인하지 않는다.
+classification:
+  category: docs
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      passes: true
+      priority: P0
+      statement: 내부 모듈과 신뢰 계산 및 사용자 확장의 소유권과 공개 계약을 구분한다.
+      verification: 기존 구조와 실행 정책 및 Go와 Rust 설계에 대조한다.
+    - id: AC2
+      passes: true
+      priority: P0
+      statement: 설치 및 권한과 버전 및 실행 격리와 종료 및 제거와 첫 유용 사례를 설계한다.
+      verification: EX-D 결정과 EX-S 시나리오 및 독립 리뷰를 대조한다.
+    - id: AC3
+      passes: true
+      priority: P0
+      statement: 구현 순서와 미확정을 구분하고 문서 검증 후 작업 소유 변경만 로컬 커밋한다.
+      verification: REQ와 링크 및 diff와 로컬 커밋을 확인한다.
+code_mapping:
+  boundary_rules:
+    - 기존 데이터 owner와 실행 승인 및 완료 판정 권위를 보존한다.
+    - 이번에는 문서와 요구사항만 변경한다.
+verification:
+  verify_gate_required: true
+audit:
+  must_not_implement:
+    - 확장 runtime과 SDK 및 컨테이너 실행과 새 의존성 설치
+    - 외부 발송과 유료 실행 및 credential 변경과 원격 게시

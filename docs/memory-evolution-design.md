@@ -212,7 +212,7 @@ MSA로 분리할 때 인증된 principal/org/scope, DTO version, timeout/cancell
 
 ## 13. 언어 선택과 Rust 적용 가능성
 
-사용자의 Rust/다른 언어 질문은 가능성과 전환 범위 검토이며 재작성 승인으로 해석하지 않는다. 현재 JS/TS의 `@modelcontextprotocol/sdk`, Zod DTO, Node SQLite와 `sqlite-vec`, transformer runtime, PostgreSQL adapters 및 CLI/import 계약을 교체하는 비용이 있다. Rust MCP SDK와 Go SDK는 공식 프로젝트에 존재하지만 현재 기능과의 동등성은 별도 계약 검사가 필요하다([Rust SDK](https://github.com/modelcontextprotocol/rust-sdk), [Go SDK](https://github.com/modelcontextprotocol/go-sdk), 2026-11-09 확인).
+이 기억 설계 당시의 Rust/다른 언어 질문은 가능성과 전환 범위 검토였다. 이후 사용자가 Go+Rust 조합의 설계를 요청하여 [별도 전환 설계](go-rust-runtime-design.ko.md)로 구체화했다. 아래 비교는 당시 판단 근거이며, 언어 전환 목표와 순서의 정본은 후속 문서다. 재작성 구현 승인은 두 설계에 포함되지 않는다. 현재 JS/TS의 `@modelcontextprotocol/sdk`, Zod DTO, Node SQLite와 `sqlite-vec`, transformer runtime, PostgreSQL adapters 및 CLI/import 계약을 교체하는 비용이 있다. Rust MCP SDK와 Go SDK는 공식 프로젝트에 존재하지만 현재 기능과의 동등성은 별도 계약 검사가 필요하다([Rust SDK](https://github.com/modelcontextprotocol/rust-sdk), [Go SDK](https://github.com/modelcontextprotocol/go-sdk), 2026-11-09 확인).
 
 | 선택 | 적합한 범위 | 비용/한계 |
 | --- | --- | --- |

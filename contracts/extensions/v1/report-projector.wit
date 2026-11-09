@@ -1,0 +1,5 @@
+package ariadne:extensions@1.0.0;
+
+world report-projector {
+    export project: func(input: list<u8>) -> result<list<u8>, string>;
+}

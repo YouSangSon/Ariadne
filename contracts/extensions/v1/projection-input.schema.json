@@ -1,0 +1,253 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "type": "integer"
+    },
+    "sourceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
+    },
+    "sourceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "comparable",
+            "descriptive-only"
+          ]
+        },
+        "base": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reportedPasses": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "totalTokens": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "known",
+                    "unknown"
+                  ]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "known"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "value"
+                    ]
+                  },
+                  "else": {
+                    "not": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "costUSD": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "known",
+                    "unknown"
+                  ]
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "known"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "value"
+                    ]
+                  },
+                  "else": {
+                    "not": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "reportedPasses",
+            "totalTokens",
+            "costUSD"
+          ]
+        },
+        "selected": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "reportedPasses": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "totalTokens": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "known",
+                    "unknown"
+                  ]
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "known"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "value"
+                    ]
+                  },
+                  "else": {
+                    "not": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "costUSD": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "known",
+                    "unknown"
+                  ]
+                },
+                "value": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "status"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "status": {
+                        "const": "known"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "value"
+                    ]
+                  },
+                  "else": {
+                    "not": {
+                      "required": [
+                        "value"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "reportedPasses",
+            "totalTokens",
+            "costUSD"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "base",
+        "selected"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sourceId",
+    "sourceDigest",
+    "comparison"
+  ],
+  "x-maxBytes": 1048576,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ariadne.local/contracts/extensions/v1/projection-input.schema.json"
+}

@@ -1,0 +1,42 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: extension-runtime-e0
+  title: 확장 계약과 Go 실행 기반의 첫 구현
+  status: verified
+requirement:
+  user_intent: 확장 플랫폼 설계를 실행 계획으로 연결하고 구현을 시작한다.
+  desired_outcome: 기존 제품을 보존하면서 계약 및 검사와 참조 projection 및 실험 CLI의 검증된 첫 구현을 남긴다.
+  confirmed_facts:
+    - 사용자가 계획을 짜서 진행하고 이어서 진행하라고 명시했다.
+    - 설계 단계의 구현 금지는 현재 구현 요청에 따라 이 작업 범위에서 대체된다.
+    - 사용자 code 실행은 실제 runtime qualification과 수명 구현 전까지 켜지 않는다.
+classification:
+  category: feature
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 공개 확장 계약과 strict 검증 및 내장 projection을 실패 테스트부터 구현한다.
+      verification: 공유 fixture와 입력 경계 및 unknown 보존 검사를 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: Go 의존 경계와 소유권 및 실험 검사 CLI를 구현하고 기존 제품 계약을 보존한다.
+      verification: AST 거절 fixture와 실제 inventory 및 CLI와 관련 root 검사를 통과한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 계획 및 구현과 미확인을 구분하고 소유 임시 자원 정리 및 독립 리뷰 뒤 로컬 커밋한다.
+      verification: 검증 로그와 cleanup 및 문서와 최종 diff 및 commit을 확인한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - 기존 Node 및 DB와 사용자 자료 및 다른 작업의 Podman 자원을 보존한다.
+    - 사용자 code 실행과 자동 설치 및 유료 실행은 이 기반 단계에서 제공하지 않는다.
+verification:
+  verify_gate_required: true
+audit:
+  must_not_implement:
+    - 보호 규칙 우회와 credential 및 Podman 기본 환경 변경
+    - 원격 게시와 임의 native 사용자 plugin 실행

@@ -2,7 +2,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { builtinModules } from 'node:module'
 import { dirname, extname, join, relative, resolve } from 'node:path'
 
-const SOURCE = /\.(?:[cm]?js|tsx?|sh|sql)$/
+const SOURCE = /\.(?:[cm]?js|tsx?|sh|sql|go|rs|wit)$/
 const JAVASCRIPT = /\.(?:[cm]?js|tsx?)$/
 const LAYERS = new Set(['domain', 'application', 'infrastructure', 'interfaces', 'composition', 'compatibility', 'tooling'])
 const INNER = new Set(['domain', 'application'])
@@ -146,12 +146,12 @@ export function imports(source) {
   return loads
 }
 
-export function sourceFiles(root, areas, excluded = []) {
+export function sourceFiles(root, areas, excluded = [], pattern = SOURCE) {
   const walk = (directory) => !existsSync(directory) ? [] : readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     if (['node_modules', '.git'].includes(entry.name)) return []
     const path = join(directory, entry.name)
     if (excluded.includes(relative(root, path).split(/[\\/]/)[0])) return []
-    return entry.isDirectory() ? walk(path) : SOURCE.test(entry.name) ? [relative(root, path).split('\\').join('/')] : []
+    return entry.isDirectory() ? walk(path) : pattern.test(entry.name) ? [relative(root, path).split('\\').join('/')] : []
   })
   return areas.flatMap((area) => walk(join(root, area))).sort()
 }
@@ -160,7 +160,8 @@ export function readInventory(root) {
   const files = {}
   const dependencies = {}
   const scopes = [['', ['.']], ['packages/memory', PACKAGE_AREAS], ['packages/code', PACKAGE_AREAS]]
-  const actual = [...ROOT_CONFIG]
+  const actual = [...ROOT_CONFIG, ...sourceFiles(root, ['contracts'], [], /\.json$/)]
+  if (existsSync(join(root, 'runtime/go/go.mod'))) actual.push('runtime/go/go.mod')
   for (const area of ['.github/workflows', 'samples']) {
     for (const entry of readdirSync(join(root, area), { withFileTypes: true })) {
       if (entry.isFile() && /\.(?:ya?ml|json|toml)$/.test(entry.name)) actual.push(`${area}/${entry.name}`)
@@ -192,7 +193,7 @@ export function boundaryErrors({ files, actual, sources, dependencies = {} }) {
   const errors = []
   for (const path of actual) if (!files[path]) errors.push(`unowned source ${path}`)
   for (const [path, record] of Object.entries(files)) {
-    const prescribed = path.match(/\/(domain|application|infrastructure|interfaces|composition)(?:\/|\.mjs$)/)?.[1] ?? (SHARED.has(path) || path === 'modules/loop/native.mjs' ? 'domain' : undefined)
+    const prescribed = path.endsWith('_test.go') ? undefined : path.match(/\/(domain|application|infrastructure|interfaces|composition)(?:\/|\.mjs$)/)?.[1] ?? (SHARED.has(path) || path === 'modules/loop/native.mjs' ? 'domain' : undefined)
     if (prescribed && record.layer !== prescribed) errors.push(`incorrect layer classification ${path}`)
     if (!LAYERS.has(record.layer) || typeof record.context !== 'string' || !record.context) errors.push(`invalid ownership ${path}`)
     if (!actual.includes(path)) { errors.push(`stale ownership ${path}`); continue }

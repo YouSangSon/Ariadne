@@ -17,4 +17,6 @@ service-account*.json
 dist/
 coverage/
 *.tsbuildinfo
+/runtime/go/Ariadne
+/runtime/go/check-architecture
 .DS_Store
