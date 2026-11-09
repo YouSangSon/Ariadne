@@ -219,6 +219,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 기억에는 재확인 방법·시점과 보고된 출처를 연결할 수 있습니다. `inspect_memory_impact`는 같은 조직·범위에 등록된 정정 영향을 조회합니다. `eval memory-ablation`은 선택적 기억 하나를 포함하거나 제외한 기록의 결과·전체 비용을 비교합니다. 자동 재확인·수정·승격은 하지 않으며, 숨은 의존성과 실제 효용은 별도 확인해야 합니다. [계약과 사용 범위](docs/memory-reuse.md)를 참고하세요.
 
+원문 근거 연결·선택 조회·정정 후보·제한된 정비의 [후속 상세 설계](docs/memory-evolution-design.md)는 구현 예정입니다.
+
 [20개 출처의 검토·적용 범위와 입력 형식](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>

@@ -476,3 +476,5 @@ S14의 [SPEC §7.4·8.5](https://github.com/openai/symphony/blob/be10a1b79df723d
 
 
 기억 재확인·등록된 정정 영향·단일 선택 기억의 오프라인 비교는 [memory-reuse](memory-reuse.md)에서 별도 구현 범위와 검증을 관리한다. 이 기능은 HS-D12의 작업 재개나 HS-D13의 수신 세션 문맥 교체를 구현하지 않는다.
+
+후속 기억 확장의 구체적 호출·데이터·전환·실패·검증 계약은 [memory-evolution-design](memory-evolution-design.md)에 있다. 독립 consolidation 정본이나 자동 runtime을 추가하지 않는 설계이며 신규 기능의 구현 완료를 뜻하지 않는다.

@@ -219,6 +219,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 Memories can carry recheck instructions, triggers and reported sources. `inspect_memory_impact` finds registered correction impacts within one organization and scope. `eval memory-ablation` compares recorded outcomes and full costs with or without one optional memory. These tools do not automatically recheck, edit or promote memories; hidden dependencies and real usefulness require separate evidence. See the [contracts and scope](docs/memory-reuse.md).
 
+The [follow-up design](docs/memory-evolution-design.md) covers source anchors, selective retrieval, correction proposals and bounded maintenance; these additions are not implemented.
+
 [Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>

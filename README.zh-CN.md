@@ -219,6 +219,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 记忆可以关联复查方法、触发条件和已报告的来源。`inspect_memory_impact` 查询同一组织和范围内已登记的修正影响。`eval memory-ablation` 比较包含或排除一条可选记忆的执行记录、结果和总成本。这些工具不会自动复查、修改或提升记忆；未登记的依赖关系和实际效用仍需单独验证。参见[契约与使用范围](docs/memory-reuse.md)。
 
+来源定位、按需读取、修正候选和有限维护的[后续详细设计](docs/memory-evolution-design.md)尚未实现。
+
 [20 个来源的审查、应用范围与输入格式（韩语）](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>

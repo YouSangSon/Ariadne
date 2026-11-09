@@ -4,6 +4,8 @@
 
 현재 단계: 구현과 로컬 검증 완료. 기준은 `3f1db36`이다. 실제 모델 효용 실험과 사용자 DB migration은 이 작업에 포함하지 않는다. 요구사항 정본은 [memory-reuse REQ](../.harness/reqs/memory-reuse.yaml)다.
 
+후속 원문 근거·안내/선택 조회·정정 후보·제한된 정비는 [상세 설계](memory-evolution-design.md)에서 다룬다. 해당 기능은 아직 구현하지 않았다.
+
 ## 적용 범위와 선택
 
 사용자가 승인한 세 항목을 기존 Memory와 Evaluation에 추가한다. [하네스 설계](harness-synthesis-design.md)의 HS-D03·D12·D13과 HS-X01·X02를 유지한다. Memory의 저장 정책을 Context나 Ontology가 대신 소유하지 않는다. Memory만 사용해도 재확인과 영향 조회가 가능하다.
