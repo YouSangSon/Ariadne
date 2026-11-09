@@ -1,0 +1,12 @@
+FROM docker.io/library/rust@sha256:760ad1d638d70ebbd0c61e06210e1289cbe45ff6425e3ea6e01241de3e14d08e AS builder
+WORKDIR /build/runtime/rust
+COPY runtime/rust/ ./
+COPY vendor/ /build/vendor/
+COPY cargo-config.toml /build/.cargo/config.toml
+RUN cargo build --locked --offline --release -j 2 --bin ariadne-extension-worker
+
+FROM docker.io/library/debian@sha256:24a01011d10eba3a023bc8585b9650b8b29021240d4217c05b905e09ef4a5232
+LABEL io.ariadne.qualification-owner="extension-runtime-e0"
+COPY --from=builder /build/runtime/rust/target/release/ariadne-extension-worker /usr/local/bin/ariadne-extension-worker
+USER 65532:65532
+ENTRYPOINT ["/usr/local/bin/ariadne-extension-worker"]

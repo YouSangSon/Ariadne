@@ -33,3 +33,9 @@ One product and checkout; `packages/memory` and
   for the Node product. Its separate gate is Go test/race, vet and
   `go run ./cmd/check-architecture --root ../..` from that directory.
   See `docs/extension-implementation-plan.ko.md` for scope and remaining gates.
+
+- `runtime/rust` is the experimental import-free extension worker, never a bare
+  native fallback for user code. Gate: locked Cargo test, fmt, clippy and the Rust
+  AST tests, using task-owned Cargo home/target paths. The fixed Podman profile
+  and `tools/qualify_extension_runtime.py` are explicit laboratory tooling;
+  metadata or a passing lab case never enables public extension execution.

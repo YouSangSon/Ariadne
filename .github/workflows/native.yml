@@ -30,3 +30,24 @@ jobs:
           go run ./cmd/check-architecture --root ../..
           go test -race ./...
           go vet ./...
+  extension-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.93.0 --profile minimal --component rustfmt --component clippy
+      - name: Check worker and qualification tooling
+        env:
+          CARGO_HOME: ${{ runner.temp }}/ariadne-extension-cargo
+          CARGO_TARGET_DIR: ${{ runner.temp }}/ariadne-extension-target
+        run: |
+          cargo +1.93.0 fmt --manifest-path runtime/rust/Cargo.toml -- --check
+          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml
+          cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
+          python3 -B tools/test_qualify_extension_runtime.py
+      - name: Remove task-owned Cargo outputs
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/ariadne-extension-cargo" "$RUNNER_TEMP/ariadne-extension-target"

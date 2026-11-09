@@ -1,0 +1,16 @@
+[package]
+name = "ariadne-extension-worker"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+
+[dependencies]
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.154"
+sha2 = "=0.10.9"
+wasmtime = { version = "=36.0.20", default-features = false, features = ["std", "runtime", "cranelift", "component-model"] }
+
+[dev-dependencies]
+syn = { version = "=2.0.119", features = ["full", "visit"] }
+wat = "=1.263.0"

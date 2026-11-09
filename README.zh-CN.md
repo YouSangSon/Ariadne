@@ -222,6 +222,7 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 来源定位、按需读取、修正候选和有限维护的[后续详细设计](docs/memory-evolution-design.md)尚未实现。
 
 Go 扩展契约、参考报告转换和包检查处于[实验阶段](docs/extension-implementation-plan.ko.md)。它们独立于现有 Node 产品运行，尚不提供用户扩展安装、执行或经过验证的 sandbox。
+Rust worker 和固定 Podman profile 是独立的运行适用性测试工具，尚不提供公开的用户扩展执行功能。
 
 [20 个来源的审查、应用范围与输入格式（韩语）](docs/harness-engineering-adoption.md).
 

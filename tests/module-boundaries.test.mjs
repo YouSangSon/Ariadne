@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Script } from 'node:vm'
 import { boundaryErrors, checkArchitecture, imports, ROOT_EXCLUSIONS, sourceFiles } from '../core/tooling/architecture.mjs'
@@ -81,10 +81,20 @@ test('new top-level tooling is discovered and cannot escape ownership coverage',
 test('native sources and WIT interfaces cannot escape the root inventory', (t) => {
   const workspace = mkdtempSync(join(tmpdir(), 'ariadne-native-boundaries-'))
   t.after(() => rmSync(workspace, { recursive: true, force: true }))
-  for (const name of ['unowned.go', 'unowned.rs', 'interface.wit']) writeFileSync(join(workspace, name), '')
+  for (const name of ['unowned.go', 'unowned.rs', 'interface.wit', 'qualification.py']) writeFileSync(join(workspace, name), '')
   const actual = sourceFiles(workspace, ['.'])
-  assert.deepEqual(actual, ['interface.wit', 'unowned.go', 'unowned.rs'])
-  assert.equal(errors({}, {}, actual).length, 3)
+  assert.deepEqual(actual, ['interface.wit', 'qualification.py', 'unowned.go', 'unowned.rs'])
+  assert.equal(errors({}, {}, actual).length, 4)
+})
+
+test('Cargo build outputs do not become owned application sources', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ariadne-cargo-boundaries-'))
+  t.after(() => rmSync(workspace, { recursive: true, force: true }))
+  for (const path of ['runtime/rust/src/domain.rs', 'runtime/rust/target/debug/build/generated.rs']) {
+    mkdirSync(dirname(join(workspace, path)), { recursive: true })
+    writeFileSync(join(workspace, path), '')
+  }
+  assert.deepEqual(sourceFiles(workspace, ['.']), ['runtime/rust/src/domain.rs'])
 })
 
 test('root sources reject optional packages, unsupported aliases and unreviewed loaders', () => {
