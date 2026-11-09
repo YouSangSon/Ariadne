@@ -1,3 +1,6 @@
+import { assertNoSecrets } from "../../domain/policies/secret-scrub.js";
+import { validateMemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
+import { inspectMemoryImpact } from "./memory-revalidation.js";
 import type { AddMemoryInput, IngestJob, SearchMemoryResult } from "../../domain/model/memory.js";
 import { ENTITY_KIND_VALUES } from "../../domain/policies/entity-extraction.js";
 import {
@@ -405,6 +408,28 @@ export function createToolHandlers(input: {
       };
     },
 
+    async inspect_memory_impact(toolInput) {
+      ensureGovernanceCanonicalMode(hasGovernanceOverrides);
+      assertProvidedScopeIdentifiers(toolInput);
+      assertAllowedValue(toolInput.scope, "scope", SUPPORTED_SCOPE_TYPES);
+      const organizationId = toolInput.organizationId?.trim() ?? "default";
+      const scopeRef = toolInput.scope === "project"
+        ? { scopeType: "project" as const, scopeId: requireProjectKey(toolInput.projectKey, "project") }
+        : { scopeType: "user" as const, scopeId: requireUserScopeId(runtime.resolveUserScopeId({cwd, explicitUserScopeId:toolInput.userScopeId, defaultUserScopeId:options.defaultUserScopeId})) };
+      const ids = toolInput.changedMemoryIds ?? [];
+      const refs = toolInput.changedSourceRefs ?? [];
+      if (!Array.isArray(ids) || ids.length > 64 || !Array.isArray(refs) || refs.length > 64 || ids.length + refs.length === 0) throw new Error("provide bounded changedMemoryIds or changedSourceRefs");
+      ids.forEach((id) => assertPositiveInteger(id, "changedMemoryIds"));
+      refs.forEach((ref) => { assertNonBlankText(ref, "changedSourceRefs"); assertNoSecrets(ref); if(ref.length > 1024) throw new Error("source ref too long"); });
+      const limit = toolInput.limit ?? 100;
+      if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new Error("limit must be 1..1000");
+      const snapshot = await withCanonicalRepository((repository) => {
+        if (!repository.listMemoryRevalidationSnapshot) throw new Error("canonical revalidation snapshot unavailable");
+        return repository.listMemoryRevalidationSnapshot(scopeRef, { organizationId, limit });
+      });
+      return {ok:true, ...scopeRef, ...inspectMemoryImpact({...snapshot,changedMemoryIds:ids,changedSourceRefs:refs})};
+    },
+
     async update_memory(toolInput) {
       ensureGovernanceCanonicalMode(hasGovernanceOverrides);
       assertPositiveInteger(toolInput.memoryId, "memoryId");
@@ -428,6 +453,10 @@ export function createToolHandlers(input: {
           ? undefined
           : optionalNonBlankText(toolInput.summary);
 
+      if (toolInput.revalidation !== undefined) {
+        if (!toolInput.expectedRecordDigest || !/^[a-f0-9]{64}$/.test(toolInput.expectedRecordDigest)) throw new Error("expectedRecordDigest required for revalidation write");
+        if (toolInput.revalidation !== null) validateMemoryRevalidation(toolInput.revalidation);
+      }
       const organizationId = toolInput.organizationId?.trim() ?? "default";
       return await withMemoryRecordWrite(withCanonicalServices, organizationId, [toolInput.memoryId], async (services) => {
         const refresh = shouldRefreshMemoryIndex(toolInput);
@@ -441,6 +470,8 @@ export function createToolHandlers(input: {
           importance: toolInput.importance,
           durability: toolInput.durability,
           tags: toolInput.tags,
+          revalidation: toolInput.revalidation,
+          expectedRecordDigest: toolInput.expectedRecordDigest,
         }, refresh);
 
         if (!memory) {

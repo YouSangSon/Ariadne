@@ -38,7 +38,8 @@ work.
   `package.json`, `src/cli.ts`, `src/cli-args.ts`, `src/lifecycle/init.ts`
 - DB-facing schema and migration order:
   `src/db/migrations/001_initial.sql` through
-  `src/db/migrations/015_background_queue_metrics_indexes.sql`
+  `src/db/migrations/016_memory_revalidation.sql`
+  (including `015_background_queue_metrics_indexes.sql`)
 
 ## Transports
 
@@ -54,7 +55,7 @@ work.
 
 ## Service Tools And JSON HTTP Routes
 
-All 20 service tools use `POST` JSON HTTP routes and share the same zod-backed
+All 21 service tools use `POST` JSON HTTP routes and share the same zod-backed
 tool schema before registry dispatch.
 
 | Tool | JSON HTTP route |
@@ -66,6 +67,7 @@ tool schema before registry dispatch.
 | `compact_memory` | `/v1/memory/compact` |
 | `list_memory` | `/v1/memory/list` |
 | `inspect_memory_graph` | `/v1/memory/graph` |
+| `inspect_memory_impact` | `/v1/memory/impact` |
 | `update_memory` | `/v1/memory/update` |
 | `delete_memory` | `/v1/memory/delete` |
 | `tag_memory` | `/v1/memory/tag` |

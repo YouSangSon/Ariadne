@@ -143,7 +143,7 @@ API를 사용하며 보관 처리 전에 확인을 요청합니다.
 
 코딩 에이전트와의 대화는 세션이 끝나면 맥락을 잃습니다. Akasha는
 에이전트가 기억할 가치가 있는 내용을 저장하고 다음에 다시 읽는 공간입니다.
-동일한 서비스 도구 20개를 MCP stdio, `POST /mcp`의 MCP Streamable HTTP,
+동일한 서비스 도구 21개를 MCP stdio, `POST /mcp`의 MCP Streamable HTTP,
 `/v1/*`의 JSON HTTP로 제공합니다. 전체 요청·응답 스키마는
 [API 레퍼런스](docs/api-reference.ko.md)에 있습니다.
 HTTP와 MCP는 같은 서비스 스키마를 공유하므로 입력 검증과 데이터 형식이
@@ -159,6 +159,7 @@ HTTP와 MCP는 같은 서비스 스키마를 공유하므로 입력 검증과 �
 | `reindex_memory` | 보존된 Postgres 청크에서 벡터 재구축 | `POST /v1/memory/reindex` |
 | `list_memory` | 태그·보관 여부 필터로 원본 레코드 검토 | `POST /v1/memory/list` |
 | `inspect_memory_graph` | 저장된 개체 언급과 관계 조회 | `POST /v1/memory/graph` |
+| `inspect_memory_impact` | Inspect registered correction dependencies; coverage remains unknown | `POST /v1/memory/impact` |
 | `update_memory` | 원본 레코드 1개 수정 후 벡터 상태 갱신 | `POST /v1/memory/update` |
 | `delete_memory` | 관리 목적으로 레코드 1개를 보관하고 벡터 정리 | `POST /v1/memory/delete` |
 | `tag_memory` | 레코드 1개의 관리 태그 교체 | `POST /v1/memory/tag` |

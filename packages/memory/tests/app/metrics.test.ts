@@ -74,6 +74,7 @@ function buildRegistry(): ToolRegistry {
       scopeId: "p",
       memories: [],
     }),
+    inspect_memory_impact: vi.fn(),
     inspect_memory_graph: vi.fn().mockResolvedValue({
       ok: true,
       scopeType: "project",

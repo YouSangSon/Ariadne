@@ -276,7 +276,7 @@ curl -X POST http://localhost:8787/v1/memory/delete \
   -d '{"memoryId": 42}' | jq
 ```
 
-`list_memory` and `inspect_memory_graph` are read-scoped for OAuth.
+`list_memory`, `inspect_memory_graph`, and `inspect_memory_impact` are read-scoped for OAuth.
 `update_memory`, `delete_memory`, and `tag_memory` require admin scope. If
 `delete_memory` reports `indexCleanupPending: true` or
 `qdrantPointsPending > 0`, enable the ingest sweeper and inspect `ingest_jobs`.
@@ -387,10 +387,10 @@ backlog count queries for the background queue gauges.
 ## Schema migrations
 
 All migrations are idempotent and applied at bootstrap. Migrations currently
-span `001-015`; new migrations append the next unused number after that range.
+span `001-016`; new migrations append the next unused number after that range.
 To add a new migration:
 
-1. Create `src/db/migrations/NNN_description.sql` (next sequence number, currently `016_*.sql`).
+1. Create `src/db/migrations/NNN_description.sql` (next sequence number, currently `017_*.sql`).
 2. Append the filename to `MIGRATION_FILES` in `src/db/migrate.ts`.
 3. Append the SQL to `embeddedPostgresMigrationSql` in the same file
    (production fallback when SQL files aren't on disk).

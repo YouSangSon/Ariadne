@@ -5,6 +5,7 @@ import { mkdtempSync, readFileSync, rmSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { commandPlan } from '../core/domain/product.mjs'
 
 const cli = fileURLToPath(new URL('../bin/Ariadne.mjs', import.meta.url))
 function run(cwd, ...args) {
@@ -29,4 +30,25 @@ test('one entry point explains capabilities and rejects unknown commands', (t) =
   const unknown = run(dir, 'not-a-command')
   assert.equal(unknown.status, 2, unknown.stderr)
   assert.match(unknown.stderr, /unknown command/)
+})
+
+test('memory ablation uses the offline evaluator and preserves caller arguments', () => {
+  const args = ['memory-ablation', '--file', 'experiment.json', '--root', '/workspace']
+  const plan = commandPlan('eval', args)
+  assert.equal(plan.path, 'evaluation/memory-ablation-cli.mjs')
+  assert.deepEqual(plan.args, args.slice(1))
+  assert.equal(plan.cwd, undefined)
+  assert.equal(commandPlan('eval', ['compare', '--file', 'runs.json']).path, 'evaluation/compare-cli.mjs')
+})
+
+test('memory ablation is usable through the product CLI from another directory', (t) => {
+  const dir = fixture(t)
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  const result = run(dir, 'eval', 'memory-ablation', '--root', root, '--file', 'evaluation/memory-ablation-example.json')
+  assert.equal(result.status, 0, result.stderr)
+  const report = JSON.parse(result.stdout)
+  assert.equal(report.eligibility.comparable, true)
+  assert.equal(report.source.path, 'evaluation/memory-ablation-example.json')
+  assert.equal(report.observations[0].reported_outcome, 'improvement')
+  assert.equal(report.costs.experiment_totals.cost_usd, null)
 })

@@ -143,7 +143,7 @@ See [memory governance](docs/operations.md) for the operator workflow.
 
 Conversations with coding agents lose context the moment the session ends.
 Akasha is the place those agents save what's worth remembering and
-read it back next time. The same 20 service tools are exposed over MCP
+read it back next time. The same 21 service tools are exposed over MCP
 stdio, MCP Streamable HTTP at `POST /mcp`, and JSON-HTTP under `/v1/*` — full
 request/response schemas live in
 [docs/api-reference.md](docs/api-reference.md).
@@ -161,6 +161,7 @@ the connected client advertises those capabilities.
 | `reindex_memory` | Rebuild vectors from retained Postgres chunks | `POST /v1/memory/reindex` |
 | `list_memory` | Review canonical records with tag / archived filters | `POST /v1/memory/list` |
 | `inspect_memory_graph` | Inspect persisted entity mentions and relationships | `POST /v1/memory/graph` |
+| `inspect_memory_impact` | Inspect registered correction dependencies; coverage remains unknown | `POST /v1/memory/impact` |
 | `update_memory` | Edit one canonical record and refresh its vector state | `POST /v1/memory/update` |
 | `delete_memory` | Governance archive of one record plus vector cleanup | `POST /v1/memory/delete` |
 | `tag_memory` | Replace governance tags on one record | `POST /v1/memory/tag` |

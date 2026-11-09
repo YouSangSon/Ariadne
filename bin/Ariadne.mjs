@@ -18,6 +18,7 @@ const help = `Ariadne — integrated agent harness
                   [--skill slug@sha256 ...]
   Ariadne skills [--root path]        List local skill metadata and pinned selections
   Ariadne eval compare --file path [--root path]  Compare recorded runs offline
+  Ariadne eval memory-ablation --file path [--root path]  Compare with/without one memory
   Ariadne code <command>               Code impact, local facts, MCP and UI (--help)
   Ariadne ontology <command>           Ontology operations (--help)
   Ariadne memory init|pack|remember|reindex <options>

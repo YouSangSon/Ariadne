@@ -305,7 +305,9 @@ function renderSection(
     const warning = hasPromptInjectionSignal(record.content)
       ? "; warning: prompt-injection-like content"
       : "";
-    return `- ${toSingleLineExcerpt(record.content)} (${record.scopeType} scope; source: ${sourceLabel}${warning})`;
+    const binding = record.revalidationBinding?.bindingMatchesRecord;
+    const reported = record.revalidation ? `; reported recheck; binding ${binding === true ? "matches record" : binding === false ? "mismatch" : "unknown"}; source currentness unknown` : "";
+    return `- ${toSingleLineExcerpt(record.content)} (${record.scopeType} scope; source: ${sourceLabel}${warning}${reported})`;
   });
 
   return `## ${title}\n${lines.join("\n")}`;

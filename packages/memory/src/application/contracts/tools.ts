@@ -1,3 +1,5 @@
+import type { MemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
+import type { inspectMemoryImpact } from "../tools/memory-revalidation.js";
 import type { CompactMemoryToolResult } from "../../domain/model/compaction.js";
 import type { EmbeddingSettings } from "./embedding-settings.js";
 // MCP server tool surface types. Extracted from server.ts to keep that file
@@ -138,7 +140,15 @@ export type InspectMemoryGraphToolResult = {
   relationships: MemoryGraphRelationship[];
 };
 
+type InspectMemoryImpactToolInput = {
+ organizationId?: string; projectKey?: string; scope: ScopeType; userScopeId?: string;
+ changedMemoryIds?: number[]; changedSourceRefs?: string[]; limit?: number;
+};
+type InspectMemoryImpactToolResult = { ok: true; scopeType: ScopeType; scopeId: string } & ReturnType<typeof inspectMemoryImpact>;
+
 export type UpdateMemoryToolInput = {
+  revalidation?: MemoryRevalidation | null;
+  expectedRecordDigest?: string;
   organizationId?: string;
   memoryId: number;
   kind?: MemoryType;
@@ -353,6 +363,7 @@ export type ToolRegistry = {
   inspect_memory_graph(
     input: InspectMemoryGraphToolInput,
   ): Promise<InspectMemoryGraphToolResult>;
+  inspect_memory_impact(input: InspectMemoryImpactToolInput): Promise<InspectMemoryImpactToolResult>;
   update_memory(input: UpdateMemoryToolInput): Promise<UpdateMemoryToolResult>;
   delete_memory(input: DeleteMemoryToolInput): Promise<DeleteMemoryToolResult>;
   tag_memory(input: TagMemoryToolInput): Promise<TagMemoryToolResult>;

@@ -58,7 +58,9 @@ operations, and pgvector writes. Application code receives an indivisible write
 scope rather than a SQL client. Code publication retains synchronous SQLite
 transactions and savepoints for related graph, fact, head, and vector writes.
 External model calls stay outside those transactions. These boundaries preserve
-storage contracts rather than introducing a new schema or data migration.
+storage contracts. The later [memory reuse extension](memory-reuse.md) adds optional
+revalidation JSONB through migration 016 in the Memory owner; it does not change
+transaction ownership or introduce a separate source of truth.
 
 ## Installation content
 

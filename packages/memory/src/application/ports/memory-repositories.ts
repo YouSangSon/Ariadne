@@ -1,3 +1,4 @@
+import type { MemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
 import type { AddMemoryInput, CloseGoalRunInput, Durability, GoalRun, GoalRunIteration, GoalRunWithIterations, IngestJob, ListGoalRunsInput, ListMemoryOptions, MemoryGraphView, MemoryType, RecordIterationInput, ScopeRef, SearchMemoryInput, SearchMemoryResult, StartGoalRunInput } from "../../domain/model/memory.js";
 import type { EntityKind } from "../../domain/policies/entity-extraction.js";
 
@@ -58,10 +59,13 @@ export type CanonicalMemoryRepository = {
       relationshipLimit?: number;
     },
   ): Promise<MemoryGraphView>;
+  listMemoryRevalidationSnapshot?(scope: ScopeRef, options: { organizationId: string; limit: number }): Promise<{ records: SearchMemoryResult[]; truncated: boolean }>;
   updateMemoryRecord(
     input: {
       id: number;
       organizationId: string;
+      revalidation?: MemoryRevalidation | null;
+      expectedRecordDigest?: string;
       kind?: MemoryType;
       title?: string | null;
       content?: string;

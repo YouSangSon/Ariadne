@@ -1176,6 +1176,19 @@
     "src/application/evaluation/ports.ts": {
       "layer": "application",
       "context": "memory"
+    },
+    "src/domain/policies/memory-revalidation.ts": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "src/application/tools/memory-revalidation.ts": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "src/db/migrations/016_memory_revalidation.sql": {
+      "layer": "infrastructure",
+      "context": "memory",
+      "anchor": "migration asset"
     }
   }
 }

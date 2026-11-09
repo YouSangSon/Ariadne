@@ -1,3 +1,4 @@
+import { validateMemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
 import * as z from "zod/v4";
 import {
   POSTGRES_INTEGER_MAX,
@@ -30,6 +31,19 @@ export type ToolInputValidation =
   | { ok: true; data: Record<string, unknown> }
   | { ok: false; message: string };
 
+const digestInputSchema = z.string().regex(/^[a-f0-9]{64}$/);
+const revalidationTextSchema = z.string().min(1).max(1024).refine((value) => value.trim().length > 0);
+const revalidationInputSchema = z.object({
+  schemaVersion: z.literal(1),
+  recheck: z.object({ method: z.string().min(1).max(4096), trigger: revalidationTextSchema, boundContentDigest: digestInputSchema }).strict(),
+  sourceObservations: z.array(z.object({ref: revalidationTextSchema, digest: digestInputSchema}).strict()).max(64).default([]),
+  dependencies: z.array(z.object({memoryId: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),contentDigest:digestInputSchema}).strict()).max(64).default([]),
+  derivatives: z.array(z.object({kind:z.enum(["summary","wiki","context"]),owner:revalidationTextSchema,ref:revalidationTextSchema,digest:digestInputSchema}).strict()).max(64).default([]),
+}).strict().superRefine((value, ctx) => {
+  try { validateMemoryRevalidation(value); }
+  catch (_error: unknown) { ctx.addIssue({code:"custom",message:"invalid or secret-bearing revalidation metadata"}); }
+});
+
 const memoryRecordOutputSchema = z
   .object({
     id: z.number(),
@@ -44,6 +58,10 @@ const memoryRecordOutputSchema = z
     durability: z.string().optional(),
     importance: z.number().optional(),
     tags: z.array(z.string()).optional(),
+    contentDigest: digestInputSchema.optional(),
+    recordDigest: digestInputSchema.optional(),
+    revalidation: revalidationInputSchema.nullable().optional(),
+    revalidationBinding: z.object({bindingMatchesRecord:z.boolean().nullable(),sourceCurrentness:z.literal("unknown"),basis:z.literal("reported")}).optional(),
     createdAt: z.string(),
     updatedAt: z.string(),
     source: z.object({}).passthrough().optional(),
@@ -350,6 +368,23 @@ export const SERVICE_TOOL_DESCRIPTORS = [
     },
   },
   {
+    name: "inspect_memory_impact",
+    description: "Inspect explicitly registered correction dependencies in one scope. Read only; coverage and source currentness remain unknown beyond registered links.",
+    inputSchema: {
+      organizationId: organizationIdInputSchema.optional(), projectKey: nonBlankTextInputSchema.optional(),
+      scope: z.enum(SUPPORTED_SCOPE_TYPES), userScopeId: nonBlankTextInputSchema.optional(),
+      changedMemoryIds: z.array(positiveSafeIntegerInputSchema).max(64).optional(),
+      changedSourceRefs: z.array(nonBlankTextInputSchema.max(1024)).max(64).optional(),
+      limit: z.number().int().positive().max(1000).optional(),
+    },
+    outputSchema: {
+      ok: z.literal(true), scopeType: z.enum(SUPPORTED_SCOPE_TYPES), scopeId: z.string(),
+      affectedMemoryIds: z.array(z.number()), registeredDerivatives: z.array(z.object({memoryId:z.number(),kind:z.enum(["summary","wiki","context"]),owner:z.string(),ref:z.string(),digest:z.string()})),
+      coverage:z.literal("known_only"), dependenciesComplete:z.literal(false), sourceCurrentness:z.literal("unknown"), basis:z.literal("reported"),
+      registered_scan_complete:z.boolean(),truncated:z.boolean(),unresolved_dependencies:z.number(),broader_review_required:z.literal(true),
+    },
+  },
+  {
     name: "update_memory",
     description:
       "Update one memory record through governance controls and refresh its vector index state.",
@@ -363,6 +398,8 @@ export const SERVICE_TOOL_DESCRIPTORS = [
       importance: postgresIntegerInputSchema.optional(),
       durability: durabilityInputSchema.optional(),
       tags: z.array(tagInputSchema).optional(),
+      revalidation: revalidationInputSchema.nullable().optional(),
+      expectedRecordDigest: digestInputSchema.optional(),
     },
     outputSchema: {
       ok: z.literal(true),
@@ -633,6 +670,7 @@ export const TOOL_ROUTES = [
   { name: "compact_memory", method: "POST", path: "/v1/memory/compact" },
   { name: "list_memory", method: "POST", path: "/v1/memory/list" },
   { name: "inspect_memory_graph", method: "POST", path: "/v1/memory/graph" },
+  { name: "inspect_memory_impact", method: "POST", path: "/v1/memory/impact" },
   { name: "update_memory", method: "POST", path: "/v1/memory/update" },
   { name: "delete_memory", method: "POST", path: "/v1/memory/delete" },
   { name: "tag_memory", method: "POST", path: "/v1/memory/tag" },
@@ -683,6 +721,7 @@ function validationSchemaForTool(toolName: ToolName): z.ZodType<Record<string, u
     toolName === "compact_memory" ||
     toolName === "list_memory" ||
     toolName === "inspect_memory_graph" ||
+    toolName === "inspect_memory_impact" ||
     toolName === "start_goal_run" ||
     toolName === "list_goal_runs"
   ) {
@@ -690,9 +729,13 @@ function validationSchemaForTool(toolName: ToolName): z.ZodType<Record<string, u
       if (scopeRequiresProjectKey(input)) {
         addProjectKeyRequiredIssue(ctx, toolName);
       }
+      if (toolName === "inspect_memory_impact" && !(Array.isArray(input.changedMemoryIds) && input.changedMemoryIds.length) && !(Array.isArray(input.changedSourceRefs) && input.changedSourceRefs.length)) ctx.addIssue({code:"custom",message:"provide changedMemoryIds or changedSourceRefs"});
     }) as z.ZodType<Record<string, unknown>>;
   }
 
+  if (toolName === "update_memory") return schema.superRefine((input, ctx) => {
+    if (input.revalidation !== undefined && input.expectedRecordDigest === undefined) ctx.addIssue({code:"custom",path:["expectedRecordDigest"],message:"expectedRecordDigest is required when writing revalidation"});
+  }) as z.ZodType<Record<string, unknown>>;
   return schema as z.ZodType<Record<string, unknown>>;
 }
 

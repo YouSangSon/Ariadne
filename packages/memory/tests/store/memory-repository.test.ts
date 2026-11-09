@@ -4024,3 +4024,64 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
   });
 
 });
+
+// Real PostgreSQL exercises the row lock/CAS and archive JSONB path; no vectors or external calls.
+describe.skipIf(!process.env.POSTGRES_HOST)("reported revalidation integration", () => {
+  beforeAll(waitForPostgres);
+  beforeEach(recreateTestDatabase);
+  it("allows one metadata writer per record digest and preserves binding mismatch after legacy edits", async () => {
+    const pool = createPgPool({connectionString:testConnectionString});
+    try {
+      await runMigrations(pool);
+      const repository=createMemoryRepository(pool);
+      const record=await repository.addMemory({organizationId:"org-a",scopeType:"project",scopeId:"alpha",memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId:"alpha",sourceType:"document",sourceRef:"source:alpha"}});
+      const metadata={schemaVersion:1 as const,recheck:{method:"Read source",trigger:"Before reuse",boundContentDigest:record.contentDigest!},sourceObservations:[],dependencies:[],derivatives:[]};
+      const results=await Promise.allSettled([
+        repository.updateMemoryRecord({id:record.id,organizationId:"org-a",expectedRecordDigest:record.recordDigest,revalidation:metadata}),
+        repository.updateMemoryRecord({id:record.id,organizationId:"org-a",expectedRecordDigest:record.recordDigest,revalidation:{...metadata,recheck:{...metadata.recheck,method:"Review source"}}}),
+      ]);
+      expect(results.filter((result)=>result.status === "fulfilled")).toHaveLength(1);
+      expect(results.filter((result)=>result.status === "rejected")).toHaveLength(1);
+      const edited=await repository.updateMemoryRecord({id:record.id,organizationId:"org-a",content:"Corrected"});
+      expect(edited?.revalidationBinding).toEqual({bindingMatchesRecord:false,sourceCurrentness:"unknown",basis:"reported"});
+      expect(edited?.revalidation?.recheck.boundContentDigest).toBe(record.contentDigest);
+      await expect(repository.updateMemoryRecord({id:record.id,organizationId:"org-a",revalidation:null})).rejects.toThrow("expectedRecordDigest");
+    } finally { await pool.end(); }
+  });
+  it("keeps dependencies scoped and reports archived rows in a bounded snapshot", async()=>{
+    const pool=createPgPool({connectionString:testConnectionString});
+    try{
+      await runMigrations(pool);
+      const repository=createMemoryRepository(pool);
+      const add=(scopeId:string,org="org-a")=>repository.addMemory({organizationId:org,scopeType:"project",scopeId,memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId,sourceType:"document",sourceRef:scopeId}});
+      const own=await add("alpha");const foreign=await add("beta");await add("alpha","org-b");
+      const revalidation={schemaVersion:1 as const,recheck:{method:"Read",trigger:"Reuse",boundContentDigest:own.contentDigest!},sourceObservations:[],dependencies:[{memoryId:foreign.id,contentDigest:foreign.contentDigest!}],derivatives:[]};
+      await expect(repository.updateMemoryRecord({id:own.id,organizationId:"org-a",expectedRecordDigest:own.recordDigest,revalidation})).rejects.toThrow("dependency unavailable");
+      await repository.archiveMemoryRecord({id:own.id,organizationId:"org-a"});
+      const snapshot=await repository.listMemoryRevalidationSnapshot!({scopeType:"project",scopeId:"alpha"},{organizationId:"org-a",limit:1});
+      expect(snapshot.records.map((record)=>record.id)).toEqual([own.id]);expect(snapshot.records[0]?.durability).toBe("archived");expect(snapshot.truncated).toBe(false);
+      await add("alpha");
+      expect((await repository.listMemoryRevalidationSnapshot!({scopeType:"project",scopeId:"alpha"},{organizationId:"org-a",limit:1})).truncated).toBe(true);
+    }finally{await pool.end();}
+  });
+  it("preserves the reported recipe and old dependency ids on archive restore without rebinding the new identity",async()=>{
+    const {createMemoryArchiveRepository}=await import("../../src/infrastructure/postgres/memory-archive-repository.js");
+    const {randomUUID}=await import("node:crypto");
+    const pool=createPgPool({connectionString:testConnectionString});
+    try{
+      await runMigrations(pool);
+      const repository=createMemoryRepository(pool);const archive=createMemoryArchiveRepository(pool);
+      const original=await repository.addMemory({organizationId:"org-a",scopeType:"project",scopeId:"alpha",memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId:"alpha",sourceType:"document",sourceRef:"alpha"}});
+      const metadata={schemaVersion:1 as const,recheck:{method:"Read",trigger:"Reuse",boundContentDigest:original.contentDigest!},sourceObservations:[],dependencies:[{memoryId:original.id,contentDigest:original.contentDigest!}],derivatives:[]};
+      const annotated=await repository.updateMemoryRecord({id:original.id,organizationId:"org-a",revalidation:metadata,expectedRecordDigest:original.recordDigest});
+      const run=await archive.createCompactionRun({organizationId:"org-a",actor:"test",scopeType:"project",scopeId:"alpha",dryRun:false,planGeneratedAt:new Date(Date.now()+1000),idempotencyKey:randomUUID()});
+      const result=await archive.applyCompactionRecord({organizationId:"org-a",recordId:original.id,runId:run.id,reason:"decay",planGeneratedAt:new Date(Date.now()+1000)});
+      const [stored]=await archive.findArchiveByIds([result.archiveId!],"org-a");
+      expect(stored?.revalidation).toEqual(annotated?.revalidation);
+      const restored=await archive.restoreToCanonical(stored!,"org-a");
+      const record=await repository.getMemoryRecordById(restored.restoredRecordId,"org-a");
+      expect(record?.id).not.toBe(original.id);expect(record?.revalidationBinding?.bindingMatchesRecord).toBe(false);
+      expect(record?.revalidation?.dependencies[0]?.memoryId).toBe(original.id);
+    }finally{await pool.end();}
+  });
+});

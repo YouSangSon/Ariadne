@@ -214,7 +214,10 @@ Existing installation data formats and identifiers, including `.harness/`, `~/.h
 ```sh
 node bin/Ariadne.mjs skills --root /path/to/project
 node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-example.json
 ```
+
+Memories can carry recheck instructions, triggers and reported sources. `inspect_memory_impact` finds registered correction impacts within one organization and scope. `eval memory-ablation` compares recorded outcomes and full costs with or without one optional memory. These tools do not automatically recheck, edit or promote memories; hidden dependencies and real usefulness require separate evidence. See the [contracts and scope](docs/memory-reuse.md).
 
 [Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
 

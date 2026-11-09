@@ -1,3 +1,5 @@
+import { validateMemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
+import { MemoryRecordConflictError, memoryContentDigest, memoryRecordDigest, describeMemoryRevalidation } from "../../application/tools/memory-revalidation.js";
 import { createHash } from "node:crypto";
 import type { CanonicalMemoryRepository } from "../../application/ports/memory-repositories.js";
 import type { AddMemoryInput, MemoryGraphEntity, MemoryGraphRelationship, MemoryGraphView, MemorySource, ScopeRef, SearchMemoryResult } from "../../domain/model/memory.js";
@@ -36,6 +38,7 @@ type PostgresMemoryRow = {
   durability: unknown;
   importance: number | string;
   source_id: number | string;
+  revalidation?: unknown;
   created_at: string | Date;
   updated_at: string | Date;
 };
@@ -137,6 +140,7 @@ const SEARCH_RETURN_COLUMNS = `
   mr.durability,
   mr.importance,
   mr.source_id,
+  mr.revalidation,
   mr.created_at,
   mr.updated_at,
   s.id AS source_id_joined,
@@ -587,6 +591,21 @@ export function createMemoryRepository(
       return inspectPostgresMemoryGraph(pool, scope, options);
     },
 
+    async listMemoryRevalidationSnapshot(scope, options) {
+      assertNonBlankText(options.organizationId, "organizationId");
+      assertNonBlankText(scope.scopeId, "scopeId");
+      const scopeType = mapScopeType(scope.scopeType, "scopeType");
+      if (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 1000) throw new Error("invalid impact scan limit");
+      const result = await pool.query<PostgresHydratedRow>(`
+        SELECT ${SEARCH_RETURN_COLUMNS}
+        FROM memory_records mr JOIN sources s ON s.id = mr.source_id
+        ${TAG_LATERAL_JOIN}
+        WHERE mr.organization_id = $1 AND mr.scope_type = $2 AND mr.scope_id = $3
+        ORDER BY mr.id LIMIT $4
+      `, [options.organizationId.trim(), scopeType, scope.scopeId.trim(), options.limit + 1]);
+      return {records: result.rows.slice(0, options.limit).map(mapPostgresSearchResult), truncated: result.rows.length > options.limit};
+    },
+
     async updateMemoryRecord(input, beforeCommit) {
       assertNonBlankText(input.organizationId, "organizationId");
       const organizationId = input.organizationId.trim();
@@ -602,11 +621,17 @@ export function createMemoryRepository(
           client,
           input.id,
           organizationId,
+          true,
         );
         if (!currentRow) {
           await client.query("ROLLBACK");
           return null;
         }
+
+        const currentRecord = mapPostgresSearchResult(currentRow);
+        if (input.revalidation !== undefined && (!input.expectedRecordDigest || !/^[a-f0-9]{64}$/.test(input.expectedRecordDigest))) throw new Error("expectedRecordDigest required for revalidation write");
+        if (input.expectedRecordDigest !== undefined && input.expectedRecordDigest !== memoryRecordDigest(currentRecord)) throw new MemoryRecordConflictError();
+        const nextRevalidation = input.revalidation === undefined ? currentRecord.revalidation : input.revalidation === null ? null : validateMemoryRevalidation(input.revalidation);
 
         const nextTitle =
           input.title === undefined
@@ -640,6 +665,16 @@ export function createMemoryRepository(
           content: nextContent,
           summary: nextSummary,
         });
+        if (input.revalidation && nextRevalidation) {
+          const prospective = {...currentRecord, title:nextTitle, content:nextContent, summary:nextSummary, memoryType:nextKind};
+          if (nextRevalidation.recheck.boundContentDigest !== memoryContentDigest(prospective)) throw new Error("revalidation boundContentDigest does not match record content");
+          if (nextRevalidation.dependencies.length) {
+            const dependencies = await client.query<{id: number | string}>(`SELECT id FROM memory_records WHERE organization_id = $1 AND scope_type = $2 AND scope_id = $3 AND id = ANY($4::bigint[])`,
+              [organizationId,currentRecord.scopeType,currentRecord.scopeId,nextRevalidation.dependencies.map((item) => item.memoryId)]);
+            const found = new Set(dependencies.rows.map((row) => Number(row.id)));
+            if (nextRevalidation.dependencies.some((item) => !found.has(item.memoryId))) throw new Error("dependency unavailable in record scope");
+          }
+        }
         const updateResult = await client.query<PostgresMemoryRow>(
           `
             UPDATE memory_records
@@ -649,6 +684,7 @@ export function createMemoryRepository(
                 summary = $6,
                 importance = $7,
                 durability = $8,
+                revalidation = $9::jsonb,
                 updated_at = NOW()
             WHERE id = $1
               AND organization_id = $2
@@ -677,6 +713,7 @@ export function createMemoryRepository(
             nextSummary,
             nextImportance,
             nextDurability,
+            nextRevalidation ? JSON.stringify(nextRevalidation) : null,
           ],
         );
         const updatedRow = requireSingleRow(updateResult.rows[0], "memory");
@@ -841,7 +878,7 @@ export function createMemoryRepository(
 function mapPostgresSearchResult(row: PostgresHydratedRow): SearchMemoryResult {
   const sourceMetadata = parseStoredPostgresSourceRef(row.source_ref);
 
-  return {
+  const record: SearchMemoryResult = {
     id: mapPositiveSafeInteger(row.id, "memory id"),
     organizationId: mapRequiredText(
       row.organization_id,
@@ -858,6 +895,7 @@ function mapPostgresSearchResult(row: PostgresHydratedRow): SearchMemoryResult {
     durability: mapDurability(row.durability),
     importance: mapPostgresInteger(row.importance, "importance"),
     tags: mapStoredTags(row.tags),
+    ...(row.revalidation == null ? {} : {revalidation:validateMemoryRevalidation(row.revalidation)}),
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
     source: {
@@ -876,12 +914,14 @@ function mapPostgresSearchResult(row: PostgresHydratedRow): SearchMemoryResult {
       createdAt: toIsoString(row.source_created_at),
     },
   };
+  return {...record, contentDigest:memoryContentDigest(record), recordDigest:memoryRecordDigest(record), revalidationBinding:describeMemoryRevalidation(record)};
 }
 
 async function getPostgresMemoryRecordById(
   queryable: PgQueryable,
   id: number,
   organizationId: string,
+  lock = false,
 ): Promise<PostgresHydratedRow | null> {
   const result = await queryable.query<PostgresHydratedRow>(
     `
@@ -891,7 +931,7 @@ async function getPostgresMemoryRecordById(
       ${TAG_LATERAL_JOIN}
       WHERE mr.id = $1
         AND mr.organization_id = $2
-      LIMIT 1
+      LIMIT 1 ${lock ? "FOR UPDATE OF mr" : ""}
     `,
     [id, organizationId],
   );

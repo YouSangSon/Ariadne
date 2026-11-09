@@ -214,7 +214,10 @@ APIプロトコルの検査を、モデルの品質、サブスクリプショ�
 ```sh
 node bin/Ariadne.mjs skills --root /path/to/project
 node bin/Ariadne.mjs eval compare --file evaluation/comparison-example.json
+node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-example.json
 ```
+
+記憶に再確認の方法・条件と報告された出典を関連付けられます。`inspect_memory_impact` は同じ組織・範囲に登録された訂正の影響を調べます。`eval memory-ablation` は任意の記憶一つを含む場合と除いた場合の実行記録・総費用を比較します。再確認・修正・昇格は自動実行せず、未登録の依存関係や実際の有用性には別の検証が必要です。[契約と利用範囲](docs/memory-reuse.md)を参照してください。
 
 [20 件の参照元・適用範囲・入力形式（韓国語）](docs/harness-engineering-adoption.md).
 

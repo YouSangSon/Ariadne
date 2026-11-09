@@ -67,6 +67,7 @@ export function withAuthenticatedRegistry(
       "inspect_memory_graph",
       registry.inspect_memory_graph,
     ),
+    inspect_memory_impact: wrap("inspect_memory_impact", registry.inspect_memory_impact),
     update_memory: wrap("update_memory", registry.update_memory),
     delete_memory: wrap("delete_memory", registry.delete_memory),
     tag_memory: wrap("tag_memory", registry.tag_memory),

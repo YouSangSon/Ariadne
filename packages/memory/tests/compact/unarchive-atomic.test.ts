@@ -79,7 +79,7 @@ function fixture(options: { failAt?: string; archivePatch?: Record<string, unkno
     }
     if (sql.includes("INSERT INTO memory_records")) {
       step("canonical_insert");
-      expect(params.slice(-3)).toEqual([200, timestamp, updatedAt]);
+      expect(params.slice(10)).toEqual([200, timestamp, updatedAt, null]);
       transaction!.canonical = true;
       return { rows: [{ id: "999" }] };
     }

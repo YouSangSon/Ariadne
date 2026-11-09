@@ -1,3 +1,4 @@
+import { validateMemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
 import type { ApplyCompactionRecordInput, ArchiveReason, ArchiveRow, CompactionRunRow, CompactionRunStatus, CompleteCompactionRunInput, CreateCompactionRunInput, MemoryArchiveRepository, PendingQdrantCleanup, QdrantStatus } from "../../application/ports/memory-archive.js";
 // MemoryArchiveRepository — repository pattern for the compaction apply path.
 // SQL ownership of compaction_runs + memory_archive tables.
@@ -136,7 +137,7 @@ export function createMemoryArchiveRepository(
               )
             RETURNING id, organization_id, scope_type, scope_id, project_key,
                       kind, title, content, summary, durability, importance,
-                      source_id, created_at, updated_at
+                      source_id, created_at, updated_at, revalidation
           ),
           deleted_with_points AS (
             SELECT
@@ -155,14 +156,14 @@ export function createMemoryArchiveRepository(
               archive_reason, scope_type, scope_id, project_key, kind, title,
               content, summary, durability, importance, decay_score,
               kept_record_id, qdrant_point_ids, qdrant_next_retry_at, source_id,
-              original_created_at, original_updated_at
+              original_created_at, original_updated_at, revalidation
             )
             SELECT
               $3, dwp.organization_id, dwp.id, $4,
               dwp.scope_type, dwp.scope_id, dwp.project_key, dwp.kind, dwp.title,
               dwp.content, dwp.summary, dwp.durability, dwp.importance, $5, $6,
               dwp.qdrant_point_ids, NOW(),
-              dwp.source_id, dwp.created_at, dwp.updated_at
+              dwp.source_id, dwp.created_at, dwp.updated_at, dwp.revalidation
             FROM deleted_with_points dwp
             ON CONFLICT (compaction_run_id, source_record_id) DO NOTHING
             RETURNING id AS archive_id, qdrant_point_ids
@@ -385,7 +386,7 @@ export function createMemoryArchiveRepository(
           SELECT id, organization_id, source_record_id, source_id,
                  scope_type, scope_id, project_key, kind, title, content,
                  summary, durability, importance,
-                 original_created_at, original_updated_at, unarchived_at
+                 original_created_at, original_updated_at, unarchived_at, revalidation
           FROM memory_archive
           WHERE id = ANY($1::bigint[])
             AND organization_id = $2
@@ -424,9 +425,9 @@ export function createMemoryArchiveRepository(
             INSERT INTO memory_records (
               organization_id, scope_type, scope_id, project_key, kind, title,
               content, summary, durability, importance, source_id,
-              created_at, updated_at
+              created_at, updated_at, revalidation
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb)
             RETURNING id
           `,
           [
@@ -443,6 +444,7 @@ export function createMemoryArchiveRepository(
             restorableArchive.sourceId,
             restorableArchive.originalCreatedAt,
             restorableArchive.originalUpdatedAt,
+            restorableArchive.revalidation ? JSON.stringify(restorableArchive.revalidation) : null,
           ],
         );
         const newId = result.rows[0]?.id;
@@ -636,6 +638,7 @@ function mapRestorableArchive(value: unknown): ArchiveRow {
     originalUpdatedAt: toIsoString(
       candidate.originalUpdatedAt as string | Date,
     ),
+    ...(candidate.revalidation == null ? {} : {revalidation:validateMemoryRevalidation(candidate.revalidation)}),
     unarchivedAt:
       candidate.unarchivedAt === null
         ? null
@@ -679,6 +682,7 @@ function mapArchiveLookupRow(value: unknown): ArchiveRow {
     importance: toPostgresInteger(row.importance, "memory archive importance"),
     originalCreatedAt: toIsoString(row.original_created_at as string | Date),
     originalUpdatedAt: toIsoString(row.original_updated_at as string | Date),
+    ...(row.revalidation == null ? {} : {revalidation:validateMemoryRevalidation(row.revalidation)}),
     unarchivedAt:
       row.unarchived_at === null
         ? null

@@ -272,7 +272,7 @@ curl -X POST http://localhost:8787/v1/memory/delete \
   -d '{"memoryId": 42}' | jq
 ```
 
-OAuth 기준 `list_memory`, `inspect_memory_graph` 는 read scope,
+OAuth 기준 `list_memory`, `inspect_memory_graph`, `inspect_memory_impact` 는 read scope,
 `update_memory`, `delete_memory`, `tag_memory` 는 admin scope가 필요합니다.
 `delete_memory` 응답이 `indexCleanupPending: true`이거나
 `qdrantPointsPending > 0`이면 ingest sweeper를 활성화하고 `ingest_jobs`를
@@ -383,10 +383,10 @@ Qdrant, OpenAI readiness probe를 호출하지 않지만, background queue gauge
 ## 스키마 마이그레이션
 
 모든 마이그레이션은 idempotent 이고 부트스트랩 시 적용. 현재 마이그레이션은
-`001-015` 범위이며, 새 마이그레이션은 그 뒤의 다음 미사용 번호를 붙입니다.
+`001-016` 범위이며, 새 마이그레이션은 그 뒤의 다음 미사용 번호를 붙입니다.
 새 마이그레이션 추가:
 
-1. `src/db/migrations/NNN_description.sql` 생성 (다음 일련 번호, 현재 `016_*.sql`).
+1. `src/db/migrations/NNN_description.sql` 생성 (다음 일련 번호, 현재 `017_*.sql`).
 2. `src/db/migrate.ts` 의 `MIGRATION_FILES` 에 파일명 추가.
 3. 같은 파일의 `embeddedPostgresMigrationSql` 에 SQL 추가
    (production fallback — SQL 파일이 디스크에 없을 때).

@@ -11,6 +11,8 @@ changes; CHANGELOG entries call those out explicitly.
 
 ## [Unreleased]
 
+- Store inert reported recheck recipes and dependency/derivative references with record-digest concurrency checks. Add read-only `inspect_memory_impact`; unknown source freshness and incomplete dependency coverage stay explicit. Migration 016 preserves metadata through physical archive/restore.
+
 - Add Korean, Japanese, Chinese and cross-language retrieval measurements and an opt-in multilingual MPNet configuration. All 18 new questions retrieve their answer in the top 5 with MPNet, but one Chinese question ranks a similar wrong answer first; strict multilingual qualification remains RED.
 
 - Preserve long transformer inputs with tokenizer-aware chunks, original offsets, and bounded overlap. Reindex repairs legacy chunks and preserves unchanged chunk IDs. Direct overlong embedding queries return HTTP 400 instead of silently truncating.
@@ -43,7 +45,7 @@ changes; CHANGELOG entries call those out explicitly.
   `abandon_goal_run`, `build_goal_context`, and `check_repeat_attempt` under
   `/v1/goal-run/*`. Active-run memories can be pinned out of compaction, close
   resolutions/reasons persist as `goal_runs.close_note`, and the current
-  migration range is `001-015`.
+  migration range is `001-016`.
 - Background sweeper observability: `/metrics` now emits low-cardinality
   compaction/ingest sweeper tick counters, tick duration summaries, and row
   outcome counters, plus live Postgres-backed backlog gauges for pending, due,
@@ -112,7 +114,7 @@ small actual impact surface.
   the recoverable `memory_archive` path and keeps vector cleanup retryable.
   The static `/admin/memory` page gives operators a compact browser shell while
   leaving all data calls behind the existing authenticated `/v1/*` routes.
-  Current migration range is `001-015`, including `memory_tags` for org-scoped
+  Current migration range is `001-016`, including `memory_tags` for org-scoped
   tag filters.
 - **pgvector backend — Postgres-only deploy option** — a `VectorIndex` port
   (`src/vector/vector-index.ts`) abstracts the vector backend so either Qdrant
@@ -131,7 +133,7 @@ small actual impact surface.
   co-mentions plus date context in `entity_relationships`. `search_memory`
   uses that graph as an exact rescue/boost path alongside Postgres FTS,
   substring fallback, and vector retrieval. Current migration range is
-  `001-015`.
+  `001-016`.
 - **MCP roots, elicitation, and sampling helpers** — MCP transports now register
   `list_workspace_roots` for client-advertised `roots/list` and
   `add_memory_interactive` for form-based elicitation before storing accepted

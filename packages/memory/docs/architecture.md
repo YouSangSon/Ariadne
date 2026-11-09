@@ -290,8 +290,8 @@ goal_run_id FK        iteration_count          created_at
                       closed_at
 ```
 
-Migrations live in `src/db/migrations/`. The current range is `001-015`;
-the runner applies `001` through `015` on bootstrap (each is idempotent,
+Migrations live in `src/db/migrations/`. The current range is `001-016`;
+the runner applies `001` through `016` on bootstrap (each is idempotent,
 `CREATE … IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
 The source of truth is `MIGRATION_FILES` plus the mirrored
 `embeddedPostgresMigrationSql` fallback in `src/infrastructure/postgres/migrate.ts`; the older
@@ -311,6 +311,10 @@ stores the resolution/reason note used when a goal run is completed or
 abandoned. `015_background_queue_metrics_indexes.sql` adds partial indexes that
 keep `/metrics` background queue backlog gauges from scanning historical
 `ingest_jobs` and `memory_archive` rows.
+
+`016_memory_revalidation.sql` adds inert JSONB revalidation snapshots to canonical
+and physical archive rows. Record-digest checks protect metadata edits; external
+source freshness remains unknown. See [the API contract](api-reference.md#reported-recheck-metadata).
 
 ## Multi-tenancy
 

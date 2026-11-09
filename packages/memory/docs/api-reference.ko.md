@@ -5,7 +5,7 @@
 Akasha는 동일한 core service tool surface를 세 가지 접근 경로로 노출합니다:
 
 - **MCP stdio** — Claude Code, Codex CLI 같은 AI 클라이언트용.
-  진입점: `dist/src/mcp/server.js`. 20 service tools 모두와 MCP 전용
+  진입점: `dist/src/mcp/server.js`. 21 service tools 모두와 MCP 전용
   client-context helper가 등록됩니다.
 - **MCP Streamable HTTP** — HTTP로 연결하는 MCP 클라이언트용.
   기본 문서화 대상 엔드포인트는 JSON-RPC 요청용 `POST /mcp` 입니다. SDK
@@ -436,6 +436,53 @@ date, named concept 중 어떤 항목이 entity-backed lexical rescue/boost 동�
 
 ---
 
+### inspect_memory_impact — 등록된 정정 영향 조회
+
+HTTP: `POST /v1/memory/impact`; MCP: `inspect_memory_impact`. OAuth read scope.
+`scope`은 `project` 또는 `user`로 명시하고, 프로젝트 범위에는 `projectKey`를
+전달합니다. `changedMemoryIds` 또는 `changedSourceRefs`를 한 개 이상 전달합니다.
+각 배열은 최대 64개, `limit`은 기본 100개/최대 1000개입니다.
+
+한 SQL 스냅샷에서 같은 조직·범위의 활성 및 soft-archive 원본을 읽고 명시적인
+의존 관계만 추적합니다. 반환값은 `affectedMemoryIds`, `registeredDerivatives`
+(최대 1000개), `registered_scan_complete`, `truncated`,
+`unresolved_dependencies` 개수입니다. 물리적으로 압축 보관된 ID·누락 ID·다른
+범위 ID는 상세를 노출하지 않고 미확인으로 남깁니다. 절단되면 등록 관계 조회도
+미완료입니다. 빈 결과도 안전한 재사용을 증명하지 않습니다.
+
+항상 `coverage:"known_only"`, `dependenciesComplete:false`, `basis:"reported"`,
+`sourceCurrentness:"unknown"`, `broader_review_required:true`입니다. 파생 문서의
+owner/ref/digest는 저장 시 보고된 참조이며 현재 권한·존재·최신성을 확인하지
+않습니다. 실행·fetch·수정·재생성은 수행하지 않습니다.
+
+### 재확인 방법과 보고된 의존성 저장
+
+원본 조회는 `contentDigest`, `recordDigest`와
+`revalidationBinding:{bindingMatchesRecord:boolean|null,sourceCurrentness:"unknown",basis:"reported"}`를
+반환합니다. 바인딩 일치는 같은 ID와 본문을 가리킨다는 뜻이며 사실 검증이 아닙니다.
+컨텍스트 Markdown에도 이 상태를 표시하고 방법의 지시문은 펼치지 않습니다.
+
+`update_memory`의 선택 필드 `revalidation`은 `schemaVersion:1`,
+`recheck:{method,trigger,boundContentDigest}`, `sourceObservations:[{ref,digest}]`,
+`dependencies:[{memoryId,contentDigest}]`,
+`derivatives:[{kind:"summary"|"wiki"|"context",owner,ref,digest}]`를 받습니다.
+배열 생략 시 빈 배열이며 미지정 속성은 거부합니다. 전체 32768 UTF-8 bytes,
+배열별 64개, method 4096자, 그 밖의 문자열 1024자, digest 소문자 SHA-256 hex가
+상한입니다. 모든 문자열에 비밀 탐지를 적용하며 실행 대기열은 만들지 않습니다.
+
+저장·`null` 삭제 모두 조회한 `expectedRecordDigest`가 필수입니다. 행 잠금 후
+같은 트랜잭션에서 비교하며 충돌은 HTTP 409입니다. 메타데이터만 수정하면
+임베딩을 다시 만들지 않습니다. 의존 메모리는 등록 시 같은 조직·범위에 있어야
+합니다. `contentDigest`는 ID·조직·범위·프로젝트·source ID·종류·제목·본문·요약을,
+`recordDigest`는 이에 메타데이터·태그·durability·importance·시각을 더해 묶습니다.
+공유 source 제목/URI와 기존 `content_hash`는 현재 원본 버전의 근거가 아닙니다.
+본문과 함께 수정하면 새 본문 digest로 바인딩해야 합니다. 기존 writer의 본문
+수정은 메타데이터를 보존하므로 불일치가 드러납니다. 물리 보관·DB 백업에도
+JSONB를 보존합니다. 복원 시 새 ID를 부여하므로 기존 바인딩은 불일치하고 의존
+ID를 자동 연결하지 않습니다. [전체 계약](api-reference.md#reported-recheck-metadata).
+
+---
+
 ### update_memory — canonical 레코드 1개 수정
 
 ```ts
@@ -449,6 +496,8 @@ type UpdateMemoryInput = {
   importance?: number;
   durability?: "ephemeral" | "durable" | "archived";
   tags?: string[];
+  revalidation?: MemoryRevalidation | null;
+  expectedRecordDigest?: string; // 메타데이터 저장/삭제 시 필수
 };
 
 type UpdateMemoryResult = {

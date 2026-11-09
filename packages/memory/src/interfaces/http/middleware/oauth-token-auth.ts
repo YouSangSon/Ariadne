@@ -183,6 +183,7 @@ export function requiredScopeKindForTool(
     case "search_memory":
     case "list_memory":
     case "inspect_memory_graph":
+    case "inspect_memory_impact":
     case "build_context_pack":
     case "list_workspace_roots":
     case "classify_memory_candidate":

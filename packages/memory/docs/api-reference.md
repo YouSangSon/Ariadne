@@ -5,7 +5,7 @@
 Akasha exposes the same core service tool surface through three access paths:
 
 - **MCP stdio** — for AI clients like Claude Code and Codex CLI.
-  Entry point: `dist/src/mcp/server.js`. All 20 service tools are registered,
+  Entry point: `dist/src/mcp/server.js`. All 21 service tools are registered,
   plus MCP-only client-context helpers.
 - **MCP Streamable HTTP** — for MCP clients that connect over HTTP.
   Primary documented endpoint: `POST /mcp` for JSON-RPC requests. The SDK
@@ -438,6 +438,75 @@ lexical rescue/boost behavior.
 
 ---
 
+### inspect_memory_impact — inspect registered correction dependencies
+
+HTTP: `POST /v1/memory/impact`; MCP: `inspect_memory_impact`. OAuth read scope.
+
+```ts
+{ organizationId?: string, scope: "project" | "user", projectKey?: string,
+  userScopeId?: string, changedMemoryIds?: number[], changedSourceRefs?: string[],
+  limit?: number } // default 100, maximum 1000 records; at most 64 changed IDs/refs each
+```
+
+Supply at least one changed ID or source reference and the project key for project
+scope. A single scoped SQL snapshot includes active and soft-archived canonical
+records. The tool follows only explicit dependencies and reported source refs;
+entity co-mentions do not establish dependency. Cycles are visited once. It returns
+`affectedMemoryIds` and `registeredDerivatives` (at most 1000 references),
+`registered_scan_complete`, `truncated`, and an `unresolved_dependencies` count.
+Missing, physically compacted and out-of-scope IDs remain unresolved without
+returning other scopes' details. Truncation also marks the registered scan incomplete.
+
+Every result has `coverage:"known_only"`, `dependenciesComplete:false`,
+`basis:"reported"`, `sourceCurrentness:"unknown"`, and
+`broader_review_required:true`. An empty result means no registered impact was
+found in the scan; it does not establish safe reuse. Derivative owners, refs and
+digests are stored observations in the memory's scope. The tool neither checks
+current target access/existence nor fetches, executes, corrects or rebuilds targets.
+
+### Reported recheck metadata
+
+Canonical reads expose `contentDigest`, `recordDigest` and
+`revalidationBinding:{bindingMatchesRecord:boolean|null,sourceCurrentness:"unknown",basis:"reported"}`.
+A matching binding means the recipe names this exact record body and identity;
+it does not verify the memory or the external source. Context markdown repeats
+this distinction without rendering recipe instructions.
+
+```ts
+type MemoryRevalidation = {
+  schemaVersion: 1;
+  recheck: { method: string; trigger: string; boundContentDigest: string };
+  sourceObservations: { ref: string; digest: string }[];
+  dependencies: { memoryId: number; contentDigest: string }[];
+  derivatives: { kind: "summary" | "wiki" | "context"; owner: string; ref: string; digest: string }[];
+};
+```
+
+Arrays may be omitted and default to empty. Unknown properties are rejected.
+Metadata is limited to 32768 UTF-8 bytes and 64 items per array. Method text is
+limited to 4096 characters, other text to 1024, and digests to lowercase SHA-256
+hex. All text is secret-scanned. Values are inert, untrusted reported observations.
+No recheck job, shell command or network fetch is scheduled.
+
+To annotate a memory, read its digests, then call `update_memory` with the metadata
+and `expectedRecordDigest`. To remove metadata, send `revalidation:null` and the
+same CAS token. The comparison occurs after locking the canonical row in the
+update transaction. A stale token returns HTTP 409. Metadata-only edits do not
+re-embed the record. Dependencies must exist in the same organization and scope
+at registration; later missing IDs remain unresolved.
+
+`contentDigest` binds record ID, organization, scope, project, source ID, kind,
+title, body and summary. `recordDigest` additionally binds metadata, tags,
+durability, importance and timestamps. Mutable shared source titles/URIs and the
+legacy source `content_hash` are not authoritative source revisions. A combined
+body/metadata edit must bind to the prospective new content digest; a mismatch
+is rejected. Old writers preserve metadata when editing content, leaving an
+explicit binding mismatch. Physical compaction archives and database backups
+preserve the JSONB metadata. Restore allocates a new ID, so the old binding no
+longer matches and dependency IDs are not automatically relinked.
+
+---
+
 ### update_memory — edit one canonical record
 
 ```ts
@@ -451,6 +520,8 @@ type UpdateMemoryInput = {
   importance?: number;
   durability?: "ephemeral" | "durable" | "archived";
   tags?: string[];
+  revalidation?: MemoryRevalidation | null;
+  expectedRecordDigest?: string; // required when writing/removing revalidation
 };
 
 type UpdateMemoryResult = {

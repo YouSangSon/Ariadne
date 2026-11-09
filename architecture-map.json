@@ -97,6 +97,18 @@
       "layer": "infrastructure",
       "context": "evaluation"
     },
+    "evaluation/memory-ablation-cli.mjs": {
+      "layer": "composition",
+      "context": "evaluation"
+    },
+    "evaluation/memory-ablation-example.json": {
+      "layer": "tooling",
+      "context": "evaluation"
+    },
+    "evaluation/memory-ablation.mjs": {
+      "layer": "domain",
+      "context": "evaluation"
+    },
     "evaluation/suite.json": {
       "layer": "tooling",
       "context": "evaluation"
@@ -379,6 +391,10 @@
     "tests/loop-native.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/memory-ablation.test.mjs": {
+      "layer": "tooling",
+      "context": "evaluation"
     },
     "tests/module-boundaries.test.mjs": {
       "layer": "tooling",

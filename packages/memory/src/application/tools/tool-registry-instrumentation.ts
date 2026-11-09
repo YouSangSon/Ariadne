@@ -143,6 +143,7 @@ export function instrumentToolRegistry(input: {
       instrument("inspect_memory_graph", toolInput, () =>
         handlers.inspect_memory_graph(toolInput),
       ),
+    inspect_memory_impact: (toolInput) => instrument("inspect_memory_impact", toolInput, () => handlers.inspect_memory_impact(toolInput)),
     update_memory: (toolInput) =>
       instrument("update_memory", toolInput, () =>
         handlers.update_memory(toolInput),

@@ -27,6 +27,7 @@ const MIGRATION_FILES = [
   "013_add_goal_runs.sql",
   "014_add_goal_run_close_note.sql",
   "015_background_queue_metrics_indexes.sql",
+  "016_memory_revalidation.sql",
 ] as const;
 
 const embeddedPostgresMigrationSql = `CREATE TABLE IF NOT EXISTS sources (
@@ -445,6 +446,8 @@ CREATE INDEX IF NOT EXISTS idx_memory_archive_qdrant_failed_status
   ON memory_archive (id)
   WHERE qdrant_status = 'failed'
     AND array_length(qdrant_point_ids, 1) > 0;
+ALTER TABLE memory_records ADD COLUMN IF NOT EXISTS revalidation JSONB;
+ALTER TABLE memory_archive ADD COLUMN IF NOT EXISTS revalidation JSONB;
 `;
 
 export type ReadPostgresMigrationSqlOptions = {

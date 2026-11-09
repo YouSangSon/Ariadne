@@ -280,8 +280,8 @@ goal_run_id FK        iteration_count          created_at
                       closed_at
 ```
 
-마이그레이션은 `src/db/migrations/` 에 위치. 현재 범위는 `001-015` 이며,
-런너는 부트스트랩 시 `001` 부터 `015` 까지 적용합니다 (모두 idempotent,
+마이그레이션은 `src/db/migrations/` 에 위치. 현재 범위는 `001-016` 이며,
+런너는 부트스트랩 시 `001` 부터 `016` 까지 적용합니다 (모두 idempotent,
 `CREATE … IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`).
 source of truth는 `src/infrastructure/postgres/migrate.ts` 의 `MIGRATION_FILES` 와 mirror된
 `embeddedPostgresMigrationSql` fallback입니다. 오래된 `src/db/schema.sql` 은
@@ -300,6 +300,10 @@ first-class goal run, ordered iteration, active-run compaction 보호용
 `015_background_queue_metrics_indexes.sql` 은 `/metrics` background queue backlog
 gauge가 historical `ingest_jobs`, `memory_archive` row를 스캔하지 않도록 partial
 index를 추가합니다.
+
+`016_memory_revalidation.sql`은 원본과 물리 보관 행에 실행하지 않는 JSONB 재확인
+메타데이터를 추가합니다. 레코드 digest로 메타데이터 수정을 검사하며 외부 원본의
+최신성은 미확인입니다. [API 계약](api-reference.ko.md#재확인-방법과-보고된-의존성-저장).
 
 ## 멀티-테넌트
 

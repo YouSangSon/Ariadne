@@ -31,8 +31,9 @@ export function commandPlan(command, args, codeCommand) {
   if (command === 'context') return node('lib/context-pack.mjs', args)
   if (command === 'skills') return node('lib/skill-catalog.mjs', args)
   if (command === 'eval') {
-    if (args[0] !== 'compare') throw new Error('eval requires compare --file <path>')
-    return node('evaluation/compare-cli.mjs', args.slice(1))
+    const script = { compare: 'compare-cli.mjs', 'memory-ablation': 'memory-ablation-cli.mjs' }[args[0]]
+    if (!script) throw new Error('eval requires compare or memory-ablation --file <path>')
+    return node(`evaluation/${script}`, args.slice(1))
   }
   if (command === 'ontology') return node('modules/ontology/cli.mjs', args)
   if (command === 'install-rules') return { ...node('scripts/install.mjs', args), installRoot: true }

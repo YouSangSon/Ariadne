@@ -1,3 +1,4 @@
+import type { MemoryRevalidation } from "../policies/memory-revalidation.js";
 import type { EntityKind } from "../policies/entity-extraction.js";
 
 export type ScopeType = "user" | "project";
@@ -71,6 +72,10 @@ export type MemoryRecord = ScopeRef & {
   durability?: Durability;
   importance?: number;
   tags?: string[];
+  revalidation?: MemoryRevalidation | null;
+  contentDigest?: string;
+  recordDigest?: string;
+  revalidationBinding?: { bindingMatchesRecord: boolean | null; sourceCurrentness: "unknown"; basis: "reported" };
   createdAt: string;
   updatedAt: string;
 };

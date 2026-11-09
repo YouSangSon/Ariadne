@@ -1,3 +1,4 @@
+import type { MemoryRevalidation } from "../../domain/policies/memory-revalidation.js";
 
 
 
@@ -108,6 +109,7 @@ export type MemoryArchiveRepository = {
 };
 
 export type ArchiveRow = {
+  revalidation?: MemoryRevalidation | null;
   id: number;
   organizationId: string;
   sourceRecordId: number;

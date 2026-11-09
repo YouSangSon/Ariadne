@@ -1,3 +1,4 @@
+import { MemoryRecordConflictError } from "../../../application/tools/memory-revalidation.js";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { ContextPackBudgetError } from "../../../application/tools/context-pack-result.js";
 import { CompactionRateLimitError } from "../../../application/usecases/apply-compaction.js";
@@ -92,6 +93,7 @@ export function buildToolRouteHandler<K extends ServiceToolName>(
         sendError(res, 400, error.message);
         return;
       }
+      if (error instanceof MemoryRecordConflictError) { sendError(res, 409, error.message); return; }
       if (error instanceof JsonBodyError) {
         sendError(res, error.status, error.message);
         return;
