@@ -39,6 +39,7 @@ dependencies = [
  "syn 2.0.119",
  "wasmtime",
  "wat",
+ "wit-parser",
 ]
 
 [[package]]

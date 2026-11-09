@@ -9,7 +9,7 @@ import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
-from qualify_extension_runtime import Laboratory, verify_profile, verify_os_profile
+from qualify_extension_runtime import Laboratory, verify_profile, verify_os_profile, verify_limit_probe
 
 
 class InspectionTests(unittest.TestCase):
@@ -78,6 +78,70 @@ class OperatingSystemTests(unittest.TestCase):
                     verify_os_profile(self.lines[:index] + self.lines[index + 1:])
 
 
+class LimitProbeTests(unittest.TestCase):
+    def setUp(self):
+        self.cpu = {"case": "cpu", "limits": {"memoryMax": 268435456,
+            "memorySwapMax": 0, "cpuMax": "100000 100000", "pidsMax": 32},
+            "before": {"nr_throttled": 2, "throttled_usec": 500},
+            "after": {"nr_throttled": 5, "throttled_usec": 1500},
+            "childrenStarted": 2, "childrenReaped": 2, "wallLimitMillis": 3000}
+        self.pids = {"case": "pids", "limits": copy.deepcopy(self.cpu["limits"]),
+            "before": {"max": 0}, "after": {"max": 1},
+            "spawnAttempts": 32, "spawnFailures": 1, "failureErrno": 11,
+            "childrenStarted": 31, "childrenReaped": 31}
+
+    def test_cpu_requires_both_kernel_throttle_counters_to_grow(self):
+        self.assertIsNone(verify_limit_probe("cpu", self.cpu))
+        for counter in self.cpu["before"]:
+            for value in (self.cpu["before"][counter], -1, True, "1000", 1 << 64):
+                with self.subTest(counter=counter, value=value):
+                    observation = copy.deepcopy(self.cpu)
+                    observation["after"][counter] = value
+                    with self.assertRaises(ValueError):
+                        verify_limit_probe("cpu", observation)
+
+    def test_pid_requires_kernel_rejection_and_finite_reaped_children(self):
+        self.assertIsNone(verify_limit_probe("pids", self.pids))
+        changes = [{"after": {"max": 0}}, {"spawnFailures": 0},
+            {"failureErrno": 12}, {"spawnAttempts": 41}, {"spawnAttempts": 31},
+            {"childrenStarted": 32}, {"childrenReaped": 30},
+            {"after": {"max": -1}}, {"after": {"max": True}},
+            {"after": {"max": 1 << 64}}]
+        for change in changes:
+            with self.subTest(change=change):
+                observation = copy.deepcopy(self.pids)
+                observation.update(change)
+                with self.assertRaises(ValueError):
+                    verify_limit_probe("pids", observation)
+
+    def test_load_proof_requires_expected_limits_and_complete_observations(self):
+        for kind, valid in (("cpu", self.cpu), ("pids", self.pids)):
+            changes = [{"case": "other"}, {"before": {}}, {"after": {}},
+                {"childrenReaped": 0}, {"limits": {**valid["limits"], "pidsMax": 64}},
+                {"limits": {**valid["limits"], "cpuMax": "max 100000"}},
+                {"limits": {**valid["limits"], "memorySwapMax": False}},
+                {"before": {**valid["before"], "unknown": 1}}, {"unknown": 1}]
+            for change in changes:
+                with self.subTest(kind=kind, change=change):
+                    observation = copy.deepcopy(valid)
+                    observation.update(change)
+                    with self.assertRaises(ValueError):
+                        verify_limit_probe(kind, observation)
+        with self.assertRaises(ValueError):
+            verify_limit_probe("unknown", self.cpu)
+
+    def test_probe_workload_accounting_rejects_invalid_numbers(self):
+        for kind, valid, fields in (("cpu", self.cpu, ("childrenStarted", "childrenReaped", "wallLimitMillis")),
+                ("pids", self.pids, ("childrenStarted", "childrenReaped", "spawnAttempts", "spawnFailures", "failureErrno"))):
+            for field in fields:
+                for value in (True, -1, 1 << 64):
+                    with self.subTest(kind=kind, field=field, value=value):
+                        observation = copy.deepcopy(valid)
+                        observation[field] = value
+                        with self.assertRaises(ValueError):
+                            verify_limit_probe(kind, observation)
+
+
 class CleanupTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(prefix="ariadne-q-unit-")
@@ -87,6 +151,24 @@ class CleanupTests(unittest.TestCase):
         self.lab.server = {"uri": "ssh://core@127.0.0.1:50042/run/user/501/podman/podman.sock"}
         self.name = "ariadne-q-test"
         self.lab.owned.add(self.name)
+
+    def test_eof_before_inspection_release_does_not_start_resource_load(self):
+        class NotStarted(Exception):
+            pass
+
+        for kind in ("cpu", "pids"):
+            with self.subTest(kind=kind):
+                def start(_kind, shell):
+                    harmless = shell.replace("/usr/local/bin/ariadne-qualification-os-probe", "/bin/echo")
+                    result = subprocess.run(["/bin/sh", "-c", harmless], input=b"",
+                                            capture_output=True, timeout=2)
+                    self.assertEqual(result.stdout, b"", "resource load started after stdin EOF")
+                    self.assertNotEqual(result.returncode, 0)
+                    raise NotStarted()
+
+                self.lab.start = start
+                with self.assertRaises(NotStarted):
+                    self.lab.resource_limit(kind)
 
     def test_endpoint_change_blocks_cleanup(self):
         self.lab.call = Mock(return_value=subprocess.CompletedProcess([], 0,
@@ -107,6 +189,34 @@ class CleanupTests(unittest.TestCase):
             self.lab.dispose(self.name)
         self.assertEqual(len(self.lab.call.call_args_list), 2)
         self.assertIn(self.name, self.lab.owned)
+
+    def test_resource_probe_preserves_counters_and_requires_proof_and_clean_exit(self):
+        fixture = LimitProbeTests()
+        fixture.setUp()
+        flat = copy.deepcopy(fixture.cpu)
+        flat["after"] = flat["before"].copy()
+        for kind, observation, code, expected_error in (
+                ("cpu", fixture.cpu, 0, None), ("pids", fixture.pids, 0, None),
+                ("cpu", flat, 0, ValueError), ("cpu", fixture.cpu, 1, RuntimeError)):
+            with self.subTest(kind=kind, code=code, expected_error=expected_error):
+                process = subprocess.Popen([sys.executable, "-B", "-c",
+                    "import sys; sys.stdin.buffer.readline(); sys.stdout.write(sys.argv[1]); sys.exit(int(sys.argv[2]))",
+                    json.dumps(observation), str(code)],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.lab.start = Mock(return_value=(self.name, process))
+                self.lab.check_endpoint = Mock()
+                self.lab.call = Mock(return_value=subprocess.CompletedProcess([], 1, b"", b"no such container"))
+                count = len(self.lab.results)
+                if expected_error:
+                    with self.assertRaises(expected_error):
+                        self.lab.resource_limit(kind)
+                    self.assertEqual(len(self.lab.results), count)
+                else:
+                    self.lab.resource_limit(kind)
+                    self.assertEqual(self.lab.results[-1]["observed"], observation)
+                    self.assertEqual(self.lab.results[-1]["exitCode"], 0)
+                self.assertIsNotNone(process.poll())
+                self.assertTrue(all(stream.closed for stream in (process.stdin, process.stdout, process.stderr)))
 
     def test_failed_worker_reaps_process_and_pipe_readers(self):
         root = Path(self.directory.name)

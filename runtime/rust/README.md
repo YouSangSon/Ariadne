@@ -42,6 +42,7 @@ Use task-owned `CARGO_HOME` and `CARGO_TARGET_DIR`, with `CARGO_BUILD_JOBS=2`:
 
 ```sh
 cargo test --locked --manifest-path runtime/rust/Cargo.toml
+cargo test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
 cargo fmt --manifest-path runtime/rust/Cargo.toml -- --check
 cargo clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
 ```
@@ -51,3 +52,18 @@ components only in an explicitly selected absolute `ARIADNE_FIXTURE_DIR`.
 Files use exclusive creation. This is test tooling and is absent from the worker
 binary. Domain values, Wasmtime adapter, protocol adapter, and binary composition
 have separate ownership and a scoped `syn` AST dependency check.
+
+The WIT contract test parses and resolves the published source with the exact
+`wit-parser` version already in the Wasmtime lockfile, then checks its world and
+single import-free function against the worker signature. Negative cases cover
+syntax, world/version, import/export and input/result drift. This is a source
+contract gate, not generated SDK bindings or a guarantee for arbitrary languages.
+
+The qualification image also contains `qualification-os-probe`, a trusted test
+fixture. Its fixed CPU/PID modes first require the exact cgroup limits and zero
+capabilities. They create at most two finite CPU workers or 40 direct process
+creation attempts, reap every child, and report kernel counter changes. This
+fixture is not part of the worker protocol or a public execution capability.
+The host releases each probe only after inspect; stdin EOF before that release
+must not start load. Production worker behavior and its no-import contract stay
+unchanged. Never run the load fixture directly on the host.

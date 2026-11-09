@@ -574,6 +574,10 @@
       "layer": "tooling",
       "context": "extensions"
     },
+    "runtime/rust/examples/qualification-os-probe.rs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/rust/src/domain.rs": {
       "layer": "domain",
       "context": "extensions"
@@ -603,6 +607,10 @@
       "context": "validation"
     },
     "runtime/rust/tests/protocol.rs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/rust/tests/wit_contract.rs": {
       "layer": "tooling",
       "context": "validation"
     },

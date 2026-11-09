@@ -7,7 +7,7 @@
 | 순서 | 구현 단위 | 종료 기준 | 상태 |
 | --- | --- | --- | --- |
 | 1. E0 계약 기반 | WIT/JSON schema·공통 fixture, Go strict parser·내장 report projector·Go AST 경계 검사·실험 CLI | 실패 재현→통과, 기존 Node 계약 보존, 실제 CLI/경계/자원 정리 | 첫 구현·로컬 검사 완료 |
-| 2. E0 runtime qualification | 고정 Rust/Wasmtime·image·rootless Podman profile, compile/limit/log/timeout/부모 사망 시험 | 실행 증거로만 지원 조합 등록. metadata나 hash만으로 지원 선언 금지 | worker·고정 profile·실험 도구 구현 및 제한된 실제 시험 완료. 전체 지원 등록은 보류 |
+| 2. E0 runtime qualification | 고정 Rust/Wasmtime·image·rootless Podman profile, compile/limit/log/timeout/부모 사망 시험 | 실행 증거로만 지원 조합 등록. metadata나 hash만으로 지원 선언 금지 | worker·고정 profile·최종 코드의 실제 10개 시험 완료. 전체 지원 등록은 보류 |
 | 3. E1 실행 수명 | private registry·원자적 revision·inspect/install/activate/run/disable/remove·격리 worker | crash·경합·취소·제거·원본 보존 시험 | 미구현 |
 | 4. E2 좁은 조회 | 현재 권한/예산 연결, worker/2·불투명 handle | owner 재인가·scope·취소·반출·호출 한도 | 선행 조건 대기 |
 | 5. E3 필요한 업무 자동화 | 개별 tool/workflow/event/외부 효과 | 개별 정책·멱등성·결과 불명·비용·복구 계약 확정 | 후속 범위 |
@@ -103,8 +103,59 @@ worker의 native unit/integration 통과와 container에서 실제 격리 실행
 
 현재 실행 근거: native Go race 121개(하위 테스트 포함)·vet·AST·gofmt, Rust 22개 통과/fixture export 1개 별도 실행·fmt·clippy, root inventory 검사 통과. 실제 Podman 6.0.2 Linux/arm64 rootless VM에서 8개 사례가 통과했다. cgroup의 memory/swap/CPU/PID 값, capability mask 5개=0·NoNewPrivs=1·Seccomp=2를 읽었고, 정상 projection·loop fuel·import 거절·WASM memory·output 한도·실제 OS OOM(exit 137)·attach 부모 SIGKILL 뒤 container timeout 및 log-driver none을 확인했다. 컨테이너 8개는 각각 ID/label·종료·삭제를 대조했다. private 증거는 `.harness/handoff/extension-runtime-qualification/`에 보존한다.
 
-이 결과는 CPU/PID 상한의 실제 설정과 OS memory 위반 시험을 구분한다. CPU throttle/PID 고갈, compile 중 시점별 부모 사망, 다른 OS/architecture, WIT 원문 compiler/binding 생성, native/WASM cold/warm 성능은 아직 검증하지 않았다. server URI·version/kernel/architecture snapshot을 암호학적 server identity나 E1 admission 보장으로 부르지 않는다. 전체 E0 지원 조합 등록과 E1은 계속 미완료다.
+이 결과는 CPU/PID 상한의 실제 설정과 OS memory 위반 시험을 구분한다. 이 초기 단계에는 CPU throttle/PID 고갈·WIT 정본 타입 검사가 없었고 후속 단위에서 추가한다. compile 중 시점별 부모 사망, 다른 OS/architecture, WIT binding 생성과 사용자 패키지 컴파일, native/WASM cold/warm 성능은 여전히 미확인이다. server URI·version/kernel/architecture snapshot을 암호학적 server identity나 E1 admission 보장으로 부르지 않는다. 전체 E0 지원 조합 등록과 E1은 계속 미완료다.
 
 최종 Python 도구는 12개 테스트를 통과했다. 초기 전체 8개 Podman 사례와, URI/identity 고정·입력 전송 deadline 보완 뒤 pure 1건을 구분해 보존한다. 이후 stdout EOF 읽기를 bounded reader로 옮긴 마지막 변경은 같은 실제 프로세스 기반 ACK/EOF 회귀 검사로 검증했으며, 전체 8개 실제 시험을 다시 실행한 것은 아니다. 독립 리뷰에서 발견한 stdin write 대기와 stdout read 대기는 공통 25초 host deadline으로 제한했다. 최종 재검토 범위의 미해결 Blocker/Major는 없다.
 
 정리: 전용 Cargo/Go cache·target·vendor·fixture·helper 등 2,812,184 KiB(약 2.68 GiB)를 열린 파일 없음 확인과 로그 보존 뒤 제거했다. 시험 container 9개와 이 작업이 처음 내려받거나 만든 rootless image 3개를 각각 ID·소유 근거·사용 여부로 확인해 제거했고 rootless container/image 목록이 비어 있다. 이미지 크기 합계를 실제 회수 용량으로 주장하지 않는다. 기존 rootful container·Podman machine/connection·전역 cache·사용자 자료·private 증거는 보존했다. 실행 적합성 증거는 남기되 image를 계속 설치해 두지는 않는다.
+
+## 후속: CPU/PID 실제 집행과 WIT 정본 검사
+
+CPU/PID 상한 설정만 읽던 검증을 실제 위반 시험으로 확장한다. 새로운
+`runtime/rust/examples/qualification-os-probe.rs`는 명시된 실험 이미지 안에서만
+실행하는 신뢰된 fixture다. 프로세스 생성 전에 정확한 cgroup 한도와 capability
+mask·NoNewPrivs·Seccomp를 검사한다. CPU 자식 2개는 각각 단조 시계 기준 3초 이내의
+연산만 수행한다. PID 자식은 중첩 생성 없이 최대 40회의 직접 생성만 시도한다.
+모든 자식을 회수한 뒤에만 커널 counter의 전후 값을 반환한다.
+
+CPU는 `nr_throttled`와 `throttled_usec` 증가를 모두 요구한다. PID는
+`pids.events max` 증가와 실제 EAGAIN 11, 생성 시도·실패·회수 수의 일치를 요구한다.
+`spawnAttempts`는 프로세스 생성 API 시도 수이며 특정 fork syscall 횟수가 아니다.
+반환 JSON의 미지 필드·boolean·음수·uint64 초과·미회수 상태는 거절한다.
+이 값은 한도 집행의 증거이며 처리량이나 언어 간 성능 비교가 아니다.
+
+독립 리뷰에서 `read ack || :`가 시작 신호 전 EOF에도 부하를 실행하는 문제를
+재현했다. 성공한 read 뒤에만 실행하도록 고치고 실제 셸 명령의 빈 stdin 회귀
+검사로 차단을 확인했다. 수정 뒤 최종 소스의 실제 Podman 시험에서 CPU·PID 사례를 포함한 10개가 모두 통과했다.
+
+WIT 정본은 기존 lockfile에 있던 `wit-parser 0.236.1`을 개발 의존성으로 재사용해
+문법과 타입을 resolve한다. world/version·단일 project 함수·import 없음·입출력
+시그니처를 실제 worker 계약과 대조하며 잘못된 변형을 거절한다. 이 검사는
+SDK binding 생성이나 임의 언어 사용자 패키지 빌드의 검증을 대신하지 않는다.
+
+최신 검증과 resource 소유 기록은 private
+`.harness/handoff/extension-runtime-e0-limits/`에서 관리한다. 공개 install/run과
+E1 registry/admission은 이 시험 도구로 활성화하지 않는다.
+
+이번 후속 단위의 로컬 검사: Rust 24개·example 파서 1개·명시 fixture export 1개,
+fmt·clippy, Python 18개, 코어 gate가 통과했다. Go 소스는 변경하지 않아 기존
+동일 Go 소스의 race 검사 121개 및 vet·AST 통과 근거를 재사용했고 실제 profile helper는
+전용 경로로 다시 빌드했다. 원격 CI 결과는 게시 시점에 따로 확인한다.
+
+최종 실행 `fbd3ebe904024c86`에서 기존 8개와 새 CPU/PID 사례를 모두 재시험했다.
+CPU kernel counter는 nr_throttled 0→30, throttled_usec 0→1,373,377로 증가했고
+자식 2개를 모두 회수했다. PID는 max 거절 counter 0→1, 생성 32회 시도 중
+EAGAIN 11로 1회 실패했고 생성된 자식 31개를 전부 회수했다. 이 값은 해당
+Linux/arm64 Podman VM의 단일 집행 시험 기록이다. 처리량·성능 SLO가 아니다.
+컨테이너 10개는 각각 ID/label·종료·삭제를 확인했고 미해결 대상은 0개였다.
+
+독립 리뷰는 실제 시험의 소스 hash 5개와 현재 파일의 일치, WIT/CI/map 연결 및
+결과를 대조했으며 검토 범위의 미해결 Blocker/Major는 없다. 전체 E0 지원 등록,
+compile 중 부모 사망의 시점별 관측, WIT SDK/binding 생성·사용자 패키지 빌드,
+다른 환경과 성능 baseline·E1은 계속 남아 있다.
+
+후속 단위 정리: 열린 파일이 없음을 확인한 전용 cache·target·vendor·fixture·helper
+1,985,004 KiB(약 1.89 GiB)를 제거했다. 이 작업이 준비한 이미지 3개도 ID와
+사용 여부를 확인해 제거했고 rootless image/container 목록은 비어 있다. 기존
+rootful 컨테이너 두 개의 목록은 작업 전후 같고 전역 cache·machine·connection과
+사용자 자료·private 증거는 보존했다.

@@ -3,10 +3,11 @@ WORKDIR /build/runtime/rust
 COPY runtime/rust/ ./
 COPY vendor/ /build/vendor/
 COPY cargo-config.toml /build/.cargo/config.toml
-RUN cargo build --locked --offline --release -j 2 --bin ariadne-extension-worker
+RUN cargo build --locked --offline --release -j 2 --bin ariadne-extension-worker --example qualification-os-probe
 
 FROM docker.io/library/debian@sha256:24a01011d10eba3a023bc8585b9650b8b29021240d4217c05b905e09ef4a5232
 LABEL io.ariadne.qualification-owner="extension-runtime-e0"
 COPY --from=builder /build/runtime/rust/target/release/ariadne-extension-worker /usr/local/bin/ariadne-extension-worker
+COPY --from=builder /build/runtime/rust/target/release/examples/qualification-os-probe /usr/local/bin/ariadne-qualification-os-probe
 USER 65532:65532
 ENTRYPOINT ["/usr/local/bin/ariadne-extension-worker"]

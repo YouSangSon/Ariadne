@@ -53,6 +53,42 @@ def verify_os_profile(lines):
         raise ValueError("actual capabilities/no-new-privileges/seccomp mismatch")
 
 
+def verify_limit_probe(kind, observation):
+    common = {"case", "limits", "before", "after", "childrenStarted", "childrenReaped"}
+    fields = {"cpu": {"wallLimitMillis"},
+              "pids": {"spawnAttempts", "spawnFailures", "failureErrno"}}
+    if (kind not in fields or not isinstance(observation, dict)
+            or set(observation) != common | fields[kind] or observation["case"] != kind):
+        raise ValueError("unexpected OS limit probe result")
+    limits = {"memoryMax": 268435456, "memorySwapMax": 0,
+              "cpuMax": "100000 100000", "pidsMax": 32}
+    if (observation["limits"] != limits
+            or any(type(observation["limits"][key]) is not type(value) for key, value in limits.items())):
+        raise ValueError("actual cgroup limits mismatch before load")
+    counters = {"nr_throttled", "throttled_usec"} if kind == "cpu" else {"max"}
+    for phase in ("before", "after"):
+        values = observation[phase]
+        if (not isinstance(values, dict) or set(values) != counters
+                or any(type(value) is not int or not 0 <= value < 1 << 64 for value in values.values())):
+            raise ValueError("invalid kernel counter observation")
+    if any(observation["after"][key] <= observation["before"][key] for key in counters):
+        raise ValueError("kernel did not confirm actual OS resource enforcement")
+    numeric = {"childrenStarted", "childrenReaped"} | fields[kind]
+    if any(type(observation[key]) is not int or not 0 <= observation[key] < 1 << 64 for key in numeric):
+        raise ValueError("invalid OS probe child accounting")
+    started = observation["childrenStarted"]
+    if observation["childrenReaped"] != started:
+        raise ValueError("OS probe children were not all reaped")
+    if kind == "cpu":
+        if started != 2 or observation["wallLimitMillis"] != 3000:
+            raise ValueError("CPU probe workload bound mismatch")
+    elif (not 1 <= started <= 31 or not 1 <= observation["spawnFailures"] <= 40
+            or not 1 <= observation["spawnAttempts"] <= 40
+            or observation["spawnAttempts"] != started + observation["spawnFailures"]
+            or observation["failureErrno"] != 11):
+        raise ValueError("PID probe did not confirm bounded EAGAIN exhaustion")
+
+
 def frame(value):
     return struct.pack(">I", len(value)) + value
 
@@ -345,12 +381,30 @@ class Laboratory:
         finally:
             self.dispose(name, process)
 
+    def resource_limit(self, kind):
+        if kind not in ("cpu", "pids"):
+            raise ValueError("unknown fixed OS resource probe")
+        name, process = self.start(kind, "read ack && exec /usr/local/bin/ariadne-qualification-os-probe " + kind)
+        try:
+            stdout, stderr = process.communicate(input=b"\n", timeout=15)
+            if process.returncode or len(stdout) > 16384:
+                raise RuntimeError("actual OS resource probe failed")
+            observation = json.loads(stdout)
+            verify_limit_probe(kind, observation)
+            case = "actual-os-cpu-throttle" if kind == "cpu" else "actual-os-pid-exhaustion"
+            self.results.append({"case": case, "status": "pass", "exitCode": 0,
+                                 "observed": observation})
+        finally:
+            self.dispose(name, process)
+
     def run(self):
         self.preflight()
         try:
             self.operating_system()
             for kind in ("pure", "loop", "import", "memory", "output"):
                 self.worker(kind, "ok" if kind == "pure" else "error")
+            self.resource_limit("cpu")
+            self.resource_limit("pids")
             self.memory_oom()
             self.detached_timeout()
         finally:

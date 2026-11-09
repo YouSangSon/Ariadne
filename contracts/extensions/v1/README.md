@@ -55,3 +55,10 @@ schema contract with runtime `builtin`. It has no WASM artifact hash. Binary
 release identity belongs to host composition/release metadata. User manifests
 require an artifact SHA-256, which remains a claim until the package reader
 verifies the actual raw WASM bytes. A matching hash is no safety proof.
+
+The published WIT source is parsed and type-resolved by the pinned Rust
+`wit_contract` integration test. It rejects changes to the world identity,
+host imports, exports and the worker byte-list/result signature. Run it with
+`cargo test --locked --manifest-path runtime/rust/Cargo.toml --test wit_contract`
+from the repository root, using task-owned Cargo directories. This check does
+not generate an author SDK or compile user packages.
