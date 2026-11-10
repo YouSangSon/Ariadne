@@ -54,6 +54,12 @@ pub struct Executor {
     engine: Engine,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum CompileEvent {
+    CompileStarted,
+    CompileFinished,
+}
+
 impl Executor {
     pub fn new() -> wasmtime::Result<Self> {
         let mut config = Config::new();
@@ -75,6 +81,15 @@ impl Executor {
     }
 
     pub fn execute(&self, wasm: &[u8], input: &[u8]) -> Outcome {
+        self.execute_observed(wasm, input, |_| {})
+    }
+
+    pub fn execute_observed(
+        &self,
+        wasm: &[u8],
+        input: &[u8],
+        mut observe: impl FnMut(CompileEvent),
+    ) -> Outcome {
         if wasm.len() > MAX_WASM
             || wasm.get(..8) != Some(b"\0asm\x0d\0\x01\0")
             || input.len() > MAX_INPUT
@@ -91,15 +106,18 @@ impl Executor {
                 engine.increment_epoch();
             }
         });
-        let result = self.run(wasm, input);
+        let result = self.run(wasm, input, &mut observe);
         let _ = stop.send(());
         let _ = ticker.join();
         result
     }
 
-    fn run(&self, wasm: &[u8], input: &[u8]) -> Outcome {
+    fn run(&self, wasm: &[u8], input: &[u8], observe: &mut impl FnMut(CompileEvent)) -> Outcome {
         // Only compile raw bytes. Never deserialize native code or load from a guest path.
-        let component = match Component::new(&self.engine, wasm) {
+        observe(CompileEvent::CompileStarted);
+        let compiled = Component::new(&self.engine, wasm);
+        observe(CompileEvent::CompileFinished);
+        let component = match compiled {
             Ok(component) => component,
             Err(_) => return Outcome::InvalidComponent,
         };

@@ -1,4 +1,4 @@
-use ariadne_extension_worker::engine::{Executor, Outcome};
+use ariadne_extension_worker::engine::{CompileEvent, Executor, Outcome};
 
 #[test]
 fn invalid_component_is_a_structured_failure() {
@@ -38,6 +38,37 @@ fn pure_component_returns_bytes() {
         Executor::new().unwrap().execute(&component(OK, ""), b"{}"),
         Outcome::Output(b"{}".to_vec())
     );
+}
+
+#[test]
+fn compilation_observation_finishes_on_success_and_compile_error() {
+    let executor = Executor::new().unwrap();
+    for (wasm, expected) in [
+        (component(OK, ""), Outcome::Output(b"{}".to_vec())),
+        (b"\0asm\x0d\0\x01\0\xff".to_vec(), Outcome::InvalidComponent),
+    ] {
+        let mut events = Vec::new();
+        assert_eq!(
+            executor.execute_observed(&wasm, b"{}", |event| events.push(event)),
+            expected
+        );
+        assert_eq!(
+            events,
+            [CompileEvent::CompileStarted, CompileEvent::CompileFinished]
+        );
+    }
+}
+
+#[test]
+fn rejected_header_does_not_report_compilation() {
+    let mut events = Vec::new();
+    assert_eq!(
+        Executor::new()
+            .unwrap()
+            .execute_observed(b"not wasm", b"{}", |event| events.push(event)),
+        Outcome::InvalidComponent
+    );
+    assert!(events.is_empty());
 }
 
 #[test]
@@ -135,15 +166,19 @@ fn export_qualification_fixtures() {
     );
     assert!(directory.is_absolute());
     std::fs::create_dir_all(&directory).unwrap();
+    let output = br#"{"schemaVersion":1,"sections":[{"title":"Derived report","body":"Untrusted extension output","sourceIds":["comparison-01"]}]}"#;
+    let body = OK.replace(
+        "i32.const 2 i32.store",
+        &format!("i32.const {} i32.store", output.len()),
+    );
+    let mut compile = String::from("(core module $compile");
+    for _ in 0..40_000 {
+        compile.push_str("(func (result i32) i32.const 1)");
+    }
+    compile.push_str(") (core instance (instantiate $compile))");
     let cases = [
-        ("pure", {
-            let output = br#"{"schemaVersion":1,"sections":[{"title":"Derived report","body":"Untrusted extension output","sourceIds":["comparison-01"]}]}"#;
-            let body = OK.replace(
-                "i32.const 2 i32.store",
-                &format!("i32.const {} i32.store", output.len()),
-            );
-            component_with_output(&body, "", output)
-        }),
+        ("pure", component_with_output(&body, "", output)),
+        ("compile", component_with_output(&body, &compile, output)),
         (
             "loop",
             component("(loop $forever br $forever) i32.const 0", ""),
@@ -165,6 +200,7 @@ fn export_qualification_fixtures() {
         ),
     ];
     for (name, wasm) in cases {
+        assert!(wasm.len() <= ariadne_extension_worker::domain::MAX_WASM);
         use std::io::Write;
         let mut file = std::fs::OpenOptions::new()
             .write(true)
