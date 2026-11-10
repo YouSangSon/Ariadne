@@ -67,3 +67,19 @@ fixture is not part of the worker protocol or a public execution capability.
 The host releases each probe only after inspect; stdin EOF before that release
 must not start load. Production worker behavior and its no-import contract stay
 unchanged. Never run the load fixture directly on the host.
+
+Compilation emits at most two fixed, best-effort stderr markers:
+`ariadne-extension-worker:compile-started` immediately before `Component::new`
+and `ariadne-extension-worker:compile-finished` immediately after either its
+successful or error return. These contain no guest data. A closed stderr receiver
+does not change stdout or ACK behavior. `Executor::execute` remains available;
+`execute_observed` exposes these adapter events without adding domain I/O.
+
+Markers describe observed call boundaries. Missing completion after an attach
+connection dies does not prove that the compiler was still executing at SIGKILL.
+The laboratory always records `phaseAtKill: unknown`. Its compile-death case
+first requires a successful normal control of the same fixture digest under the
+same image/profile, then records observed entry, termination and cleanup as
+separate facts. Invalid/partial markers, early completion/output or failed cleanup
+remain inconclusive and exit nonzero. The controlled heavy fixture is exported
+only by the ignored test and must never be compiled on the unconfined host.

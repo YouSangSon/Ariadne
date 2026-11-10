@@ -159,3 +159,52 @@ compile 중 부모 사망의 시점별 관측, WIT SDK/binding 생성·사용자
 사용 여부를 확인해 제거했고 rootless image/container 목록은 비어 있다. 기존
 rootful 컨테이너 두 개의 목록은 작업 전후 같고 전역 cache·machine·connection과
 사용자 자료·private 증거는 보존했다.
+
+## 후속: 컴파일 진입 관측과 부모 사망
+
+PR #8은 main `b2d516c`에 병합했으며 검증한 tree와 병합 tree가 일치한다.
+다음 단위는 compile 호출 경계의 관측과 attach 부모 사망 뒤 종료를 확인한다.
+이 관측으로 SIGKILL 순간 compiler 내부에 있었다고 단정하지 않는다.
+
+engine adapter가 `Component::new` 직전 CompileStarted와 모든 정상/오류 반환
+직후 CompileFinished를 알린다. composition만 고정된 비민감 stderr 표식을
+best-effort로 출력하고 domain·stdout frame·ACK·권한 계약은 유지한다.
+기존 execute는 관측 없는 호환 진입점으로 남긴다. 로그 출력 실패가 응답
+프로토콜을 panic으로 바꾸지 않는지 검사한다.
+
+실험 도구는 작은 표식을 EOF 전에 읽고 부분 줄·중복·역순·초과를 거절한다.
+고정 fixture의 정상 compile과 응답·ACK·종료·정리를 먼저 같은 Podman profile에서 확인한 뒤, 시작
+관측 후 attach 프로세스만 종료한다. kill 전에 Finished·응답이 관측되면
+inconclusive로 남기고 성공 사례 수에 넣지 않는다. marker 미관측은 사건
+미발생의 증거가 아니므로 `phaseAtKill`은 항상 unknown이다.
+
+종료 판정은 자연 종료 관측·비OOM·CID/label 정리·I/O 회수를 각각 확인한다.
+container 시작부터 종료까지의 수명과 kill 이후 대기 시간을 구분하며 실제
+30초 profile과 측정 허용 오차 5초를 별도 기록한다. 이 허용 오차는 profile
+확대나 지연 SLO가 아니다. 구현·실제 시험·CI가 끝나기 전에는 통과로 쓰지 않는다.
+
+정상 대조 시험은 수동 선행조건으로 두지 않고 도구 안에서 강제한다. 대조
+artifactDigest와 미리 읽은 종료 실험 bytes의 digest가 다르면 실험 대상을
+생성하지 않는다. 기존 10개 + 정상 compile 대조 + 부모 사망 관측으로 최종
+실행 결과는 12개다. 사례 수 증가 자체가 지원 조합 등록을 뜻하지 않는다.
+
+최종 소스의 실제 실행 `70d0d1eaa5a94574`에서 12개가 모두 통과했고 소유 container
+12개의 종료·삭제와 미해결 0개를 확인했다. 정상 대조는 같은 artifact digest로
+응답·ACK·exit 0·비OOM을 통과했다. 후속 attach SIGKILL은 -9, worker는 exit 2로
+자연 종료했고 강제 cleanup 이전 종료와 비OOM을 확인했다. kill 이후 관측 대기는
+190.169 ms, container metadata의 전체 수명은 514.553 ms였다. 이는 단일 실행
+기록이며 지연 SLO나 성능 개선 수치가 아니다. 시작 표식만 관측됐고 kill 전 종료
+표식과 stdout은 미관측이지만, `phaseAtKill: unknown`을 그대로 남긴다.
+
+로컬 Rust 검사 28개·example 파서 1개·명시 fixture export 1개·fmt·clippy,
+Python 28개, 기존 Node 소스의 코어 gate가 통과했다. 이전 관측 없는 stderr
+reader가 EOF까지 표식을 기다리는 실패와, 정상 compile 대조 없이 종료 대상을
+시작하던 실패를 재현하고 수정했다. Go와 Memory/Code 소스는 변경하지 않았다.
+동일 소스의 기존 검증 근거를 재사용하며 새 원격 CI 결과는 별도 확인한다.
+
+후속 관측 단위의 정리: 열린 파일 없음 확인 뒤 전용 cache·target·vendor·fixture·
+helper 2,011,660 KiB(약 1.92 GiB)를 제거했다. 이 작업 소유 image 3개도 정상
+rmi로 제거했고 rootless image/container 목록이 비어 있다. 다른 작업 rootful
+컨테이너 목록은 전후 같으며 전역 cache·machine/connection·사용자 자료와
+private 검증 근거는 보존했다. 독립 리뷰에서 소스 6개와 fixture bytes hash 및
+실제 receipt/inspect의 CID·image·label·종료·정리 일치를 확인했다.

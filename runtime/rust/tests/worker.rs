@@ -1,5 +1,5 @@
 use ariadne_extension_worker::{domain::*, protocol::*};
-use std::io::{Read, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -71,6 +71,99 @@ fn frames_with_wasm(child: &mut std::process::Child, wasm: &[u8]) {
     let stdin = child.stdin.as_mut().unwrap();
     write_frame(stdin, &serde_json::to_vec(&request).unwrap(), MAX_REQUEST).unwrap();
     write_frame(stdin, wasm, MAX_WASM).unwrap();
+}
+
+fn pure_component() -> Vec<u8> {
+    wat::parse_str(r#"(component
+        (core module $m
+          (memory (export "memory") 2)
+          (data (i32.const 1024) "{}")
+          (func $guest_private_text)
+          (func (export "realloc") (param i32 i32 i32 i32) (result i32) i32.const 4096)
+          (func (export "project") (param i32 i32) (result i32)
+            i32.const 4 i32.const 1024 i32.store
+            i32.const 8 i32.const 2 i32.store i32.const 0))
+        (core instance $i (instantiate $m))
+        (func (export "project") (param "input" (list u8)) (result (result (list u8) (error string)))
+          (canon lift (core func $i "project") (memory (core memory $i "memory")) (realloc (core func $i "realloc")))))"#).unwrap()
+}
+
+#[test]
+fn compile_markers_precede_stdin_eof_without_payload() {
+    let malformed = b"\0asm\x0d\0\x01\0\xffguest_private_text".to_vec();
+    for (wasm, status) in [(pure_component(), "ok"), (malformed, "error")] {
+        let mut child = launch();
+        frames_with_wasm(&mut child, &wasm);
+        let stderr = child.stderr.take().unwrap();
+        let (tx, rx) = std::sync::mpsc::channel();
+        let reader = std::thread::spawn(move || {
+            let mut stderr = BufReader::with_capacity(1, stderr);
+            for _ in 0..2 {
+                let mut line = String::new();
+                stderr.read_line(&mut line).unwrap();
+                let _ = tx.send(line);
+            }
+            let mut tail = Vec::new();
+            stderr.read_to_end(&mut tail).unwrap();
+            tail
+        });
+        for expected in [
+            "ariadne-extension-worker:compile-started\n",
+            "ariadne-extension-worker:compile-finished\n",
+        ] {
+            assert_eq!(
+                rx.recv_timeout(Duration::from_secs(5))
+                    .expect("compile marker waited for stdin EOF"),
+                expected
+            );
+        }
+        let response = read_frame(child.stdout.as_mut().unwrap(), MAX_RESPONSE).unwrap();
+        let response: serde_json::Value = serde_json::from_slice(&response).unwrap();
+        assert_eq!(response["status"], status);
+        if status == "ok" {
+            assert_eq!(response["output"], "{}");
+            assert!(response.get("code").is_none());
+        } else {
+            assert_eq!(response["code"], "INVALID_COMPONENT");
+            assert!(response.get("output").is_none());
+        }
+        assert_eq!(response["invocationId"], "test_1");
+        assert_eq!(response["artifactDigest"], sha256(&wasm));
+        child.stdin.as_mut().unwrap().write_all(&[ACK]).unwrap();
+        drop(child.stdin.take());
+        assert!(wait(&mut child).success());
+        assert!(reader.join().unwrap().is_empty());
+        let mut tail = Vec::new();
+        child
+            .stdout
+            .as_mut()
+            .unwrap()
+            .read_to_end(&mut tail)
+            .unwrap();
+        assert!(tail.is_empty());
+    }
+}
+
+#[test]
+fn closed_stderr_does_not_break_response_or_ack() {
+    let mut child = launch();
+    drop(child.stderr.take());
+    frames_with_wasm(&mut child, &pure_component());
+    let response = read_frame(child.stdout.as_mut().unwrap(), MAX_RESPONSE).unwrap();
+    let response: serde_json::Value = serde_json::from_slice(&response).unwrap();
+    assert_eq!(response["status"], "ok");
+    assert_eq!(response["output"], "{}");
+    child.stdin.as_mut().unwrap().write_all(&[ACK]).unwrap();
+    drop(child.stdin.take());
+    assert!(wait(&mut child).success());
+    let mut tail = Vec::new();
+    child
+        .stdout
+        .as_mut()
+        .unwrap()
+        .read_to_end(&mut tail)
+        .unwrap();
+    assert!(tail.is_empty());
 }
 
 #[test]

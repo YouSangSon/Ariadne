@@ -1,5 +1,6 @@
 """Explicit E0 laboratory; never installs or authorizes a user extension."""
 import argparse
+from datetime import datetime
 import hashlib
 import json
 import os
@@ -95,6 +96,78 @@ def frame(value):
 
 def digest(value):
     return hashlib.sha256(value).hexdigest()
+
+
+class _CompileObservation:
+    """Bounded marker observations, never proof of the phase at SIGKILL."""
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.changed = queue.Queue(maxsize=1)
+        self.events = []
+        self.invalid = self.overflow = self.incomplete = False
+        self.stderr_bytes = self.stdout_before_kill = 0
+        self.kill_at = None
+
+    def notify(self):
+        try:
+            self.changed.put_nowait(None)
+        except queue.Full:
+            pass
+
+    def drain_stderr(self, stream):
+        pending = bytearray()
+        markers = (b"ariadne-extension-worker:compile-started\n",
+                   b"ariadne-extension-worker:compile-finished\n")
+        try:
+            while data := stream.read1(8192):
+                observed_at = time.monotonic()
+                with self.lock:
+                    self.stderr_bytes = min(65537, self.stderr_bytes + len(data))
+                    if self.stderr_bytes > 65536:
+                        self.overflow = True
+                        pending.clear()
+                    elif not self.invalid:
+                        pending.extend(data)
+                        while b"\n" in pending:
+                            line, _, rest = pending.partition(b"\n")
+                            pending = bytearray(rest)
+                            expected = markers[len(self.events)] if len(self.events) < 2 else None
+                            if line + b"\n" != expected:
+                                self.invalid = True
+                                pending.clear()
+                                break
+                            self.events.append(("compile-started" if not self.events else "compile-finished", observed_at))
+                self.notify()
+        except BaseException:
+            with self.lock:
+                self.invalid = True
+        finally:
+            with self.lock:
+                self.incomplete = bool(pending)
+            self.notify()
+
+    def drain_stdout(self, stream):
+        try:
+            while data := stream.read1(8192):
+                observed_at = time.monotonic()
+                with self.lock:
+                    if self.kill_at is None or observed_at <= self.kill_at:
+                        self.stdout_before_kill = min(65537, self.stdout_before_kill + len(data))
+        except BaseException:
+            with self.lock:
+                self.invalid = True
+            self.notify()
+
+    def snapshot(self):
+        with self.lock:
+            return {"compileMarkers": [name for name, _ in self.events],
+                "compileStartedObserved": bool(self.events),
+                "compileFinishedObservedBeforeKill": any(name == "compile-finished" and
+                    (self.kill_at is None or at <= self.kill_at) for name, at in self.events),
+                "phaseSignalValid": not (self.invalid or self.overflow or self.incomplete),
+                "phaseSignalInvalid": self.invalid, "phaseSignalOverflow": self.overflow,
+                "phaseSignalIncomplete": self.incomplete,
+                "stderrBytesObserved": self.stderr_bytes, "stdoutBytesBeforeKill": self.stdout_before_kill}
 
 
 class Laboratory:
@@ -238,13 +311,17 @@ class Laboratory:
             "unresolvedContainers": sorted(self.owned)}, indent=2) + "\n")
         temporary.replace(path)
 
-    def worker(self, kind, expected):
+    def request(self, kind):
         wasm = (Path(self.args.fixtures) / (kind + ".wasm")).read_bytes()
         payload = Path(self.args.input).read_bytes()
         request = {"protocol": "ariadne.extension-worker/1", "invocationId": self.run_id,
             "packageDigest": "a" * 64, "inputDigest": digest(payload),
             "artifactDigest": digest(wasm), "world": "ariadne:extensions/report-projector@1.0.0",
             "profileRevision": "e0-1", "input": payload.decode("utf8")}
+        return request, wasm, payload
+
+    def worker(self, kind, expected):
+        request, wasm, payload = self.request(kind)
         name, process = self.start(kind)
         errors, response, eof = bytearray(), queue.Queue(), queue.Queue()
         sent, acknowledged, completed = queue.Queue(), queue.Queue(), queue.Queue()
@@ -330,7 +407,8 @@ class Laboratory:
                 raise RuntimeError("worker exit or I/O cleanup failed")
             state = self.inspect(name)["State"]
             self.results.append({"case": kind, "status": "pass", "workerStatus": message["status"],
-                "code": message.get("code"), "exitCode": state["ExitCode"], "oomKilled": state.get("OOMKilled")})
+                "artifactDigest": request["artifactDigest"], "code": message.get("code"),
+                "exitCode": state["ExitCode"], "oomKilled": state.get("OOMKilled")})
         finally:
             acknowledged.put(False)
             self.dispose(name, process, (stdin_writer, stdout_reader, stderr_reader))
@@ -370,6 +448,116 @@ class Laboratory:
         finally:
             self.dispose(name, process, (reader,))
 
+    def compile_parent_death(self):
+        request, wasm, _ = self.request("compile")
+        observation = _CompileObservation()
+        receipt = {"case": "compile-enter-observed-parent-killed-timeout", "status": "inconclusive",
+            "artifactDigest": request["artifactDigest"], "normalCompileControlPassed": False,
+            "normalCompileControlArtifactDigest": None,
+            "phaseAtKill": "unknown", "attachAliveBeforeKill": False, "containerAliveBeforeKill": False,
+            "attachSigkillRequested": False, "attachExitCode": None, "exitCode": None, "oomKilled": None,
+            "killToTerminationMillis": None, "containerLifetimeMillis": None,
+            "containerRuntimeLimitMillis": 30000, "terminationToleranceMillis": 5000,
+            "naturalTerminationObserved": False, "cleanupConfirmed": False}
+        receipt.update(observation.snapshot())
+        try:
+            self.worker("compile", "ok")
+            control = self.results[-1]
+            receipt["normalCompileControlArtifactDigest"] = control.get("artifactDigest")
+            if (control.get("case") != "compile" or control.get("status") != "pass"
+                    or control.get("artifactDigest") != request["artifactDigest"]):
+                raise RuntimeError("normal compile control artifact differs from the kill target")
+            receipt["normalCompileControlPassed"] = True
+        except Exception as error:
+            receipt["reason"] = str(error) or type(error).__name__
+            self.results.append(receipt)
+            self.save()
+            raise RuntimeError("normal compile control did not pass for the kill target") from error
+        self.results.append(receipt)
+        name, process = self.start("compile-parent")
+        sent = queue.Queue(maxsize=1)
+        deadline = time.monotonic() + 25
+
+        def write_request():
+            try:
+                process.stdin.write(frame(json.dumps(request).encode()) + frame(wasm))
+                process.stdin.flush()
+                sent.put(None)
+            except BaseException as error:
+                sent.put(error)
+
+        threads = (threading.Thread(target=write_request, daemon=True),
+            threading.Thread(target=observation.drain_stderr, args=(process.stderr,), daemon=True),
+            threading.Thread(target=observation.drain_stdout, args=(process.stdout,), daemon=True))
+        failure = None
+        try:
+            for thread in threads:
+                thread.start()
+            write_error = sent.get(timeout=max(0, deadline - time.monotonic()))
+            if write_error is not None:
+                raise write_error
+            while True:
+                snapshot = observation.snapshot()
+                receipt.update(snapshot)
+                if (not snapshot["phaseSignalValid"] or snapshot["compileFinishedObservedBeforeKill"]
+                        or snapshot["stdoutBytesBeforeKill"]):
+                    raise RuntimeError("compile marker or output cannot establish the observation window")
+                if snapshot["compileStartedObserved"]:
+                    break
+                observation.changed.get(timeout=max(0, deadline - time.monotonic()))
+            before = self.inspect(name)
+            receipt["attachAliveBeforeKill"] = process.poll() is None
+            receipt["containerAliveBeforeKill"] = before["State"].get("Running") is True
+            receipt["oomKilled"] = before["State"].get("OOMKilled")
+            if (before["Id"] != self.container_ids[name]
+                    or before.get("Config", {}).get("Labels", {}).get("io.ariadne.qualification") != name
+                    or not receipt["attachAliveBeforeKill"] or not receipt["containerAliveBeforeKill"]
+                    or receipt["oomKilled"] is not False):
+                raise RuntimeError("owned worker and attach must both be alive without OOM before SIGKILL")
+            # A marker is an observation only; the compiler may return before SIGKILL.
+            kill_started = time.monotonic()
+            process.kill()
+            receipt["attachSigkillRequested"] = True
+            with observation.lock:
+                observation.kill_at = time.monotonic()
+            receipt["attachExitCode"] = process.wait(timeout=3)
+            self.call("wait", self.container_ids[name], timeout=max(0.001, 35 - (time.monotonic() - kill_started)))
+            receipt["killToTerminationMillis"] = round((time.monotonic() - kill_started) * 1000, 3)
+            final = self.inspect(name)
+            state = final["State"]
+            receipt.update({"exitCode": state.get("ExitCode"), "oomKilled": state.get("OOMKilled"),
+                "naturalTerminationObserved": state.get("Running") is False})
+            started = datetime.fromisoformat(state["StartedAt"].replace("Z", "+00:00"))
+            finished = datetime.fromisoformat(state["FinishedAt"].replace("Z", "+00:00"))
+            if started.utcoffset() is None or finished.utcoffset() is None:
+                raise RuntimeError("container lifetime timestamps lack timezone information")
+            receipt["containerLifetimeMillis"] = (finished - started).total_seconds() * 1000
+            if (final["Id"] != self.container_ids[name]
+                    or final.get("Config", {}).get("Labels", {}).get("io.ariadne.qualification") != name
+                    or receipt["attachExitCode"] != -9 or not receipt["naturalTerminationObserved"]
+                    or type(receipt["exitCode"]) is not int or receipt["exitCode"] == 0
+                    or receipt["oomKilled"] is not False or receipt["killToTerminationMillis"] > 35000
+                    or not 0 < receipt["containerLifetimeMillis"] <= 35000):
+                raise RuntimeError("natural non-OOM termination exceeded or failed the fixed profile bounds")
+        except Exception as error:
+            failure = error
+            receipt["reason"] = str(error) or type(error).__name__
+        finally:
+            try:
+                self.dispose(name, process, threads)
+                receipt["cleanupConfirmed"] = any(item["id"] == self.container_ids[name]
+                    and item["label"] == name and item["terminated"] and item["removed"] for item in self.cleanup)
+            finally:
+                receipt["attachExitCode"] = process.returncode
+                receipt.update(observation.snapshot())
+                self.save()
+        if (failure is not None or not receipt["cleanupConfirmed"] or not receipt["phaseSignalValid"]
+                or not receipt["compileStartedObserved"] or receipt["compileFinishedObservedBeforeKill"]
+                or receipt["stdoutBytesBeforeKill"]):
+            raise RuntimeError("compile observation inconclusive") from failure
+        receipt["status"] = "pass"
+        self.save()
+
     def memory_oom(self):
         name, process = self.start("oom", "value=$(head -c 400000000 /dev/zero | tr '\\000' x); printf '%s' \"$value\" > /dev/null")
         try:
@@ -407,6 +595,7 @@ class Laboratory:
             self.resource_limit("pids")
             self.memory_oom()
             self.detached_timeout()
+            self.compile_parent_death()
         finally:
             for name in list(self.owned):
                 self.dispose(name)

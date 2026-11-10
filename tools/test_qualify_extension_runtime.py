@@ -1,4 +1,6 @@
 import copy
+import hashlib
+import io
 import json
 from pathlib import Path
 import queue
@@ -9,7 +11,7 @@ import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
-from qualify_extension_runtime import Laboratory, verify_profile, verify_os_profile, verify_limit_probe
+from qualify_extension_runtime import Laboratory, verify_profile, verify_os_profile, verify_limit_probe, _CompileObservation
 
 
 class InspectionTests(unittest.TestCase):
@@ -324,6 +326,207 @@ assert sys.stdin.buffer.read() == b'\\x01'
         self.assertEqual(process.returncode, 0)
         self.assertLessEqual(set(threading.enumerate()), previous_threads)
         self.assertEqual(self.lab.results[0]["status"], "pass")
+        self.assertEqual(self.lab.results[0]["artifactDigest"],
+                         hashlib.sha256(b"fixture").hexdigest())
+
+
+class CompileObservationTests(unittest.TestCase):
+    def test_started_is_observed_live_before_stderr_eof(self):
+        process = subprocess.Popen([sys.executable, "-B", "-c",
+            "import sys,time; sys.stderr.write('ariadne-extension-worker:compile-started\\n'); sys.stderr.flush(); time.sleep(60)"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        observation = _CompileObservation()
+        reader = threading.Thread(target=observation.drain_stderr, args=(process.stderr,), daemon=True)
+        reader.start()
+        try:
+            observation.changed.get(timeout=1)
+            self.assertTrue(observation.snapshot()["compileStartedObserved"])
+            self.assertIsNone(process.poll(), "marker was only delivered after process EOF")
+        finally:
+            process.kill()
+            process.wait(timeout=3)
+            reader.join(timeout=2)
+            for stream in (process.stdin, process.stdout, process.stderr):
+                stream.close()
+            self.assertFalse(reader.is_alive())
+
+    def test_finished_same_chunk_and_invalid_signals_never_approve_kill(self):
+        started = b"ariadne-extension-worker:compile-started\n"
+        finished = b"ariadne-extension-worker:compile-finished\n"
+        for data in (started + finished, finished, started * 2, started + b"partial",
+                     started + b"private error\n", started + b"x" * 65536):
+            with self.subTest(size=len(data), prefix=data[:50]):
+                observation = _CompileObservation()
+                observation.drain_stderr(io.BytesIO(data))
+                snapshot = observation.snapshot()
+                self.assertFalse(snapshot["phaseSignalValid"] and
+                    snapshot["compileStartedObserved"] and not snapshot["compileFinishedObservedBeforeKill"])
+                self.assertLessEqual(snapshot["stderrBytesObserved"], 65537)
+                self.assertLessEqual(len(snapshot["compileMarkers"]), 2)
+                self.assertNotIn("private", json.dumps(snapshot))
+
+
+class CompileParentDeathTests(unittest.TestCase):
+    setUp = CleanupTests.setUp
+    def run_probe(self, program, *, state=None, before_state=None, wasm=b"fixture", short_wait=False):
+        root = Path(self.directory.name)
+        (root / "compile.wasm").write_bytes(wasm)
+        (root / "input.json").write_text("{}")
+        self.lab.args.fixtures = str(root)
+        self.lab.args.input = str(root / "input.json")
+        def normal_control(kind, expected):
+            self.assertEqual((kind, expected), ("compile", "ok"))
+            self.lab.results.append({"case": kind, "status": "pass",
+                "artifactDigest": hashlib.sha256(wasm).hexdigest()})
+
+        self.lab.worker = Mock(side_effect=normal_control)
+        process = subprocess.Popen([sys.executable, "-B", "-c", program],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.addCleanup(lambda: process.kill() if process.poll() is None else None)
+        self.lab.start = Mock(return_value=(self.name, process))
+        self.lab.container_ids[self.name] = "owned-id"
+        self.lab.check_endpoint = Mock()
+        running = {"Id": "owned-id", "Config": {"Labels": {"io.ariadne.qualification": self.name}},
+            "State": {"Running": True, "OOMKilled": False}}
+        if before_state:
+            running["State"].update(before_state)
+        stopped = copy.deepcopy(running)
+        stopped["State"].update({"Running": False, "ExitCode": 137, "OOMKilled": False,
+            "StartedAt": "2026-11-10T00:00:00Z", "FinishedAt": "2026-11-10T00:00:30Z"})
+        if state:
+            stopped["State"].update(state)
+        removed = forced_stopped = False
+
+        def call(command, *args, **kwargs):
+            nonlocal removed, forced_stopped
+            if command == "inspect":
+                if removed:
+                    return subprocess.CompletedProcess([], 1, b"", b"no such container")
+                item = stopped if forced_stopped or process.poll() is not None else running
+                return subprocess.CompletedProcess([], 0, json.dumps([item]).encode(), b"")
+            if command == "kill":
+                forced_stopped = True
+            if command == "rm":
+                self.assertEqual(args, ("owned-id",))
+                removed = True
+            return subprocess.CompletedProcess([], 0, b"137\n", b"")
+
+        self.lab.call = Mock(side_effect=call)
+        before = set(threading.enumerate())
+        original_get = queue.Queue.get
+
+        def bounded_get(target, *args, **kwargs):
+            if short_wait and "timeout" in kwargs:
+                kwargs["timeout"] = min(kwargs["timeout"], 0.1)
+            return original_get(target, *args, **kwargs)
+
+        try:
+            with patch("qualify_extension_runtime.queue.Queue.get", new=bounded_get):
+                self.lab.compile_parent_death()
+        finally:
+            self.assertIsNotNone(process.poll())
+            self.assertTrue(all(stream.closed for stream in (process.stdin, process.stdout, process.stderr)))
+            self.assertLessEqual(set(threading.enumerate()), before)
+            self.assertEqual(self.lab.cleanup[-1]["id"], "owned-id")
+            self.assertFalse(self.lab.owned)
+            if self.lab.results[-1]["naturalTerminationObserved"]:
+                self.assertFalse(any(call.args[0] == "kill" for call in self.lab.call.call_args_list),
+                                 "cleanup had to force container termination")
+        return self.lab.results[-1]
+
+    program = """
+import struct,sys,time
+for _ in range(2):
+    size = struct.unpack('>I', sys.stdin.buffer.read(4))[0]
+    assert len(sys.stdin.buffer.read(size)) == size
+sys.stderr.buffer.write(b'ariadne-extension-worker:compile-started\\n')
+sys.stderr.flush()
+time.sleep(60)
+"""
+
+    def test_compile_entry_kill_records_unknown_phase_and_owned_cleanup(self):
+        result = self.run_probe(self.program)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["phaseAtKill"], "unknown")
+        self.assertEqual(result["attachExitCode"], -9)
+        self.assertTrue(result["naturalTerminationObserved"] and result["cleanupConfirmed"])
+        self.assertEqual(result["containerLifetimeMillis"], 30000)
+        self.assertTrue(result["normalCompileControlPassed"])
+        self.assertEqual(result["normalCompileControlArtifactDigest"], result["artifactDigest"])
+
+    def test_failed_or_changed_normal_control_blocks_death_target_creation(self):
+        root = Path(self.directory.name)
+        (root / "compile.wasm").write_bytes(b"fixture")
+        (root / "input.json").write_text("{}")
+        self.lab.args.fixtures = str(root)
+        self.lab.args.input = str(root / "input.json")
+        for fails in (True, False):
+            with self.subTest(control_fails=fails):
+                self.lab.results.clear()
+                self.lab.start = Mock(side_effect=AssertionError(
+                    "death target started without a passed matching normal compile control"))
+
+                def control(kind, expected):
+                    if fails:
+                        raise RuntimeError("normal compilation failed")
+                    self.lab.results.append({"case": kind, "status": "pass", "artifactDigest": "b" * 64})
+
+                self.lab.worker = Mock(side_effect=control)
+                with self.assertRaisesRegex(RuntimeError, "normal compile control"):
+                    self.lab.compile_parent_death()
+                self.lab.start.assert_not_called()
+                self.lab.worker.assert_called_once_with("compile", "ok")
+                result = self.lab.results[-1]
+                self.assertEqual(result["status"], "inconclusive")
+                self.assertFalse(result["normalCompileControlPassed"])
+                self.assertFalse(result["attachSigkillRequested"])
+
+    def test_finished_before_kill_is_inconclusive(self):
+        program = self.program.replace("compile-started\\n'", "compile-started\\nariadne-extension-worker:compile-finished\\n'")
+        with self.assertRaisesRegex(RuntimeError, "compile observation inconclusive"):
+            self.run_probe(program)
+        self.assertEqual(self.lab.results[-1]["status"], "inconclusive")
+        self.assertTrue(self.lab.results[-1]["compileFinishedObservedBeforeKill"])
+
+    def test_stalled_input_has_bounded_deadline_and_reaps_threads(self):
+        with self.assertRaises((RuntimeError, queue.Empty)):
+            self.run_probe("import time; time.sleep(60)", wasm=b"x" * 1048576, short_wait=True)
+        self.assertEqual(self.lab.results[-1]["status"], "inconclusive")
+
+    def test_partial_overflow_duplicate_and_unknown_streams_are_inconclusive(self):
+        started = b"ariadne-extension-worker:compile-started\n"
+        for data in (started + b"partial", started + b"x" * 65536, started * 2,
+                     b"ariadne-extension-worker:compile-finished\n", started + b"private error\n"):
+            program = self.program.replace("b'ariadne-extension-worker:compile-started\\n'", repr(data))
+            with self.subTest(size=len(data)), self.assertRaises(RuntimeError):
+                self.run_probe(program)
+            result = self.lab.results[-1]
+            self.assertEqual(result["status"], "inconclusive")
+            self.assertFalse(result["phaseSignalValid"])
+            self.assertEqual(result["phaseAtKill"], "unknown")
+            self.assertNotIn("private", json.dumps(result))
+
+    def test_stdout_is_drained_bounded_and_blocks_approval(self):
+        program = self.program.replace("sys.stderr.buffer.write(",
+            "sys.stdout.buffer.write(b'x' * 1048576); sys.stdout.flush(); sys.stderr.buffer.write(")
+        with self.assertRaises(RuntimeError):
+            self.run_probe(program)
+        self.assertEqual(self.lab.results[-1]["stdoutBytesBeforeKill"], 65537)
+        self.assertEqual(self.lab.results[-1]["status"], "inconclusive")
+
+    def test_dead_or_oom_worker_before_kill_is_inconclusive(self):
+        for state in ({"Running": False}, {"OOMKilled": True}):
+            with self.subTest(state=state), self.assertRaises(RuntimeError):
+                self.run_probe(self.program, before_state=state)
+            self.assertEqual(self.lab.results[-1]["status"], "inconclusive")
+            self.assertFalse(self.lab.results[-1]["attachSigkillRequested"])
+
+    def test_oom_and_lifetime_beyond_profile_tolerance_cannot_pass(self):
+        for state in ({"OOMKilled": True}, {"FinishedAt": "2026-11-10T00:00:36Z"},
+                      {"FinishedAt": "2026-11-10T00:00:30"}, {"ExitCode": 0}):
+            with self.subTest(state=state), self.assertRaises(RuntimeError):
+                self.run_probe(self.program, state=state)
+            self.assertEqual(self.lab.results[-1]["status"], "inconclusive")
 
 
 class EndpointTests(unittest.TestCase):

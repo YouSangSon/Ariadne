@@ -1,5 +1,9 @@
-use ariadne_extension_worker::{domain::*, engine::Executor, protocol::*};
-use std::io::{self, BufReader, Read};
+use ariadne_extension_worker::{
+    domain::*,
+    engine::{CompileEvent, Executor},
+    protocol::*,
+};
+use std::io::{self, BufReader, Read, Write};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
@@ -41,7 +45,13 @@ fn run() -> Result<(), ()> {
         }
     });
     let executor = Executor::new().map_err(|_| ())?;
-    let mut outcome = executor.execute(&wasm, request.input.as_bytes());
+    let mut outcome = executor.execute_observed(&wasm, request.input.as_bytes(), |event| {
+        let marker: &[u8] = match event {
+            CompileEvent::CompileStarted => b"ariadne-extension-worker:compile-started\n",
+            CompileEvent::CompileFinished => b"ariadne-extension-worker:compile-finished\n",
+        };
+        let _ = io::stderr().lock().write_all(marker);
+    });
     let mut response = serde_json::to_vec(&Response::new(&request, &outcome)).map_err(|_| ())?;
     if response.len() > MAX_RESPONSE {
         outcome = Outcome::InvalidOutput;
