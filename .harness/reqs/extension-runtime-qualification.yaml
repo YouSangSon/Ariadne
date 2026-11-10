@@ -30,6 +30,16 @@ functional_contract:
       statement: 기존 제품과 공개 실행 금지를 보존하고 문서와 CI 정의 및 소유 자원 정리를 검증한다.
       verification: 관련 로컬 gate와 독립 리뷰 및 최종 diff와 소유 자원 잔여를 대조하고 원격 CI 및 main 병합은 별도 게시 증거로 관리한다.
       passes: true
+    - id: AC4
+      priority: P0
+      statement: CPU와 PID 제한의 실제 커널 집행과 유한 부하 및 자식 회수를 확인한다.
+      verification: 고정 Podman profile에서 throttle counter와 PID 거절 counter 및 EAGAIN과 모든 자식 회수 증거를 남긴다.
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: WIT 정본의 문법과 타입 및 worker world와 시그니처 불일치를 자동 거절한다.
+      verification: 고정 parser로 정본을 검사하고 잘못된 문법과 world 및 import와 export 및 입출력 타입 변형을 거절한다.
+      passes: true
 code_mapping:
   boundary_rules:
     - Memory와 Code 및 Node 공개 CLI와 원본 자료 및 다른 작업의 자원을 보존한다.

@@ -46,6 +46,7 @@ jobs:
         run: |
           cargo +1.93.0 fmt --manifest-path runtime/rust/Cargo.toml -- --check
           cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml
+          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
           cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
           python3 -B tools/test_qualify_extension_runtime.py
       - name: Remove task-owned Cargo outputs
