@@ -1,0 +1,52 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: postgres-migration-lifecycle
+  title: PostgreSQL 마이그레이션 직렬화와 테스트 초기화 주기 수정
+  status: ready_for_routing
+requirement:
+  user_intent: 기존 Go 도구 체인 PR의 필수 PostgreSQL CI를 막는 선행 결함을 별도 단위로 수정한다.
+  desired_outcome: 협력하는 마이그레이션 호출을 직렬화하고 업무 테스트의 스키마 준비를 hook에서 완료한다.
+  confirmed_facts:
+    - 기준 main은 e48e455fe797027a39d5470d76e11067c828cc0e이다.
+    - 기존 CI에서 테스트 시간 초과와 pg_type 중복 및 DDL 교착이 관측됐으나 최초 시간 초과의 원인은 확정하지 않았다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 독립 실제 PostgreSQL 연결의 중복 마이그레이션이 모두 완료되고 스키마가 존재한다.
+      verification: 관측 가능한 서버 잠금 대기로 겹침을 제어한 RED와 GREEN을 보관한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: DDL 이후 실행 오류가 전체 배치를 rollback하고 잠금을 해제하며 대기 및 후속 마이그레이션이 성공한다.
+      verification: 실제 PostgreSQL의 22012 오류와 DDL 부재 및 후속 성공을 검사한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 업무 테스트는 hook에서 스키마를 준비하며 기존 업무와 조직 및 동시성 검증을 보존한다.
+      verification: Node 22.23.4와 PostgreSQL 16에서 CI의 4파일 명령을 그대로 실행한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 패키지와 루트 필수 검사 및 독립 검토를 완료하고 작업 소유 임시 자원을 정리한다.
+      verification: 로컬 검사와 SOURCE_PASS 및 DELIVERY와 정확한 게시 HEAD의 필수 CI 12개를 구분 기록한다.
+      passes: false
+code_mapping:
+  boundary_rules:
+    - runMigrations의 query-only 계약과 공개 시그니처 및 SQL 원문 반환을 유지한다.
+    - 하나의 단순 query 메시지에 고정 two-int advisory transaction lock과 기존 SQL을 실행한다.
+    - 마이그레이션 SQL 및 embedded 자산과 스키마 및 의존성과 Go 파일을 변경하지 않는다.
+    - 기존 timeout과 skip 및 전역 병렬 설정을 변경하지 않는다.
+verification:
+  commands:
+    - npx vitest run tests/store/memory-repository.test.ts tests/store/memory-write-concurrency.integration.test.ts tests/jobs/ingest-job-repository.test.ts tests/db/migrate.test.ts
+    - npm run setup
+    - npm run verify
+  verify_gate_required: true
+  publication_gate: 소스 로컬 커밋 후 독립 SOURCE_PASS 전 push 금지; 정확한 HEAD의 필수 CI 12개와 독립 DELIVERY 전 main 병합 금지.
+audit:
+  must_not_implement:
+    - 온라인 업무 쓰기나 구형 migrator까지 보호한다는 보장
+    - migration ledger 또는 앱 전체 업무 잠금과 자동 마이그레이션 정책 변경
+    - 글로벌 toolchain과 credential 및 보호 규칙 변경

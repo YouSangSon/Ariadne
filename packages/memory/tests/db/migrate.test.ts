@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createPgPool } from "../../src/infrastructure/postgres/connection.js";
+import { setTimeout as delay } from "node:timers/promises";
+import { createPgPool, type PgPool } from "../../src/infrastructure/postgres/connection.js";
 import {
   readPostgresMigrationSql,
   resolveMigrationDatabaseUrl,
@@ -99,6 +100,90 @@ async function recreateTestDatabase() {
     await adminPool.query('CREATE DATABASE "memory_os_test"');
   } finally {
     await adminPool.end();
+  }
+}
+
+// Observe server state instead of assuming that a query has reached its lock.
+async function waitForBlocker(observer: PgPool, waitingPid: number, blockerPid: number) {
+  const deadline = Date.now() + 2_000;
+  while (Date.now() < deadline) {
+    const result = await observer.query<{ blocked: boolean }>(
+      "SELECT $2::int = ANY(pg_blocking_pids($1::int)) AS blocked",
+      [waitingPid, blockerPid],
+    );
+    if (result.rows[0]?.blocked) return;
+    await delay(10);
+  }
+  throw new Error(`backend ${waitingPid} did not wait for backend ${blockerPid}`);
+}
+
+async function overlapMigrations(failAfterDdl: boolean) {
+  await recreateTestDatabase();
+  const pools = Array.from({ length: 3 }, () => createPgPool({
+    connectionString: testConnectionString,
+    max: 1,
+  }));
+  const [observer, first, second] = pools;
+  // Test barriers use the bigint keyspace, separate from migration two-int locks.
+  const barrier = "731492864019";
+  const pending: Promise<unknown>[] = [];
+  try {
+    const pids = await Promise.all(pools.map(async (pool) => {
+      const result = await pool.query<{ pid: number }>("SELECT pg_backend_pid() AS pid");
+      return result.rows[0].pid;
+    }));
+    expect(new Set(pids).size).toBe(3);
+    await observer.query(`SELECT pg_advisory_lock(${barrier}::bigint)`);
+    // Only injection is synthetic: real PostgreSQL executes the whole batch.
+    const pausedPool = {
+      query: (sql: string) => first.query(`${sql}
+        CREATE TABLE migration_rollback_probe (id integer);
+        SELECT pg_advisory_xact_lock(${barrier}::bigint);
+        ${failAfterDdl ? "SELECT 1 / 0;" : ""}`),
+    } as PgPool;
+    const firstResult = runMigrations(pausedPool).then(
+      () => ({ status: "fulfilled" as const }),
+      (reason: unknown) => ({ status: "rejected" as const, reason }),
+    );
+    pending.push(firstResult);
+    await waitForBlocker(observer, pids[1], pids[0]);
+    const secondResult = runMigrations(second).then(
+      () => ({ status: "fulfilled" as const }),
+      (reason: unknown) => ({ status: "rejected" as const, reason }),
+    );
+    pending.push(secondResult);
+    await waitForBlocker(observer, pids[2], pids[1]);
+    const waitingLocks = await observer.query<{ locktype: string }>(
+      "SELECT locktype FROM pg_locks WHERE pid = $1 AND NOT granted",
+      [pids[2]],
+    );
+    await observer.query(`SELECT pg_advisory_unlock(${barrier}::bigint)`);
+    const results = await Promise.all([firstResult, secondResult]);
+    if (failAfterDdl) {
+      expect(results[0]).toMatchObject({ status: "rejected", reason: { code: "22012" } });
+      const probe = await observer.query<{ name: string | null }>(
+        "SELECT to_regclass('public.migration_rollback_probe')::text AS name",
+      );
+      expect(probe.rows[0].name).toBeNull();
+    } else {
+      expect(results[0]).toEqual({ status: "fulfilled" });
+    }
+    expect(results[1]).toEqual({ status: "fulfilled" });
+    expect(waitingLocks.rows).toEqual([{ locktype: "advisory" }]);
+    await runMigrations(second);
+    const schema = await observer.query<{ name: string | null }>(
+      "SELECT to_regclass('public.memory_records')::text AS name",
+    );
+    expect(schema.rows[0].name).toBe("memory_records");
+    const locks = await observer.query(
+      "SELECT 1 FROM pg_locks WHERE pid = ANY($1::int[]) AND locktype = 'advisory'",
+      [pids.slice(1)],
+    );
+    expect(locks.rows).toEqual([]);
+  } finally {
+    await observer.end();
+    await Promise.allSettled(pending);
+    await Promise.all([first.end(), second.end()]);
   }
 }
 
@@ -403,6 +488,14 @@ describe.skipIf(!process.env.POSTGRES_HOST)("runMigrations", () => {
       await pool.end();
     }
   });
+  it("serializes overlapping independent migration calls", async () => {
+    await overlapMigrations(false);
+  });
+
+  it("rolls back DDL and releases the migration guard after a runtime SQL failure", async () => {
+    await overlapMigrations(true);
+  });
+
 });
 
 describe("readPostgresMigrationSql", () => {

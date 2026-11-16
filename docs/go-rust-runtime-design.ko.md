@@ -251,7 +251,7 @@ Code는 분석 입력 snapshot·기존 head를 검증한 뒤 기존 SQLite 게�
 
 목표는 최상위 명령 하나가 선택한 모듈의 빌드·검증·패키징을 수행하는 것이다. **예정 명령**은 `go run ./tools/build.go --modules core,ontology`이며 root에서 실행한다. 이 파일은 아직 없고 현재 `npm run setup/build/verify`를 대체하지 않는다. Go-only 선택은 Cargo를 요구하지 않는다. Rust 시험이 포함된 Code 빌드만 Cargo를 실행한다. 기존 전체 기본 선택과 엄격한 module 인자 검증은 유지한다.
 
-Go는 한 module(`runtime/go/go.mod`), Rust는 한 workspace와 lockfile을 둔다. `go.sum`, `Cargo.lock`, `rust-toolchain.toml`과 Go toolchain을 고정하고 Go readonly 의존성 모드·Cargo `--locked`를 적용한다. 현재 개발/CI pin은 Go 1.24.5와 Rust 1.93.0이며 Node oracle은 24.22.2다. SDK·배포 플랫폼 적합성과 최신 보안 기준은 별도 gate다. 이 버전을 전체 제품 native 전환의 적합성 판정으로 사용하지 않는다. 네트워크로 toolchain/의존성을 가져오는 단계와 오프라인 빌드를 구분한다.
+Go는 한 module(`runtime/go/go.mod`), Rust는 한 workspace와 lockfile을 둔다. `go.sum`, `Cargo.lock`, `rust-toolchain.toml`과 Go toolchain을 고정하고 Go readonly 의존성 모드·Cargo `--locked`를 적용한다. 프로젝트 `.tool-versions`는 asdf의 `golang 1.27.4`, `nodejs 24.22.2`, `rust 1.93.0`, `python 3.14.5`를 선택하며 사용자 전역 기본값은 유지한다. 현재 개발/CI 기준은 지원 중인 보안 패치 Go 1.27.4와 Rust 1.93.0이며 Node oracle은 24.22.2다. Python 3.14.5는 qualification 도구만 사용한다. 주 CI는 Node/Python setup action과 Rust의 job 전용 선택으로 `.tool-versions`를 읽으며, 기존 Node 22.23.4 호환 검사는 별도로 유지한다. `go.mod`의 `go 1.27.4`는 최소 버전이다. CI와 로컬 gate는 `GOTOOLCHAIN=local`에서 실제 `GOVERSION=go1.27.4`를 확인한다. [Go 공식 지원 정책과 패치 내역](https://go.dev/doc/devel/release)에 따라 기준을 갱신했으며 SDK 의존성과 제품 기능은 추가하지 않는다. SDK·배포 플랫폼 적합성은 별도 gate다. 이 버전을 전체 제품 native 전환의 적합성 판정으로 사용하지 않는다. 네트워크로 toolchain/의존성을 가져오는 단계와 오프라인 빌드를 구분한다.
 
 Go 기본 executable에는 core 기능만 직접 등록한다. 선택 모듈은 생성한 composition 파일의 명시 import로 등록한다. 생성기는 공개 module 목록과 허용 template만 사용하고 arbitrary source path를 입력받지 않는다. 등록·DB 초기화는 package `init()`의 부수효과에 맡기지 않는다. 생성 산출물은 작업 전용 경로에 두며 같은 소스 checkout의 동시 빌드가 서로 덮어쓰지 않게 한다.
 
@@ -376,7 +376,7 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 - Go MCP SDK의 존재는 확인했지만 현 HTTP/MCP의 OAuth·tool schema·session·오류와의 동등성은 미검증이다.
 - SQLite driver/`sqlite-vec`와 transformers 대체 adapter, TS parser 대체 여부는 선정 전이다. native dependency·라이선스·모델 출력 동등성·플랫폼 검사가 끝나기 전 해당 owner의 Node 제거를 약속하지 않는다.
-- 개발 toolchain pin은 현재 Go 1.24.5·Rust 1.93.0으로 구현했다. release runner 가용성, hard RSS 상한과 운영 SLO는 G0의 남은 산출물이다. G2a는 compiler 전역 설치나 CI 권한을 변경하지 않는다.
+- 개발 toolchain 기준은 현재 Go 1.27.4·Rust 1.93.0이다. Go 지원 패치 갱신은 [supported-go-toolchain 요구사항](../.harness/reqs/supported-go-toolchain.yaml)으로 추적한다. release runner 가용성, hard RSS 상한과 운영 SLO는 G0의 남은 산출물이다. G2a는 compiler 전역 설치나 CI 권한을 변경하지 않는다.
 - 첫 Rust 집계가 작아서 실익이 없을 수 있다. 다른 계산을 추가하려면 실제 profile 근거와 bounded input 계약이 필요하다.
 
 설계 문서 검증 범위는 실제 코드/기존 목표 대조, 대안 검토, 시나리오 연결, 독립 리뷰, 상대 링크·REQ 형식·diff 확인이다. Go/Rust 빌드·성능·운영 검증과 동일한 상태로 보고하지 않는다.
