@@ -141,7 +141,7 @@ test('shared pure exports are controlled and guarded filesystem I/O stays outwar
 })
 
 
-test('nested Cargo manifests are discovered with owned metadata and target exclusion', (t) => {
+test('nested Cargo manifests and ontology JSON fixtures cannot escape metadata inventory', (t) => {
   const workspace = mkdtempSync(join(tmpdir(), 'ariadne-cargo-manifests-'))
   t.after(() => rmSync(workspace, { recursive: true, force: true }))
   for (const prefix of ['', 'packages/memory', 'packages/code']) {
@@ -149,10 +149,12 @@ test('nested Cargo manifests are discovered with owned metadata and target exclu
     writeFileSync(join(workspace, prefix, 'architecture-map.json'), JSON.stringify({ schema_version: 1, files: {} }))
     if (prefix) writeFileSync(join(workspace, prefix, 'package.json'), '{}')
   }
-  for (const directory of ['.github/workflows', 'samples', 'runtime/rust/crates/unowned', 'runtime/rust/target/debug']) mkdirSync(join(workspace, directory), { recursive: true })
-  for (const path of ['runtime/rust/Cargo.toml', 'runtime/rust/crates/unowned/Cargo.toml', 'runtime/rust/target/debug/Cargo.toml']) writeFileSync(join(workspace, path), '')
+  for (const directory of ['.github/workflows', 'samples', 'runtime/rust/crates/unowned', 'runtime/rust/target/debug', 'contracts/ontology/node-v1']) mkdirSync(join(workspace, directory), { recursive: true })
+  for (const path of ['runtime/rust/Cargo.toml', 'runtime/rust/crates/unowned/Cargo.toml', 'runtime/rust/target/debug/Cargo.toml', 'contracts/ontology/node-v1/unregistered.json']) writeFileSync(join(workspace, path), '')
   const inventory = readInventory(workspace)
   const manifests = inventory.actual.filter((path) => path.endsWith('Cargo.toml'))
   assert.deepEqual(manifests, ['runtime/rust/Cargo.toml', 'runtime/rust/crates/unowned/Cargo.toml'])
   assert.match(boundaryErrors({ ...inventory, sources: () => '' }).join('\n'), /unowned source runtime\/rust\/crates\/unowned\/Cargo.toml/)
+  assert.ok(inventory.actual.includes('contracts/ontology/node-v1/unregistered.json'))
+  assert.match(boundaryErrors({ ...inventory, sources: () => '' }).join('\n'), /unowned source contracts\/ontology\/node-v1\/unregistered.json/)
 })

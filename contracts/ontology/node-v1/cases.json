@@ -1,0 +1,459 @@
+{
+  "fixture_version": 1,
+  "cases": [
+    {
+      "id": "source-order-unreviewed",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"beta\",\"name\":\"Beta\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"z.md\",\"\\ue000.md\"]},{\"id\":\"alpha\",\"name\":\"Alpha\",\"description\":\"An authored definition\",\"synonyms\":[\"First\"],\"sources\":[\"\\ud83d\\ude00.md\",\"a.md\"]}],\"relations\":[{\"to\":\"beta\",\"type\":\"relates\",\"sources\":[\"a.md\"],\"from\":\"alpha\"}]}",
+      "sources": {
+        "z.md": "last\n",
+        "\ue000.md": "private-use\n",
+        "\ud83d\ude00.md": "astral\n",
+        "a.md": "first\n"
+      },
+      "searches": [
+        {
+          "query": "first"
+        },
+        {
+          "query": "absent"
+        }
+      ]
+    },
+    {
+      "id": "review-current",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"beta\",\"name\":\"Beta\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"z.md\",\"\ue000.md\"]},{\"id\":\"alpha\",\"name\":\"Alpha\",\"description\":\"An authored definition\",\"synonyms\":[\"First\"],\"sources\":[\"\ud83d\ude00.md\",\"a.md\"]}],\"relations\":[{\"to\":\"beta\",\"type\":\"relates\",\"sources\":[\"a.md\"],\"from\":\"alpha\"}],\"reviewed_digest\":\"668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f\"}",
+      "sources": {
+        "z.md": "last\n",
+        "\ue000.md": "private-use\n",
+        "\ud83d\ude00.md": "astral\n",
+        "a.md": "first\n"
+      },
+      "searches": [
+        {
+          "query": "alpha"
+        }
+      ]
+    },
+    {
+      "id": "review-stale-definition",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"beta\",\"name\":\"Beta\",\"description\":\"Changed authored definition\",\"synonyms\":[],\"sources\":[\"z.md\",\"\ue000.md\"]},{\"id\":\"alpha\",\"name\":\"Alpha\",\"description\":\"An authored definition\",\"synonyms\":[\"First\"],\"sources\":[\"\ud83d\ude00.md\",\"a.md\"]}],\"relations\":[{\"to\":\"beta\",\"type\":\"relates\",\"sources\":[\"a.md\"],\"from\":\"alpha\"}],\"reviewed_digest\":\"668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f\"}",
+      "sources": {
+        "z.md": "last\n",
+        "\ue000.md": "private-use\n",
+        "\ud83d\ude00.md": "astral\n",
+        "a.md": "first\n"
+      },
+      "searches": []
+    },
+    {
+      "id": "review-stale-source",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"beta\",\"name\":\"Beta\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"z.md\",\"\ue000.md\"]},{\"id\":\"alpha\",\"name\":\"Alpha\",\"description\":\"An authored definition\",\"synonyms\":[\"First\"],\"sources\":[\"\ud83d\ude00.md\",\"a.md\"]}],\"relations\":[{\"to\":\"beta\",\"type\":\"relates\",\"sources\":[\"a.md\"],\"from\":\"alpha\"}],\"reviewed_digest\":\"668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f\"}",
+      "sources": {
+        "z.md": "last\n",
+        "\ue000.md": "private-use\n",
+        "\ud83d\ude00.md": "astral\n",
+        "a.md": "changed source\n"
+      },
+      "searches": []
+    },
+    {
+      "id": "ambiguous-before-truncation-and-relations",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"b\",\"name\":\"Beta\",\"description\":\"An authored definition\",\"synonyms\":[\"SHARED\"],\"sources\":[]},{\"id\":\"a\",\"name\":\"Alpha\",\"description\":\"An authored definition\",\"synonyms\":[\"shared\"],\"sources\":[]},{\"id\":\"c\",\"name\":\"Other\",\"description\":\"shared in description\",\"synonyms\":[],\"sources\":[]},{\"id\":\"d\",\"name\":\"sharedness\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[{\"type\":\"related\",\"to\":\"b\",\"sources\":[],\"from\":\"a\"},{\"type\":\"related\",\"to\":\"c\",\"sources\":[],\"from\":\"a\"},{\"type\":\"related\",\"to\":\"d\",\"sources\":[],\"from\":\"a\"},{\"type\":\"unselected\",\"to\":\"d\",\"sources\":[],\"from\":\"c\"}]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "shared",
+          "limit": 1
+        },
+        {
+          "query": "shared",
+          "limit": 20
+        },
+        {
+          "query": "absent",
+          "limit": 1
+        }
+      ]
+    },
+    {
+      "id": "name-200-utf16-astral",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\ud83d\ude00"
+        }
+      ]
+    },
+    {
+      "id": "name-201-utf16-astral",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00x\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\ud83d\ude00"
+        }
+      ]
+    },
+    {
+      "id": "query-utf16-boundaries",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00x\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00"
+        },
+        {
+          "query": "\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00\ud83d\ude00x"
+        }
+      ]
+    },
+    {
+      "id": "lone-surrogates-and-astral-half-queries",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"high\",\"name\":\"\\ud800\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"low\",\"name\":\"\\udc00\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"astral\",\"name\":\"\\ud83d\\ude00\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\ud800"
+        },
+        {
+          "query": "\udc00"
+        },
+        {
+          "query": "\ud83d"
+        },
+        {
+          "query": "\ude00"
+        },
+        {
+          "query": "\ud83d\ude00"
+        }
+      ]
+    },
+    {
+      "id": "full-lower-dotted-i-and-contextual-sigma",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"dotted\",\"name\":\"\\u0130\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"sigma-medial\",\"name\":\"\\u0391\\u03a3\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0391\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"sigma-final\",\"name\":\"\\u0391\\u03a3\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\\u0301\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "i\u0307"
+        },
+        {
+          "query": "i"
+        },
+        {
+          "query": "\u03c3\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u03b1"
+        },
+        {
+          "query": "\u03c2\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301\u0301"
+        }
+      ]
+    },
+    {
+      "id": "nfkc-authored-composed-decomposed-fullwidth-hangul",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"composed\",\"name\":\"\\u00e9\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"decomposed\",\"name\":\"e\\u0301\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"width\",\"name\":\"\\uff26\\uff2f\\uff2f\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"hangul\",\"name\":\"\\u1100\\u1161\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "e\u0301"
+        },
+        {
+          "query": "\u00e9"
+        },
+        {
+          "query": "foo"
+        },
+        {
+          "query": "\uac00"
+        }
+      ]
+    },
+    {
+      "id": "nfkc-over-30-nonstarters-and-authored-cgj",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"reordered\",\"name\":\"a\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0300\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"cgj\",\"name\":\"a\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u0315\\u034f\\u0300\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\u00e0\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315"
+        },
+        {
+          "query": "a\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u034f\u0300"
+        },
+        {
+          "query": "a\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0315\u0300"
+        }
+      ]
+    },
+    {
+      "id": "js-trim-bom-versus-nel",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"coffee\",\"name\":\"coffee\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]},{\"id\":\"nel\",\"name\":\"\\u0085\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\ufeffcoffee\ufeff"
+        },
+        {
+          "query": "\u0085coffee\u0085"
+        },
+        {
+          "query": "\u0085"
+        },
+        {
+          "query": "\ufeff"
+        }
+      ]
+    },
+    {
+      "id": "bom-only-name-rejected",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"\\ufeff\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": []
+    },
+    {
+      "id": "raw-fingerprint-escaping",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"<>&\\u2028\\u2029\\\"\\\\\",\"description\":\"e\\u0301 \\uff26\\uff2f\\uff2f \\u0130 \\ud800 \\udc00\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "<>&"
+        },
+        {
+          "query": "\"\\"
+        }
+      ]
+    },
+    {
+      "id": "json-duplicate-keys-last-wins",
+      "document_json": "{\"schema_version\":2,\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"First\",\"name\":\"Last\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "Last"
+        }
+      ]
+    },
+    {
+      "id": "json-schema-number-1e0",
+      "document_json": "{\"schema_version\":1e0,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": []
+    },
+    {
+      "id": "json-schema-number-1.000",
+      "document_json": "{\"schema_version\":1.000,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": []
+    },
+    {
+      "id": "json-invalid-sanitized",
+      "document_json": "{\"terms\": \"authored source must stay hidden\", invalid}",
+      "sources": {},
+      "searches": []
+    },
+    {
+      "id": "reject-root-extra",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[],\"extra\":true}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-schema",
+      "document_json": "{\"schema_version\":2,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-root-array",
+      "document_json": "[]",
+      "sources": {
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-missing-terms",
+      "document_json": "{\"schema_version\":1,\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-term-extra",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"],\"extra\":true}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-term-name-type",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":7,\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-control-name",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"a\\u0000b\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-id",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"Upper\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-duplicate-id",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]},{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-normalized-duplicate-synonyms",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[\"\\uff26\\uff2f\\uff2f\",\"foo\"],\"sources\":[\"proof.md\"]}],\"relations\":[]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-dangling-relation",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[{\"type\":\"related\",\"to\":\"missing\",\"sources\":[\"z.md\"],\"from\":\"term\"}]}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-source-traversal",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"../outside\"]}],\"relations\":[]}",
+      "sources": {
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-duplicate-source",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"a.md\",\"a.md\"]}],\"relations\":[]}",
+      "sources": {
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-reviewed-digest",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"proof.md\"]}],\"relations\":[],\"reviewed_digest\":\"invalid\"}",
+      "sources": {
+        "proof.md": "must not be read",
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "reject-unique-source-limit",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"t0\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"0.md\"]},{\"id\":\"t1\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"1.md\"]},{\"id\":\"t2\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"2.md\"]},{\"id\":\"t3\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"3.md\"]},{\"id\":\"t4\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"4.md\"]},{\"id\":\"t5\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"5.md\"]},{\"id\":\"t6\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"6.md\"]},{\"id\":\"t7\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"7.md\"]},{\"id\":\"t8\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"8.md\"]},{\"id\":\"t9\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"9.md\"]},{\"id\":\"t10\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"10.md\"]},{\"id\":\"t11\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"11.md\"]},{\"id\":\"t12\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"12.md\"]},{\"id\":\"t13\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"13.md\"]},{\"id\":\"t14\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"14.md\"]},{\"id\":\"t15\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"15.md\"]},{\"id\":\"t16\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"16.md\"]},{\"id\":\"t17\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"17.md\"]},{\"id\":\"t18\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"18.md\"]},{\"id\":\"t19\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"19.md\"]},{\"id\":\"t20\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"20.md\"]},{\"id\":\"t21\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"21.md\"]},{\"id\":\"t22\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"22.md\"]},{\"id\":\"t23\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"23.md\"]},{\"id\":\"t24\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"24.md\"]},{\"id\":\"t25\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"25.md\"]},{\"id\":\"t26\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"26.md\"]},{\"id\":\"t27\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"27.md\"]},{\"id\":\"t28\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"28.md\"]},{\"id\":\"t29\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"29.md\"]},{\"id\":\"t30\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"30.md\"]},{\"id\":\"t31\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"31.md\"]},{\"id\":\"t32\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[\"32.md\"]}],\"relations\":[]}",
+      "sources": {
+        "z.md": "must not be read",
+        "a.md": "must not be read"
+      },
+      "searches": []
+    },
+    {
+      "id": "query-and-limit-errors",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"term\",\"name\":\"Term\",\"description\":\"An authored definition\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": null
+        },
+        {
+          "query": 7
+        },
+        {
+          "query": " "
+        },
+        {
+          "query": "Term",
+          "limit": 0
+        },
+        {
+          "query": "Term",
+          "limit": 21
+        },
+        {
+          "query": "Term",
+          "limit": 1.5
+        }
+      ]
+    },
+    {
+      "id": "sigma-overlapping-cased-ignorable-and-barriers",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"overlap-start\",\"name\":\"\\u0345\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-after-a\",\"name\":\"A\\u0345\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-after-sigma\",\"name\":\"A\\u03a3\\u0345\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-later-cased\",\"name\":\"A\\u03a3\\u0345A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"emoji-barrier\",\"name\":\"A\\u03a3\\ud83d\\ude00A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"surrogate-prefix\",\"name\":\"A\\ud800\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"surrogate-suffix\",\"name\":\"A\\u03a3\\ud800A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\u0345\u03c3"
+        },
+        {
+          "query": "a\u0345\u03c2"
+        },
+        {
+          "query": "a\u03c2\u0345"
+        },
+        {
+          "query": "a\u03c3\u0345a"
+        },
+        {
+          "query": "a\u03c2\ud83d\ude00a"
+        },
+        {
+          "query": "a\ud800\u03c3"
+        },
+        {
+          "query": "a\u03c2\ud800a"
+        },
+        {
+          "query": "\u0345\u03c2"
+        }
+      ]
+    }
+  ]
+}

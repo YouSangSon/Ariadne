@@ -1,0 +1,2695 @@
+{
+  "fixture_version": 1,
+  "provenance": {
+    "runtime": {
+      "node": "v24.22.2",
+      "icu": "78.3",
+      "unicode": "17.0"
+    },
+    "source_sha256": {
+      "modules/ontology/domain.mjs": "cf68cacb4b69e6cf71ab2decb57fbe1536b2dc487394473c4636a751708ea416",
+      "modules/ontology/application.mjs": "10dc974179343796ed9ad91ab299b295f243655ab3ff5c90613e92d099e9d3bf",
+      "lib/scrub.mjs": "9c9b1b233e2af96e3ef106e8c85d7efb94f06d3acd14d70a8959ee1c2990fb7a"
+    },
+    "inputs_sha256": "58033a3b172d52f5be13c915bc397921176ee63cb1dd15dd914055c12533e122",
+    "oracle_sha256": "3f6d4f6b401a736fc003b17fee60ba7c47ecbc2169d64f2078435fb27d3ffaaa"
+  },
+  "cases": [
+    {
+      "id": "source-order-unreviewed",
+      "document_reads": 1,
+      "source_reads": [
+        "a.md",
+        "z.md",
+        "😀.md",
+        ".md"
+      ],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2262657461222c226e616d65223a2242657461222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b227a2e6d64222c22ee80802e6d64225d7d2c7b226964223a22616c706861222c226e616d65223a22416c706861222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b224669727374225d2c22736f7572636573223a5b22f09f98802e6d64222c22612e6d64225d7d5d2c2272656c6174696f6e73223a5b7b2266726f6d223a22616c706861222c2274797065223a2272656c61746573222c22746f223a2262657461222c22736f7572636573223a5b22612e6d64225d7d5d7d2c22736f757263655f686173686573223a5b7b2270617468223a22612e6d64222c22736861323536223a2262363430653834306231396433373836363062333266623531616531386436376463636234613835393661323965376264373263316232616535393238663431227d2c7b2270617468223a227a2e6d64222c22736861323536223a2237363164316662313435636138633731333032333134313232373664663630663334646433343535346334643137346239373361343565333232323437356139227d2c7b2270617468223a22f09f98802e6d64222c22736861323536223a2235636338393265386464373964343564666566323166396138376537393535383936633936616239623739316632333435653561343536626361343434663631227d2c7b2270617468223a22ee80802e6d64222c22736861323536223a2231373332636162376337653432663665666466633237613066323064363532333135643231393634326635393539306631383236643966356664623962623938227d5d7d",
+          "sha256": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "beta",
+              "name": "Beta",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "z.md",
+                ".md"
+              ]
+            },
+            {
+              "id": "alpha",
+              "name": "Alpha",
+              "description": "An authored definition",
+              "synonyms": [
+                "First"
+              ],
+              "sources": [
+                "😀.md",
+                "a.md"
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "from": "alpha",
+              "type": "relates",
+              "to": "beta",
+              "sources": [
+                "a.md"
+              ]
+            }
+          ]
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f",
+        "review_status": "unreviewed",
+        "term_count": 2,
+        "relation_count": 1,
+        "terms_without_sources": 0,
+        "relations_without_sources": 0,
+        "source_hashes": [
+          {
+            "path": "a.md",
+            "sha256": "b640e840b19d378660b32fb51ae18d67dccb4a8596a29e7bd72c1b2ae5928f41"
+          },
+          {
+            "path": "z.md",
+            "sha256": "761d1fb145ca8c7130231412276df60f34dd34554c4d174b973a45e3222475a9"
+          },
+          {
+            "path": "😀.md",
+            "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+          },
+          {
+            "path": ".md",
+            "sha256": "1732cab7c7e42f6efdfc27a0f20d652315d219642f59590f1826d9f5fdb9bb98"
+          }
+        ]
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f",
+            "review_status": "unreviewed",
+            "query": "first",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "alpha",
+                "name": "Alpha",
+                "description": "An authored definition",
+                "synonyms": [
+                  "First"
+                ],
+                "sources": [
+                  "😀.md",
+                  "a.md"
+                ]
+              }
+            ],
+            "relations": [
+              {
+                "from": "alpha",
+                "type": "relates",
+                "to": "beta",
+                "sources": [
+                  "a.md"
+                ]
+              }
+            ],
+            "total_relations": 1,
+            "relations_truncated": false,
+            "source_hashes": [
+              {
+                "path": "a.md",
+                "sha256": "b640e840b19d378660b32fb51ae18d67dccb4a8596a29e7bd72c1b2ae5928f41"
+              },
+              {
+                "path": "😀.md",
+                "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+              }
+            ]
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f",
+            "review_status": "unreviewed",
+            "query": "absent",
+            "total_matches": 0,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "review-current",
+      "document_reads": 1,
+      "source_reads": [
+        "a.md",
+        "z.md",
+        "😀.md",
+        ".md"
+      ],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2262657461222c226e616d65223a2242657461222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b227a2e6d64222c22ee80802e6d64225d7d2c7b226964223a22616c706861222c226e616d65223a22416c706861222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b224669727374225d2c22736f7572636573223a5b22f09f98802e6d64222c22612e6d64225d7d5d2c2272656c6174696f6e73223a5b7b2266726f6d223a22616c706861222c2274797065223a2272656c61746573222c22746f223a2262657461222c22736f7572636573223a5b22612e6d64225d7d5d7d2c22736f757263655f686173686573223a5b7b2270617468223a22612e6d64222c22736861323536223a2262363430653834306231396433373836363062333266623531616531386436376463636234613835393661323965376264373263316232616535393238663431227d2c7b2270617468223a227a2e6d64222c22736861323536223a2237363164316662313435636138633731333032333134313232373664663630663334646433343535346334643137346239373361343565333232323437356139227d2c7b2270617468223a22f09f98802e6d64222c22736861323536223a2235636338393265386464373964343564666566323166396138376537393535383936633936616239623739316632333435653561343536626361343434663631227d2c7b2270617468223a22ee80802e6d64222c22736861323536223a2231373332636162376337653432663665666466633237613066323064363532333135643231393634326635393539306631383236643966356664623962623938227d5d7d",
+          "sha256": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "beta",
+              "name": "Beta",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "z.md",
+                ".md"
+              ]
+            },
+            {
+              "id": "alpha",
+              "name": "Alpha",
+              "description": "An authored definition",
+              "synonyms": [
+                "First"
+              ],
+              "sources": [
+                "😀.md",
+                "a.md"
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "from": "alpha",
+              "type": "relates",
+              "to": "beta",
+              "sources": [
+                "a.md"
+              ]
+            }
+          ],
+          "reviewed_digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f"
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f",
+        "review_status": "current",
+        "term_count": 2,
+        "relation_count": 1,
+        "terms_without_sources": 0,
+        "relations_without_sources": 0,
+        "source_hashes": [
+          {
+            "path": "a.md",
+            "sha256": "b640e840b19d378660b32fb51ae18d67dccb4a8596a29e7bd72c1b2ae5928f41"
+          },
+          {
+            "path": "z.md",
+            "sha256": "761d1fb145ca8c7130231412276df60f34dd34554c4d174b973a45e3222475a9"
+          },
+          {
+            "path": "😀.md",
+            "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+          },
+          {
+            "path": ".md",
+            "sha256": "1732cab7c7e42f6efdfc27a0f20d652315d219642f59590f1826d9f5fdb9bb98"
+          }
+        ]
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f",
+            "review_status": "current",
+            "query": "alpha",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "alpha",
+                "name": "Alpha",
+                "description": "An authored definition",
+                "synonyms": [
+                  "First"
+                ],
+                "sources": [
+                  "😀.md",
+                  "a.md"
+                ]
+              }
+            ],
+            "relations": [
+              {
+                "from": "alpha",
+                "type": "relates",
+                "to": "beta",
+                "sources": [
+                  "a.md"
+                ]
+              }
+            ],
+            "total_relations": 1,
+            "relations_truncated": false,
+            "source_hashes": [
+              {
+                "path": "a.md",
+                "sha256": "b640e840b19d378660b32fb51ae18d67dccb4a8596a29e7bd72c1b2ae5928f41"
+              },
+              {
+                "path": "😀.md",
+                "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "review-stale-definition",
+      "document_reads": 1,
+      "source_reads": [
+        "a.md",
+        "z.md",
+        "😀.md",
+        ".md"
+      ],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2262657461222c226e616d65223a2242657461222c226465736372697074696f6e223a224368616e67656420617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b227a2e6d64222c22ee80802e6d64225d7d2c7b226964223a22616c706861222c226e616d65223a22416c706861222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b224669727374225d2c22736f7572636573223a5b22f09f98802e6d64222c22612e6d64225d7d5d2c2272656c6174696f6e73223a5b7b2266726f6d223a22616c706861222c2274797065223a2272656c61746573222c22746f223a2262657461222c22736f7572636573223a5b22612e6d64225d7d5d7d2c22736f757263655f686173686573223a5b7b2270617468223a22612e6d64222c22736861323536223a2262363430653834306231396433373836363062333266623531616531386436376463636234613835393661323965376264373263316232616535393238663431227d2c7b2270617468223a227a2e6d64222c22736861323536223a2237363164316662313435636138633731333032333134313232373664663630663334646433343535346334643137346239373361343565333232323437356139227d2c7b2270617468223a22f09f98802e6d64222c22736861323536223a2235636338393265386464373964343564666566323166396138376537393535383936633936616239623739316632333435653561343536626361343434663631227d2c7b2270617468223a22ee80802e6d64222c22736861323536223a2231373332636162376337653432663665666466633237613066323064363532333135643231393634326635393539306631383236643966356664623962623938227d5d7d",
+          "sha256": "95c984e76f572b05135b86e88f3792d01f4a3840bccb68bb11e8829db257d4ce"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "beta",
+              "name": "Beta",
+              "description": "Changed authored definition",
+              "synonyms": [],
+              "sources": [
+                "z.md",
+                ".md"
+              ]
+            },
+            {
+              "id": "alpha",
+              "name": "Alpha",
+              "description": "An authored definition",
+              "synonyms": [
+                "First"
+              ],
+              "sources": [
+                "😀.md",
+                "a.md"
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "from": "alpha",
+              "type": "relates",
+              "to": "beta",
+              "sources": [
+                "a.md"
+              ]
+            }
+          ],
+          "reviewed_digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f"
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "95c984e76f572b05135b86e88f3792d01f4a3840bccb68bb11e8829db257d4ce",
+        "review_status": "stale",
+        "term_count": 2,
+        "relation_count": 1,
+        "terms_without_sources": 0,
+        "relations_without_sources": 0,
+        "source_hashes": [
+          {
+            "path": "a.md",
+            "sha256": "b640e840b19d378660b32fb51ae18d67dccb4a8596a29e7bd72c1b2ae5928f41"
+          },
+          {
+            "path": "z.md",
+            "sha256": "761d1fb145ca8c7130231412276df60f34dd34554c4d174b973a45e3222475a9"
+          },
+          {
+            "path": "😀.md",
+            "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+          },
+          {
+            "path": ".md",
+            "sha256": "1732cab7c7e42f6efdfc27a0f20d652315d219642f59590f1826d9f5fdb9bb98"
+          }
+        ]
+      },
+      "searches": []
+    },
+    {
+      "id": "review-stale-source",
+      "document_reads": 1,
+      "source_reads": [
+        "a.md",
+        "z.md",
+        "😀.md",
+        ".md"
+      ],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2262657461222c226e616d65223a2242657461222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b227a2e6d64222c22ee80802e6d64225d7d2c7b226964223a22616c706861222c226e616d65223a22416c706861222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b224669727374225d2c22736f7572636573223a5b22f09f98802e6d64222c22612e6d64225d7d5d2c2272656c6174696f6e73223a5b7b2266726f6d223a22616c706861222c2274797065223a2272656c61746573222c22746f223a2262657461222c22736f7572636573223a5b22612e6d64225d7d5d7d2c22736f757263655f686173686573223a5b7b2270617468223a22612e6d64222c22736861323536223a2238326631313965313638353232373966653265653565326131343864356161656238356536336536343338353030666330343637396137313935363439616561227d2c7b2270617468223a227a2e6d64222c22736861323536223a2237363164316662313435636138633731333032333134313232373664663630663334646433343535346334643137346239373361343565333232323437356139227d2c7b2270617468223a22f09f98802e6d64222c22736861323536223a2235636338393265386464373964343564666566323166396138376537393535383936633936616239623739316632333435653561343536626361343434663631227d2c7b2270617468223a22ee80802e6d64222c22736861323536223a2231373332636162376337653432663665666466633237613066323064363532333135643231393634326635393539306631383236643966356664623962623938227d5d7d",
+          "sha256": "eaf1b19f307d66044aee737353e20338ec8f99967e596e9b9de66e5acde5d6ed"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "beta",
+              "name": "Beta",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "z.md",
+                ".md"
+              ]
+            },
+            {
+              "id": "alpha",
+              "name": "Alpha",
+              "description": "An authored definition",
+              "synonyms": [
+                "First"
+              ],
+              "sources": [
+                "😀.md",
+                "a.md"
+              ]
+            }
+          ],
+          "relations": [
+            {
+              "from": "alpha",
+              "type": "relates",
+              "to": "beta",
+              "sources": [
+                "a.md"
+              ]
+            }
+          ],
+          "reviewed_digest": "668ab1c30a3dae45657c2733738835109beee5e577cfc39c2a6ae5801dc8623f"
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "eaf1b19f307d66044aee737353e20338ec8f99967e596e9b9de66e5acde5d6ed",
+        "review_status": "stale",
+        "term_count": 2,
+        "relation_count": 1,
+        "terms_without_sources": 0,
+        "relations_without_sources": 0,
+        "source_hashes": [
+          {
+            "path": "a.md",
+            "sha256": "82f119e16852279fe2ee5e2a148d5aaeb85e63e6438500fc04679a7195649aea"
+          },
+          {
+            "path": "z.md",
+            "sha256": "761d1fb145ca8c7130231412276df60f34dd34554c4d174b973a45e3222475a9"
+          },
+          {
+            "path": "😀.md",
+            "sha256": "5cc892e8dd79d45dfef21f9a87e7955896c96ab9b791f2345e5a456bca444f61"
+          },
+          {
+            "path": ".md",
+            "sha256": "1732cab7c7e42f6efdfc27a0f20d652315d219642f59590f1826d9f5fdb9bb98"
+          }
+        ]
+      },
+      "searches": []
+    },
+    {
+      "id": "ambiguous-before-truncation-and-relations",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2262222c226e616d65223a2242657461222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b22534841524544225d2c22736f7572636573223a5b5d7d2c7b226964223a2261222c226e616d65223a22416c706861222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b22736861726564225d2c22736f7572636573223a5b5d7d2c7b226964223a2263222c226e616d65223a224f74686572222c226465736372697074696f6e223a2273686172656420696e206465736372697074696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a2264222c226e616d65223a227368617265646e657373222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b7b2266726f6d223a2261222c2274797065223a2272656c61746564222c22746f223a2262222c22736f7572636573223a5b5d7d2c7b2266726f6d223a2261222c2274797065223a2272656c61746564222c22746f223a2263222c22736f7572636573223a5b5d7d2c7b2266726f6d223a2261222c2274797065223a2272656c61746564222c22746f223a2264222c22736f7572636573223a5b5d7d2c7b2266726f6d223a2263222c2274797065223a22756e73656c6563746564222c22746f223a2264222c22736f7572636573223a5b5d7d5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "ff9bad6233082e3fd8c835483ac37f125dd91e73f2796823b34cb294629cf90c"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "b",
+              "name": "Beta",
+              "description": "An authored definition",
+              "synonyms": [
+                "SHARED"
+              ],
+              "sources": []
+            },
+            {
+              "id": "a",
+              "name": "Alpha",
+              "description": "An authored definition",
+              "synonyms": [
+                "shared"
+              ],
+              "sources": []
+            },
+            {
+              "id": "c",
+              "name": "Other",
+              "description": "shared in description",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "d",
+              "name": "sharedness",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": [
+            {
+              "from": "a",
+              "type": "related",
+              "to": "b",
+              "sources": []
+            },
+            {
+              "from": "a",
+              "type": "related",
+              "to": "c",
+              "sources": []
+            },
+            {
+              "from": "a",
+              "type": "related",
+              "to": "d",
+              "sources": []
+            },
+            {
+              "from": "c",
+              "type": "unselected",
+              "to": "d",
+              "sources": []
+            }
+          ]
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "ff9bad6233082e3fd8c835483ac37f125dd91e73f2796823b34cb294629cf90c",
+        "review_status": "unreviewed",
+        "term_count": 4,
+        "relation_count": 4,
+        "terms_without_sources": 4,
+        "relations_without_sources": 4,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "ff9bad6233082e3fd8c835483ac37f125dd91e73f2796823b34cb294629cf90c",
+            "review_status": "unreviewed",
+            "query": "shared",
+            "total_matches": 4,
+            "ambiguous": true,
+            "truncated": true,
+            "terms": [
+              {
+                "id": "a",
+                "name": "Alpha",
+                "description": "An authored definition",
+                "synonyms": [
+                  "shared"
+                ],
+                "sources": []
+              }
+            ],
+            "relations": [
+              {
+                "from": "a",
+                "type": "related",
+                "to": "b",
+                "sources": []
+              }
+            ],
+            "total_relations": 3,
+            "relations_truncated": true,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "ff9bad6233082e3fd8c835483ac37f125dd91e73f2796823b34cb294629cf90c",
+            "review_status": "unreviewed",
+            "query": "shared",
+            "total_matches": 4,
+            "ambiguous": true,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "a",
+                "name": "Alpha",
+                "description": "An authored definition",
+                "synonyms": [
+                  "shared"
+                ],
+                "sources": []
+              },
+              {
+                "id": "b",
+                "name": "Beta",
+                "description": "An authored definition",
+                "synonyms": [
+                  "SHARED"
+                ],
+                "sources": []
+              },
+              {
+                "id": "d",
+                "name": "sharedness",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              },
+              {
+                "id": "c",
+                "name": "Other",
+                "description": "shared in description",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [
+              {
+                "from": "a",
+                "type": "related",
+                "to": "b",
+                "sources": []
+              },
+              {
+                "from": "a",
+                "type": "related",
+                "to": "c",
+                "sources": []
+              },
+              {
+                "from": "a",
+                "type": "related",
+                "to": "d",
+                "sources": []
+              },
+              {
+                "from": "c",
+                "type": "unselected",
+                "to": "d",
+                "sources": []
+              }
+            ],
+            "total_relations": 4,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "ff9bad6233082e3fd8c835483ac37f125dd91e73f2796823b34cb294629cf90c",
+            "review_status": "unreviewed",
+            "query": "absent",
+            "total_matches": 0,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "name-200-utf16-astral",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a22f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "c2e91a3b1091034e68f49e94605c4581dc6bad7ccfcc3ccac6ac7cea4d66bee8"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "c2e91a3b1091034e68f49e94605c4581dc6bad7ccfcc3ccac6ac7cea4d66bee8",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "c2e91a3b1091034e68f49e94605c4581dc6bad7ccfcc3ccac6ac7cea4d66bee8",
+            "review_status": "unreviewed",
+            "query": "😀",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "term",
+                "name": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "name-201-utf16-astral",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Invalid name"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Invalid name"
+      }
+    },
+    {
+      "id": "query-utf16-boundaries",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a225465726d222c226465736372697074696f6e223a22f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f9880f09f988078222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "7f0c611276975a384b3bf3bba9a1596c864ce639c97c0e73b44276812663d2f1"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "Term",
+              "description": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀x",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "7f0c611276975a384b3bf3bba9a1596c864ce639c97c0e73b44276812663d2f1",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "7f0c611276975a384b3bf3bba9a1596c864ce639c97c0e73b44276812663d2f1",
+            "review_status": "unreviewed",
+            "query": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "term",
+                "name": "Term",
+                "description": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀x",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "Invalid query"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lone-surrogates-and-astral-half-queries",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2268696768222c226e616d65223a225c7564383030222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226c6f77222c226e616d65223a225c7564633030222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a2261737472616c222c226e616d65223a22f09f9880222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "high",
+              "name": "\ud800",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "low",
+              "name": "\udc00",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "astral",
+              "name": "😀",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+        "review_status": "unreviewed",
+        "term_count": 3,
+        "relation_count": 0,
+        "terms_without_sources": 3,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+            "review_status": "unreviewed",
+            "query": "\ud800",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "high",
+                "name": "\ud800",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+            "review_status": "unreviewed",
+            "query": "\udc00",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "low",
+                "name": "\udc00",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+            "review_status": "unreviewed",
+            "query": "\ud83d",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "astral",
+                "name": "😀",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+            "review_status": "unreviewed",
+            "query": "\ude00",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "astral",
+                "name": "😀",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "e5d3a5835145f23283f7aa976068dd0316efc49ac056b55db9b0f0aeb4a581b7",
+            "review_status": "unreviewed",
+            "query": "😀",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "astral",
+                "name": "😀",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "full-lower-dotted-i-and-contextual-sigma",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a22646f74746564222c226e616d65223a22c4b0222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a227369676d612d6d656469616c222c226e616d65223a22ce91cea3cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81ce91222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a227369676d612d66696e616c222c226e616d65223a22ce91cea3cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81cc81222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "dotted",
+              "name": "İ",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "sigma-medial",
+              "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́Α",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "sigma-final",
+              "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780",
+        "review_status": "unreviewed",
+        "term_count": 3,
+        "relation_count": 0,
+        "terms_without_sources": 3,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780",
+            "review_status": "unreviewed",
+            "query": "i̇",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "dotted",
+                "name": "İ",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780",
+            "review_status": "unreviewed",
+            "query": "i",
+            "total_matches": 3,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "dotted",
+                "name": "İ",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              },
+              {
+                "id": "sigma-final",
+                "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              },
+              {
+                "id": "sigma-medial",
+                "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́Α",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780",
+            "review_status": "unreviewed",
+            "query": "σ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́α",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "sigma-medial",
+                "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́Α",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "b11d6ba0517ea58d18ade4ea2a5eeb83c271d118414f9b43a2307d2d01083780",
+            "review_status": "unreviewed",
+            "query": "ς́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "sigma-final",
+                "name": "ΑΣ́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́́",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "nfkc-authored-composed-decomposed-fullwidth-hangul",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a22636f6d706f736564222c226e616d65223a22c3a9222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226465636f6d706f736564222c226e616d65223a2265cc81222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a227769647468222c226e616d65223a22efbca6efbcafefbcaf222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a2268616e67756c222c226e616d65223a22e18480e185a1222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "composed",
+              "name": "é",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "decomposed",
+              "name": "é",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "width",
+              "name": "ＦＯＯ",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "hangul",
+              "name": "가",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea",
+        "review_status": "unreviewed",
+        "term_count": 4,
+        "relation_count": 0,
+        "terms_without_sources": 4,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea",
+            "review_status": "unreviewed",
+            "query": "é",
+            "total_matches": 2,
+            "ambiguous": true,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "composed",
+                "name": "é",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              },
+              {
+                "id": "decomposed",
+                "name": "é",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea",
+            "review_status": "unreviewed",
+            "query": "é",
+            "total_matches": 2,
+            "ambiguous": true,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "composed",
+                "name": "é",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              },
+              {
+                "id": "decomposed",
+                "name": "é",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea",
+            "review_status": "unreviewed",
+            "query": "foo",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "width",
+                "name": "ＦＯＯ",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "23b1adb9b37e5c994aff1ab5c0aac082219979457112ce753b5ea3fa024eb7ea",
+            "review_status": "unreviewed",
+            "query": "가",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "hangul",
+                "name": "가",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "nfkc-over-30-nonstarters-and-authored-cgj",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a2272656f726465726564222c226e616d65223a2261cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc80222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a2263676a222c226e616d65223a2261cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cc95cd8fcc80222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "0b2e53304b067264a2d8bd32ae67268192accedb966ec77b1141b64979072f79"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "reordered",
+              "name": "à̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "cgj",
+              "name": "a̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕͏̀",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "0b2e53304b067264a2d8bd32ae67268192accedb966ec77b1141b64979072f79",
+        "review_status": "unreviewed",
+        "term_count": 2,
+        "relation_count": 0,
+        "terms_without_sources": 2,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "0b2e53304b067264a2d8bd32ae67268192accedb966ec77b1141b64979072f79",
+            "review_status": "unreviewed",
+            "query": "à̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "reordered",
+                "name": "à̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "0b2e53304b067264a2d8bd32ae67268192accedb966ec77b1141b64979072f79",
+            "review_status": "unreviewed",
+            "query": "a̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕͏̀",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "cgj",
+                "name": "a̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕͏̀",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "0b2e53304b067264a2d8bd32ae67268192accedb966ec77b1141b64979072f79",
+            "review_status": "unreviewed",
+            "query": "à̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "reordered",
+                "name": "à̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕̕",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "js-trim-bom-versus-nel",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a22636f66666565222c226e616d65223a22636f66666565222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226e656c222c226e616d65223a22c285222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "cfbe2cb6718e7a737c261cbbdf5444e13ec42d85a7969ff9a90de79f4c2a0627"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "coffee",
+              "name": "coffee",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "nel",
+              "name": "",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "cfbe2cb6718e7a737c261cbbdf5444e13ec42d85a7969ff9a90de79f4c2a0627",
+        "review_status": "unreviewed",
+        "term_count": 2,
+        "relation_count": 0,
+        "terms_without_sources": 2,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "cfbe2cb6718e7a737c261cbbdf5444e13ec42d85a7969ff9a90de79f4c2a0627",
+            "review_status": "unreviewed",
+            "query": "﻿coffee﻿",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "coffee",
+                "name": "coffee",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "cfbe2cb6718e7a737c261cbbdf5444e13ec42d85a7969ff9a90de79f4c2a0627",
+            "review_status": "unreviewed",
+            "query": "coffee",
+            "total_matches": 0,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "cfbe2cb6718e7a737c261cbbdf5444e13ec42d85a7969ff9a90de79f4c2a0627",
+            "review_status": "unreviewed",
+            "query": "",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "nel",
+                "name": "",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "Invalid query"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bom-only-name-rejected",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Invalid name"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Invalid name"
+      }
+    },
+    {
+      "id": "raw-fingerprint-escaping",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a223c3e26e280a8e280a95c225c5c222c226465736372697074696f6e223a2265cc8120efbca6efbcafefbcaf20c4b0205c7564383030205c7564633030222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "ec19e8b0224ac831a84c1e3ad38249af8c7bfcd82f74e9be9bbf665e3205dd04"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "<>&  \"\\",
+              "description": "é ＦＯＯ İ \ud800 \udc00",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "ec19e8b0224ac831a84c1e3ad38249af8c7bfcd82f74e9be9bbf665e3205dd04",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "ec19e8b0224ac831a84c1e3ad38249af8c7bfcd82f74e9be9bbf665e3205dd04",
+            "review_status": "unreviewed",
+            "query": "<>&",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "term",
+                "name": "<>&  \"\\",
+                "description": "é ＦＯＯ İ \ud800 \udc00",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "ec19e8b0224ac831a84c1e3ad38249af8c7bfcd82f74e9be9bbf665e3205dd04",
+            "review_status": "unreviewed",
+            "query": "\"\\",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "term",
+                "name": "<>&  \"\\",
+                "description": "é ＦＯＯ İ \ud800 \udc00",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "json-duplicate-keys-last-wins",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a224c617374222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "f305598110d68e4efd825f90aa03c79872aaa7c5e88f202626a673f039bc8761"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "Last",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "f305598110d68e4efd825f90aa03c79872aaa7c5e88f202626a673f039bc8761",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "f305598110d68e4efd825f90aa03c79872aaa7c5e88f202626a673f039bc8761",
+            "review_status": "unreviewed",
+            "query": "Last",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "term",
+                "name": "Last",
+                "description": "An authored definition",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "json-schema-number-1e0",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a225465726d222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": []
+    },
+    {
+      "id": "json-schema-number-1.000",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a225465726d222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": []
+    },
+    {
+      "id": "json-invalid-sanitized",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "SyntaxError"
+        }
+      },
+      "load_error": {
+        "name": "SyntaxError"
+      }
+    },
+    {
+      "id": "reject-root-extra",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+      }
+    },
+    {
+      "id": "reject-schema",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Unsupported ontology schema_version"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Unsupported ontology schema_version"
+      }
+    },
+    {
+      "id": "reject-root-array",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+      }
+    },
+    {
+      "id": "reject-missing-terms",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Expected fields: schema_version, terms, relations; optional: reviewed_digest"
+      }
+    },
+    {
+      "id": "reject-term-extra",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Expected fields: id, name, description, synonyms, sources"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Expected fields: id, name, description, synonyms, sources"
+      }
+    },
+    {
+      "id": "reject-term-name-type",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Invalid name"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Invalid name"
+      }
+    },
+    {
+      "id": "reject-control-name",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Invalid name"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Invalid name"
+      }
+    },
+    {
+      "id": "reject-id",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Invalid or secret-shaped identifier"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Invalid or secret-shaped identifier"
+      }
+    },
+    {
+      "id": "reject-duplicate-id",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Duplicate term ID: term"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Duplicate term ID: term"
+      }
+    },
+    {
+      "id": "reject-normalized-duplicate-synonyms",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Duplicate synonym: term"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Duplicate synonym: term"
+      }
+    },
+    {
+      "id": "reject-dangling-relation",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Relation refers to an unknown term"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Relation refers to an unknown term"
+      }
+    },
+    {
+      "id": "reject-source-traversal",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Source must be a contained, non-secret relative path"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Source must be a contained, non-secret relative path"
+      }
+    },
+    {
+      "id": "reject-duplicate-source",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "Duplicate source path"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Duplicate source path"
+      }
+    },
+    {
+      "id": "reject-reviewed-digest",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "error": {
+          "name": "Error",
+          "message": "reviewed_digest must be a SHA-256 digest"
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "reviewed_digest must be a SHA-256 digest"
+      }
+    },
+    {
+      "id": "reject-unique-source-limit",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "t0",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "0.md"
+              ]
+            },
+            {
+              "id": "t1",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "1.md"
+              ]
+            },
+            {
+              "id": "t2",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "2.md"
+              ]
+            },
+            {
+              "id": "t3",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "3.md"
+              ]
+            },
+            {
+              "id": "t4",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "4.md"
+              ]
+            },
+            {
+              "id": "t5",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "5.md"
+              ]
+            },
+            {
+              "id": "t6",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "6.md"
+              ]
+            },
+            {
+              "id": "t7",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "7.md"
+              ]
+            },
+            {
+              "id": "t8",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "8.md"
+              ]
+            },
+            {
+              "id": "t9",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "9.md"
+              ]
+            },
+            {
+              "id": "t10",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "10.md"
+              ]
+            },
+            {
+              "id": "t11",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "11.md"
+              ]
+            },
+            {
+              "id": "t12",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "12.md"
+              ]
+            },
+            {
+              "id": "t13",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "13.md"
+              ]
+            },
+            {
+              "id": "t14",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "14.md"
+              ]
+            },
+            {
+              "id": "t15",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "15.md"
+              ]
+            },
+            {
+              "id": "t16",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "16.md"
+              ]
+            },
+            {
+              "id": "t17",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "17.md"
+              ]
+            },
+            {
+              "id": "t18",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "18.md"
+              ]
+            },
+            {
+              "id": "t19",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "19.md"
+              ]
+            },
+            {
+              "id": "t20",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "20.md"
+              ]
+            },
+            {
+              "id": "t21",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "21.md"
+              ]
+            },
+            {
+              "id": "t22",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "22.md"
+              ]
+            },
+            {
+              "id": "t23",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "23.md"
+              ]
+            },
+            {
+              "id": "t24",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "24.md"
+              ]
+            },
+            {
+              "id": "t25",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "25.md"
+              ]
+            },
+            {
+              "id": "t26",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "26.md"
+              ]
+            },
+            {
+              "id": "t27",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "27.md"
+              ]
+            },
+            {
+              "id": "t28",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "28.md"
+              ]
+            },
+            {
+              "id": "t29",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "29.md"
+              ]
+            },
+            {
+              "id": "t30",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "30.md"
+              ]
+            },
+            {
+              "id": "t31",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "31.md"
+              ]
+            },
+            {
+              "id": "t32",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": [
+                "32.md"
+              ]
+            }
+          ],
+          "relations": []
+        }
+      },
+      "load_error": {
+        "name": "Error",
+        "message": "Ontology exceeds 32 unique source files"
+      }
+    },
+    {
+      "id": "query-and-limit-errors",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a227465726d222c226e616d65223a225465726d222c226465736372697074696f6e223a22416e20617574686f72656420646566696e6974696f6e222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "term",
+              "name": "Term",
+              "description": "An authored definition",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "bdaec0f1c86108899bbe1ef115b53a430731afc2adb51b690d2540e3b0bfa258",
+        "review_status": "unreviewed",
+        "term_count": 1,
+        "relation_count": 0,
+        "terms_without_sources": 1,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "error": {
+            "name": "Error",
+            "message": "Invalid query"
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "Invalid query"
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "Invalid query"
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "limit must be an integer from 1 to 20"
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "limit must be an integer from 1 to 20"
+          }
+        },
+        {
+          "error": {
+            "name": "Error",
+            "message": "limit must be an integer from 1 to 20"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sigma-overlapping-cased-ignorable-and-barriers",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a226f7665726c61702d7374617274222c226e616d65223a22cd85cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d61667465722d61222c226e616d65223a2241cd85cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d61667465722d7369676d61222c226e616d65223a2241cea3cd85222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d6c617465722d6361736564222c226e616d65223a2241cea3cd8541222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22656d6f6a692d62617272696572222c226e616d65223a2241cea3f09f988041222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22737572726f676174652d707265666978222c226e616d65223a22415c7564383030cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22737572726f676174652d737566666978222c226e616d65223a2241cea35c756438303041222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "overlap-start",
+              "name": "ͅΣ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-after-a",
+              "name": "AͅΣ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-after-sigma",
+              "name": "AΣͅ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-later-cased",
+              "name": "AΣͅA",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "emoji-barrier",
+              "name": "AΣ😀A",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "surrogate-prefix",
+              "name": "A\ud800Σ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "surrogate-suffix",
+              "name": "AΣ\ud800A",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+        "review_status": "unreviewed",
+        "term_count": 7,
+        "relation_count": 0,
+        "terms_without_sources": 7,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "ͅσ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-start",
+                "name": "ͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aͅς",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-a",
+                "name": "AͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aςͅ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-sigma",
+                "name": "AΣͅ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aσͅa",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-later-cased",
+                "name": "AΣͅA",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aς😀a",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "emoji-barrier",
+                "name": "AΣ😀A",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "a\ud800σ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "surrogate-prefix",
+                "name": "A\ud800Σ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aς\ud800a",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "surrogate-suffix",
+                "name": "AΣ\ud800A",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "ͅς",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-a",
+                "name": "AͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        }
+      ]
+    }
+  ]
+}
