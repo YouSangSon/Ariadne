@@ -38,6 +38,12 @@ tables to 16,384 elements in aggregate, 16 memories/tables, 64 instances, and a
 conservatively reducing the remaining budget. These limits do not bound compiler
 RSS or replace container memory/CPU/PID limits.
 
+Development and verification versions belong to the root `.tool-versions`: Go
+1.27.4, Node 24.22.2, Rust 1.93.0 and Python 3.14.5. Use `asdf install` from
+the repository root. Python is only used by qualification tooling. The worker
+CI uses Ubuntu 24.04 for the exact Python distribution; this is a test platform,
+not a production operating-system support claim.
+
 Use task-owned `CARGO_HOME` and `CARGO_TARGET_DIR`, with `CARGO_BUILD_JOBS=2`:
 
 ```sh

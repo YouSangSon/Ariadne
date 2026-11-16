@@ -21,6 +21,10 @@
       "layer": "tooling",
       "context": "automation"
     },
+    ".tool-versions": {
+      "layer": "tooling",
+      "context": "core"
+    },
     ".gitignore": {
       "layer": "tooling",
       "context": "core"

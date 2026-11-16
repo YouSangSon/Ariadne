@@ -221,6 +221,8 @@ Memories can carry recheck instructions, triggers and reported sources. `inspect
 
 The [follow-up design](docs/memory-evolution-design.md) covers source anchors, selective retrieval, correction proposals and bounded maintenance; these additions are not implemented.
 
+Development and verification use `.tool-versions` with Go `1.27.4`, Node `24.22.2`, Rust `1.93.0` and Python `3.14.5`; prepare them with `asdf install`. Python is used only for native qualification tooling. Go SQLite checks require CGO and a C compiler; follow the [native gate](docs/extension-implementation-plan.ko.md#별도-native-gate) for effective version checks and task-owned cache cleanup.
+
 Go extension contracts, a reference report projector, package inspection and a nonexecuting package registry are [experimental](docs/extension-implementation-plan.ko.md). The separate Go CLI provides installation, digest selection, disabling and removal. Activation grants no execution authority. The Node product is unchanged, and user-extension execution and a qualified sandbox remain unavailable.
 The Rust worker and fixed Podman profile are separate qualification tooling; public user-extension execution remains unavailable.
 

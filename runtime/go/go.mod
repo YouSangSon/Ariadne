@@ -1,5 +1,5 @@
 module ariadne/runtime
 
-go 1.24.5
+go 1.27.4
 
 require github.com/mattn/go-sqlite3 v1.14.53
