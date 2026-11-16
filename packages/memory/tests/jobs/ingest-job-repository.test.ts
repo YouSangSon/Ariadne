@@ -190,6 +190,12 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
   beforeAll(async () => {
     await waitForPostgres();
     await recreateTestDatabase();
+    const pool = createPgPool({ connectionString: testConnectionString });
+    try {
+      await runMigrations(pool);
+    } finally {
+      await pool.end();
+    }
   });
 
   afterAll(async () => {
@@ -202,8 +208,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
-
       const memoryRepository = createMemoryRepository(pool);
       const createdMemory = await memoryRepository.addMemory({
         scopeType: "project",
@@ -251,7 +255,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     const pool = createPgPool({ connectionString: testConnectionString });
 
     try {
-      await runMigrations(pool);
       const jobs = createIngestJobRepository(pool);
       const job = await createJob(pool);
 
@@ -281,7 +284,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     const pool = createPgPool({ connectionString: testConnectionString });
 
     try {
-      await runMigrations(pool);
       const jobs = createIngestJobRepository(pool);
       const job = await createJob(pool);
 
@@ -312,7 +314,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     const pool = createPgPool({ connectionString: testConnectionString });
 
     try {
-      await runMigrations(pool);
       const jobs = createIngestJobRepository(pool);
       const job = await createJob(pool);
 
@@ -333,7 +334,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     const pool = createPgPool({ connectionString: testConnectionString });
 
     try {
-      await runMigrations(pool);
       const jobs = createIngestJobRepository(pool);
       const job = await createJob(pool);
 
@@ -367,7 +367,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createIngestJobRepository", () => {
     const pool = createPgPool({ connectionString: testConnectionString });
 
     try {
-      await runMigrations(pool);
       const jobs = createIngestJobRepository(pool);
 
       const a = await createJob(pool);
