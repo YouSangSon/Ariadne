@@ -55,12 +55,13 @@ Unicode scalar 문자열로 강제 변환하거나 U+FFFD로 대체하면 안 �
 
 ## 선택 사례의 경계
 
-35개 사례는 다음 구별되는 결과를 고정한다. 전체 Unicode나 모든 schema 조합의 전수 검증이 아니다.
+36개 사례는 다음 구별되는 결과를 고정한다. 전체 Unicode나 모든 schema 조합의 전수 검증이 아니다.
 
 - 출처 경로 중복 제거·UTF-16 정렬·원본 bytes의 hash, 검토 미실시/current/정의 변경 stale/출처 변경 stale
 - exact/label substring/description 순위와 ID 동률 순서, 잘라내기 전 모호성, 선택된 용어의 관계 경계
 - 이름 200/201 및 query 256/257 UTF-16 경계의 astral 문자, lone high/low surrogate와 astral half-query
 - U+0130 full lowercase와 31개 case-ignorable mark를 넘는 Greek sigma 문맥
+- Cased(대소문자 속성)와 Case_Ignorable(대소문자 문맥에서 건너뛰는 속성)에 동시에 속하는 U+0345 앞/뒤의 sigma. 이후 cased 문자 유무와 문맥을 끊는 emoji/lone surrogate를 literal 소문자 query로 비교해 이름과 query 정규화의 동반 오류를 드러낸다
 - NFKC의 분해/합성·전각·한글 자모, 31개 nonstarter와 작성된 CGJ의 차이
 - JS trim의 BOM U+FEFF와 NEL U+0085, 공백/타입/limit 오류
 - `<>&`, U+2028/U+2029, 따옴표와 역슬래시를 포함한 raw fingerprint

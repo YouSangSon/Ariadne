@@ -423,6 +423,37 @@
           "limit": 1.5
         }
       ]
+    },
+    {
+      "id": "sigma-overlapping-cased-ignorable-and-barriers",
+      "document_json": "{\"schema_version\":1,\"terms\":[{\"id\":\"overlap-start\",\"name\":\"\\u0345\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-after-a\",\"name\":\"A\\u0345\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-after-sigma\",\"name\":\"A\\u03a3\\u0345\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"overlap-later-cased\",\"name\":\"A\\u03a3\\u0345A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"emoji-barrier\",\"name\":\"A\\u03a3\\ud83d\\ude00A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"surrogate-prefix\",\"name\":\"A\\ud800\\u03a3\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]},{\"id\":\"surrogate-suffix\",\"name\":\"A\\u03a3\\ud800A\",\"description\":\"Context boundary\",\"synonyms\":[],\"sources\":[]}],\"relations\":[]}",
+      "sources": {},
+      "searches": [
+        {
+          "query": "\u0345\u03c3"
+        },
+        {
+          "query": "a\u0345\u03c2"
+        },
+        {
+          "query": "a\u03c2\u0345"
+        },
+        {
+          "query": "a\u03c3\u0345a"
+        },
+        {
+          "query": "a\u03c2\ud83d\ude00a"
+        },
+        {
+          "query": "a\ud800\u03c3"
+        },
+        {
+          "query": "a\u03c2\ud800a"
+        },
+        {
+          "query": "\u0345\u03c2"
+        }
+      ]
     }
   ]
 }

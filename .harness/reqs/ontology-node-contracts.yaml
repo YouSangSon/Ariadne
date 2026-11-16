@@ -19,6 +19,7 @@ requirement:
     - 실제 Node 24.22.2와 ICU 78.3 및 Unicode 17.0을 oracle로 사용한다.
     - 기존 Node ontology domain과 application 및 파일과 CLI 경로는 변경하지 않는다.
     - 이 단위는 G1 선행 fixture이며 Go 이식과 production 전환을 포함하지 않는다.
+    - U+0345와 sigma 및 emoji와 lone surrogate의 실제 Node probe 입력 7개를 literal 소문자 query 8개와 묶어 선택 사례를 36개로 확장했다.
 functional_contract:
   acceptance_criteria:
     - id: AC1
@@ -49,23 +50,23 @@ verification:
     - node scripts/verify.mjs --modules ontology
   evidence:
     - criterion_id: AC1
-      check: 실제 원본 oracle의 literal 결과와 fingerprint UTF-8 hex 재현
+      check: 실제 원본 oracle의 36개 literal 결과와 fingerprint UTF-8 hex 재현 및 기존 35개 출력 불변 비교
       result: passed
       exit_code: 0
-      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
-      artifact: .harness/handoff/ontology-node-contracts/check-final.log
+      source_state: fe510c4 원본 35개와 U0345 sigma 후속 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/sigma-delta.json
     - criterion_id: AC2
       check: 읽기 순서와 오류 시 0회 및 결과와 fingerprint 및 provenance의 8가지 변조 거절
       result: passed
       exit_code: 0
-      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
-      artifact: .harness/handoff/ontology-node-contracts/focused.log
+      source_state: fe510c4 원본 35개와 U0345 sigma 후속 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/sigma-focused.log
     - criterion_id: AC3
       check: root와 ontology 정규 source tests 및 mirror와 REQ gate
       result: passed
       exit_code: 0
-      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
-      artifact: .harness/handoff/ontology-node-contracts/root-ontology-verify.log
+      source_state: fe510c4 원본 35개와 U0345 sigma 후속 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/sigma-root-ontology-verify.log
 audit:
   must_not_implement:
     - Go 온톨로지 이식과 수동 Unicode normalizer 및 production 전환

@@ -11,7 +11,7 @@
       "modules/ontology/application.mjs": "10dc974179343796ed9ad91ab299b295f243655ab3ff5c90613e92d099e9d3bf",
       "lib/scrub.mjs": "9c9b1b233e2af96e3ef106e8c85d7efb94f06d3acd14d70a8959ee1c2990fb7a"
     },
-    "inputs_sha256": "03635da2622546776d650757e3251240d1845916adf629bedc4cf4c72da0b101",
+    "inputs_sha256": "58033a3b172d52f5be13c915bc397921176ee63cb1dd15dd914055c12533e122",
     "oracle_sha256": "3f6d4f6b401a736fc003b17fee60ba7c47ecbc2169d64f2078435fb27d3ffaaa"
   },
   "cases": [
@@ -2415,6 +2415,278 @@
           "error": {
             "name": "Error",
             "message": "limit must be an integer from 1 to 20"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sigma-overlapping-cased-ignorable-and-barriers",
+      "document_reads": 1,
+      "source_reads": [],
+      "fingerprints": [
+        {
+          "utf8_hex": "7b2266696e6765727072696e745f76657273696f6e223a312c22646566696e6974696f6e223a7b22736368656d615f76657273696f6e223a312c227465726d73223a5b7b226964223a226f7665726c61702d7374617274222c226e616d65223a22cd85cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d61667465722d61222c226e616d65223a2241cd85cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d61667465722d7369676d61222c226e616d65223a2241cea3cd85222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a226f7665726c61702d6c617465722d6361736564222c226e616d65223a2241cea3cd8541222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22656d6f6a692d62617272696572222c226e616d65223a2241cea3f09f988041222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22737572726f676174652d707265666978222c226e616d65223a22415c7564383030cea3222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d2c7b226964223a22737572726f676174652d737566666978222c226e616d65223a2241cea35c756438303041222c226465736372697074696f6e223a22436f6e7465787420626f756e64617279222c2273796e6f6e796d73223a5b5d2c22736f7572636573223a5b5d7d5d2c2272656c6174696f6e73223a5b5d7d2c22736f757263655f686173686573223a5b5d7d",
+          "sha256": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3"
+        }
+      ],
+      "validation": {
+        "value": {
+          "schema_version": 1,
+          "terms": [
+            {
+              "id": "overlap-start",
+              "name": "ͅΣ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-after-a",
+              "name": "AͅΣ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-after-sigma",
+              "name": "AΣͅ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "overlap-later-cased",
+              "name": "AΣͅA",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "emoji-barrier",
+              "name": "AΣ😀A",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "surrogate-prefix",
+              "name": "A\ud800Σ",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            },
+            {
+              "id": "surrogate-suffix",
+              "name": "AΣ\ud800A",
+              "description": "Context boundary",
+              "synonyms": [],
+              "sources": []
+            }
+          ],
+          "relations": []
+        }
+      },
+      "inspect": {
+        "schema_version": 1,
+        "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+        "review_status": "unreviewed",
+        "term_count": 7,
+        "relation_count": 0,
+        "terms_without_sources": 7,
+        "relations_without_sources": 0,
+        "source_hashes": []
+      },
+      "searches": [
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "ͅσ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-start",
+                "name": "ͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aͅς",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-a",
+                "name": "AͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aςͅ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-sigma",
+                "name": "AΣͅ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aσͅa",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-later-cased",
+                "name": "AΣͅA",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aς😀a",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "emoji-barrier",
+                "name": "AΣ😀A",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "a\ud800σ",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "surrogate-prefix",
+                "name": "A\ud800Σ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "aς\ud800a",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "surrogate-suffix",
+                "name": "AΣ\ud800A",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
+          }
+        },
+        {
+          "value": {
+            "schema_version": 1,
+            "digest": "dd15dcb86f3160cf703598124f8a34cc48cbb546fafb9240dbdfd638fc57f6e3",
+            "review_status": "unreviewed",
+            "query": "ͅς",
+            "total_matches": 1,
+            "ambiguous": false,
+            "truncated": false,
+            "terms": [
+              {
+                "id": "overlap-after-a",
+                "name": "AͅΣ",
+                "description": "Context boundary",
+                "synonyms": [],
+                "sources": []
+              }
+            ],
+            "relations": [],
+            "total_relations": 0,
+            "relations_truncated": false,
+            "source_hashes": []
           }
         }
       ]
