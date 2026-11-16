@@ -148,3 +148,16 @@ The proposed combination of scoped context, evidence reuse, supervised continuit
 and eventual task control is described in the [harness synthesis design](harness-synthesis-design.md).
 It preserves these owners and the existing execution policy; its future contracts
 are not implemented capabilities.
+
+## Code numeric compute library (G2a)
+
+`runtime/go/internal/code/domain` owns numeric inputs, counts and their invariants.
+The Code-local `adapters/computewire` owns strict JSON and canonical digest
+validation. No platform package imports the Code domain and no unused application
+port is introduced. `runtime/rust/crates/ariadne-compute` owns the analogous pure
+count kernel and protocol codec without Wasmtime or worker imports. The Rust AST
+gate discovers every compute source and rejects unknown files, domain serde/I/O,
+outward and cross-module imports. The root inventory discovers nested Cargo
+manifests while excluding Cargo target output. Code's existing test exclusion
+keeps TS tests outside the production map; its fixture generator is inventoried
+as tooling and its actual TS test remains part of the owning package gate.

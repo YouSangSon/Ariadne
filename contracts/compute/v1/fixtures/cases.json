@@ -1,0 +1,1148 @@
+{
+  "valid": [
+    {
+      "name": "empty",
+      "request": "empty-request.json",
+      "response": "empty-response.json",
+      "canonicalPayload": "empty-canonical.json",
+      "sha256": "33e3bb470525ad3ac8dc19eccad6ceb7c306237390fb985e5779ab85483c4df2",
+      "semantic": {
+        "paths": [],
+        "commits": [],
+        "included": [],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "tiny",
+      "request": "tiny-request.json",
+      "response": "tiny-response.json",
+      "canonicalPayload": "tiny-canonical.json",
+      "sha256": "73c33205d9b30fdfdf31e08236aaf51c309f31ebab0c6e98910f013f94e732d6"
+    },
+    {
+      "name": "first-seen",
+      "request": "first-seen-request.json",
+      "response": "first-seen-response.json",
+      "canonicalPayload": "first-seen-canonical.json",
+      "sha256": "335d8d4800e4c182d316c840208bfd96c8574dc53b644e8235e22414a6fb175f",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts",
+          "c.ts"
+        ],
+        "commits": [
+          [
+            "b.ts",
+            "c.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts",
+          "c.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "duplicate-paths",
+      "request": "duplicate-paths-request.json",
+      "response": "duplicate-paths-response.json",
+      "canonicalPayload": "duplicate-paths-canonical.json",
+      "sha256": "b3d5b5915a3c30b16a59a8b7090425cdc3bbe0b81e09098dba5a682d5397dcf8",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts",
+          "unused.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "unique26-noisy",
+      "request": "unique26-noisy-request.json",
+      "response": "unique26-noisy-response.json",
+      "canonicalPayload": "unique26-noisy-canonical.json",
+      "sha256": "33e3bb470525ad3ac8dc19eccad6ceb7c306237390fb985e5779ab85483c4df2",
+      "semantic": {
+        "paths": [],
+        "commits": [
+          [
+            "a.ts",
+            "b.ts",
+            "excluded-0.ts",
+            "excluded-1.ts",
+            "excluded-2.ts",
+            "excluded-3.ts",
+            "excluded-4.ts",
+            "excluded-5.ts",
+            "excluded-6.ts",
+            "excluded-7.ts",
+            "excluded-8.ts",
+            "excluded-9.ts",
+            "excluded-10.ts",
+            "excluded-11.ts",
+            "excluded-12.ts",
+            "excluded-13.ts",
+            "excluded-14.ts",
+            "excluded-15.ts",
+            "excluded-16.ts",
+            "excluded-17.ts",
+            "excluded-18.ts",
+            "excluded-19.ts",
+            "excluded-20.ts",
+            "excluded-21.ts",
+            "excluded-22.ts",
+            "excluded-23.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "raw26-unique25",
+      "request": "raw26-unique25-request.json",
+      "response": "raw26-unique25-response.json",
+      "canonicalPayload": "raw26-unique25-canonical.json",
+      "sha256": "82920ce95b5a04945ccdaa4d00f507ab76776738f6b1dba3ae915dd5c30e92bd",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "a.ts",
+            "b.ts",
+            "excluded-0.ts",
+            "excluded-1.ts",
+            "excluded-2.ts",
+            "excluded-3.ts",
+            "excluded-4.ts",
+            "excluded-5.ts",
+            "excluded-6.ts",
+            "excluded-7.ts",
+            "excluded-8.ts",
+            "excluded-9.ts",
+            "excluded-10.ts",
+            "excluded-11.ts",
+            "excluded-12.ts",
+            "excluded-13.ts",
+            "excluded-14.ts",
+            "excluded-15.ts",
+            "excluded-16.ts",
+            "excluded-17.ts",
+            "excluded-18.ts",
+            "excluded-19.ts",
+            "excluded-20.ts",
+            "excluded-21.ts",
+            "excluded-22.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "singletons",
+      "request": "singletons-request.json",
+      "response": "singletons-response.json",
+      "canonicalPayload": "singletons-canonical.json",
+      "sha256": "d0e45f7c0c2370d4a3cc99ea79765b90d40f20607af469d1b14a61d80708fab0",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "b.ts"
+          ],
+          [
+            "excluded.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "threshold-inclusive",
+      "request": "threshold-inclusive-request.json",
+      "response": "threshold-inclusive-response.json",
+      "canonicalPayload": "threshold-inclusive-canonical.json",
+      "sha256": "9746fb38af4bed3ab90c605ce1e0914e24d237542a854902c326413f3944d884",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {}
+      }
+    },
+    {
+      "name": "threshold-count-below",
+      "request": "threshold-count-below-request.json",
+      "response": "threshold-count-below-response.json",
+      "canonicalPayload": "threshold-count-below-canonical.json",
+      "sha256": "aaa0d0db3dc6d201c9fcec60b47614951a0da381893faf8ce9a4057c12488c0d",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {}
+      }
+    },
+    {
+      "name": "threshold-score-below",
+      "request": "threshold-score-below-request.json",
+      "response": "threshold-score-below-response.json",
+      "canonicalPayload": "threshold-score-below-canonical.json",
+      "sha256": "73ab0336f32020590cc8d009845bd128863211aca23e602a779ac3a807bf482b",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {}
+      }
+    },
+    {
+      "name": "rounding-five-eighths",
+      "request": "rounding-five-eighths-request.json",
+      "response": "rounding-five-eighths-response.json",
+      "canonicalPayload": "rounding-five-eighths-canonical.json",
+      "sha256": "da52aee4cc743957e256ad8b936b302a1c797eb07a6e80f206e751dfd2d8d2df",
+      "semantic": {
+        "paths": [
+          "a.ts",
+          "b.ts"
+        ],
+        "commits": [
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts",
+            "b.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ],
+          [
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "a.ts",
+          "b.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "unicode-ties",
+      "request": "unicode-ties-request.json",
+      "response": "unicode-ties-response.json",
+      "canonicalPayload": "unicode-ties-canonical.json",
+      "sha256": "335d8d4800e4c182d316c840208bfd96c8574dc53b644e8235e22414a6fb175f",
+      "semantic": {
+        "paths": [
+          "é.ts",
+          "z.ts",
+          "é.ts"
+        ],
+        "commits": [
+          [
+            "é.ts",
+            "z.ts"
+          ],
+          [
+            "é.ts",
+            "z.ts"
+          ]
+        ],
+        "included": [
+          "é.ts",
+          "é.ts",
+          "z.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "unicode-ties-reordered",
+      "request": "unicode-ties-reordered-request.json",
+      "response": "unicode-ties-reordered-response.json",
+      "canonicalPayload": "unicode-ties-reordered-canonical.json",
+      "sha256": "73c33205d9b30fdfdf31e08236aaf51c309f31ebab0c6e98910f013f94e732d6",
+      "semantic": {
+        "paths": [
+          "é.ts",
+          "z.ts",
+          "é.ts"
+        ],
+        "commits": [
+          [
+            "é.ts",
+            "z.ts"
+          ],
+          [
+            "é.ts",
+            "z.ts"
+          ]
+        ],
+        "included": [
+          "é.ts",
+          "é.ts",
+          "z.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    },
+    {
+      "name": "unicode-case-punctuation",
+      "request": "unicode-case-punctuation-request.json",
+      "response": "unicode-case-punctuation-response.json",
+      "canonicalPayload": "unicode-case-punctuation-canonical.json",
+      "sha256": "c376d39a397b78fdf633673bc3350a93b40798428bf7dbe85034b36e78db9ee6",
+      "semantic": {
+        "paths": [
+          "A.ts",
+          "_.ts",
+          "a.ts",
+          "中.ts",
+          "日本.ts",
+          "한.ts",
+          "😀.ts"
+        ],
+        "commits": [
+          [
+            "😀.ts",
+            "a.ts"
+          ],
+          [
+            "中.ts",
+            "a.ts"
+          ],
+          [
+            "한.ts",
+            "a.ts"
+          ],
+          [
+            "日本.ts",
+            "a.ts"
+          ],
+          [
+            "_.ts",
+            "a.ts"
+          ],
+          [
+            "A.ts",
+            "a.ts"
+          ]
+        ],
+        "included": [
+          "A.ts",
+          "_.ts",
+          "a.ts",
+          "中.ts",
+          "日本.ts",
+          "한.ts",
+          "😀.ts"
+        ],
+        "options": {
+          "minCoChanges": 1,
+          "minCouplingScore": 0
+        }
+      }
+    }
+  ],
+  "equivalentRequest": "tiny-reordered-request.json",
+  "invalidRequests": [
+    {
+      "name": "missing-protocol",
+      "file": "reject-request-missing-protocol.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-protocol",
+      "file": "reject-request-null-protocol.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-operation",
+      "file": "reject-request-missing-operation.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-operation",
+      "file": "reject-request-null-operation.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-requestId",
+      "file": "reject-request-missing-requestId.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-requestId",
+      "file": "reject-request-null-requestId.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-inputDigest",
+      "file": "reject-request-missing-inputDigest.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-inputDigest",
+      "file": "reject-request-null-inputDigest.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-payload",
+      "file": "reject-request-missing-payload.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-payload",
+      "file": "reject-request-null-payload.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-payload-fileCount",
+      "file": "reject-request-null-payload-fileCount.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-payload-fileCount",
+      "file": "reject-request-missing-payload-fileCount.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-payload-commits",
+      "file": "reject-request-null-payload-commits.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "missing-payload-commits",
+      "file": "reject-request-missing-payload-commits.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "wrong-version",
+      "file": "reject-request-wrong-version.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "wrong-operation",
+      "file": "reject-request-wrong-operation.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "bad-id",
+      "file": "reject-request-bad-id.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "long-id",
+      "file": "reject-request-long-id.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "unicode-id",
+      "file": "reject-request-unicode-id.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "empty-id",
+      "file": "reject-request-empty-id.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "uppercase-digest",
+      "file": "reject-request-uppercase-digest.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "bad-digest",
+      "file": "reject-request-bad-digest.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "unknown",
+      "file": "reject-request-unknown.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "case-field",
+      "file": "reject-request-case-field.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "nested-unknown",
+      "file": "reject-request-nested-unknown.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "nested-case",
+      "file": "reject-request-nested-case.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number--0",
+      "file": "reject-request-number--0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number--0",
+      "file": "reject-request-id-number--0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number--1",
+      "file": "reject-request-number--1.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number--1",
+      "file": "reject-request-id-number--1.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-1.0",
+      "file": "reject-request-number-1.0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-1.0",
+      "file": "reject-request-id-number-1.0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-1e0",
+      "file": "reject-request-number-1e0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-1e0",
+      "file": "reject-request-id-number-1e0.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-4294967296",
+      "file": "reject-request-number-4294967296.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-4294967296",
+      "file": "reject-request-id-number-4294967296.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-null",
+      "file": "reject-request-number-null.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-null",
+      "file": "reject-request-id-number-null.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-true",
+      "file": "reject-request-number-true.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-true",
+      "file": "reject-request-id-number-true.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "number-3",
+      "file": "reject-request-number-3.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "id-number-3",
+      "file": "reject-request-id-number-3.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "duplicate-fileCount",
+      "file": "reject-request-duplicate-fileCount.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "duplicate-fileu0043ount",
+      "file": "reject-request-duplicate-fileu0043ount.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "duplicate-envelope",
+      "file": "reject-request-duplicate-envelope.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "invalid-utf8",
+      "file": "reject-request-invalid-utf8.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "trailing",
+      "file": "reject-request-trailing.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "unsorted",
+      "file": "reject-request-unsorted.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "duplicate-id",
+      "file": "reject-request-duplicate-id.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "out-of-range",
+      "file": "reject-request-out-of-range.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "null-commit",
+      "file": "reject-request-null-commit.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "commits-string",
+      "file": "reject-request-commits-string.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-protocol-number",
+      "file": "reject-request-type-protocol-number.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-protocol-array",
+      "file": "reject-request-type-protocol-array.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-protocol-object",
+      "file": "reject-request-type-protocol-object.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-operation-number",
+      "file": "reject-request-type-operation-number.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-operation-array",
+      "file": "reject-request-type-operation-array.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-operation-object",
+      "file": "reject-request-type-operation-object.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-requestId-number",
+      "file": "reject-request-type-requestId-number.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-requestId-array",
+      "file": "reject-request-type-requestId-array.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-requestId-object",
+      "file": "reject-request-type-requestId-object.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-inputDigest-number",
+      "file": "reject-request-type-inputDigest-number.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-inputDigest-array",
+      "file": "reject-request-type-inputDigest-array.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "type-inputDigest-object",
+      "file": "reject-request-type-inputDigest-object.json",
+      "expectedCode": "INVALID_INPUT"
+    }
+  ],
+  "invalidResponses": [
+    {
+      "name": "missing-protocol",
+      "file": "reject-response-missing-protocol.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-protocol",
+      "file": "reject-response-null-protocol.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-operation",
+      "file": "reject-response-missing-operation.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-operation",
+      "file": "reject-response-null-operation.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-requestId",
+      "file": "reject-response-missing-requestId.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-requestId",
+      "file": "reject-response-null-requestId.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-inputDigest",
+      "file": "reject-response-missing-inputDigest.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-inputDigest",
+      "file": "reject-response-null-inputDigest.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-status",
+      "file": "reject-response-missing-status.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-status",
+      "file": "reject-response-null-status.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-frequencies",
+      "file": "reject-response-missing-frequencies.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-frequencies",
+      "file": "reject-response-null-frequencies.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "missing-pairs",
+      "file": "reject-response-missing-pairs.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "null-pairs",
+      "file": "reject-response-null-pairs.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "unknown",
+      "file": "reject-response-unknown.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "wrong-id",
+      "file": "reject-response-wrong-id.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "wrong-digest",
+      "file": "reject-response-wrong-digest.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "wrong-version",
+      "file": "reject-response-wrong-version.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "wrong-operation",
+      "file": "reject-response-wrong-operation.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "bad-status",
+      "file": "reject-response-bad-status.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "short-frequencies",
+      "file": "reject-response-short-frequencies.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "frequency-over",
+      "file": "reject-response-frequency-over.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "zero-count",
+      "file": "reject-response-zero-count.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "count-over",
+      "file": "reject-response-count-over.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "pair-reversed",
+      "file": "reject-response-pair-reversed.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "pair-range",
+      "file": "reject-response-pair-range.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "pair-duplicate",
+      "file": "reject-response-pair-duplicate.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "pair-unsorted",
+      "file": "reject-response-pair-unsorted.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "ordinal-duplicate",
+      "file": "reject-response-ordinal-duplicate.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "ordinal-gap",
+      "file": "reject-response-ordinal-gap.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "tuple-short",
+      "file": "reject-response-tuple-short.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "tuple-long",
+      "file": "reject-response-tuple-long.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "unknown-code",
+      "file": "reject-response-unknown-code.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "error-with-counts",
+      "file": "reject-response-error-with-counts.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "fraction",
+      "file": "reject-response-fraction.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "negative-zero",
+      "file": "reject-response-negative-zero.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "exponent",
+      "file": "reject-response-exponent.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "overflow",
+      "file": "reject-response-overflow.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "duplicate",
+      "file": "reject-response-duplicate.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "trailing",
+      "file": "reject-response-trailing.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "invalid-utf8",
+      "file": "reject-response-invalid-utf8.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-protocol-number",
+      "file": "reject-response-type-protocol-number.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-protocol-array",
+      "file": "reject-response-type-protocol-array.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-protocol-object",
+      "file": "reject-response-type-protocol-object.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-operation-number",
+      "file": "reject-response-type-operation-number.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-operation-array",
+      "file": "reject-response-type-operation-array.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-operation-object",
+      "file": "reject-response-type-operation-object.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-requestId-number",
+      "file": "reject-response-type-requestId-number.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-requestId-array",
+      "file": "reject-response-type-requestId-array.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-requestId-object",
+      "file": "reject-response-type-requestId-object.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-inputDigest-number",
+      "file": "reject-response-type-inputDigest-number.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-inputDigest-array",
+      "file": "reject-response-type-inputDigest-array.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "type-inputDigest-object",
+      "file": "reject-response-type-inputDigest-object.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    }
+  ],
+  "errorResponses": [
+    "error-INVALID_INPUT.json",
+    "error-UNSUPPORTED_VERSION.json",
+    "error-LIMIT_EXCEEDED.json",
+    "error-UNAVAILABLE.json",
+    "error-BUSY.json",
+    "error-CANCELLED.json",
+    "error-DEADLINE_EXCEEDED.json",
+    "error-PROTOCOL_ERROR.json",
+    "error-ENGINE_FAILED.json"
+  ]
+}

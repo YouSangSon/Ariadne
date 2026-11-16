@@ -224,6 +224,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 Go の拡張契約、参照用レポート変換、パッケージ検査と実行を伴わないパッケージ registry は[実験段階](docs/extension-implementation-plan.ko.md)です。独立した Go CLI はインストール、digest の選択、無効化と削除を提供します。activate は実行権限を与えません。Node 製品は変更せず、ユーザー拡張の実行や検証済み sandbox は提供しません。
 Rust worker と固定 Podman profile は独立した実行適合性試験用ツールであり、ユーザー拡張の公開実行機能はまだ提供しません。
 
+信頼された co-change 計算の G2a Go/Rust 純粋ライブラリ、厳密な JSON 契約、実際の TS とのオフライン比較は[別の契約](contracts/compute/v1/README.md)に記載しています。計算実行ファイル、プロセス連携、DB 公開、性能優位はまだ実装または検証していません。
+
 [20 件の参照元・適用範囲・入力形式（韓国語）](docs/harness-engineering-adoption.md).
 
 <a id="license"></a>

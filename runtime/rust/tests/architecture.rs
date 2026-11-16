@@ -12,7 +12,24 @@ impl Boundaries<'_> {
             [root, module, ..] if root == "std" => Some(module.as_str()),
             _ => None,
         };
-        let forbidden = parts.first().is_some_and(|p| p == "wasmtime_wasi")
+        let compute_protocol = ["compute-protocol", "compute-lib"].contains(&self.layer);
+        let forbidden = (compute_protocol
+            && (std_module.is_some_and(|m| {
+                ["fs", "net", "process", "env", "io", "thread", "time"].contains(&m)
+            }) || parts
+                .first()
+                .is_some_and(|p| ["wasmtime", "ariadne_extension_worker"].contains(&p.as_str()))
+                || (parts
+                    .first()
+                    .is_some_and(|p| ["crate", "super"].contains(&p.as_str()))
+                    && parts
+                        .get(1)
+                        .is_some_and(|p| !["cochange", "protocol"].contains(&p.as_str())))))
+            || (self.layer == "domain"
+                && parts
+                    .iter()
+                    .any(|p| ["protocol", "engine"].contains(&p.as_str())))
+            || parts.first().is_some_and(|p| p == "wasmtime_wasi")
             || (self.layer != "main" && std_module == Some("process"))
             || (self.layer == "domain"
                 && std_module.is_some_and(|module| {
@@ -104,24 +121,52 @@ impl<'ast> Visit<'ast> for Boundaries<'_> {
     }
 }
 
+fn source_layer(path: &str) -> Option<&'static str> {
+    match path {
+        "src/lib.rs" => Some("lib"),
+        "src/main.rs" => Some("main"),
+        "src/domain.rs" => Some("domain"),
+        "src/engine.rs" => Some("engine"),
+        "src/protocol.rs" => Some("protocol"),
+        "crates/ariadne-compute/src/lib.rs" => Some("compute-lib"),
+        "crates/ariadne-compute/src/cochange.rs" => Some("domain"),
+        "crates/ariadne-compute/src/protocol.rs" => Some("compute-protocol"),
+        _ => None,
+    }
+}
+
+fn inspect_sources(root: &std::path::Path, directory: &std::path::Path) {
+    for entry in std::fs::read_dir(directory).unwrap() {
+        let entry = entry.unwrap();
+        if entry.path().is_dir() {
+            inspect_sources(root, &entry.path());
+            continue;
+        }
+        if entry.path().extension().is_none_or(|ext| ext != "rs") {
+            continue;
+        }
+        let name = entry
+            .path()
+            .strip_prefix(root)
+            .unwrap()
+            .to_string_lossy()
+            .replace('\\', "/");
+        let layer = source_layer(&name).unwrap_or_else(|| panic!("unowned Rust source {name}"));
+        let source = std::fs::read_to_string(entry.path()).unwrap();
+        let mut checker = Boundaries {
+            layer,
+            errors: Vec::new(),
+        };
+        checker.visit_file(&syn::parse_file(&source).unwrap());
+        assert!(checker.errors.is_empty(), "{name}: {:?}", checker.errors);
+    }
+}
+
 #[test]
 fn rust_layers_have_owned_sources_and_inward_dependencies() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    for entry in std::fs::read_dir(root.join("src")).unwrap() {
-        let entry = entry.unwrap();
-        let name = entry.file_name().to_str().unwrap().to_owned();
-        assert!(
-            ["lib.rs", "domain.rs", "engine.rs", "protocol.rs", "main.rs"].contains(&name.as_str()),
-            "unowned Rust source {name}"
-        );
-        let source = std::fs::read_to_string(entry.path()).unwrap();
-        let syntax = syn::parse_file(&source).unwrap();
-        let mut checker = Boundaries {
-            layer: name.trim_end_matches(".rs"),
-            errors: Vec::new(),
-        };
-        checker.visit_file(&syntax);
-        assert!(checker.errors.is_empty(), "{name}: {:?}", checker.errors);
+    for directory in ["src", "crates/ariadne-compute/src"] {
+        inspect_sources(root, &root.join(directory));
     }
 }
 
@@ -195,4 +240,69 @@ fn gate_allows_pure_values_protocol_stdio_and_composition_processes() {
         checker.visit_file(&syn::parse_file(source).unwrap());
         assert!(checker.errors.is_empty(), "{layer}: {:?}", checker.errors);
     }
+}
+
+#[test]
+fn compute_sources_reject_io_domain_serialization_and_cross_module_imports() {
+    assert_eq!(source_layer("crates/ariadne-compute/src/new.rs"), None);
+    assert_eq!(
+        source_layer("crates/ariadne-compute/src/nested/new.rs"),
+        None
+    );
+    for (layer, source) in [
+        ("domain", "use serde::Serialize;"),
+        ("domain", "use super::protocol::Request;"),
+        ("domain", "fn read() { std::fs::read(path); }"),
+        ("compute-protocol", "use std::io::Read;"),
+        ("domain", "use sha2::Sha256;"),
+        ("compute-protocol", "use std::{net::TcpStream as Socket};"),
+        ("compute-protocol", "use crate::extensions::Registry;"),
+        (
+            "compute-protocol",
+            "use ariadne_extension_worker::engine::Executor;",
+        ),
+    ] {
+        let mut checker = Boundaries {
+            layer,
+            errors: Vec::new(),
+        };
+        checker.visit_file(&syn::parse_file(source).unwrap());
+        assert!(!checker.errors.is_empty(), "{layer} accepted {source}");
+    }
+}
+
+#[test]
+fn compute_library_composition_cannot_gain_os_capabilities() {
+    for layer in ["compute-lib", "compute-protocol", "domain"] {
+        for module in ["fs", "net", "env", "process", "io", "thread", "time"] {
+            for source in [
+                format!("use std::{{{module} as hidden}};"),
+                format!("fn run() {{ std::{module}::operation(); }}"),
+            ] {
+                let mut checker = Boundaries {
+                    layer,
+                    errors: Vec::new(),
+                };
+                checker.visit_file(&syn::parse_file(&source).unwrap());
+                assert!(!checker.errors.is_empty(), "{layer} accepted {source}");
+            }
+        }
+    }
+}
+
+#[test]
+fn compute_unknown_source_file_is_rejected_by_directory_walk() {
+    let root = std::env::temp_dir().join(format!(
+        "ariadne-compute-architecture-{}",
+        std::process::id()
+    ));
+    std::fs::create_dir(&root).unwrap();
+    let directory = root.join("crates/ariadne-compute/src/nested");
+    std::fs::create_dir_all(&directory).unwrap();
+    std::fs::write(directory.join("unknown.rs"), "pub fn unowned() {} ").unwrap();
+    let result = std::panic::catch_unwind(|| {
+        inspect_sources(&root, &root.join("crates/ariadne-compute/src"))
+    });
+    std::fs::remove_dir_all(&root).unwrap();
+    assert!(result.is_err());
 }

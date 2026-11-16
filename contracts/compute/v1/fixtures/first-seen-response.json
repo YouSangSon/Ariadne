@@ -1,0 +1,1 @@
+{"protocol":"ariadne.compute/1","operation":"cochange-counts/1","requestId":"first-seen","inputDigest":"335d8d4800e4c182d316c840208bfd96c8574dc53b644e8235e22414a6fb175f","status":"ok","frequencies":[1,2,1],"pairs":[[0,1,1,1],[1,2,1,0]]}

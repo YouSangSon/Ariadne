@@ -46,9 +46,10 @@
     "docs:lint": "node scripts/docs-lint.js",
     "schemas:build": "tsx scripts/generate-report-schema.ts",
     "schemas:check": "tsx scripts/generate-report-schema.ts --check",
-    "lint": "npm run check && npm run docs:lint && npm run schemas:check",
+    "lint": "npm run check && npm run docs:lint && npm run schemas:check && npm run compute:fixtures:check",
     "verify": "npm run lint && npm run test:install-smoke && npm test && npm run test:dogfood && npm run bench && npm run audit:dependencies",
-    "test:architecture": "tsx --test tests/architecture-boundaries.test.ts tests/architecture-usecases.test.ts"
+    "test:architecture": "tsx --test tests/architecture-boundaries.test.ts tests/architecture-usecases.test.ts",
+    "compute:fixtures:check": "tsx scripts/generate-compute-fixtures.ts --check"
   },
   "engines": {
     "node": ">=24.0.0"

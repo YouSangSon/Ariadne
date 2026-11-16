@@ -1,0 +1,510 @@
+{
+  "sourceHashes": {
+    "packages/code/src/domain/indexing/co-change.ts": "5d295d3dff0dd80b51e6c0b8f218a9ec7cf1c1b0753d525f659d626d4324ae27",
+    "packages/code/src/domain/indexing/index-policy.ts": "32d3b7c5393b474e8751fd274abe5959a111f216eb8db6f5a9c483d1d757facf",
+    "packages/code/src/infrastructure/sqlite/indexing.ts": "8a42f56571249d3009facd91d14930fb36a3e410b9c5653326d1a9b0d9f8deda"
+  },
+  "node": "v24.22.2",
+  "icu": "78.3",
+  "locale": "en-US",
+  "scope": "Offline numeric counts, actual TS ordering, provenance and IDs; no Go locale, DB publication or subprocess proof.",
+  "cases": [
+    {
+      "name": "empty",
+      "pairs": [],
+      "identities": []
+    },
+    {
+      "name": "first-seen",
+      "pairs": [
+        {
+          "source": "a.ts",
+          "target": "b.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "b.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "b.ts",
+          "target": "c.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "c.ts",
+          "target": "b.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "a4089e1b3ed12894e4ee",
+          "snippet": "co-changed with b.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "1789ea043c3d13735d08",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:c.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "754de46a2946d1767136",
+          "snippet": "co-changed with c.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:c.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "eae4be059e048cf60255",
+          "snippet": "co-changed with b.ts in 1 commits (coupling 0.50)"
+        }
+      ]
+    },
+    {
+      "name": "duplicate-paths",
+      "pairs": [
+        {
+          "source": "a.ts",
+          "target": "b.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "b.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "a4089e1b3ed12894e4ee",
+          "snippet": "co-changed with b.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "1789ea043c3d13735d08",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.50)"
+        }
+      ]
+    },
+    {
+      "name": "unique26-noisy",
+      "pairs": [],
+      "identities": []
+    },
+    {
+      "name": "raw26-unique25",
+      "pairs": [
+        {
+          "source": "a.ts",
+          "target": "b.ts",
+          "coChangeCount": 1,
+          "couplingScore": 1
+        },
+        {
+          "source": "b.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 1
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:1:1.00",
+          "relationId": "9bec65b2225fe3c386b9",
+          "snippet": "co-changed with b.ts in 1 commits (coupling 1.00)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:1.00",
+          "relationId": "c5ba3c1715ab111c0e13",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 1.00)"
+        }
+      ]
+    },
+    {
+      "name": "singletons",
+      "pairs": [],
+      "identities": []
+    },
+    {
+      "name": "threshold-inclusive",
+      "pairs": [
+        {
+          "source": "a.ts",
+          "target": "b.ts",
+          "coChangeCount": 3,
+          "couplingScore": 0.3
+        },
+        {
+          "source": "b.ts",
+          "target": "a.ts",
+          "coChangeCount": 3,
+          "couplingScore": 0.3
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:3:0.30",
+          "relationId": "ab598aecc2370f0311e1",
+          "snippet": "co-changed with b.ts in 3 commits (coupling 0.30)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:3:0.30",
+          "relationId": "0f27840c14153517457d",
+          "snippet": "co-changed with a.ts in 3 commits (coupling 0.30)"
+        }
+      ]
+    },
+    {
+      "name": "threshold-count-below",
+      "pairs": [],
+      "identities": []
+    },
+    {
+      "name": "threshold-score-below",
+      "pairs": [],
+      "identities": []
+    },
+    {
+      "name": "rounding-five-eighths",
+      "pairs": [
+        {
+          "source": "a.ts",
+          "target": "b.ts",
+          "coChangeCount": 5,
+          "couplingScore": 0.625
+        },
+        {
+          "source": "b.ts",
+          "target": "a.ts",
+          "coChangeCount": 5,
+          "couplingScore": 0.625
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:b.ts",
+          "provenance": "co-change:5:0.63",
+          "relationId": "5aa78f18b028979867bb",
+          "snippet": "co-changed with b.ts in 5 commits (coupling 0.63)"
+        },
+        {
+          "sourceEntityId": "file:b.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:5:0.63",
+          "relationId": "c7889a418343a768fc4e",
+          "snippet": "co-changed with a.ts in 5 commits (coupling 0.63)"
+        }
+      ]
+    },
+    {
+      "name": "unicode-ties",
+      "pairs": [
+        {
+          "source": "é.ts",
+          "target": "z.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "é.ts",
+          "target": "z.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "z.ts",
+          "target": "é.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "z.ts",
+          "target": "é.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:é.ts",
+          "targetEntityId": "file:z.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "81fb1f1e485961e89c12",
+          "snippet": "co-changed with z.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:é.ts",
+          "targetEntityId": "file:z.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "9a36715e97d2148dfeaa",
+          "snippet": "co-changed with z.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:z.ts",
+          "targetEntityId": "file:é.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "999fbb5e0572f97ba2a6",
+          "snippet": "co-changed with é.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:z.ts",
+          "targetEntityId": "file:é.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "df753cd5b487bdc14113",
+          "snippet": "co-changed with é.ts in 1 commits (coupling 0.50)"
+        }
+      ]
+    },
+    {
+      "name": "unicode-ties-reordered",
+      "pairs": [
+        {
+          "source": "é.ts",
+          "target": "z.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "é.ts",
+          "target": "z.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "z.ts",
+          "target": "é.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        },
+        {
+          "source": "z.ts",
+          "target": "é.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.5
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:é.ts",
+          "targetEntityId": "file:z.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "9a36715e97d2148dfeaa",
+          "snippet": "co-changed with z.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:é.ts",
+          "targetEntityId": "file:z.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "81fb1f1e485961e89c12",
+          "snippet": "co-changed with z.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:z.ts",
+          "targetEntityId": "file:é.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "df753cd5b487bdc14113",
+          "snippet": "co-changed with é.ts in 1 commits (coupling 0.50)"
+        },
+        {
+          "sourceEntityId": "file:z.ts",
+          "targetEntityId": "file:é.ts",
+          "provenance": "co-change:1:0.50",
+          "relationId": "999fbb5e0572f97ba2a6",
+          "snippet": "co-changed with é.ts in 1 commits (coupling 0.50)"
+        }
+      ]
+    },
+    {
+      "name": "unicode-case-punctuation",
+      "pairs": [
+        {
+          "source": "_.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "😀.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "_.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "😀.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "A.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "한.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "中.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "a.ts",
+          "target": "日本.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "A.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "한.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "中.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        },
+        {
+          "source": "日本.ts",
+          "target": "a.ts",
+          "coChangeCount": 1,
+          "couplingScore": 0.16666666666666666
+        }
+      ],
+      "identities": [
+        {
+          "sourceEntityId": "file:_.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "b62dfc4d0913cce07050",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:😀.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "276608dc3dfa1c5fa898",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:_.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "31679d92215ef043a503",
+          "snippet": "co-changed with _.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:😀.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "f1ab9d57328a0a12ac5c",
+          "snippet": "co-changed with 😀.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:A.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "735266dfd090966e635f",
+          "snippet": "co-changed with A.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:한.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "89f733d6e44401bd0d5e",
+          "snippet": "co-changed with 한.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:中.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "76510bb15721e60b26bf",
+          "snippet": "co-changed with 中.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:a.ts",
+          "targetEntityId": "file:日本.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "6fb7576050be46d5f92d",
+          "snippet": "co-changed with 日本.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:A.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "a3aa592894a866ad9be4",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:한.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "9f4576e86de3f193b4da",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:中.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "ef01088a1becd9a606e0",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        },
+        {
+          "sourceEntityId": "file:日本.ts",
+          "targetEntityId": "file:a.ts",
+          "provenance": "co-change:1:0.17",
+          "relationId": "ad040b2a3a8261e83f6c",
+          "snippet": "co-changed with a.ts in 1 commits (coupling 0.17)"
+        }
+      ]
+    }
+  ]
+}

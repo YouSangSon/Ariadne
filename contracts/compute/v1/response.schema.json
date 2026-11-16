@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ariadne.local/contracts/compute/v1/response.schema.json",
+  "title": "Ariadne numeric co-change response",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "protocol",
+        "operation",
+        "requestId",
+        "inputDigest",
+        "status",
+        "frequencies",
+        "pairs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "const": "ariadne.compute/1"
+        },
+        "operation": {
+          "const": "cochange-counts/1"
+        },
+        "requestId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$"
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "const": "ok"
+        },
+        "frequencies": {
+          "type": "array",
+          "maxItems": 37500,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1500
+          }
+        },
+        "pairs": {
+          "type": "array",
+          "maxItems": 450000,
+          "items": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 1500
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              }
+            ],
+            "items": false
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "protocol",
+        "operation",
+        "requestId",
+        "inputDigest",
+        "status",
+        "code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "const": "ariadne.compute/1"
+        },
+        "operation": {
+          "const": "cochange-counts/1"
+        },
+        "requestId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$"
+        },
+        "inputDigest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "status": {
+          "const": "error"
+        },
+        "code": {
+          "enum": [
+            "INVALID_INPUT",
+            "UNSUPPORTED_VERSION",
+            "LIMIT_EXCEEDED",
+            "UNAVAILABLE",
+            "BUSY",
+            "CANCELLED",
+            "DEADLINE_EXCEEDED",
+            "PROTOCOL_ERROR",
+            "ENGINE_FAILED"
+          ]
+        }
+      }
+    }
+  ]
+}

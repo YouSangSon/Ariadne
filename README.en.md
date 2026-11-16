@@ -226,6 +226,8 @@ The Rust worker and fixed Podman profile are separate qualification tooling; pub
 
 [Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
 
+The G2a pure Go/Rust co-change libraries, strict JSON contract and actual TS offline comparison have a [separate contract](contracts/compute/v1/README.md). Compute executables, process integration, DB publication and performance gains remain unimplemented or unverified.
+
 <a id="license"></a>
 
 ## License

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Script } from 'node:vm'
-import { boundaryErrors, checkArchitecture, imports, ROOT_EXCLUSIONS, sourceFiles } from '../core/tooling/architecture.mjs'
+import { boundaryErrors, checkArchitecture, imports, readInventory, ROOT_EXCLUSIONS, sourceFiles } from '../core/tooling/architecture.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 
@@ -138,4 +138,21 @@ test('shared pure exports are controlled and guarded filesystem I/O stays outwar
     'a/files.mjs': "import { readProjectText } from '../core/infrastructure/project-files.mjs'",
   }), [])
   assert.match(errors(files, { 'a/domain.mjs': "import { readProjectText } from '../core/infrastructure/project-files.mjs'" }).join('\n'), /domain depends outward/)
+})
+
+
+test('nested Cargo manifests are discovered with owned metadata and target exclusion', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ariadne-cargo-manifests-'))
+  t.after(() => rmSync(workspace, { recursive: true, force: true }))
+  for (const prefix of ['', 'packages/memory', 'packages/code']) {
+    mkdirSync(join(workspace, prefix), { recursive: true })
+    writeFileSync(join(workspace, prefix, 'architecture-map.json'), JSON.stringify({ schema_version: 1, files: {} }))
+    if (prefix) writeFileSync(join(workspace, prefix, 'package.json'), '{}')
+  }
+  for (const directory of ['.github/workflows', 'samples', 'runtime/rust/crates/unowned', 'runtime/rust/target/debug']) mkdirSync(join(workspace, directory), { recursive: true })
+  for (const path of ['runtime/rust/Cargo.toml', 'runtime/rust/crates/unowned/Cargo.toml', 'runtime/rust/target/debug/Cargo.toml']) writeFileSync(join(workspace, path), '')
+  const inventory = readInventory(workspace)
+  const manifests = inventory.actual.filter((path) => path.endsWith('Cargo.toml'))
+  assert.deepEqual(manifests, ['runtime/rust/Cargo.toml', 'runtime/rust/crates/unowned/Cargo.toml'])
+  assert.match(boundaryErrors({ ...inventory, sources: () => '' }).join('\n'), /unowned source runtime\/rust\/crates\/unowned\/Cargo.toml/)
 })

@@ -1,7 +1,7 @@
 # Ariadne Go + Rust 전환 설계
 
 작성: YouSangSon의 요청을 바탕으로 Codex 작성 · 2026-11-09
-상태: 목표 설계 작성과 독립 리뷰 완료. Go/Rust 런타임·빌드·배포는 아직 구현하지 않았다.
+상태: 승인된 목표 설계. G2a의 순수 계산·JSON 계약·오프라인 TS 비교를 구현했다. 제품 전환과 G2b 프로세스 연결·배포는 남아 있다.
 기준: `6a0c4589d6b055a3b33f5489a45fd5808895d193`. 요구사항: [go-rust-runtime-design](../.harness/reqs/go-rust-runtime-design.yaml).
 
 ## 1. 목표와 적용 범위
@@ -12,7 +12,7 @@ Go가 모듈의 업무 규칙과 실행 수명을 맡고, Rust는 필요한 계�
 
 후속 [모듈과 사용자 확장 설계](extension-platform-design.ko.md)는 안정적인 공개 확장 계약과 비신뢰 사용자 code의 실행 경계를 추가한다. 이 문서의 native compute는 계속 신뢰된 계산용이며 사용자 WASM sandbox와 구분한다. 선택 설치가 모듈화 전체를 뜻하지 않는다.
 
-이 문서는 언어 전환의 목표 구조, 내부 통신, 빌드·배포, 호환성 검증과 이행 순서를 소유한다. 기존 [전체 리팩토링 설계](full-refactor-design.ko.md)의 모듈 소유권과 [실행 정책](execution-policy.md)은 유지한다. 이번 작업은 설계 문서와 로컬 커밋까지다. 런타임 구현, 데이터 이전, 원격 게시, MSA 배포를 시작하지 않는다.
+이 문서는 언어 전환의 목표 구조, 내부 통신, 빌드·배포, 호환성 검증과 이행 순서를 소유한다. 기존 [전체 리팩토링 설계](full-refactor-design.ko.md)의 모듈 소유권과 [실행 정책](execution-policy.md)은 유지한다. 초기 문서 작업은 설계와 로컬 커밋 범위였다. 후속 승인으로 구현을 단위별 진행하며, 현재 G2a는 숫자 계약과 순수 라이브러리까지다. 데이터 이전과 MSA 배포는 시작하지 않는다.
 
 완료조건은 다음과 같다.
 
@@ -90,7 +90,7 @@ Ariadne memory serve
 
 DDD는 업무 의미와 데이터의 소유 경계다. Go의 `domain`은 정책·값을, `application`은 유스케이스와 필요한 포트를 소유한다. `adapters`가 DB·HTTP·프로세스를 구현하고 `composition`이 연결한다. 도메인에 `exec.Cmd`, SQL 연결, 브로커 client, resource 이름 lookup을 노출하지 않는다. `context.Context`는 취소가 필요한 application/adapter 경계에서 사용한다.
 
-다음은 **예정 배치**이며 실제 디렉터리가 아니다. 기존 JS/TS 폴더를 이번에 이동하지 않는다.
+다음은 **전체 목표 배치**다. E0/registry와 G2a의 실제 소스는 해당 구현 문서와 계약 정본에 구분한다. 아직 없는 application/process 경로는 후속 계획이다. 기존 JS/TS 폴더는 이동하지 않는다.
 
 ```text
 runtime/go/go.mod, go.sum
@@ -129,7 +129,7 @@ application은 인증된 주체를 받아 유스케이스를 조율하고, 데�
 
 모듈 간 통신은 공개 application 계약과 직렬화 가능한 값으로 제한한다. 순환 의존은 거절한다. 외부 계약을 내부 모델로 변환하는 adapter가 버전·오류 차이를 흡수하며 모든 모듈이 함께 수정돼야 하는 거대한 공통 모델을 만들지 않는다. 실제 소비 경계가 있는 포트만 정의하고 모든 함수에 interface를 붙이지 않는다.
 
-G0에서 현재 architecture 검사의 범위를 Go/Rust까지 확장할 계획을 고정한다. G1부터는 미등록 소스, domain의 I/O 의존, application의 구체 adapter import, 모듈 내부 침범과 순환 의존을 넣은 거절 fixture가 실패해야 한다. Go import graph와 Rust crate dependency는 도구로 확인하고 단순 폴더 이름만 검사하지 않는다. 실제 검사 구현·CI 연결은 후속 단계다.
+G0에서 현재 architecture 검사의 범위를 Go/Rust까지 확장할 계획을 고정한다. G1부터는 미등록 소스, domain의 I/O 의존, application의 구체 adapter import, 모듈 내부 침범과 순환 의존을 넣은 거절 fixture가 실패해야 한다. Go import graph와 Rust crate dependency는 도구로 확인하고 단순 폴더 이름만 검사하지 않는다. 현재 E0/registry와 G2a 범위의 Go/Rust AST 및 inventory와 native CI가 구현돼 있다. 이 검사가 제품 전체 Go 전환이나 다른 모듈의 미구현 use case까지 증명하지는 않는다.
 
 ### 4.3 모듈화와 확장 경로
 
@@ -159,13 +159,22 @@ G0에서 현재 architecture 검사의 범위를 Go/Rust까지 확장할 계획�
 
 Go도 같은 포트의 참조 구현을 갖는다. 계산 알고리즘만 두 언어에 존재하며 임계값·인가·결과 적용 정책은 owner 한 곳에 둔다. G2는 TS가 생성한 golden fixture와 Go→Rust 결과를 오프라인으로 비교한다. 기존 TS production pipeline은 수정하지 않고 TS→Go→Rust 중계도 만들지 않는다. 기존 동기 `computeCoChanges` 공개 export는 유지한다. G4에서 Go Code application이 계산을 기다린 뒤 동기 게시에 준비된 결과를 전달한다. Rust 대기 중 DB transaction을 열지 않는다.
 
-기존 `.sort()`는 UTF-16 기준이고 최종 `localeCompare()`는 locale 영향을 받는다. G2의 오프라인 비교에서 TS oracle이 기존 정렬을 유지하고 Rust는 정수 ID만 정렬한다. 서로 다른 문자열인 `é.ts`와 `e\u0301.ts`의 비교가 0이면 stable sort는 기존 pair 삽입 순서를 유지한다. 따라서 counts가 같아도 첫 등장 순서를 버리면 호환되지 않는다. Go Code 전환 전에는 Unicode 정규화 동등 문자열·구두점·대소문자·한중일 파일명과 commit 등장 순서를 바꾼 fixture 및 locale 조건을 고정해야 한다. Go의 기본 문자열 정렬로 바꾸거나 출력 차이를 무시하지 않는다. 동일 정렬을 재현하지 못하면 Code의 TS 호환 경로를 유지한다.
+기존 `.sort()`는 UTF-16 기준이고 최종 `localeCompare()`는 locale 영향을 받는다. G2a의 오프라인 비교에서 실제 TS oracle이 기존 정렬을 유지하고 Rust는 정수 ID만 정렬한다. 서로 다른 문자열인 `é.ts`와 `e\u0301.ts`의 비교가 0이면 stable sort는 기존 pair 삽입 순서를 유지한다. 따라서 counts가 같아도 첫 등장 순서를 버리면 호환되지 않는다. Go Code 전환 전에는 Unicode 정규화 동등 문자열·구두점·대소문자·한중일 파일명과 commit 등장 순서를 바꾼 fixture 및 locale 조건을 고정해야 한다. Go의 기본 문자열 정렬로 바꾸거나 출력 차이를 무시하지 않는다. 동일 정렬을 재현하지 못하면 Code의 TS 호환 경로를 유지한다.
 
 `sqlite/indexing.ts`는 `couplingScore.toFixed(2)`를 provenance에 넣고, `index-policy.ts:relationId`는 그 문자열을 hash한다. `5/8 = 0.625` 같은 반올림 경계, IEEE-754 계산과 JS 숫자/JSON 문자열화, stable JSON bytes를 비교해 relation ID·근거 문자열까지 보존한다. 값이 대략 같다는 허용 오차로 ID 불일치를 통과시키지 않는다.
 
 기본 상한은 1,500 commits, commit당 25개 파일이다. 이론상 쌍 증가 횟수는 최대 `1500 × 25 × 24 / 2 = 450,000`이다. 이는 성능 실측이 아니다. 첫 후보는 통신·취소·동등성 검증용이며 Rust 활성화를 정당화하는 성능 근거는 아직 없다.
 
 ### 계산 포트와 wire v1
+
+G2a는 위 설계의 숫자 JSON 값만 먼저 구현한다. Go Code adapter가 codec을 소유하며
+platform은 Code domain을 import하지 않는다. 아직 실제 application 소비자가 없어
+빈 interface/use case는 추가하지 않았다. 원문 숫자·중복 key 등 JSON Schema 밖의 필수
+검사와 오류 code 분류는 [계약 정본](../contracts/compute/v1/README.md)에 명시한다.
+Go/Rust는 손으로 계산한 작은 counts·ordinal과 동일한 raw 거절 fixture를 검사한다.
+실제 TypeScript import 기반 비교는 문자열 정렬·임계값·반올림·ID를 오프라인 검증하며,
+Go locale 구현이나 SQLite 게시·incremental proven confidence·savepoint를 대신하지 않는다.
+
 
 아래 타입은 설계 예시다. `CountCoChanges(ctx, input) -> counts, error`는 인증된 Code 유스케이스만 호출한다. Rust에 조직 ID를 보내 인증했다고 간주하지 않는다. 호스트가 접근 범위를 결정하고 선택된 숫자 ID만 전달한다.
 
@@ -242,7 +251,7 @@ Code는 분석 입력 snapshot·기존 head를 검증한 뒤 기존 SQLite 게�
 
 목표는 최상위 명령 하나가 선택한 모듈의 빌드·검증·패키징을 수행하는 것이다. **예정 명령**은 `go run ./tools/build.go --modules core,ontology`이며 root에서 실행한다. 이 파일은 아직 없고 현재 `npm run setup/build/verify`를 대체하지 않는다. Go-only 선택은 Cargo를 요구하지 않는다. Rust 시험이 포함된 Code 빌드만 Cargo를 실행한다. 기존 전체 기본 선택과 엄격한 module 인자 검증은 유지한다.
 
-Go는 한 module(`runtime/go/go.mod`), Rust는 한 workspace와 lockfile을 둔다. `go.sum`, `Cargo.lock`, `rust-toolchain.toml`과 Go toolchain을 고정하고 Go readonly 의존성 모드·Cargo `--locked`를 적용한다. 실제 버전은 G0에서 지원 SDK와 CI 조합을 확인한 후 pin한다. 이 문서가 현재 설치 버전이나 최신 버전을 추정해 고정하지 않는다. 네트워크로 toolchain/의존성을 가져오는 단계와 오프라인 빌드를 구분한다.
+Go는 한 module(`runtime/go/go.mod`), Rust는 한 workspace와 lockfile을 둔다. `go.sum`, `Cargo.lock`, `rust-toolchain.toml`과 Go toolchain을 고정하고 Go readonly 의존성 모드·Cargo `--locked`를 적용한다. 현재 개발/CI pin은 Go 1.24.5와 Rust 1.93.0이며 Node oracle은 24.22.2다. SDK·배포 플랫폼 적합성과 최신 보안 기준은 별도 gate다. 이 버전을 전체 제품 native 전환의 적합성 판정으로 사용하지 않는다. 네트워크로 toolchain/의존성을 가져오는 단계와 오프라인 빌드를 구분한다.
 
 Go 기본 executable에는 core 기능만 직접 등록한다. 선택 모듈은 생성한 composition 파일의 명시 import로 등록한다. 생성기는 공개 module 목록과 허용 template만 사용하고 arbitrary source path를 입력받지 않는다. 등록·DB 초기화는 package `init()`의 부수효과에 맡기지 않는다. 생성 산출물은 작업 전용 경로에 두며 같은 소스 checkout의 동시 빌드가 서로 덮어쓰지 않게 한다.
 
@@ -261,7 +270,7 @@ Core/ontology가 Go로 완전히 전환되면 그 배포에는 Node/Rust toolcha
 
 ## 9. 전환 순서와 되돌리기
 
-각 단계의 현재 상태는 모두 미구현이다. 같은 단계에서 언어·DB schema·업무 정책을 함께 바꾸지 않는다. 먼저 참조 결과를 고정하고 한 command family 또는 owner씩 전환한다.
+현재 상태는 단계별로 구분한다. E0와 비실행 registry V1의 근거는 [확장 구현 계획](extension-implementation-plan.ko.md)에 있다. G2a는 G2 중 순수 계산·엄격 JSON codec·공통 fixture·실제 TS 오프라인 비교를 구현한 단위다. G2b의 subprocess·EOF·취소·runner와 G4의 locale·DB 게시 등 나머지 gate는 미완료다. 같은 단계에서 언어·DB schema·업무 정책을 함께 바꾸지 않는다. 먼저 참조 결과를 고정하고 한 command family 또는 owner씩 전환한다.
 
 | 단계 | 구현 단위 | 통과 조건·중단 조건 |
 | --- | --- | --- |
@@ -280,7 +289,7 @@ schema·DB를 그대로 유지하는 전환은 신규 writer가 구 reader와 �
 
 ## 10. 구현 대상과 검증 계획
 
-아래 경로는 **후속 구현 계획**이다. 현재 생성된 Go/Rust 소스나 실행한 검사가 아니다. 모듈별 상세 파일 목록은 해당 단계의 G0 대조 뒤 기존 owner 안에서 정하며, 미확인 파일을 이미 존재하는 것처럼 링크하지 않는다.
+아래 표는 **전체 전환의 구현 계획**이다. 현재 G2a의 실제 소스는 `runtime/go/internal/code/domain/cochange.go`, `internal/code/adapters/computewire/protocol.go`, `runtime/rust/crates/ariadne-compute/src/{lib,cochange,protocol}.rs`와 `contracts/compute/v1/`다. 프로세스 코드와 application 소비자는 아직 만들지 않았다. 나머지 행은 후속 계획이며 실행 근거가 아니다. 모듈별 상세 파일 목록은 해당 단계의 G0 대조 뒤 기존 owner 안에서 정하며, 미확인 파일을 이미 존재하는 것처럼 링크하지 않는다.
 
 ### TDD로 구현하는 순서
 
@@ -319,7 +328,7 @@ G0부터 G5까지 기능·버그 변경은 아래 순서를 따른다. 문서 �
 | `.github/workflows/verify.yml` 및 보안 workflow | 기존 Node gate 유지, 해당 단계에서 Go/Rust·혼합 버전·지원 플랫폼 gate 추가 |
 | `.gitignore`, README 네 언어, `docs/consolidation.md`, `docs/architecture.md` | 실제 생성 산출물·설치 요구·지원 범위가 바뀌는 단계에서 함께 갱신 |
 
-언어별 검증은 예정된 Go test/vet/race, Cargo test/fmt/clippy와 schema fixture 적합성 검사다. 제품의 기존 `npm run verify` 및 Memory DB/vector·MCP CI는 해당 owner가 이행 완료되기 전까지 제거하지 않는다. 보안 workflow의 지원 언어를 확인하고 Rust 의존성/소스 검사 도구를 선택한다. 기존 CodeQL 이름만 남겼다고 Rust까지 검사됐다고 보고하지 않는다. 새로운 toolchain·scanner 설치는 구현 단계의 명시된 준비 작업이다.
+현재 G2a의 언어별 gate는 Go test/vet/race, Cargo test/fmt/clippy와 공통 raw fixture 적합성 검사다. 후속 단계는 해당 구현의 실제 통합 검사를 별도로 추가한다. 제품의 기존 `npm run verify` 및 Memory DB/vector·MCP CI는 해당 owner가 이행 완료되기 전까지 제거하지 않는다. 보안 workflow의 지원 언어를 확인하고 Rust 의존성/소스 검사 도구를 선택한다. 기존 CodeQL 이름만 남겼다고 Rust까지 검사됐다고 보고하지 않는다. 새로운 toolchain·scanner 설치는 구현 단계의 명시된 준비 작업이다.
 
 DB·브로커 통합 검증은 **Podman**을 사용한다. Docker Desktop으로 전환하지 않는다. 기존 Podman machine/context/default/desktop-linux 설정은 삭제하지 않는다. 작업별 container·network·volume 이름을 부여하고 준비 전 기존 자원 목록을 확인한다. 서비스가 필요 없는 순수 계약 검사는 로컬에서 수행한다. macOS/Windows native 종료 검증을 Linux container 결과로 대신하지 않는다.
 
@@ -337,7 +346,7 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 ## 11. 시나리오와 결정 추적
 
-아래는 설계에서 도출한 시험 계획이며 사용자 승인된 별도 정책이나 실제 통과 결과가 아니다. 기존 테스트는 참조 근거이고 새 Go/Rust 검증은 모두 미실행이다.
+아래는 전체 단계의 시험 계획이다. G2a의 실제 근거는 REQ와 공통 fixture에 한정하며 이 표의 전체 통과를 뜻하지 않는다. 기존 테스트와 후속 단계의 시험 계획을 G2a의 실제 로컬 검증으로 확대하지 않는다.
 
 | ID / 결정 | 조건·행동 | 기대 결과와 검증 계층 |
 | --- | --- | --- |
@@ -361,18 +370,18 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 ## 12. 미확인 사항과 다음 작업
 
-이번 설계의 다음 구현 단위는 G0의 계약 fixture와 측정 baseline이다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다.
+현재 G2a의 숫자 계약과 순수 계산은 [계약 정본](../contracts/compute/v1/README.md)과 [요구사항](../.harness/reqs/compute-contracts.yaml)으로 추적한다. 다음 계산 단위는 G2b의 실제 subprocess·EOF·취소 연결이다. G0의 성능·자원 baseline과 로컬 backup timeout은 별도로 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다.
 
 - Go MCP SDK의 존재는 확인했지만 현 HTTP/MCP의 OAuth·tool schema·session·오류와의 동등성은 미검증이다.
 - SQLite driver/`sqlite-vec`와 transformers 대체 adapter, TS parser 대체 여부는 선정 전이다. native dependency·라이선스·모델 출력 동등성·플랫폼 검사가 끝나기 전 해당 owner의 Node 제거를 약속하지 않는다.
-- Go/Rust 실제 toolchain pin, release runner 가용성, hard RSS 상한과 운영 SLO는 G0의 산출물이다. compiler 설치나 CI 권한 변경은 이번에 수행하지 않는다.
+- 개발 toolchain pin은 현재 Go 1.24.5·Rust 1.93.0으로 구현했다. release runner 가용성, hard RSS 상한과 운영 SLO는 G0의 남은 산출물이다. G2a는 compiler 전역 설치나 CI 권한을 변경하지 않는다.
 - 첫 Rust 집계가 작아서 실익이 없을 수 있다. 다른 계산을 추가하려면 실제 profile 근거와 bounded input 계약이 필요하다.
 
 설계 문서 검증 범위는 실제 코드/기존 목표 대조, 대안 검토, 시나리오 연결, 독립 리뷰, 상대 링크·REQ 형식·diff 확인이다. Go/Rust 빌드·성능·운영 검증과 동일한 상태로 보고하지 않는다.
 
 독립 리뷰에서 G2의 중계 경계, EOF 종료 순서, stable-sort 동률과 소수점 provenance, 임베딩 전처리 누락을 보완했다. 최종 검토에는 미해결 Blocker/Major가 없으며 목표 설계와 G0 준비로 진행할 수 있다는 판정을 받았다. 실제 프로세스 종료·성능·native adapter·운영 cutover 검증은 여전히 남아 있다.
 
-후속 요청으로 GR-D09, §4.1–4.3, §10의 TDD 순서, GR-S16–17을 명시했다. 이는 기존 아키텍처 요구를 구체화한 문서 보완이며 초기 독립 리뷰 이후 추가됐다. 이 부분은 기존 owner·의존성 규칙과 문서 수준에서 대조했으며 아직 Go/Rust 경계 검사나 TDD 실행 근거는 없다.
+후속 요청으로 GR-D09, §4.1–4.3, §10의 TDD 순서, GR-S16–17을 명시했다. 이는 기존 아키텍처 요구를 구체화한 문서 보완이며 초기 독립 리뷰 이후 추가됐다. 이 요구는 기존 owner·의존성 규칙을 유지한다. 후속 E0/registry와 G2a에서 범위별 Go/Rust 경계 검사와 실패 후 통과 근거를 추가했으며, 전 단계 구현 완료와는 구분한다.
 
 ## 13. 공식 자료와 해석 범위
 

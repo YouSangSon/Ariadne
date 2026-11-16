@@ -55,6 +55,10 @@
       "layer": "tooling",
       "context": "code"
     },
+    "scripts/generate-compute-fixtures.ts": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "scripts/generate-report-schema.ts": {
       "layer": "tooling",
       "context": "code"

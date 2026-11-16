@@ -41,6 +41,698 @@
       "layer": "composition",
       "context": "core"
     },
+    "contracts/compute/v1/fixtures/cases.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/duplicate-paths-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/duplicate-paths-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/duplicate-paths-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/empty-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/empty-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/empty-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-BUSY.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-CANCELLED.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-DEADLINE_EXCEEDED.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-ENGINE_FAILED.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-INVALID_INPUT.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-LIMIT_EXCEEDED.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-PROTOCOL_ERROR.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-UNAVAILABLE.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/error-UNSUPPORTED_VERSION.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/first-seen-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/first-seen-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/first-seen-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/raw26-unique25-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/raw26-unique25-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/raw26-unique25-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-bad-digest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-bad-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-case-field.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-commits-string.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-duplicate-envelope.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-duplicate-fileCount.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-duplicate-fileu0043ount.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-duplicate-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-empty-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number--0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number--1.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-1.0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-1e0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-3.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-4294967296.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-null.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-id-number-true.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-invalid-utf8.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-long-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-inputDigest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-payload-commits.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-payload-fileCount.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-payload.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-protocol.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-missing-requestId.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-nested-case.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-nested-unknown.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-commit.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-inputDigest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-payload-commits.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-payload-fileCount.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-payload.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-protocol.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-null-requestId.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number--0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number--1.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-1.0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-1e0.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-3.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-4294967296.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-null.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-number-true.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-out-of-range.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-trailing.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-inputDigest-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-inputDigest-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-inputDigest-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-operation-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-operation-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-operation-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-protocol-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-protocol-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-protocol-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-requestId-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-requestId-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-type-requestId-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-unicode-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-unknown.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-unsorted.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-uppercase-digest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-wrong-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-wrong-version.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-bad-status.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-count-over.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-error-with-counts.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-exponent.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-fraction.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-frequency-over.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-invalid-utf8.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-frequencies.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-inputDigest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-pairs.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-protocol.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-requestId.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-missing-status.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-negative-zero.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-frequencies.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-inputDigest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-pairs.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-protocol.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-requestId.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-null-status.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-ordinal-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-ordinal-gap.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-overflow.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-pair-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-pair-range.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-pair-reversed.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-pair-unsorted.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-short-frequencies.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-trailing.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-tuple-long.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-tuple-short.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-inputDigest-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-inputDigest-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-inputDigest-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-operation-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-operation-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-operation-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-protocol-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-protocol-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-protocol-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-requestId-array.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-requestId-number.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-type-requestId-object.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-unknown-code.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-unknown.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-wrong-digest.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-wrong-id.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-wrong-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-wrong-version.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-zero-count.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/rounding-five-eighths-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/rounding-five-eighths-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/rounding-five-eighths-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/singletons-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/singletons-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/singletons-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-count-below-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-count-below-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-count-below-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-inclusive-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-inclusive-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-inclusive-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-score-below-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-score-below-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/threshold-score-below-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/tiny-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/tiny-reordered-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/tiny-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/tiny-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/ts-oracle.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-case-punctuation-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-case-punctuation-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-case-punctuation-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-reordered-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-reordered-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-reordered-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unicode-ties-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unique26-noisy-canonical.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unique26-noisy-request.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/unique26-noisy-response.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/request.schema.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/response.schema.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "contracts/extensions/v1/fixtures/cases.json": {
       "layer": "tooling",
       "context": "validation"
@@ -504,6 +1196,22 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/code/adapters/computewire/protocol.go": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "runtime/go/internal/code/adapters/computewire/protocol_test.go": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "runtime/go/internal/code/domain/cochange.go": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "runtime/go/internal/code/domain/cochange_test.go": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "runtime/go/internal/composition/cli.go": {
       "layer": "composition",
       "context": "core"
@@ -593,6 +1301,26 @@
     "runtime/rust/Cargo.toml": {
       "layer": "tooling",
       "context": "extensions"
+    },
+    "runtime/rust/crates/ariadne-compute/Cargo.toml": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "runtime/rust/crates/ariadne-compute/src/cochange.rs": {
+      "layer": "domain",
+      "context": "code"
+    },
+    "runtime/rust/crates/ariadne-compute/src/lib.rs": {
+      "layer": "composition",
+      "context": "code"
+    },
+    "runtime/rust/crates/ariadne-compute/src/protocol.rs": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "runtime/rust/crates/ariadne-compute/tests/contracts.rs": {
+      "layer": "tooling",
+      "context": "code"
     },
     "runtime/rust/examples/qualification-os-probe.rs": {
       "layer": "tooling",
