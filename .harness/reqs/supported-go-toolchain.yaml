@@ -2,8 +2,8 @@ schema_version: 1
 kind: harness.requirement
 metadata:
   req_id: supported-go-toolchain
-  title: 지원 중인 보안 패치 Go compiler로 native 검증 기준 갱신
-  status: verified
+  title: 프로젝트 Go와 Rust 및 Node와 Python 언어 버전을 asdf로 관리
+  status: ready_for_routing
   priority: P0
   owner: supported-go-toolchain
   intake_started: 2026-11-16
@@ -11,10 +11,10 @@ metadata:
 classification:
   category: config
   confidence: high
-  reason: 승인된 G0 준비 중 지원 종료된 compiler만 갱신하고 기존 동작과 의존성을 보존하며 사용자 요청대로 프로젝트 asdf 버전을 설정한다.
+  reason: 승인된 G0 준비 중 지원 중인 Go compiler와 기존 Rust 및 Node와 Python을 프로젝트 asdf에서 선택하고 CI의 주 언어 pin과 실제 버전을 맞춘다.
 requirement:
   user_intent: 승인된 Go와 Rust 전환을 단위별 구현하고 실제 소스에 맞춰 검증한다.
-  desired_outcome: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0을 기준으로 기존 native 계약과 실제 Go에서 Rust 프로세스 연결을 검증한다.
+  desired_outcome: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0과 Python 3.14.5를 기준으로 기존 native 계약과 실제 Go에서 Rust 프로세스 연결을 검증한다.
   confirmed_facts:
     - Go 공식 정책은 마지막 두 major release를 지원하며 1.27.4는 2026-11-10 보안 패치다.
     - go.mod의 go directive는 최소 버전이며 실제 GOVERSION 확인은 별도다.
@@ -23,9 +23,9 @@ functional_contract:
   acceptance_criteria:
     - id: AC1
       priority: P0
-      statement: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0을 선택하고 CI 실제 Go 버전과 기존 의존성을 확인한다.
-      verification: 프로젝트와 HOME의 asdf 선택 및 일반 명령 해석과 go.mod 및 setup-go 연결과 GOVERSION 및 go.sum과 module graph를 대조한다.
-      passes: true
+      statement: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0과 Python 3.14.5를 선택하고 CI의 실제 버전과 기존 의존성을 확인한다.
+      verification: 프로젝트와 하위 경로 및 HOME의 일반 명령과 asdf 선택을 확인하고 주 CI pin의 일치 및 불일치 검사를 대조한다.
+      passes: false
     - id: AC2
       priority: P0
       statement: 같은 최종 소스가 Go 1.27.4에서 race와 vet 및 AST와 SQLite와 실험 CLI 계약을 통과한다.
@@ -40,10 +40,17 @@ functional_contract:
       priority: P0
       statement: 문서와 REQ 및 root 경계를 맞추고 작업 소유 compiler와 cache 및 실행 자원을 정리한다.
       verification: root source gate와 문서 링크 및 diff와 hash 기반 기존 component 근거와 process 및 Podman 정리 기록을 대조한다.
+      passes: false
+    - id: AC5
+      priority: P0
+      statement: Python 3.14.5에서 기존 qualification 시험 도구가 동작하며 사용자 확장 실행 권한은 추가하지 않는다.
+      verification: python3 -B tooling 단위 검사와 실제 interpreter 및 source hash를 대조하고 실제 Podman qualification은 실행하지 않는다.
       passes: true
 code_mapping:
   boundary_rules:
-    - Go compiler 최소 버전과 실제 버전 검사만 변경하며 runtime 업무 기능과 Rust 버전은 바꾸지 않는다.
+    - 프로젝트가 사용하는 네 언어와 CI의 같은 pin 선택만 소유하고 runtime 업무 기능과 기존 Rust 및 Node 및 Python 버전은 바꾸지 않는다.
+    - Python은 시험 도구이며 실제 Podman qualification이나 사용자 확장 실행 권한을 추가하지 않는다.
+    - Node 22.23.4 호환 CI는 별도 지원 환경으로 유지한다.
     - 프로젝트 .tool-versions만 선택을 소유하며 사용자 전역 기본값과 설정 및 공유 cache를 변경하지 않는다.
     - 요청한 asdf Go 1.27.4 설치는 유지하고 일회성 compiler와 검증 자원만 정리한다.
 verification:
@@ -53,14 +60,15 @@ verification:
     - go test -count=1 -race ./...
     - go vet ./...
     - go run ./cmd/check-architecture --root ../..
+    - python3 -B tools/test_qualify_extension_runtime.py
     - node scripts/verify.mjs
   evidence:
     - criterion_id: AC1
-      check: asdf 프로젝트 선택과 일반 명령 및 전역 기본값 보존과 실제 CI assertion 일치 및 불일치 검사
+      check: 네 언어의 프로젝트 선택과 Python 실제 interpreter 및 CI pin 일치와 불일치 및 누락과 잘못된 값 검사
       result: passed
       exit_code: 0
-      source_state: 승인된 G2b 소스와 supported-go-toolchain 최종 변경 및 native-source-closure.json의 316개 hash
-      artifact: .harness/handoff/supported-go-toolchain/ci-version-assertion-probe.json
+      source_state: 기존 Go와 Rust 및 Node 소스와 같은 toolchain의 새 프로젝트 설정 및 Python 3.14.5
+      artifact: .harness/handoff/supported-go-toolchain/project-language-pin-probe.json
     - criterion_id: AC2
       check: 실제 Go 1.27.4에서 macOS와 Linux ARM64 전체 race 및 vet와 AST 및 실제 CLI 13개 계약
       result: passed
@@ -79,10 +87,16 @@ verification:
       exit_code: 0
       source_state: 검토된 cleanup 후속 4e3d78c를 일반 통합한 변경과 지원 compiler 및 asdf 설정
       artifact: .harness/handoff/supported-go-toolchain/root-final.log
+    - criterion_id: AC5
+      check: asdf의 프로젝트 Python 3.14.5와 기존 두 tooling 소스의 28개 단위 검사
+      result: passed
+      exit_code: 0
+      source_state: 두 Python 파일은 기존 hash와 같으며 -B로 실행하고 실제 Podman qualification은 실행하지 않음
+      artifact: .harness/handoff/supported-go-toolchain/project-python-tooling-tests.log
 audit:
   must_not_implement:
     - 새 SDK와 x/text 의존성 및 Go 기능 이식과 제품 CLI 교체
-    - Rust toolchain 변경과 보안 framework 재설계
+    - 기존 Rust 및 Node와 Python 버전 업그레이드와 보안 framework 재설계
     - 사용자 전역 기본값과 다른 프로젝트 버전 및 credential 변경
   completion_report_should_include:
     - 새 검증과 hash 기반 재사용 및 원격 CI와 main 병합을 구분한다.

@@ -16,7 +16,7 @@
 
 ## 구현 경계
 
-`runtime/go`는 외부 Go dependency 없는 실험 module로 시작했고, registry V1에서 SQLite adapter에만 `github.com/mattn/go-sqlite3 v1.14.53`을 추가했다. CGO와 C compiler가 필요하며 Node 제품의 의존성은 바꾸지 않는다. 프로젝트 `.tool-versions`는 asdf의 `golang 1.27.4`, `nodejs 24.22.2`, `rust 1.93.0`을 선택한다. 사용자 전역 기본값은 바꾸지 않는다. 현재 개발·CI 기준은 지원 중인 보안 패치 Go 1.27.4다. `go.mod`는 최소 버전이므로 실제 검증에서는 `GOTOOLCHAIN=local`과 `go env GOVERSION`으로 `go1.27.4`를 확인한다. 배포 플랫폼 적합성과 runtime qualification은 별도 gate다. 제품의 기존 Node launcher·setup·모듈 이름은 유지한다. 새로운 Go CLI는 core 전면 이식을 선언하지 않는다.
+`runtime/go`는 외부 Go dependency 없는 실험 module로 시작했고, registry V1에서 SQLite adapter에만 `github.com/mattn/go-sqlite3 v1.14.53`을 추가했다. CGO와 C compiler가 필요하며 Node 제품의 의존성은 바꾸지 않는다. 프로젝트 `.tool-versions`는 asdf의 `golang 1.27.4`, `nodejs 24.22.2`, `rust 1.93.0`, `python 3.14.5`를 선택한다. Python은 native qualification 시험 도구만 사용하며 제품 실행 권한을 추가하지 않는다. 사용자 전역 기본값은 바꾸지 않는다. 현재 개발·CI 기준은 지원 중인 보안 패치 Go 1.27.4다. `go.mod`는 최소 버전이므로 실제 검증에서는 `GOTOOLCHAIN=local`과 `go env GOVERSION`으로 `go1.27.4`를 확인한다. 배포 플랫폼 적합성과 runtime qualification은 별도 gate다. 제품의 기존 Node launcher·setup·모듈 이름은 유지한다. 새로운 Go CLI는 core 전면 이식을 선언하지 않는다.
 
 extension manifest는 실제 WASM artifact hash를 가진다. 내장 projector는 정적 Go 함수이므로 별도 builtin descriptor를 사용하며 가짜 WASM hash를 만들지 않는다. 둘은 같은 projection 입출력 계약과 fixture를 사용한다. JSON schema로 표현하기 어려운 UTF-8 byte/동일 입력 source 참조/직사각형 표 등은 문서화한 `x-*` 제약과 Go semantic validator가 담당한다. 일반 JSON schema 검증기가 해당 제약까지 자동 검사한다고 주장하지 않는다.
 
@@ -95,7 +95,7 @@ cargo clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -
 python3 -B tools/test_qualify_extension_runtime.py
 ```
 
-native CI에 pinned Rust/Linux 검사와 Python 단위 검사를 추가한다. 실제 Podman qualification은 image·연결·helper·fixture·private 증거 경로를 명시해 별도 실행하며 CI 정의만으로 통과로 처리하지 않는다. WASM fixture는 production binary의 옵션이 아니라 ignored Rust integration test에서 명시한 전용 디렉터리로만 export한다.
+native CI의 Rust pin은 프로젝트 `.tool-versions`에서 읽어 설치하고 `RUSTUP_TOOLCHAIN`으로 해당 job에만 선택한다. Python은 `actions/setup-python@v7`의 `python-version-file`로 같은 파일을 읽고 실제 3.14.5를 확인한다. 공식 3.14.5 배포 artifact가 있는 `ubuntu-24.04`에서 extension-worker CI만 실행하며 Go/compute job의 `ubuntu-latest`는 유지한다. 이는 검증 플랫폼 선택이며 운영 OS 지원 선언은 아니다. 기존 Node 22.23.4 호환 검사는 유지하고 제품 Node 검사는 `.tool-versions`를 읽는다. 실제 Podman qualification은 image·연결·helper·fixture·private 증거 경로를 명시해 별도 실행하며 CI 정의만으로 통과로 처리하지 않는다. WASM fixture는 production binary의 옵션이 아니라 ignored Rust integration test에서 명시한 전용 디렉터리로만 export한다.
 
 | 연결 시나리오 | 현재 검사와 책임 |
 | --- | --- |

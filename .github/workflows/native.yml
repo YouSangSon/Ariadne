@@ -45,25 +45,36 @@ jobs:
           go test -race ./...
           go vet ./...
   extension-worker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       CARGO_BUILD_JOBS: 2
     steps:
       - uses: actions/checkout@v7
-      - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.93.0 --profile minimal --component rustfmt --component clippy
+      - name: Install project Rust toolchain
+        run: |
+          project_rust=$(awk '$1 == "rust" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test -n "$project_rust"
+          rustup toolchain install "$project_rust" --profile minimal --component rustfmt --component clippy
+          echo "RUSTUP_TOOLCHAIN=$project_rust" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: ${{ github.workspace }}/.tool-versions
       - name: Check worker and qualification tooling
         env:
           CARGO_HOME: ${{ runner.temp }}/ariadne-extension-cargo
           CARGO_TARGET_DIR: ${{ runner.temp }}/ariadne-extension-target
         run: |
-          cargo +1.93.0 fmt --manifest-path runtime/rust/Cargo.toml --all -- --check
-          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute
-          cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --all-targets -- -D warnings
-          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml
-          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
-          cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
+          test "$(rustc --version | awk '{ print $2 }')" = "$RUSTUP_TOOLCHAIN"
+          project_python=$(awk '$1 == "python" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test "$(python3 -B -c 'import platform; print(platform.python_version())')" = "$project_python"
+          python3 --version
+          cargo fmt --manifest-path runtime/rust/Cargo.toml --all -- --check
+          cargo test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute
+          cargo clippy --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --all-targets -- -D warnings
+          cargo test --locked --manifest-path runtime/rust/Cargo.toml
+          cargo test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
+          cargo clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
           python3 -B tools/test_qualify_extension_runtime.py
       - name: Remove task-owned Cargo outputs
         if: always()
@@ -78,8 +89,12 @@ jobs:
         with:
           go-version-file: runtime/go/go.mod
           cache: false
-      - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.93.0 --profile minimal
+      - name: Install project Rust toolchain
+        run: |
+          project_rust=$(awk '$1 == "rust" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test -n "$project_rust"
+          rustup toolchain install "$project_rust" --profile minimal
+          echo "RUSTUP_TOOLCHAIN=$project_rust" >> "$GITHUB_ENV"
       - name: Compare actual Go adapter with compiled Rust engine
         env:
           GOTOOLCHAIN: local
@@ -105,7 +120,8 @@ jobs:
           project_go=$(awk '$1 == "golang" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
           test "$(go env GOVERSION)" = "go$project_go"
           go env GOVERSION GOOS GOARCH CGO_ENABLED
-          cargo +1.93.0 build --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --bin ariadne-compute
+          test "$(rustc --version | awk '{ print $2 }')" = "$RUSTUP_TOOLCHAIN"
+          cargo build --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --bin ariadne-compute
           export ARIADNE_COMPUTE_TEST_BINARY="$CARGO_TARGET_DIR/debug/ariadne-compute"
           cd runtime/go
           go test -count=1 -race -v ./internal/code/adapters/computeprocess

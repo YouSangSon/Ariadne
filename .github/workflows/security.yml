@@ -39,10 +39,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Node.js 24
+      - name: Set up project Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24.22.2'
+          node-version-file: ${{ github.workspace }}/.tool-versions
           cache: npm
           cache-dependency-path: packages/code/package-lock.json
 
