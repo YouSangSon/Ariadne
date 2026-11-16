@@ -493,10 +493,17 @@ export function readPostgresMigrationSql(
   return parts.join("\n\n");
 }
 
+// Stable across releases; two-int keys are separate from record/scope bigint locks.
+const MIGRATION_LOCK_NAMESPACE = 0x41524941;
+const MIGRATION_LOCK_ID = 0x4d494752;
+
 export async function runMigrations(pool: PgPool): Promise<void> {
   assertMigrationPool(pool);
 
-  await pool.query(readPostgresMigrationSql());
+  // One simple-query message keeps lock + DDL atomic; migrations must not control transactions.
+  await pool.query(
+    `SELECT pg_catalog.pg_advisory_xact_lock(${MIGRATION_LOCK_NAMESPACE}, ${MIGRATION_LOCK_ID});\n${readPostgresMigrationSql()}`,
+  );
 }
 
 export function resolveMigrationDatabaseUrl(env: NodeJS.ProcessEnv): string {

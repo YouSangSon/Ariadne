@@ -3473,6 +3473,16 @@ describe("createMemoryRepository (unit — no PG required)", () => {
   });
 });
 
+async function prepareTestDatabase() {
+  await recreateTestDatabase();
+  const pool = createPgPool({ connectionString: testConnectionString });
+  try {
+    await runMigrations(pool);
+  } finally {
+    await pool.end();
+  }
+}
+
 // Postgres-backed suite: skip when POSTGRES_HOST is unset (e.g. the non-PG CI
 // job, or local dev without docker compose). The pg-integration CI job sets
 // it explicitly. Local opt-in: `POSTGRES_HOST=127.0.0.1 npm test`.
@@ -3481,9 +3491,7 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     await waitForPostgres();
   });
 
-  beforeEach(async () => {
-    await recreateTestDatabase();
-  });
+  beforeEach(prepareTestDatabase);
 
   afterAll(async () => {
     await recreateTestDatabase();
@@ -3495,7 +3503,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       const created = await repository.addMemory({
@@ -3549,7 +3556,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       const created = await repository.addMemory({
@@ -3669,7 +3675,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       const created = await repository.addMemory({
@@ -3794,7 +3799,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       await expect(
@@ -3824,7 +3828,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       const first = await repository.addMemory({
@@ -3889,7 +3892,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       await repository.addMemory({
@@ -3959,7 +3961,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
     });
 
     try {
-      await runMigrations(pool);
       const repository = createMemoryRepository(pool);
 
       const first = await repository.addMemory({
@@ -4028,11 +4029,10 @@ describe.skipIf(!process.env.POSTGRES_HOST)("createMemoryRepository", () => {
 // Real PostgreSQL exercises the row lock/CAS and archive JSONB path; no vectors or external calls.
 describe.skipIf(!process.env.POSTGRES_HOST)("reported revalidation integration", () => {
   beforeAll(waitForPostgres);
-  beforeEach(recreateTestDatabase);
+  beforeEach(prepareTestDatabase);
   it("allows one metadata writer per record digest and preserves binding mismatch after legacy edits", async () => {
     const pool = createPgPool({connectionString:testConnectionString});
     try {
-      await runMigrations(pool);
       const repository=createMemoryRepository(pool);
       const record=await repository.addMemory({organizationId:"org-a",scopeType:"project",scopeId:"alpha",memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId:"alpha",sourceType:"document",sourceRef:"source:alpha"}});
       const metadata={schemaVersion:1 as const,recheck:{method:"Read source",trigger:"Before reuse",boundContentDigest:record.contentDigest!},sourceObservations:[],dependencies:[],derivatives:[]};
@@ -4051,7 +4051,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("reported revalidation integration",
   it("keeps dependencies scoped and reports archived rows in a bounded snapshot", async()=>{
     const pool=createPgPool({connectionString:testConnectionString});
     try{
-      await runMigrations(pool);
       const repository=createMemoryRepository(pool);
       const add=(scopeId:string,org="org-a")=>repository.addMemory({organizationId:org,scopeType:"project",scopeId,memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId,sourceType:"document",sourceRef:scopeId}});
       const own=await add("alpha");const foreign=await add("beta");await add("alpha","org-b");
@@ -4069,7 +4068,6 @@ describe.skipIf(!process.env.POSTGRES_HOST)("reported revalidation integration",
     const {randomUUID}=await import("node:crypto");
     const pool=createPgPool({connectionString:testConnectionString});
     try{
-      await runMigrations(pool);
       const repository=createMemoryRepository(pool);const archive=createMemoryArchiveRepository(pool);
       const original=await repository.addMemory({organizationId:"org-a",scopeType:"project",scopeId:"alpha",memoryType:"fact",content:"Original",source:{scopeType:"project",scopeId:"alpha",sourceType:"document",sourceRef:"alpha"}});
       const metadata={schemaVersion:1 as const,recheck:{method:"Read",trigger:"Reuse",boundContentDigest:original.contentDigest!},sourceObservations:[],dependencies:[{memoryId:original.id,contentDigest:original.contentDigest!}],derivatives:[]};

@@ -43,9 +43,11 @@ Daily commands:
 
 The Postgres-backed repository/migration suites
 (`tests/store/memory-repository.test.ts`,
-`tests/jobs/ingest-job-repository.test.ts`, `tests/db/migrate.test.ts`) skip
-gracefully when Postgres on `127.0.0.1:5432` isn't reachable; bring it up via
-`docker compose up -d postgres` if you want them to run locally. Pgvector
+`tests/jobs/ingest-job-repository.test.ts`, `tests/db/migrate.test.ts`) require
+an explicit `POSTGRES_HOST` opt-in and use `127.0.0.1:${POSTGRES_PORT:-5432}`.
+Use an isolated PostgreSQL instance: these suites drop and recreate their named
+test databases. Repository suites prepare the schema in setup hooks before
+business assertions; migration replay coverage belongs in `tests/db/migrate.test.ts`. Pgvector
 adapter integration cases in `tests/vector/pgvector-index.integration.test.ts`
 skip unless `PGVECTOR_TEST_URL` is set; CI runs them in the
 `pgvector-integration` job.
@@ -80,10 +82,20 @@ factory. Tool handlers and orchestrators consume the interface, not the impl.
 SQL files live in `src/db/migrations/NNN_*.sql`. Current migration files span
 `001-016`; the next migration should be `017_*.sql`. Future schema changes
 append the next unused number after the current range, add the filename to
-`MIGRATION_FILES` in `src/db/migrate.ts`, and add the embedded snapshot string
+`MIGRATION_FILES` in `src/infrastructure/postgres/migrate.ts`, and add the embedded snapshot string
 for production fallbacks. All migrations must be idempotent
 (`CREATE … IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`) and safe to run on
 populated databases.
+
+`runMigrations` serializes cooperating migration calls in the same database with
+a stable two-integer advisory transaction lock. It submits the lock and all SQL
+as one plain-string simple-query message, with no parameter values. Keep migration
+SQL free of explicit transaction control and commands that cannot run in a
+transaction (such as `CREATE INDEX CONCURRENTLY`); this preserves atomic rollback
+and automatic lock release. A caller already inside a transaction retains the
+lock until that transaction ends. The guard does not coordinate live business
+writes or older migrators that do not take it; it is not an online migration
+safety policy.
 
 ## Pull-request workflow
 
