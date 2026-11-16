@@ -1,0 +1,92 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: compute-contracts
+  title: G2a 순수 co-change 계산과 엄격 JSON 계약 및 실제 TS 비교
+  status: verified
+  priority: P0
+  owner: compute-contracts
+  intake_started: 2026-11-16
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 Go와 Rust 설계 중 독립 검증 가능한 순수 계산 단위를 구현한다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 DDD 및 클린 아키텍처와 모듈 경계를 지키며 TDD로 구현한다.
+  desired_outcome: 경로나 저장소에 접근하지 않는 두 계산 라이브러리가 같은 엄격 JSON과 literal fixture를 처리하고 실제 TS 함수의 의미와 비교된다.
+  confirmed_facts:
+    - 기존 Node production 계산과 export 및 SQLite 게시 경로는 유지한다.
+    - G2a는 값 계약과 순수 라이브러리이며 G2b의 실행 파일 및 프로세스 수명을 포함하지 않는다.
+    - main 18f68dcc73f483e58ff65ee0b766781427468ab5의 비실행 registry와 SQLite 의존성은 선행 통합이다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: Go와 Rust가 순수 숫자 집계와 결과 불변조건 및 최대 입력의 450000개 pair를 검증한다.
+      verification: Go internal/code domain 및 Rust ariadne-compute의 literal 빈도와 pair 및 ordinal 검사와 최대 입력 수학 검사를 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 양 언어가 같은 raw fixture의 정상 값과 canonical SHA를 확인하고 잘못된 JSON 및 숫자와 상관관계를 같은 오류 code로 거절한다.
+      verification: Go computewire와 Rust contracts 테스트에서 cases.json의 정상과 거절 및 오류 응답 전체를 검사한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 실제 TS 함수와 literal counts 복원 결과의 directed pair 및 순서와 provenance 및 ID가 정확히 일치한다.
+      verification: packages/code의 compute fixture generator --check와 compute-contract.test.ts 및 owning package gate를 실행한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 모든 새 native 소스와 nested Cargo manifest를 발견하고 domain I/O 및 외부 계층과 미등록 파일을 거절한다.
+      verification: Go AST와 Rust root architecture 테스트 및 root module-boundaries와 전체 product verify를 실행한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - Go Code domain은 숫자 값과 순수 규칙만 소유한다. JSON과 digest는 같은 Code adapter가 소유한다.
+    - Rust compute는 worker와 Wasmtime 및 파일과 네트워크와 환경 및 자식 프로세스에 의존하지 않는다.
+    - 실제 소비자 없는 application interface나 공개 CLI를 만들지 않는다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - cargo test --locked -p ariadne-compute
+    - cargo fmt --all -- --check
+    - cargo clippy --locked -p ariadne-compute --all-targets -- -D warnings
+    - cargo test --locked -p ariadne-extension-worker --test architecture
+    - npm run verify
+  evidence:
+    - criterion_id: AC1
+      check: Go race 전체와 Rust compute tests
+      result: passed
+      exit_code: 0
+      source_state: main18f68dc와 G2a working tree 및 private 최종 hash inventory
+      artifact: .harness/handoff/compute-contracts/review-fix-go-race.jsonl
+    - criterion_id: AC2
+      check: 공통 raw 정상 및 거절 fixture와 같은 오류 code
+      result: passed
+      exit_code: 0
+      source_state: main18f68dc와 G2a working tree
+      artifact: .harness/handoff/compute-contracts/review-fix-rust-green.log
+    - criterion_id: AC3
+      check: 실제 TS generator check 재검증과 동일 TS 소스의 기존 owning full product verify 재사용
+      result: passed
+      exit_code: 0
+      source_state: main18f68dc와 G2a working tree
+      artifact: .harness/handoff/compute-contracts/full-product-verify-built.log
+    - criterion_id: AC4
+      check: Go AST와 Rust AST 및 root inventory와 전체 product verify
+      result: passed
+      exit_code: 0
+      source_state: main18f68dc와 G2a working tree
+      artifact: .harness/handoff/compute-contracts/review-fix-rust-ast.log
+audit:
+  must_not_implement:
+    - G2b 실행 파일과 framing 및 EOF와 cancel 및 runner와 watchdog
+    - production TS 호출 경로 변경과 DB publication 및 G4 locale 전환
+    - 새 infra나 provider 및 기본 Rust 선택과 속도 우위 주장
+  completion_report_should_include:
+    - G2a 로컬 검증과 독립 리뷰 및 원격 CI와 main 병합을 구분한다.
+    - G0나 G2 전체 및 G4나 E1 전체의 완료를 주장하지 않는다.

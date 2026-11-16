@@ -1,0 +1,1 @@
+{"protocol":"ariadne.compute/1","operation":"cochange-counts/1","requestId":"tiny","inputDigest":"0000000000000000000000000000000000000000000000000000000000000000","payload":{"fileCount":3,"commits":[[0,1],[1,2]]}}

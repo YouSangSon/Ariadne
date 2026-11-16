@@ -1,0 +1,1 @@
+{"protocol":"ariadne.compute/1","operation":"cochange-counts/1","requestId":"threshold-score-below","inputDigest":"73ab0336f32020590cc8d009845bd128863211aca23e602a779ac3a807bf482b","payload":{"fileCount":2,"commits":[[0,1],[0,1],[0,1],[0],[0],[0],[0],[0],[0],[0],[0]]}}

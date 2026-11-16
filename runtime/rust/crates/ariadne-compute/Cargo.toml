@@ -1,0 +1,11 @@
+[package]
+name = "ariadne-compute"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.93"
+publish = false
+
+[dependencies]
+serde = "=1.0.228"
+serde_json = "=1.0.154"
+sha2 = "=0.10.9"

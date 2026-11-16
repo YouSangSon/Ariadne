@@ -297,10 +297,12 @@ AST를 통과했다. 이전 코어 기본 병렬 검사는 서로 다른 기존 
 모두 일치했고, Node 24.22.2의 원래 `node scripts/verify.mjs`도 설정 변경 없이 통과했다.
 작업 전용 native cache와 Linux container·image·임시 경로는 정리했다. 공유 cache와
 소유권이 불명확한 중단 fixture 두 개는 보존했다. 정확한 commit의 독립 소스 리뷰와
-Draft PR 게시는 완료했고 최종 CI·전달 리뷰·병합은 대기 중이다. 전체 E1이나 사용자
-실행 지원의 완료를 뜻하지 않는다.
+[PR #10](https://github.com/YouSangSon/Ariadne/pull/10)은 최종 합성 소스의 독립 전달 리뷰와
+원격 검사 11개를 통과하고 2026-11-16 보호된 main `18f68dcc73f483e58ff65ee0b766781427468ab5`에
+일반 병합됐다. 이 게시 완료는 비실행 registry V1 단위에 한정한다. 전체 E1의 runner/run과
+사용자 실행 지원은 여전히 미구현이다.
 
-현재 [Draft PR #10](https://github.com/YouSangSon/Ariadne/pull/10)의 첫 CI에서 Go 포맷·AST·race·vet와
+[PR #10](https://github.com/YouSangSon/Ariadne/pull/10)의 첫 CI에서 Go 포맷·AST·race·vet와
 별도 Rust worker 검사는 통과했지만 native job의 마지막 cache 정리가 실패했다.
 읽기 전용 Go module cache를 일반 삭제로 지우던 문제를 수정해 전용 `GOMODCACHE`를
 명시하고 `go clean -modcache` 뒤에만 전용 경로를 삭제한다. 검사 실패 코드는 유지하며
@@ -311,4 +313,6 @@ Draft PR 게시는 완료했고 최종 CI·전달 리뷰·병합은 대기 중�
 전체 제품 `verify`는 기존 Memory 패키지의 Hono 의존성 감사에서 실패했다.
 해당 취약점은 별도 보안 [PR #11](https://github.com/YouSangSon/Ariadne/pull/11)에서 수정해 main에
 병합했으며 E1 브랜치는 그 변경을 일반 merge로 통합했다. 이 PR의 Node lockfile은 main과
-같다. 합쳐진 최종 HEAD의 전체 원격 검사와 전달 리뷰를 확인하기 전에는 E1을 병합하지 않는다.
+같다. 합쳐진 최종 소스의 전체 원격 검사 11개와 독립 전달 리뷰를 확인한 뒤 PR #10을
+병합했다. 로컬 Memory backup 15초 제한의 기존 timeout과 G0 자원 baseline 미완료는
+원격 통과와 별도로 남겨 둔다.

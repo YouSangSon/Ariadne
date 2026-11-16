@@ -55,7 +55,9 @@ jobs:
           CARGO_HOME: ${{ runner.temp }}/ariadne-extension-cargo
           CARGO_TARGET_DIR: ${{ runner.temp }}/ariadne-extension-target
         run: |
-          cargo +1.93.0 fmt --manifest-path runtime/rust/Cargo.toml -- --check
+          cargo +1.93.0 fmt --manifest-path runtime/rust/Cargo.toml --all -- --check
+          cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute
+          cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --all-targets -- -D warnings
           cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml
           cargo +1.93.0 test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
           cargo +1.93.0 clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings

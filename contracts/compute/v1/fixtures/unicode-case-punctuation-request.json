@@ -1,0 +1,1 @@
+{"protocol":"ariadne.compute/1","operation":"cochange-counts/1","requestId":"unicode-case-punctuation","inputDigest":"c376d39a397b78fdf633673bc3350a93b40798428bf7dbe85034b36e78db9ee6","payload":{"fileCount":7,"commits":[[2,6],[2,3],[2,5],[2,4],[1,2],[0,2]]}}

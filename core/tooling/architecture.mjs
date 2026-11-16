@@ -163,7 +163,8 @@ export function readInventory(root) {
   const scopes = [['', ['.']], ['packages/memory', PACKAGE_AREAS], ['packages/code', PACKAGE_AREAS]]
   const actual = [...ROOT_CONFIG, ...sourceFiles(root, ['contracts'], [], /\.json$/)]
   if (existsSync(join(root, 'runtime/go/go.mod'))) actual.push('runtime/go/go.mod')
-  for (const path of ['runtime/rust/Cargo.toml', 'runtime/rust/Cargo.lock', 'runtime/extensions/Containerfile']) if (existsSync(join(root, path))) actual.push(path)
+  actual.push(...sourceFiles(root, ['runtime/rust'], [], /^Cargo\.toml$/))
+  for (const path of ['runtime/rust/Cargo.lock', 'runtime/extensions/Containerfile']) if (existsSync(join(root, path))) actual.push(path)
   for (const area of ['.github/workflows', 'samples']) {
     for (const entry of readdirSync(join(root, area), { withFileTypes: true })) {
       if (entry.isFile() && /\.(?:ya?ml|json|toml)$/.test(entry.name)) actual.push(`${area}/${entry.name}`)

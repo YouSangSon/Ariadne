@@ -1,4 +1,4 @@
-# Experimental extension worker
+# Experimental native libraries and extension worker
 
 This E0 worker is qualification groundwork. Public extension execution remains
 unsupported until the host's pinned rootless container profile and lifecycle
@@ -43,7 +43,7 @@ Use task-owned `CARGO_HOME` and `CARGO_TARGET_DIR`, with `CARGO_BUILD_JOBS=2`:
 ```sh
 cargo test --locked --manifest-path runtime/rust/Cargo.toml
 cargo test --locked --manifest-path runtime/rust/Cargo.toml --example qualification-os-probe
-cargo fmt --manifest-path runtime/rust/Cargo.toml -- --check
+cargo fmt --manifest-path runtime/rust/Cargo.toml --all -- --check
 cargo clippy --locked --manifest-path runtime/rust/Cargo.toml --all-targets -- -D warnings
 ```
 
@@ -83,3 +83,23 @@ same image/profile, then records observed entry, termination and cleanup as
 separate facts. Invalid/partial markers, early completion/output or failed cleanup
 remain inconclusive and exit nonzero. The controlled heavy fixture is exported
 only by the ignored test and must never be compiled on the unconfined host.
+
+## Numeric compute library (G2a)
+
+`crates/ariadne-compute` is a separate pure count library and strict numeric JSON
+codec. It has no executable, subprocess lifecycle or worker/Wasmtime dependency.
+The workspace keeps the existing extension worker as its default member. Run the
+compute checks explicitly; the root default test is not compute coverage.
+
+```sh
+cargo test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute
+cargo clippy --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --all-targets -- -D warnings
+cargo fmt --manifest-path runtime/rust/Cargo.toml --all -- --check
+cargo test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-extension-worker --test architecture
+```
+
+The shared [compute contract](../../contracts/compute/v1/README.md) owns lexical
+JSON checks, canonical hashing and hand-derived counts. Its offline TS comparison
+does not prove subprocess EOF/cancellation, Go locale equivalence, DB publication
+or a speedup. These remain G2b/G4 gates. Native CI preserves the existing worker,
+OS-probe and Python qualification checks and adds explicit compute test/clippy.

@@ -187,3 +187,14 @@ in `.gitleaks.toml` require both the exact file path and the exact reviewed
 synthetic test or local example secret. They remain valid after history rewrites.
 Different values in those files and matching values elsewhere remain subject to
 the scanner.
+
+## Trusted numeric compute (G2a)
+
+The [compute contract](../contracts/compute/v1/README.md) describes the separate
+pure Go/Rust count libraries and strict JSON codec. Actual TS imports validate
+the committed offline semantics and identities through the Code package gate.
+The Node production pipeline, exports and DB writer remain unchanged. There is
+no compute executable, process/EOF/cancellation integration or performance claim;
+G2b and G4 retain those remaining gates. Task-owned native caches and short temp
+paths are required for local validation; global installs and runtime data are
+not cleaned as test outputs.

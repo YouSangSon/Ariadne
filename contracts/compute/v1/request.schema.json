@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ariadne.local/contracts/compute/v1/request.schema.json",
+  "title": "Ariadne numeric co-change request",
+  "type": "object",
+  "required": [
+    "protocol",
+    "operation",
+    "requestId",
+    "inputDigest",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "const": "ariadne.compute/1"
+    },
+    "operation": {
+      "const": "cochange-counts/1"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,128}$"
+    },
+    "inputDigest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "payload": {
+      "type": "object",
+      "required": [
+        "fileCount",
+        "commits"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "fileCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 37500
+        },
+        "commits": {
+          "type": "array",
+          "maxItems": 1500,
+          "items": {
+            "type": "array",
+            "maxItems": 25,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 37499
+            }
+          }
+        }
+      }
+    }
+  }
+}
