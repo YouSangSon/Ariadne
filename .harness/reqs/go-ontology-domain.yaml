@@ -1,0 +1,94 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-ontology-domain
+  title: G1a Go 온톨로지 도메인과 애플리케이션 및 JSON 어댑터
+  status: verified
+  priority: P0
+  owner: go-ontology-domain
+  intake_started: 2026-11-16
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 G1a 순수 library가 기존 Node의 실제 계약을 보존한다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 DDD 및 클린 아키텍처와 모듈 경계를 지키며 TDD로 구현한다.
+  desired_outcome: Go ontology domain과 application 및 JSON 어댑터가 Node 36개 골든과 UTF-16 및 Unicode와 scrub 계약을 보존한다.
+  confirmed_facts:
+    - 기존 Node ontology와 scrub 및 filesystem과 CLI는 유지한다.
+    - G1a는 실제로 필요한 순수 core scrub만 공유하며 G1b filesystem과 G1c CLI 및 기본 전환은 후속 범위다.
+    - 실제 Go1.27.4 jsonv2의 Token도 10000 깊이 제한이 있어 승인된 반복 container grammar와 고립된 stdlib scalar 검증을 사용한다.
+    - Unicode17 공개 고정 데이터와 x-text v0.44.0의 공개 API만 사용하며 Caser는 호출마다 소유한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 실제 36개 Node 골든의 검증 및 검색과 inspect 및 fingerprint bytes와 출처 읽기 순서를 보존한다.
+      verification: Go TestNodeGoldens와 기존 Node oracle을 같은 literal fixture로 비교한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: UTF-16 및 JSON 문법과 binary64 및 깊은 정상과 비정상 입력을 보존한다.
+      verification: literal unit assertions와 전체 UTF-16 roundtrip 및 10001과 50000 깊이와 독립 문법 fuzz를 검사한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: Unicode17 정규화와 full lowercase 및 ordered scrub 정책이 동시 호출에도 Node 관측을 보존한다.
+      verification: 공식 100170 정규화 검사와 전수 scalar hash 및 context와 27개 scrub 골든과 race를 실행한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 정확한 ontology-scrub 및 x-text 의존만 허용하고 다른 내부 경계와 기존 보안 검사를 유지한다.
+      verification: Go AST와 root metadata 및 기존 8개 Node ontology 보안 검사와 root ontology gate를 실행한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - ontology domain은 같은 domain과 정확한 core-domain-scrub 및 cases와 language와 norm만 의존한다.
+    - application은 domain과 실제 ReadDocument 및 ReadSource와 Fingerprint 포트만 의존한다.
+    - JSON 어댑터는 임시 입력을 만든 뒤 typed fingerprint payload를 직렬화한다.
+    - Node 원본과 Rust 및 Memory와 Code 및 PG 구현은 변경하지 않는다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/ontology-node-goldens.mjs --check
+    - node scripts/ontology-scrub-goldens.mjs
+    - node scripts/generate-ontology-unicode.mjs --check
+    - node scripts/ontology-unicode-oracle.mjs
+    - node scripts/verify.mjs --modules ontology
+  evidence:
+    - criterion_id: AC1
+      check: Actual 36 literal Node cases and exact fingerprint bytes and read order
+      result: passed
+      exit_code: 0
+      source_state: Private final source freeze plus reviewed Node b5685f6
+      artifact: .harness/handoff/go-ontology-domain/final-owned-race-uncached.log
+    - criterion_id: AC2
+      check: Raw UTF-16 and isolated scalar grammar and deep shadowed syntax and fuzz
+      result: passed
+      exit_code: 0
+      source_state: Production decoder unchanged after independent parser review
+      artifact: .harness/handoff/go-ontology-domain/final-escaped-shadowed-race.log
+    - criterion_id: AC3
+      check: Unicode17 normative and exhaustive scalar hashes plus 27 scrub cases and race
+      result: passed
+      exit_code: 0
+      source_state: Fixed public UCD and x-text v0.44.0 with unchanged Node owners
+      artifact: .harness/handoff/go-ontology-domain/final-owned-race-uncached.log
+    - criterion_id: AC4
+      check: Full Go race and vet and AST plus root ontology security and metadata gate
+      result: passed
+      exit_code: 0
+      source_state: Whole Go proof plus final affected test closure and unchanged Rust interop sources
+      artifact: .harness/handoff/go-ontology-domain/final-root-ontology.log
+audit:
+  must_not_implement:
+    - Go ontology filesystem과 CLI 및 기본 cutover
+    - 새 MCP 및 데이터베이스와 권한 및 agent runtime
+    - JSON dependency 및 Go experimental profile 변경과 내부 stdlib 우회
+  completion_report_should_include:
+    - 로컬 library 검증과 native cutover 및 원격 CI와 실제 main 통합을 구분한다.
+    - 첫 native 실행 전 구현된 domain과 application 및 hash를 preimplementation TDD라고 보고하지 않는다.

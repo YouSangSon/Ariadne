@@ -21,10 +21,6 @@
       "layer": "tooling",
       "context": "automation"
     },
-    ".tool-versions": {
-      "layer": "tooling",
-      "context": "core"
-    },
     ".gitignore": {
       "layer": "tooling",
       "context": "core"
@@ -36,6 +32,10 @@
     ".gitleaksignore": {
       "layer": "tooling",
       "context": "security"
+    },
+    ".tool-versions": {
+      "layer": "tooling",
+      "context": "core"
     },
     "bin/Ariadne.mjs": {
       "layer": "composition",
@@ -1077,6 +1077,38 @@
       "layer": "tooling",
       "context": "ontology"
     },
+    "contracts/ontology/unicode-17/DerivedCoreProperties.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/NormalizationTest.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/SpecialCasing.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/license-provenance.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/scrub-cases.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/unicode-LICENSE.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/unicode-data.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/unicode-17/x-text-LICENSE.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "core/application/product.mjs": {
       "layer": "application",
       "context": "core"
@@ -1380,6 +1412,14 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/core/domain/scrub/scrub.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/scrub/scrub_test.go": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "runtime/go/internal/evaluation/application/projection.go": {
       "layer": "application",
       "context": "evaluation",
@@ -1453,6 +1493,50 @@
     "runtime/go/internal/extensions/domain/strict_json.go": {
       "layer": "domain",
       "context": "extensions"
+    },
+    "runtime/go/internal/ontology/adapters/json/contracts_test.go": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/json/decode.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/json/fingerprint.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/json/quote.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/application/ontology.go": {
+      "layer": "application",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/definition.go": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/normalize.go": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/normalize_test.go": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/search.go": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/text.go": {
+      "layer": "domain",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/domain/unicode_properties_generated.go": {
+      "layer": "domain",
+      "context": "ontology"
     },
     "runtime/go/internal/platform/computeprocess/preflight_unix_test.go": {
       "layer": "tooling",
@@ -1574,6 +1658,10 @@
       "layer": "composition",
       "context": "integration"
     },
+    "scripts/generate-ontology-unicode.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "scripts/install.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -1583,6 +1671,14 @@
       "context": "integration"
     },
     "scripts/ontology-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "scripts/ontology-scrub-goldens.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "scripts/ontology-unicode-oracle.mjs": {
       "layer": "tooling",
       "context": "ontology"
     },

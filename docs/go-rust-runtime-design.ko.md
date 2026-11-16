@@ -395,3 +395,16 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 - [공식 Go MCP SDK](https://github.com/modelcontextprotocol/go-sdk): Go 서버/클라이언트 구현 후보. 현재 Ariadne 인증·전송 계약의 자동 호환을 보장하지 않는다.
 
 EGM의 문서 구조와 pstack의 경계·대안 검토를 적용했다. 사용자가 이미 설계를 요청한 범위는 반복 승인 인터뷰 없이 문서화하며, 정책·공개 계약을 바꾸는 미결정 사항은 구현 전에 분리한다.
+
+### G1a 순수 library 구현 범위
+
+Go ontology의 domain/application과 로컬 JSON 어댑터는 기존 Node의 36개 골든에
+맞춰 이식한다. `Text`는 UTF-16 단위를 보존하며 문자열의 길이·검색·정렬과
+지문을 손실 없이 처리한다. 실제로 필요한 시크릿 정책만 `core/domain/scrub`이
+소유한다. 온톨로지 domain에서 이 순수 패키지로 향하는 정확한 예외와
+x/text의 cases/language/norm 3개만 허용하며 일반 core 내부 접근은 거절한다.
+Unicode17 데이터·라이선스·재생성·검사 범위는
+[고정 데이터 안내](../contracts/ontology/unicode-17/README.md)가 소유한다.
+
+이 단위는 filesystem/CLI 연결과 기본 전환을 포함하지 않는다. G1b/G1c와
+실제 CI 및 공개 전환 근거는 각각 확인한 뒤 완료로 표시한다.
