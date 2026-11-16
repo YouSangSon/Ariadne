@@ -309,5 +309,6 @@ Draft PR 게시는 완료했고 최종 CI·전달 리뷰·병합은 대기 중�
 다른 module 버전의 runtime 검증을 뜻하지 않는다. 실제 E1 의존성은 v1.14.53 그대로다.
 
 전체 제품 `verify`는 기존 Memory 패키지의 Hono 의존성 감사에서 실패했다.
-이 단위는 Node 의존성을 바꾸지 않으며 별도 보안 선행 변경을 기다린다. 해당 변경을
-통합한 뒤 최종 HEAD의 전체 원격 검사와 전달 리뷰를 다시 확인하기 전에는 병합하지 않는다.
+해당 취약점은 별도 보안 [PR #11](https://github.com/YouSangSon/Ariadne/pull/11)에서 수정해 main에
+병합했으며 E1 브랜치는 그 변경을 일반 merge로 통합했다. 이 PR의 Node lockfile은 main과
+같다. 합쳐진 최종 HEAD의 전체 원격 검사와 전달 리뷰를 확인하기 전에는 E1을 병합하지 않는다.
