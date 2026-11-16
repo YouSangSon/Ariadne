@@ -3,9 +3,11 @@ package computewire
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"regexp"
 	"strconv"
@@ -203,17 +205,26 @@ func EncodeResponse(expected Request, response Response) ([]byte, error) {
 	return json.Marshal(out)
 }
 func DecodeResponse(raw []byte, expected Request) (Response, error) {
+	return DecodeResponseContext(context.Background(), raw, expected)
+}
+func DecodeResponseContext(ctx context.Context, raw []byte, expected Request) (Response, error) {
+	if err := ctx.Err(); err != nil {
+		return Response{}, err
+	}
 	if err := validateRequest(expected); err != nil {
 		return Response{}, err
 	}
-	response, err := decodeResponse(raw, expected)
-	if err != nil && err != LimitExceeded {
+	response, err := decodeResponse(ctx, raw, expected)
+	if ctx.Err() != nil {
+		return Response{}, ctx.Err()
+	}
+	if err != nil && err != LimitExceeded && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 		return Response{}, ProtocolError
 	}
 	return response, err
 }
-func decodeResponse(raw []byte, expected Request) (Response, error) {
-	value, err := parse(raw, MaxResponseBytes)
+func decodeResponse(ctx context.Context, raw []byte, expected Request) (Response, error) {
+	value, err := parseContext(ctx, raw, MaxResponseBytes)
 	if err != nil {
 		return Response{}, err
 	}
@@ -254,6 +265,9 @@ func decodeResponse(raw []byte, expected Request) (Response, error) {
 	}
 	counts := domain.CoChangeCounts{Frequencies: make([]uint32, len(frequencies)), Pairs: make([]domain.PairCount, len(pairs))}
 	for i, item := range frequencies {
+		if err := ctx.Err(); err != nil {
+			return Response{}, err
+		}
 		n, ok := uint32Value(item)
 		if !ok {
 			return Response{}, ProtocolError
@@ -261,6 +275,9 @@ func decodeResponse(raw []byte, expected Request) (Response, error) {
 		counts.Frequencies[i] = n
 	}
 	for i, item := range pairs {
+		if err := ctx.Err(); err != nil {
+			return Response{}, err
+		}
 		tuple, ok := item.([]any)
 		if !ok || len(tuple) != 4 {
 			return Response{}, ProtocolError
@@ -274,6 +291,9 @@ func decodeResponse(raw []byte, expected Request) (Response, error) {
 			pair[j] = n
 		}
 		counts.Pairs[i] = domain.PairCount{A: pair[0], B: pair[1], Count: pair[2], FirstSeenOrdinal: pair[3]}
+	}
+	if err := ctx.Err(); err != nil {
+		return Response{}, err
 	}
 	if err := domain.ValidateCounts(expected.Input, counts); err != nil {
 		return Response{}, domainError(err)
@@ -294,22 +314,29 @@ func fields(value any, names ...string) (map[string]any, bool) {
 }
 func uint32Value(value any) (uint32, bool) {
 	number, ok := value.(json.Number)
-	if !ok || !integer.MatchString(string(number)) {
+	if !ok || len(number) > 10 || !integer.MatchString(string(number)) {
 		return 0, false
 	}
 	n, err := strconv.ParseUint(string(number), 10, 32)
 	return uint32(n), err == nil
 }
-func parse(raw []byte, limit int) (any, error) {
+func parse(raw []byte, limit int) (any, error) { return parseContext(context.Background(), raw, limit) }
+func parseContext(ctx context.Context, raw []byte, limit int) (any, error) {
 	if len(raw) > limit {
 		return nil, LimitExceeded
 	}
-	if !utf8.Valid(raw) || !validUnicodeEscapes(raw) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if !validUTF8(ctx, raw) || !validUnicodeEscapesContext(ctx, raw) {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
 		return nil, InvalidInput
 	}
-	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder := json.NewDecoder(&contextReader{ctx: ctx, r: bytes.NewReader(raw)})
 	decoder.UseNumber()
-	value, err := readValue(decoder, 0)
+	value, err := readValue(ctx, decoder, 0)
 	if err != nil {
 		return nil, InvalidInput
 	}
@@ -318,7 +345,10 @@ func parse(raw []byte, limit int) (any, error) {
 	}
 	return value, nil
 }
-func readValue(decoder *json.Decoder, depth int) (any, error) {
+func readValue(ctx context.Context, decoder *json.Decoder, depth int) (any, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if depth > 5 {
 		return nil, InvalidInput
 	}
@@ -341,7 +371,7 @@ func readValue(decoder *json.Decoder, depth int) (any, error) {
 			if _, exists := object[name]; exists {
 				return nil, InvalidInput
 			}
-			value, err := readValue(decoder, depth+1)
+			value, err := readValue(ctx, decoder, depth+1)
 			if err != nil {
 				return nil, err
 			}
@@ -354,7 +384,7 @@ func readValue(decoder *json.Decoder, depth int) (any, error) {
 	case json.Delim('['):
 		array := make([]any, 0)
 		for decoder.More() {
-			value, err := readValue(decoder, depth+1)
+			value, err := readValue(ctx, decoder, depth+1)
 			if err != nil {
 				return nil, err
 			}
@@ -376,8 +406,18 @@ func readValue(decoder *json.Decoder, depth int) (any, error) {
 
 // encoding/json replaces unpaired UTF-16 escapes; the wire contract rejects them.
 func validUnicodeEscapes(raw []byte) bool {
+	return validUnicodeEscapesContext(context.Background(), raw)
+}
+func validUnicodeEscapesContext(ctx context.Context, raw []byte) bool {
 	inString := false
+	nextCheck := 0
 	for i := 0; i < len(raw); i++ {
+		if i >= nextCheck {
+			if ctx.Err() != nil {
+				return false
+			}
+			nextCheck = i + 4096
+		}
 		if raw[i] == '"' {
 			inString = !inString
 			continue
@@ -414,6 +454,38 @@ func validUnicodeEscapes(raw []byte) bool {
 			return false
 		}
 		i += 6
+	}
+	return true
+}
+
+// Bound decoder reads even for one large token; no validator goroutine is abandoned.
+type contextReader struct {
+	ctx context.Context
+	r   *bytes.Reader
+}
+
+func (r *contextReader) Read(p []byte) (int, error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	if len(p) > 4096 {
+		p = p[:4096]
+	}
+	return r.r.Read(p)
+}
+func validUTF8(ctx context.Context, raw []byte) bool {
+	for i := 0; i < len(raw); {
+		if ctx.Err() != nil {
+			return false
+		}
+		end := min(i+4096, len(raw))
+		for i < end {
+			r, n := utf8.DecodeRune(raw[i:])
+			if r == utf8.RuneError && n == 1 {
+				return false
+			}
+			i += n
+		}
 	}
 	return true
 }

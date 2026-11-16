@@ -1,0 +1,107 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: compute-process
+  title: G2b 신뢰된 Rust 계산 프로세스와 Go 어댑터
+  status: verified
+  priority: P0
+  owner: compute-process
+  intake_started: 2026-11-16
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 G2 계산 계약을 실제 두 프로세스의 수명과 실패 경계까지 구현한다.
+requirement:
+  user_intent: Go와 Rust 전환을 DDD 및 클린 아키텍처에 따라 TDD로 이어가고 검증된 단위마다 커밋한다.
+  desired_outcome: 신뢰된 설치 정체성을 확인한 Go 어댑터가 Rust 계산을 호출하고 실패나 취소 시 결과를 버리며 종료를 확인한다.
+  confirmed_facts:
+    - G2a 공통 값 계약은 main 23c889c1eb1f7686460ce4d3cbff7c908c152a67에서 통합했다.
+    - 기존 TS production과 공개 export 및 기본 backend와 SQLite 게시 경로는 유지한다.
+    - Writing 중 EOF는 writer 완료 또는 기존 watchdog으로 판정하는 동기화된 관측이며 물리적 byte 도착 시각을 보장하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 실제 Go 어댑터가 Rust 실행 파일과 14개 공통 정상 fixture 및 최대 450000 pair 결과를 정확히 비교한다.
+      verification: 명시한 ARIADNE_COMPUTE_TEST_BINARY로 typed counter actual integration을 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 잘못된 입력과 응답 및 설치 정체성은 고정 오류로 거절하고 payload나 credential을 자유 형식 오류로 내보내지 않는다.
+      verification: 공통 strict codec과 raw 실제 binary 오류 및 manifest와 framing 실패 검사를 실행한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: BUSY와 취소 및 deadline과 부모 소실 및 EOF와 backpressure를 유한하게 처리하며 회수 미확인 시 runner를 격리하고 근거를 보존한다.
+      verification: 실제 process fault tests와 Rust parent kill 및 watchdog과 failed reap 주입 및 structured diagnostics 검사를 실행한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: Code infrastructure만 정확한 platform transport를 참조하고 순수 domain과 Rust library의 I/O 및 교차 모듈 침범은 거절한다.
+      verification: Go와 Rust AST negative controls 및 root inventory 검사를 실행한다.
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: macOS와 명시한 rootless Podman Linux에서 실제 프로세스 검사를 실행하고 새 실제 Go→Rust CI와 기존 필수 검사를 유지한다.
+      verification: native Go race 및 vet와 Rust compute 및 root worker와 root gate 및 Linux 검사와 자원 정리 근거를 기록한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - platform computeprocess는 opaque bytes와 설치 정체성 및 프로세스 수명만 소유하고 Code를 import하지 않는다.
+    - Code adapters computeprocess는 computewire와 domain을 조합하며 빈 application 포트를 추가하지 않는다.
+    - Rust compute main만 필요한 stdio 및 thread와 time 및 fatal exit를 사용한다.
+    - root extension worker의 ACK 수명과 Wasmtime 계약은 compute와 별개다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go test -race ./...
+    - go test -count=1 -race ./internal/code/adapters/...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - cargo test --locked -p ariadne-compute
+    - cargo fmt --all -- --check
+    - cargo clippy --locked -p ariadne-compute --all-targets -- -D warnings
+    - cargo test --locked
+    - cargo clippy --locked --all-targets -- -D warnings
+    - node scripts/verify.mjs
+  evidence:
+    - criterion_id: AC1
+      check: uncached actual Go to Rust shared valid and maximum comparison
+      result: passed
+      exit_code: 0
+      source_state: final G2b source and reviewed protocol binary SHA in private handoff
+      artifact: .harness/handoff/compute-process/native-final-adapters-uncached.log
+    - criterion_id: AC2
+      check: shared 95 request rejects and 13 actual binary frame policies plus existing response corpus
+      result: passed
+      exit_code: 0
+      source_state: final G2b codec and shared corpus
+      artifact: .harness/handoff/compute-process/green-review-protocol-process.log
+    - criterion_id: AC3
+      check: actual process faults and quarantine and parent forced kill and watchdog
+      result: passed
+      exit_code: 0
+      source_state: final Go transport and Rust engine with synchronous context validator
+      artifact: .harness/handoff/compute-process/native-final-transport-refinement.log
+    - criterion_id: AC4
+      check: exact transport exception negative controls and Rust AST and root inventory
+      result: passed
+      exit_code: 0
+      source_state: final G2b source and owned fixture inventory
+      artifact: .harness/handoff/compute-process/root-review-final.log
+    - criterion_id: AC5
+      check: macOS native gates and Linux rootless actual integration with scoped cleanup
+      result: passed
+      exit_code: 0
+      source_state: final source SHA and platform binary identities recorded privately
+      artifact: .harness/handoff/compute-process/linux-final-adapters-uncached.log
+audit:
+  must_not_implement:
+    - production TS pipeline 변경과 공개 compute CLI 및 기본 backend 전환
+    - DB writer 및 transaction과 저장 또는 빈 미래 application port
+    - installer 및 새 서비스나 broker 또는 shell과 PATH fallback
+  completion_report_should_include:
+    - 로컬 검증과 독립 source review 및 원격 CI와 main 병합을 구분한다.
+    - Windows와 미검증 OS CPU 조합 및 성능 우위와 G4 및 G5 완료를 주장하지 않는다.
+    - 작업 소유 process와 pipe 및 cwd와 임시 cache 및 Podman 자원의 정리 근거를 남긴다.

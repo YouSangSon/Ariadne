@@ -84,10 +84,11 @@ separate facts. Invalid/partial markers, early completion/output or failed clean
 remain inconclusive and exit nonzero. The controlled heavy fixture is exported
 only by the ignored test and must never be compiled on the unconfined host.
 
-## Numeric compute library (G2a)
+## Numeric compute library and executable (G2a/G2b)
 
 `crates/ariadne-compute` is a separate pure count library and strict numeric JSON
-codec. It has no executable, subprocess lifecycle or worker/Wasmtime dependency.
+codec. Its separate `src/main.rs` now exposes one framed request/response for the
+internal Go adapter. The pure library still has no OS I/O or worker/Wasmtime dependency.
 The workspace keeps the existing extension worker as its default member. Run the
 compute checks explicitly; the root default test is not compute coverage.
 
@@ -100,6 +101,9 @@ cargo test --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-extension
 
 The shared [compute contract](../../contracts/compute/v1/README.md) owns lexical
 JSON checks, canonical hashing and hand-derived counts. Its offline TS comparison
-does not prove subprocess EOF/cancellation, Go locale equivalence, DB publication
-or a speedup. These remain G2b/G4 gates. Native CI preserves the existing worker,
-OS-probe and Python qualification checks and adds explicit compute test/clippy.
+does not prove Go locale equivalence, DB publication or a speedup. Those remain
+G4/measurement gates. G2b actual process tests cover EOF/cancellation, watchdog,
+parent loss and actual Go→Rust counts. Native CI preserves the existing worker,
+OS-probe and Python qualification checks and adds a dedicated cross-language
+`compute-process` job. See the contract for synchronized EOF observation limits
+and the distinction between normal thread joins and fatal OS process exit.

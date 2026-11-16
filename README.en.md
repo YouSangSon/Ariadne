@@ -226,7 +226,7 @@ The Rust worker and fixed Podman profile are separate qualification tooling; pub
 
 [Review of 20 sources, adoption scope and input format (Korean)](docs/harness-engineering-adoption.md).
 
-The G2a pure Go/Rust co-change libraries, strict JSON contract and actual TS offline comparison have a [separate contract](contracts/compute/v1/README.md). Compute executables, process integration, DB publication and performance gains remain unimplemented or unverified.
+The pure Go/Rust co-change libraries, strict JSON contract and actual TS offline comparison have a [separate contract](contracts/compute/v1/README.md). G2b adds an internal Go adapter and Rust executable with framing, cancellation, cleanup and exact result comparison. The existing Node product, public CLI, default backend and DB publication remain unchanged; this does not establish a speedup or provide an installer.
 
 <a id="license"></a>
 

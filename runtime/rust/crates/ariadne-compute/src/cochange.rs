@@ -24,6 +24,7 @@ pub struct CoChangeCounts {
 pub enum CountError {
     InvalidInput,
     LimitExceeded,
+    Cancelled,
 }
 
 pub fn validate_input(input: &CoChangeInput) -> Result<(), CountError> {
@@ -43,13 +44,25 @@ pub fn validate_input(input: &CoChangeInput) -> Result<(), CountError> {
     Ok(())
 }
 pub fn count_reference(input: &CoChangeInput) -> Result<CoChangeCounts, CountError> {
+    count_cancellable(input, || false)
+}
+pub fn count_cancellable(
+    input: &CoChangeInput,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<CoChangeCounts, CountError> {
     validate_input(input)?;
+    if cancelled() {
+        return Err(self::CountError::Cancelled);
+    }
     let mut counts = CoChangeCounts {
         frequencies: vec![0; input.file_count as usize],
         pairs: vec![],
     };
     let mut pairs = std::collections::BTreeMap::<(u32, u32), PairCount>::new();
     for commit in &input.commits {
+        if cancelled() {
+            return Err(self::CountError::Cancelled);
+        }
         for id in commit {
             counts.frequencies[*id as usize] += 1;
         }
@@ -69,7 +82,13 @@ pub fn count_reference(input: &CoChangeInput) -> Result<CoChangeCounts, CountErr
     if pairs.len() > MAX_PAIRS {
         return Err(self::CountError::LimitExceeded);
     }
-    counts.pairs = pairs.into_values().collect();
+    counts.pairs.reserve(pairs.len());
+    for pair in pairs.into_values() {
+        if cancelled() {
+            return Err(self::CountError::Cancelled);
+        }
+        counts.pairs.push(pair);
+    }
     Ok(counts)
 }
 
