@@ -1,7 +1,7 @@
 # Ariadne 모듈과 사용자 확장 설계
 
 작성: YouSangSon의 요청을 바탕으로 Codex 작성 · 2026-11-09
-상태: 목표 설계 작성·독립 검토 완료. 후속 [E0 구현](extension-implementation-plan.ko.md)은 계약·참조 projector·검사 CLI·Go/Rust 경계 검사와 격리 실행 시험용 worker를 제공한다. 시험용 worker의 존재는 공개 실행 지원을 뜻하지 않는다. 사용자 확장 registry·sandbox·설치/실행 CLI는 아직 구현하지 않았다.
+상태: 목표 설계 작성·독립 검토 완료. 후속 [구현](extension-implementation-plan.ko.md)은 E0 계약·참조 projector·검사 CLI·Go/Rust 경계 검사와 별도 격리 실행 시험용 worker, 비실행 registry V1을 제공한다. 실험 Go CLI는 패키지 설치·선택·비활성화·제거를 제공하며 activation은 실행 권한이 아니다. qualified runner·사용자 run과 전체 sandbox 지원은 아직 제공하지 않는다.
 기준: `568f970`. [요구사항](../.harness/reqs/extension-platform-design.yaml). [Go+Rust 전환 설계](go-rust-runtime-design.ko.md)의 업무 소유권·TDD와 [실행 정책](execution-policy.md)을 계승한다.
 
 ## 1. 원하는 결과와 범위
@@ -71,7 +71,7 @@ domain은 SQL·Podman·Wasmtime·HTTP를 import하지 않는다. application이 
 
 ## 5. 사용자 흐름과 첫 확장 계약
 
-**예정 사용 예시**다. 현재 실행 가능한 CLI가 아니다.
+**전체 E1의 예정 사용 예시**다. 현재 실험 Go CLI의 비실행 install·inspect·activate·disable·remove와 정확한 인자는 [구현 계획](extension-implementation-plan.ko.md#후속-비실행-패키지-레지스트리-v1)을 따른다. 아래 run은 제공하지 않는다.
 
 ```sh
 Ariadne extensions inspect --package ./team-report
@@ -173,7 +173,7 @@ worker/2는 단일 invocation 안에서 hostcall request ID·sequence·capabilit
 
 ## 10. 구현 순서와 예정 파일
 
-아래는 전체 이행 단계다. 현재 E0 계약 기반 일부만 구현했으며 실행 격리·E1 이후는 후속 구현이다. Go+Rust G0/G1 기반과 병행 가능한 계약 작업만 먼저 하고, E1을 위해 paused Task dispatcher 전체를 선행 구현하지 않는다.
+아래는 전체 이행 단계다. 현재 E0 계약·별도 worker 시험과 비실행 registry V1을 구현했다. qualified host runner·run과 전체 E1 이후는 후속 구현이다. Go+Rust G0/G1 기반과 병행 가능한 계약 작업만 먼저 하고, E1을 위해 paused Task dispatcher 전체를 선행 구현하지 않는다.
 
 | 단계 | 산출물 | 통과·중단 기준 |
 | --- | --- | --- |
@@ -243,3 +243,14 @@ E0에서 선택할 항목은 안정 Wasmtime/Cargo/Go/SQLite driver 버전과 OS
 - [Store limits](https://docs.wasmtime.dev/api/wasmtime/struct.StoreLimitsBuilder.html): per-memory/table 제한과 개수 제한을 합계로 혼동하지 않음. Context7의 Wasmtime 원문으로 대조.
 - [Component Model](https://component-model.bytecodealliance.org/): 명시한 world/import/export와 언어 간 계약 후보. 임의 언어 패키지의 즉시 호환을 보장하지 않음.
 - [Podman run](https://docs.podman.io/en/latest/markdown/podman-run.1.html): 자원·mount·network·image 실행 경계. 기본 image pull과 서버 설정을 그대로 신뢰하지 않고 고정 profile을 검증해야 함.
+
+## 14. 현재 비실행 registry V1의 경계
+
+[구현 계획](extension-implementation-plan.ko.md#후속-비실행-패키지-레지스트리-v1)은
+현재 실행 가능한 명령·digest 형식·저장/복구와 검증 상태를 소유한다. 이 문서의
+invocation·admission·grant·종료 회수 설명은 전체 E1의 목표 계약이다. V1은
+패키지 bytes와 선택 및 제거만 저장하며 실행 권한을 만들지 않는다. SQLite schema
+1에는 runner와 invocation이 없고 모든 결과는 runtimeQualified false다. 앞으로
+runner를 추가할 때 schema 2를 사용하며 V1은 열린 handle에서도 정확한 schema를
+확인해 미래 schema를 거절한다. 활성화는 digest 선택만 바꾸고 worker 종료나
+실행 취소가 완료됐다는 값을 만들지 않는다.

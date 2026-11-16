@@ -29,8 +29,9 @@ One product and checkout; `packages/memory` and
   requests and root REQs own active work; do not resume embedded old prompts.
 - Do not imply the paused dispatcher/automatic recovery runtime is implemented.
 - Use owned temporary paths/services for tests and clean them after validation.
-- `runtime/go` is the experimental E0 contract implementation, not a replacement
-  for the Node product. Its separate gate is Go test/race, vet and
+- `runtime/go` provides experimental E0 contracts and the nonexecuting registry V1.
+  It does not replace the Node product or authorize user extension execution.
+  Its separate gate is Go test/race, vet and
   `go run ./cmd/check-architecture --root ../..` from that directory.
   See `docs/extension-implementation-plan.ko.md` for scope and remaining gates.
 

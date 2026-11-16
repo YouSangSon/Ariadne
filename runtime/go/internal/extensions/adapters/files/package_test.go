@@ -4,9 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
 	"ariadne/runtime/internal/extensions/domain"
@@ -88,6 +90,98 @@ func TestInspectRejectsUnsafeOrAlteredPackages(t *testing.T) {
 			}
 			if strings.Contains(err.Error(), dir) {
 				t.Fatal("internal path exposed")
+			}
+		})
+	}
+}
+
+func TestInspectActuallyReadsOptionalUTF8(t *testing.T) {
+	dir := packageFixture(t)
+	if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte{0xff}, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Inspect(dir); err == nil {
+		t.Fatal("invalid optional UTF-8 accepted")
+	}
+}
+
+func TestPackageReaderRejectsFIFOExecutableAndOversizedOptional(t *testing.T) {
+	for _, kind := range []string{"fifo", "executable", "optional-limit", "total-limit"} {
+		t.Run(kind, func(t *testing.T) {
+			dir := packageFixture(t)
+			file := filepath.Join(dir, "README.md")
+			switch kind {
+			case "fifo":
+				if err := syscall.Mkfifo(file, 0600); err != nil {
+					t.Fatal(err)
+				}
+			case "executable":
+				if err := os.WriteFile(file, []byte("hello"), 0700); err != nil {
+					t.Fatal(err)
+				}
+			case "optional-limit":
+				f, err := os.Create(file)
+				if err != nil {
+					t.Fatal(err)
+				}
+				err = f.Truncate(domain.MaxPackageBytes + 1)
+				f.Close()
+				if err != nil {
+					t.Fatal(err)
+				}
+			case "total-limit":
+				for _, name := range []string{"README.md", "LICENSE"} {
+					f, err := os.Create(filepath.Join(dir, name))
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = f.Truncate(domain.MaxPackageBytes / 2)
+					f.Close()
+					if err != nil {
+						t.Fatal(err)
+					}
+				}
+			}
+			if _, err := (Reader{}).ReadPackage(dir); err == nil {
+				t.Fatal("unsafe package accepted")
+			}
+		})
+	}
+}
+func TestReadDetectsDescriptorAndPathChanges(t *testing.T) {
+	for _, kind := range []string{"replace", "grow", "chmod"} {
+		t.Run(kind, func(t *testing.T) {
+			dir := t.TempDir()
+			path := filepath.Join(dir, "README.md")
+			if err := os.WriteFile(path, []byte("before"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			root, err := os.OpenRoot(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer root.Close()
+			_, err = readFileObserved(root, "README.md", 100, func() {
+				switch kind {
+				case "replace":
+					if e := os.Remove(path); e != nil {
+						t.Fatal(e)
+					}
+					if e := os.WriteFile(path, []byte("after"), 0600); e != nil {
+						t.Fatal(e)
+					}
+				case "grow":
+					if e := os.WriteFile(path, []byte("longer changed"), 0600); e != nil {
+						t.Fatal(e)
+					}
+				case "chmod":
+					if e := os.Chmod(path, 0700); e != nil {
+						t.Fatal(e)
+					}
+				}
+			})
+			if !errors.Is(err, domain.PackageChanged) {
+				t.Fatalf("want PACKAGE_CHANGED, got %v", err)
 			}
 		})
 	}
