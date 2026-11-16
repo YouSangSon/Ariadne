@@ -1,0 +1,59 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: mcp-http-dependency-security
+  title: MCP HTTP 전이 의존성의 보안 패치
+  status: ready_for_routing
+requirement:
+  user_intent: Ariadne 구현을 계속하고 검증한 단위마다 커밋과 push 및 main 병합을 진행한다.
+  desired_outcome: E1과 분리한 선행 변경으로 Memory와 Code의 취약 전이 의존성을 교체하고 기존 제품 검증을 유지한다.
+  confirmed_facts:
+    - 기준 origin/main은 701e55bafc1e7233b082c5bef2634983782c7534이다.
+    - E1 Verify 43787080825는 기존 main과 같은 Memory lockfile의 중간 등급 취약점으로 실패했다.
+    - SDK 1.32.1의 기존 범위는 node-server의 2.x와 Hono의 4.x 패치를 허용한다.
+    - GHSA-qv5m-9pm6-hqp3와 GHSA-jpvv-r467-5p4w의 node-server 수정 버전은 2.1.6이다.
+    - Hono 공식 4.13.16 보안 릴리스는 mount와 wildcard middleware 및 form과 CSS 및 CSRF 문제를 수정했다.
+    - npm 11.9.0은 node-server 2.1.8과 Hono 4.13.18을 선택했으며 최소 수정 버전과 실제 선택 버전은 다르다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 두 독립 lockfile에서 취약 Hono를 교체하고 Memory의 취약 node-server를 교체하며 SDK와 manifest 및 다른 패키지는 유지한다.
+      verification: npm 생성 diff와 공식 registry integrity 및 기존 SDK 범위를 대조해 필요한 세 package 항목만 변경됐는지 확인한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 두 패키지의 중간 등급 이상 취약점 감사가 성공하고 기존 감사 기준을 완화하지 않는다.
+      verification: 변경 전 실패와 변경 후 npm audit --audit-level=moderate --json의 exit 및 취약점 수를 보관한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 기존 HTTP와 MCP 및 조직 권한과 CLI 계약을 보존하고 전체 로컬 제품 검증을 통과한다.
+      verification: Node 24.22.2와 npm 11.9.0에서 npm run setup과 npm run verify를 실행하며 실제 DB 및 유료 모델 opt-in 없이 결과를 기록한다.
+      passes: false
+    - id: AC4
+      priority: P0
+      statement: 독립 소스 보안 검토를 통과하고 이번 검증이 만든 불필요한 자원을 정리한다.
+      verification: 부모 독립 검토 판정과 작업 소유 node_modules 및 dist와 cache 및 임시 경로 정리 결과를 확인한다.
+      passes: false
+code_mapping:
+  boundary_rules:
+    - packages/memory/package-lock.json과 packages/code/package-lock.json의 독립 그래프를 유지한다.
+    - SDK major와 manifest 및 override와 HTTP 구현 및 auth와 조직 scope와 공개 API를 변경하지 않는다.
+    - E1 checkout과 다른 작업의 파일 및 사용자 데이터와 공유 cache를 변경하지 않는다.
+verification:
+  commands:
+    - npm run setup
+    - npm run verify
+    - npm audit --audit-level=moderate --json
+  verify_gate_required: true
+  publication_gate: 정확한 최종 커밋의 모든 필수 CI context와 app ID 및 native 두 작업이 성공한 뒤 expected-head 보호 검사로 main에 병합하며 실제 결과는 private 게시 기록에 남긴다.
+audit:
+  must_not_implement:
+    - audit 기준 완화 또는 force audit fix와 보호 규칙 우회
+    - 실 DB나 유료 provider 자동 시작과 credential 및 글로벌 도구 변경
+    - 취약 버전 포함을 실제 공격이나 서비스 노출의 증거로 단정
+  sources:
+    - https://github.com/honojs/node-server/security/advisories/GHSA-qv5m-9pm6-hqp3
+    - https://github.com/honojs/node-server/security/advisories/GHSA-jpvv-r467-5p4w
+    - https://github.com/honojs/hono/releases/tag/v4.13.16
