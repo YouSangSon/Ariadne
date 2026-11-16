@@ -23,9 +23,20 @@ jobs:
           GOCACHE: ${{ runner.temp }}/ariadne-native-cache
           GOTMPDIR: ${{ runner.temp }}/ariadne-native-tmp
           GOPATH: ${{ runner.temp }}/ariadne-native-deps
+          GOMODCACHE: ${{ runner.temp }}/ariadne-native-deps/pkg/mod
         run: |
           mkdir -p "$GOCACHE" "$GOTMPDIR" "$GOPATH"
-          trap 'rm -rf "$GOCACHE" "$GOTMPDIR" "$GOPATH"' EXIT
+          cleanup() {
+            local check_exit=$?
+            if go clean -modcache && rm -rf "$GOCACHE" "$GOTMPDIR" "$GOPATH"; then
+              exit "$check_exit"
+            fi
+            if [ "$check_exit" -ne 0 ]; then
+              exit "$check_exit"
+            fi
+            exit 1
+          }
+          trap cleanup EXIT
           test -z "$(gofmt -l .)"
           go run ./cmd/check-architecture --root ../..
           go test -race ./...

@@ -1,10 +1,8 @@
 package files
 
 import (
+	"ariadne/runtime/internal/extensions/application"
 	"ariadne/runtime/internal/extensions/domain"
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"io"
 	"os"
@@ -30,75 +28,89 @@ func ReadInput(filename string, maxBytes int) ([]byte, error) {
 	return readFile(root, filepath.Base(filename), maxBytes)
 }
 
-func Inspect(directory string) (Inspection, error) {
+type Reader struct{}
+
+var _ application.PackageReader = Reader{}
+
+func (Reader) ReadPackage(directory string) (domain.PackageSnapshot, error) {
 	root, err := os.OpenRoot(directory)
 	if err != nil {
-		return Inspection{}, errors.New("package directory unavailable")
+		return domain.PackageSnapshot{}, domain.InvalidPackage
 	}
 	defer root.Close()
 	dir, err := root.Open(".")
 	if err != nil {
-		return Inspection{}, errors.New("package directory unavailable")
+		return domain.PackageSnapshot{}, domain.InvalidPackage
 	}
-	entries, readErr := dir.ReadDir(33)
+	entries, readErr := dir.ReadDir(5)
 	closeErr := dir.Close()
-	if (readErr != nil && readErr != io.EOF) || closeErr != nil || len(entries) > 32 {
-		return Inspection{}, errors.New("package file list invalid")
+	if (readErr != nil && readErr != io.EOF) || closeErr != nil || len(entries) > 4 {
+		return domain.PackageSnapshot{}, domain.InvalidPackage
 	}
-	var total int64
+	captured := make(map[string][]byte, len(entries))
+	var total int
 	for _, entry := range entries {
-		if entry.Name() != "manifest.json" && entry.Name() != "extension.wasm" && entry.Name() != "LICENSE" && entry.Name() != "README.md" {
-			return Inspection{}, errors.New("unexpected package file")
+		name := entry.Name()
+		if !domain.AllowedFile(name) {
+			return domain.PackageSnapshot{}, domain.InvalidPackage
 		}
-		info, err := root.Lstat(entry.Name())
-		if err != nil || !info.Mode().IsRegular() {
-			return Inspection{}, errors.New("package files must be regular")
+		limit := domain.MaxPackageBytes
+		if name == "manifest.json" {
+			limit = domain.MaxManifestBytes
 		}
-		total += info.Size()
+		if name == "extension.wasm" {
+			limit = domain.MaxArtifactBytes
+		}
+		data, err := readFile(root, name, limit)
+		if err != nil {
+			return domain.PackageSnapshot{}, err
+		}
+		total += len(data)
 		if total > domain.MaxPackageBytes {
-			return Inspection{}, errors.New("package exceeds size limit")
+			return domain.PackageSnapshot{}, domain.InvalidPackage
 		}
+		captured[name] = data
 	}
-	manifestBytes, err := readFile(root, "manifest.json", domain.MaxManifestBytes)
+	return domain.CapturePackage(captured)
+}
+
+func Inspect(directory string) (Inspection, error) {
+	snapshot, err := (Reader{}).ReadPackage(directory)
 	if err != nil {
 		return Inspection{}, err
 	}
-	manifest, err := domain.ParseManifest(manifestBytes)
-	if err != nil {
-		return Inspection{}, errors.New("invalid extension manifest")
-	}
-	wasm, err := readFile(root, "extension.wasm", domain.MaxArtifactBytes)
-	if err != nil {
-		return Inspection{}, err
-	}
-	if len(wasm) < 8 || !bytes.Equal(wasm[:8], []byte{0, 'a', 's', 'm', 13, 0, 1, 0}) {
-		return Inspection{}, errors.New("artifact is not a WebAssembly component")
-	}
-	hash := sha256.Sum256(wasm)
-	if hex.EncodeToString(hash[:]) != manifest.ArtifactSHA256 {
-		return Inspection{}, errors.New("artifact digest mismatch")
-	}
-	return Inspection{Manifest: manifest, ArtifactStatus: "component-header-only", RuntimeQualified: false}, nil
+	return Inspection{Manifest: snapshot.Manifest(), ArtifactStatus: "component-header-only", RuntimeQualified: false}, nil
 }
 
 func readFile(root *os.Root, name string, maxBytes int) ([]byte, error) {
+	return readFileObserved(root, name, maxBytes, nil)
+}
+func readFileObserved(root *os.Root, name string, maxBytes int, openedHook func()) ([]byte, error) {
 	before, err := root.Lstat(name)
-	if err != nil || !before.Mode().IsRegular() || before.Size() > int64(maxBytes) {
-		return nil, errors.New("package file unavailable or exceeds limit")
+	if err != nil || !before.Mode().IsRegular() || before.Mode().Perm()&0111 != 0 || before.Size() > int64(maxBytes) {
+		return nil, domain.InvalidPackage
 	}
 	// Nonblocking open prevents a concurrent FIFO replacement from blocking inspection.
 	f, err := root.OpenFile(name, os.O_RDONLY|syscall.O_NONBLOCK, 0)
 	if err != nil {
-		return nil, errors.New("package file unavailable")
+		return nil, domain.InvalidPackage
 	}
 	defer f.Close()
 	opened, err := f.Stat()
 	if err != nil || !opened.Mode().IsRegular() || !os.SameFile(before, opened) {
-		return nil, errors.New("package file changed")
+		return nil, domain.PackageChanged
+	}
+	if openedHook != nil {
+		openedHook()
 	}
 	data, err := io.ReadAll(io.LimitReader(f, int64(maxBytes)+1))
 	if err != nil || len(data) > maxBytes {
-		return nil, errors.New("package file unreadable or exceeds limit")
+		return nil, domain.InvalidPackage
+	}
+	after, err := f.Stat()
+	current, pathErr := root.Lstat(name)
+	if err != nil || pathErr != nil || !os.SameFile(opened, current) || opened.Size() != after.Size() || !opened.ModTime().Equal(after.ModTime()) || opened.Mode() != after.Mode() || int64(len(data)) != after.Size() {
+		return nil, domain.PackageChanged
 	}
 	return data, nil
 }

@@ -221,7 +221,7 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 원문 근거 연결·선택 조회·정정 후보·제한된 정비의 [후속 상세 설계](docs/memory-evolution-design.md)는 구현 예정입니다.
 
-Go 기반 확장 계약·참조 보고서 변환·패키지 검사는 [실험 단계](docs/extension-implementation-plan.ko.md)입니다. 기존 Node 제품과 별도로 실행하며 사용자 확장 설치·실행이나 sandbox 지원을 제공하지 않습니다.
+Go 기반 확장 계약·참조 보고서 변환·패키지 검사와 비실행 패키지 레지스트리는 [실험 단계](docs/extension-implementation-plan.ko.md)입니다. 별도 Go CLI는 설치·digest 선택·비활성화·제거만 제공하며 Node 제품과 연결하지 않습니다. 활성화는 실행 권한이 아니며 사용자 확장 실행·sandbox 지원은 제공하지 않습니다.
 Rust worker와 고정 Podman profile은 별도 실행 적합성 시험용이며, 공개 사용자 실행 기능은 아직 제공하지 않습니다.
 
 [20개 출처의 검토·적용 범위와 입력 형식](docs/harness-engineering-adoption.md).

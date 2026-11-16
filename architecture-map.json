@@ -537,6 +537,14 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/extensions/adapters/sqlite/store.go": {
+      "layer": "infrastructure",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/adapters/sqlite/store_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/extensions/application/environment.go": {
       "layer": "application",
       "context": "extensions"
@@ -554,11 +562,23 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/extensions/application/registry.go": {
+      "layer": "application",
+      "context": "extensions"
+    },
     "runtime/go/internal/extensions/domain/contracts.go": {
       "layer": "domain",
       "context": "extensions"
     },
     "runtime/go/internal/extensions/domain/contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/extensions/domain/registry.go": {
+      "layer": "domain",
+      "context": "extensions"
+    },
+    "runtime/go/internal/extensions/domain/registry_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
