@@ -40,7 +40,7 @@ functional_contract:
       priority: P0
       statement: 문서와 REQ 및 root 경계를 맞추고 작업 소유 compiler와 cache 및 실행 자원을 정리한다.
       verification: root source gate와 문서 링크 및 diff와 hash 기반 기존 component 근거와 process 및 Podman 정리 기록을 대조한다.
-      passes: false
+      passes: true
     - id: AC5
       priority: P0
       statement: Python 3.14.5에서 기존 qualification 시험 도구가 동작하며 사용자 확장 실행 권한은 추가하지 않는다.
@@ -85,8 +85,8 @@ verification:
       check: 최종 root source 및 mirror와 REQ gate와 전용 native 및 Linux 및 root 임시 자원 정리
       result: passed
       exit_code: 0
-      source_state: 검토된 cleanup 후속 4e3d78c를 일반 통합한 변경과 지원 compiler 및 asdf 설정
-      artifact: .harness/handoff/supported-go-toolchain/root-final.log
+      source_state: 실제 PG 선행 main 2dbd560을 일반 통합한 네 언어 프로젝트 설정과 대상 검증 및 소유 자원 정리
+      artifact: .harness/handoff/supported-go-toolchain/project-language-combined-core.log
     - criterion_id: AC5
       check: asdf의 프로젝트 Python 3.14.5와 기존 두 tooling 소스의 28개 단위 검사
       result: passed
@@ -100,4 +100,5 @@ audit:
     - 사용자 전역 기본값과 다른 프로젝트 버전 및 credential 변경
   completion_report_should_include:
     - 새 검증과 hash 기반 재사용 및 원격 CI와 main 병합을 구분한다.
+    - AC1의 새 worker CI 실제 설치와 검증은 로컬 pin 검사와 구분하고 새 exact HEAD에서 확인한다.
     - 이 checkpoint를 G0 전체나 G1 및 전환 프로그램 전체 완료로 보고하지 않는다.
