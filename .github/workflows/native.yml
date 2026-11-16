@@ -37,6 +37,9 @@ jobs:
             exit 1
           }
           trap cleanup EXIT
+          project_go=$(awk '$1 == "golang" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test "$(go env GOVERSION)" = "go$project_go"
+          go env GOVERSION GOOS GOARCH CGO_ENABLED
           test -z "$(gofmt -l .)"
           go run ./cmd/check-architecture --root ../..
           go test -race ./...
@@ -99,6 +102,9 @@ jobs:
             exit 1
           }
           trap cleanup EXIT
+          project_go=$(awk '$1 == "golang" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test "$(go env GOVERSION)" = "go$project_go"
+          go env GOVERSION GOOS GOARCH CGO_ENABLED
           cargo +1.93.0 build --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --bin ariadne-compute
           export ARIADNE_COMPUTE_TEST_BINARY="$CARGO_TARGET_DIR/debug/ariadne-compute"
           cd runtime/go

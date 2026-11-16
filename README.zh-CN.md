@@ -221,6 +221,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 来源定位、按需读取、修正候选和有限维护的[后续详细设计](docs/memory-evolution-design.md)尚未实现。
 
+`asdf install` → `.tool-versions` (`golang 1.27.4`, `nodejs 24.22.2`, `rust 1.93.0`). 实验 Go 源码的开发与 CI 使用 Go 1.27.4；SQLite 检查需要 CGO 和 C compiler。实际 compiler 版本检查与任务专用 cache 清理请遵循 [native gate](docs/extension-implementation-plan.ko.md#별도-native-gate)。
+
 Go 扩展契约、参考报告转换、包检查和不执行扩展的包 registry 处于[实验阶段](docs/extension-implementation-plan.ko.md)。独立的 Go CLI 提供安装、digest 选择、停用和移除。activate 不授予执行权限。Node 产品保持不变，尚不提供用户扩展执行或经过验证的 sandbox。
 Rust worker 和固定 Podman profile 是独立的运行适用性测试工具，尚不提供公开的用户扩展执行功能。
 

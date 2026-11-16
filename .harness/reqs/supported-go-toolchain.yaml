@@ -1,0 +1,89 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: supported-go-toolchain
+  title: 지원 중인 보안 패치 Go compiler로 native 검증 기준 갱신
+  status: verified
+  priority: P0
+  owner: supported-go-toolchain
+  intake_started: 2026-11-16
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: config
+  confidence: high
+  reason: 승인된 G0 준비 중 지원 종료된 compiler만 갱신하고 기존 동작과 의존성을 보존하며 사용자 요청대로 프로젝트 asdf 버전을 설정한다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 단위별 구현하고 실제 소스에 맞춰 검증한다.
+  desired_outcome: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0을 기준으로 기존 native 계약과 실제 Go에서 Rust 프로세스 연결을 검증한다.
+  confirmed_facts:
+    - Go 공식 정책은 마지막 두 major release를 지원하며 1.27.4는 2026-11-10 보안 패치다.
+    - go.mod의 go directive는 최소 버전이며 실제 GOVERSION 확인은 별도다.
+    - G2b 실제 프로세스 소스를 통합한 뒤 compiler 변경의 전체 검증을 수행한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 프로젝트 asdf의 Go 1.27.4와 기존 Node 24.22.2 및 Rust 1.93.0을 선택하고 CI 실제 Go 버전과 기존 의존성을 확인한다.
+      verification: 프로젝트와 HOME의 asdf 선택 및 일반 명령 해석과 go.mod 및 setup-go 연결과 GOVERSION 및 go.sum과 module graph를 대조한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 같은 최종 소스가 Go 1.27.4에서 race와 vet 및 AST와 SQLite와 실험 CLI 계약을 통과한다.
+      verification: macOS ARM64와 rootless Podman Linux ARM64에서 실제 환경을 기록하고 native gate를 실행한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 기존 Rust 실행 파일이 새 Go compiler로 만든 호출자와 값 계약과 취소 및 종료 수명을 지킨다.
+      verification: source 및 binary hash를 확인한 실제 Go에서 Rust 통합을 count 1로 실행해 cache 재사용을 막는다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 문서와 REQ 및 root 경계를 맞추고 작업 소유 compiler와 cache 및 실행 자원을 정리한다.
+      verification: root source gate와 문서 링크 및 diff와 hash 기반 기존 component 근거와 process 및 Podman 정리 기록을 대조한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - Go compiler 최소 버전과 실제 버전 검사만 변경하며 runtime 업무 기능과 Rust 버전은 바꾸지 않는다.
+    - 프로젝트 .tool-versions만 선택을 소유하며 사용자 전역 기본값과 설정 및 공유 cache를 변경하지 않는다.
+    - 요청한 asdf Go 1.27.4 설치는 유지하고 일회성 compiler와 검증 자원만 정리한다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go env GOVERSION GOOS GOARCH CGO_ENABLED
+    - go test -count=1 -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/verify.mjs
+  evidence:
+    - criterion_id: AC1
+      check: asdf 프로젝트 선택과 일반 명령 및 전역 기본값 보존과 실제 CI assertion 일치 및 불일치 검사
+      result: passed
+      exit_code: 0
+      source_state: 승인된 G2b 소스와 supported-go-toolchain 최종 변경 및 native-source-closure.json의 316개 hash
+      artifact: .harness/handoff/supported-go-toolchain/ci-version-assertion-probe.json
+    - criterion_id: AC2
+      check: 실제 Go 1.27.4에서 macOS와 Linux ARM64 전체 race 및 vet와 AST 및 실제 CLI 13개 계약
+      result: passed
+      exit_code: 0
+      source_state: 양 target 각각 12개 package와 411개 test 및 CGO 활성화와 native compiler metadata
+      artifact: .harness/handoff/supported-go-toolchain/native-summary.json
+    - criterion_id: AC3
+      check: 같은 Rust source와 binary digest의 실제 Go에서 Rust 호출 및 값과 취소 및 종료 계약
+      result: passed
+      exit_code: 0
+      source_state: Rust fd20d340dfac2d536dda61689da2eb0b43082a55 빌드 재사용 및 새 Go caller count 1 실행
+      artifact: .harness/handoff/supported-go-toolchain/linux-summary.json
+    - criterion_id: AC4
+      check: 최종 root source 및 mirror와 REQ gate와 전용 native 및 Linux 및 root 임시 자원 정리
+      result: passed
+      exit_code: 0
+      source_state: 검토된 cleanup 후속 4e3d78c를 일반 통합한 변경과 지원 compiler 및 asdf 설정
+      artifact: .harness/handoff/supported-go-toolchain/root-final.log
+audit:
+  must_not_implement:
+    - 새 SDK와 x/text 의존성 및 Go 기능 이식과 제품 CLI 교체
+    - Rust toolchain 변경과 보안 framework 재설계
+    - 사용자 전역 기본값과 다른 프로젝트 버전 및 credential 변경
+  completion_report_should_include:
+    - 새 검증과 hash 기반 재사용 및 원격 CI와 main 병합을 구분한다.
+    - 이 checkpoint를 G0 전체나 G1 및 전환 프로그램 전체 완료로 보고하지 않는다.

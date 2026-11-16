@@ -16,7 +16,7 @@
 
 ## 구현 경계
 
-`runtime/go`는 외부 Go dependency 없는 실험 module로 시작했고, registry V1에서 SQLite adapter에만 `github.com/mattn/go-sqlite3 v1.14.53`을 추가했다. CGO와 C compiler가 필요하며 Node 제품의 의존성은 바꾸지 않는다. 현재 개발 환경의 Go 1.24.5로 재현하고 배포용 toolchain 적합성·보안 기준은 runtime qualification 때 별도로 갱신한다. 제품의 기존 Node launcher·setup·모듈 이름은 유지한다. 새로운 Go CLI는 core 전면 이식을 선언하지 않는다.
+`runtime/go`는 외부 Go dependency 없는 실험 module로 시작했고, registry V1에서 SQLite adapter에만 `github.com/mattn/go-sqlite3 v1.14.53`을 추가했다. CGO와 C compiler가 필요하며 Node 제품의 의존성은 바꾸지 않는다. 프로젝트 `.tool-versions`는 asdf의 `golang 1.27.4`, `nodejs 24.22.2`, `rust 1.93.0`을 선택한다. 사용자 전역 기본값은 바꾸지 않는다. 현재 개발·CI 기준은 지원 중인 보안 패치 Go 1.27.4다. `go.mod`는 최소 버전이므로 실제 검증에서는 `GOTOOLCHAIN=local`과 `go env GOVERSION`으로 `go1.27.4`를 확인한다. 배포 플랫폼 적합성과 runtime qualification은 별도 gate다. 제품의 기존 Node launcher·setup·모듈 이름은 유지한다. 새로운 Go CLI는 core 전면 이식을 선언하지 않는다.
 
 extension manifest는 실제 WASM artifact hash를 가진다. 내장 projector는 정적 Go 함수이므로 별도 builtin descriptor를 사용하며 가짜 WASM hash를 만들지 않는다. 둘은 같은 projection 입출력 계약과 fixture를 사용한다. JSON schema로 표현하기 어려운 UTF-8 byte/동일 입력 source 참조/직사각형 표 등은 문서화한 `x-*` 제약과 Go semantic validator가 담당한다. 일반 JSON schema 검증기가 해당 제약까지 자동 검사한다고 주장하지 않는다.
 
@@ -48,12 +48,17 @@ environment는 사용자가 제공한 Podman info JSON의 일부 보고된 metad
 ### 별도 native gate
 
 ```sh
+asdf install
+asdf current
+export GOTOOLCHAIN=local GOFLAGS=-mod=readonly
+test "$(go env GOVERSION)" = go1.27.4
+go env GOVERSION GOOS GOARCH CGO_ENABLED
 go run ./cmd/check-architecture --root ../..
-go test -race ./...
+go test -count=1 -race ./...
 go vet ./...
 ```
 
-`.github/workflows/native.yml`은 Go module에 고정한 개발 toolchain으로 같은 검사를 수행하도록 정의했다. CI 실행 결과는 로컬 결과와 별도다. Node 제품의 기존 gate는 그대로 유지한다. native CI는 전용 cache/temp를 만들고 종료 시 정리하며 shared cache를 사용하지 않는다.
+`.github/workflows/native.yml`은 기존 `go-version-file: runtime/go/go.mod`로 Go를 준비하고 실제 버전이 `go1.27.4`인지 확인한 뒤 같은 검사를 수행한다. CI 실행 결과는 로컬 결과와 별도다. Node 제품의 기존 gate는 그대로 유지한다. native CI는 전용 cache/temp를 만들고 종료 시 정리하며 shared cache를 사용하지 않는다. Go 1.27의 `testing.TempDir`는 `GOTMPDIR`를 사용하므로 rootless Podman VM에서 FIFO를 검사할 때는 `GOTMPDIR`와 `TMPDIR`를 모두 container 내부 전용 `/tmp`에 둔다. macOS bind mount를 테스트 임시 디렉터리로 사용하지 않는다.
 
 이번 작업은 strict 계약·파일 검사·환경 판정·native source 발견의 실패 테스트를 먼저 실행한 뒤 구현한다. 원래 제품에 대한 기존 유효 검사와 새 경로의 검증을 구분한다. 초기 계약 단계에서 미확인이던 WIT 컴파일·Linux worker·격리 실행은 아래 후속 단계에서 따로 추적한다. 성능 baseline과 E1 실행 수명은 아직 완료하지 않았다.
 
