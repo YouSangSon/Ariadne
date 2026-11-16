@@ -224,7 +224,7 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 Go 기반 확장 계약·참조 보고서 변환·패키지 검사와 비실행 패키지 레지스트리는 [실험 단계](docs/extension-implementation-plan.ko.md)입니다. 별도 Go CLI는 설치·digest 선택·비활성화·제거만 제공하며 Node 제품과 연결하지 않습니다. 활성화는 실행 권한이 아니며 사용자 확장 실행·sandbox 지원은 제공하지 않습니다.
 Rust worker와 고정 Podman profile은 별도 실행 적합성 시험용이며, 공개 사용자 실행 기능은 아직 제공하지 않습니다.
 
-신뢰된 co-change 계산의 G2a 순수 Go/Rust 라이브러리와 엄격 JSON 계약·실제 TS 오프라인 비교는 [별도 계약](contracts/compute/v1/README.md)에 있습니다. 실행 파일·프로세스 연결·DB 게시·성능 우위는 아직 제공하거나 검증하지 않습니다.
+신뢰된 co-change 계산의 순수 Go/Rust 라이브러리와 엄격 JSON 계약·실제 TS 오프라인 비교는 [별도 계약](contracts/compute/v1/README.md)에 있습니다. G2b는 내부 Go 어댑터와 Rust 실행 파일의 framing·취소·종료 및 정확한 결과 비교를 추가합니다. 기존 Node 제품·공개 CLI·기본 backend와 DB 게시 경로는 유지하며 성능 우위나 설치기 제공을 뜻하지 않습니다.
 
 [20개 출처의 검토·적용 범위와 입력 형식](docs/harness-engineering-adoption.md).
 

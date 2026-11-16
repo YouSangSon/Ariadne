@@ -145,6 +145,54 @@
       "layer": "tooling",
       "context": "code"
     },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-bad-id-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-bad-id-negative-zero.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-bad-id-shape.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-good-id-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-good-id-negative-zero.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-future-good-id-shape.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-bad-id-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-bad-id-negative-zero.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-bad-id-shape.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-good-id-duplicate.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-good-id-negative-zero.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-cross-v1-good-id-shape.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "contracts/compute/v1/fixtures/reject-request-duplicate-envelope.json": {
       "layer": "tooling",
       "context": "code"
@@ -1288,6 +1336,14 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/code/adapters/computeprocess/counter.go": {
+      "layer": "infrastructure",
+      "context": "code"
+    },
+    "runtime/go/internal/code/adapters/computeprocess/counter_test.go": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "runtime/go/internal/code/adapters/computewire/protocol.go": {
       "layer": "infrastructure",
       "context": "code"
@@ -1386,6 +1442,22 @@
       "layer": "domain",
       "context": "extensions"
     },
+    "runtime/go/internal/platform/computeprocess/preflight_unix_test.go": {
+      "layer": "tooling",
+      "context": "platform"
+    },
+    "runtime/go/internal/platform/computeprocess/protocol.go": {
+      "layer": "infrastructure",
+      "context": "platform"
+    },
+    "runtime/go/internal/platform/computeprocess/runner.go": {
+      "layer": "infrastructure",
+      "context": "platform"
+    },
+    "runtime/go/internal/platform/computeprocess/runner_test.go": {
+      "layer": "tooling",
+      "context": "platform"
+    },
     "runtime/rust/Cargo.lock": {
       "layer": "tooling",
       "context": "extensions"
@@ -1406,11 +1478,19 @@
       "layer": "composition",
       "context": "code"
     },
+    "runtime/rust/crates/ariadne-compute/src/main.rs": {
+      "layer": "composition",
+      "context": "code"
+    },
     "runtime/rust/crates/ariadne-compute/src/protocol.rs": {
       "layer": "infrastructure",
       "context": "code"
     },
     "runtime/rust/crates/ariadne-compute/tests/contracts.rs": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "runtime/rust/crates/ariadne-compute/tests/process.rs": {
       "layer": "tooling",
       "context": "code"
     },

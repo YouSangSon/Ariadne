@@ -138,3 +138,30 @@ func TestModuleCyclesAndComposition(t *testing.T) {
 		})
 	}
 }
+
+func TestComputeTransportExceptionIsExactAndInwardOnly(t *testing.T) {
+	for _, tt := range []struct {
+		from, layer, owner, to, targetOwner string
+		allowed                             bool
+	}{
+		{"code/adapters/computeprocess", "infrastructure", "code", "platform/computeprocess", "platform", true},
+		{"code/domain", "domain", "code", "platform/computeprocess", "platform", false},
+		{"code/application", "application", "code", "platform/computeprocess", "platform", false},
+		{"memory/adapters/computeprocess", "infrastructure", "memory", "platform/computeprocess", "platform", false},
+		{"code/adapters/computeprocess", "infrastructure", "code", "platform/other", "platform", false},
+		{"platform/computeprocess", "infrastructure", "platform", "code/adapters/computewire", "code", false},
+	} {
+		t.Run(tt.from+"->"+tt.to, func(t *testing.T) {
+			from, to := "internal/"+tt.from+"/a.go", "internal/"+tt.to+"/b.go"
+			sources := map[string]string{from: "package source\nimport _ \"example.test/runtime/internal/" + tt.to + "\"", to: "package target"}
+			records := map[string]Record{from: {Layer: tt.layer, Context: tt.owner}, to: {Layer: "infrastructure", Context: tt.targetOwner}}
+			violations, err := Check(fixture(t, sources, records))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.allowed && len(violations) != 0 || !tt.allowed && len(violations) == 0 {
+				t.Fatalf("allowed=%v violations=%v", tt.allowed, violations)
+			}
+		})
+	}
+}

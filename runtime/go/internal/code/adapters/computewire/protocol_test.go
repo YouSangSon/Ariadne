@@ -3,13 +3,17 @@ package computewire
 import (
 	"ariadne/runtime/internal/code/domain"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 )
 
 const fixtureRoot = "../../../../../../contracts/compute/v1/fixtures"
@@ -146,4 +150,62 @@ func TestWireBoundsBeforeParseAndExpectedRequest(t *testing.T) {
 	if _, err := EncodeResponse(request, Response{Counts: &empty, Code: "INVALID_INPUT"}); err == nil {
 		t.Fatal("mixed response accepted")
 	}
+}
+
+type checkpointContext struct {
+	context.Context
+	remaining int
+}
+
+func (c *checkpointContext) Err() error {
+	c.remaining--
+	if c.remaining <= 0 {
+		return context.Canceled
+	}
+	return nil
+}
+func TestDecodeResponseContextPreservesCancellationAcrossBoundedPhases(t *testing.T) {
+	request, err := NewRequest("cancel", domain.CoChangeInput{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// One large token must not hide cancellation inside encoding/json's buffered read.
+	raw := []byte(`{"protocol":"` + strings.Repeat("x", MaxResponseBytes-128) + `"}`)
+	ctx := &checkpointContext{Context: context.Background(), remaining: 10}
+	if _, err = DecodeResponseContext(ctx, raw, request); !errors.Is(err, context.Canceled) {
+		t.Fatalf("prescan cancellation lost: %v", err)
+	}
+	ctx = &checkpointContext{Context: context.Background(), remaining: 4}
+	decoder := json.NewDecoder(&contextReader{ctx: ctx, r: bytes.NewReader(append(append([]byte{'"'}, bytes.Repeat([]byte("x"), 1<<20)...), '"'))})
+	decoder.UseNumber()
+	if _, err = decoder.Token(); err == nil || ctx.Err() == nil {
+		t.Fatalf("token ignored cancellation: %v", err)
+	}
+	escaped := []byte(`"` + strings.Repeat(`\ud800\udc00`, 4096) + `"`)
+	ctx = &checkpointContext{Context: context.Background(), remaining: 4}
+	if validUnicodeEscapesContext(ctx, escaped) {
+		t.Fatal("escape jumps skipped cancellation checkpoint")
+	}
+	// A rune spanning the 4096-byte prescan chunk remains valid.
+	boundary := append(bytes.Repeat([]byte("x"), 4095), []byte("😀")...)
+	if !validUTF8(context.Background(), boundary) {
+		t.Fatal("UTF-8 chunk split rejected a valid rune")
+	}
+}
+func TestMaximumValidateCountsFiniteTail(t *testing.T) {
+	input := domain.CoChangeInput{FileCount: 37500, Commits: make([][]uint32, 1500)}
+	for i := range input.Commits {
+		for j := range 25 {
+			input.Commits[i] = append(input.Commits[i], uint32(i*25+j))
+		}
+	}
+	counts, err := domain.CountReference(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	start := time.Now()
+	if err = domain.ValidateCounts(input, counts); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("bounded non-context domain validation tail: %s for %d pairs", time.Since(start), len(counts.Pairs))
 }

@@ -65,3 +65,41 @@ jobs:
       - name: Remove task-owned Cargo outputs
         if: always()
         run: rm -rf "$RUNNER_TEMP/ariadne-extension-cargo" "$RUNNER_TEMP/ariadne-extension-target"
+
+  compute-process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: runtime/go/go.mod
+          cache: false
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.93.0 --profile minimal
+      - name: Compare actual Go adapter with compiled Rust engine
+        env:
+          GOTOOLCHAIN: local
+          GOFLAGS: -mod=readonly
+          GOCACHE: ${{ runner.temp }}/ariadne-compute/go-cache
+          GOTMPDIR: ${{ runner.temp }}/ariadne-compute/go-tmp
+          GOPATH: ${{ runner.temp }}/ariadne-compute/go-deps
+          GOMODCACHE: ${{ runner.temp }}/ariadne-compute/go-deps/pkg/mod
+          CARGO_HOME: ${{ runner.temp }}/ariadne-compute/cargo-home
+          CARGO_TARGET_DIR: ${{ runner.temp }}/ariadne-compute/cargo-target
+          CARGO_BUILD_JOBS: 2
+        run: |
+          mkdir -p "$GOCACHE" "$GOTMPDIR" "$GOPATH"
+          cleanup() {
+            local check_exit=$?
+            if (cd runtime/go && go clean -modcache) && rm -rf "$RUNNER_TEMP/ariadne-compute"; then
+              exit "$check_exit"
+            fi
+            if [ "$check_exit" -ne 0 ]; then exit "$check_exit"; fi
+            exit 1
+          }
+          trap cleanup EXIT
+          cargo +1.93.0 build --locked --manifest-path runtime/rust/Cargo.toml -p ariadne-compute --bin ariadne-compute
+          export ARIADNE_COMPUTE_TEST_BINARY="$CARGO_TARGET_DIR/debug/ariadne-compute"
+          cd runtime/go
+          go test -count=1 -race -v ./internal/code/adapters/computeprocess

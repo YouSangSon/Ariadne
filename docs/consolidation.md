@@ -188,13 +188,16 @@ synthetic test or local example secret. They remain valid after history rewrites
 Different values in those files and matching values elsewhere remain subject to
 the scanner.
 
-## Trusted numeric compute (G2a)
+## Trusted numeric compute (G2a/G2b)
 
 The [compute contract](../contracts/compute/v1/README.md) describes the separate
 pure Go/Rust count libraries and strict JSON codec. Actual TS imports validate
 the committed offline semantics and identities through the Code package gate.
-The Node production pipeline, exports and DB writer remain unchanged. There is
-no compute executable, process/EOF/cancellation integration or performance claim;
-G2b and G4 retain those remaining gates. Task-owned native caches and short temp
-paths are required for local validation; global installs and runtime data are
-not cleaned as test outputs.
+The internal G2b Go adapter now invokes a trusted Rust compute executable with
+framing, identity checks, cancellation, EOF/watchdog and confirmed cleanup. Actual
+Go→Rust counts and process fault tests complement the offline TS comparison. The
+Node production pipeline, public CLI/exports, default backend and DB writer remain
+unchanged. Product consumption and locale/publication belong to G4; installers
+and release targets belong to G5. No speedup is claimed. Task-owned native caches
+and short temp paths are required for local validation; global installs and runtime
+data are not cleaned as test outputs.
