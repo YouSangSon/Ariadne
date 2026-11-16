@@ -305,7 +305,79 @@
       "layer": "tooling",
       "context": "code"
     },
+    "contracts/compute/v1/fixtures/reject-request-operation-escaped-backslash.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-high-before-ascii.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-lone-high.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-lone-low.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-paired.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-replacement-escaped.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-replacement-literal.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-reversed.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-operation-two-high.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "contracts/compute/v1/fixtures/reject-request-out-of-range.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-escaped-backslash.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-high-before-ascii.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-lone-high.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-lone-low.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-paired.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-replacement-escaped.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-replacement-literal.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-reversed.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-protocol-two-high.json": {
       "layer": "tooling",
       "context": "code"
     },
@@ -378,6 +450,10 @@
       "context": "code"
     },
     "contracts/compute/v1/fixtures/reject-request-wrong-operation.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-request-wrong-version-null-operation.json": {
       "layer": "tooling",
       "context": "code"
     },
@@ -477,6 +553,14 @@
       "layer": "tooling",
       "context": "code"
     },
+    "contracts/compute/v1/fixtures/reject-response-operation-lone-high.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-operation-lone-low.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
     "contracts/compute/v1/fixtures/reject-response-ordinal-duplicate.json": {
       "layer": "tooling",
       "context": "code"
@@ -502,6 +586,14 @@
       "context": "code"
     },
     "contracts/compute/v1/fixtures/reject-response-pair-unsorted.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-protocol-lone-high.json": {
+      "layer": "tooling",
+      "context": "code"
+    },
+    "contracts/compute/v1/fixtures/reject-response-protocol-lone-low.json": {
       "layer": "tooling",
       "context": "code"
     },

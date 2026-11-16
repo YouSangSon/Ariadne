@@ -19,7 +19,7 @@ payload는 `fileCount,commits`만 허용한다. fileCount는 0..37,500, commits�
 | 검사 | 규칙 |
 | --- | --- |
 | 원문 크기 | 요청 16 MiB, 응답 32 MiB를 **파싱 전** 거절 |
-| 문자열 인코딩·문서 경계 | 유효 UTF-8, JSON 값 하나, 뒤에는 공백만 허용 |
+| 문자열 인코딩·문서 경계 | 유효 UTF-8, JSON 값 하나, 뒤에는 공백만 허용. 짝 없는 UTF-16 surrogate escape는 거절하며, 올바른 high/low 쌍과 실제 U+FFFD는 일반 문자열로 검증 |
 | 숫자 원문 | `0\|[1-9][0-9]*`에 맞고 u32 이내. -0·음수·소수·지수·overflow 거절 |
 | object key | 대소문자 구분, escaped key를 해석한 뒤 중복 거절, 모든 계층의 unknown/missing/null 거절 |
 | 입력 관계 | commit ID 범위·오름차순·중복 없음 |
@@ -28,7 +28,7 @@ payload는 `fileCount,commits`만 허용한다. fileCount는 0..37,500, commits�
 
 원문 envelope의 공백과 payload key 순서는 달라도 된다. canonical payload로 digest를 재계산한다. tiny의 bytes는 `{"fileCount":3,"commits":[[0,1],[1,2]]}`이고 SHA-256은 `73c33205d9b30fdfdf31e08236aaf51c309f31ebab0c6e98910f013f94e732d6`이다. Python 표준 hashlib로 별도 계산했고 Go·Rust·TS가 같은 값을 검사한다.
 
-요청의 잘못된 타입·JSON·digest·필드·도메인 값은 `INVALID_INPUT`, 문자열인 버전/operation 불일치는 `UNSUPPORTED_VERSION`, 크기/개수 상한 초과는 `LIMIT_EXCEEDED`다. 응답의 잘못된 값·JSON·버전·상관관계는 `PROTOCOL_ERROR`, 응답 크기/개수 상한 초과는 `LIMIT_EXCEEDED`다. 기대 요청 자체가 잘못되면 요청 검증 오류를 반환한다. 유효한 `status:error`의 code는 원문 enum을 유지한다. 파싱 오류의 원문 메시지는 반환하지 않는다.
+요청의 잘못된 타입·JSON·digest·필드·도메인 값은 `INVALID_INPUT`, 버전과 operation의 타입을 모두 확인한 뒤 문자열 값의 불일치는 `UNSUPPORTED_VERSION`, 크기/개수 상한 초과는 `LIMIT_EXCEEDED`다. 응답의 잘못된 값·JSON·버전·상관관계는 `PROTOCOL_ERROR`, 응답 크기/개수 상한 초과는 `LIMIT_EXCEEDED`다. 기대 요청 자체가 잘못되면 요청 검증 오류를 반환한다. 유효한 `status:error`의 code는 원문 enum을 유지한다. 파싱 오류의 원문 메시지는 반환하지 않는다. 버전 문자열이 다르더라도 operation이 null이면 먼저 `INVALID_INPUT`으로 거절한다. Go의 JSON decoder가 짝 없는 surrogate를 대체 문자로 정규화하기 전에 원문 escape를 검사한다. 정상 surrogate 쌍·`\ufffd`·실제 대체 문자·문자열 안의 escaped backslash는 정규화 없이 유지한다. 이들로 만든 잘못된 버전 문자열은 타입 오류가 아닌 `UNSUPPORTED_VERSION`으로 분류하는 fixture를 둔다.
 
 ## 공통 fixture와 실제 TypeScript 비교
 

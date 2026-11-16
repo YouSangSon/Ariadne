@@ -304,7 +304,7 @@ func parse(raw []byte, limit int) (any, error) {
 	if len(raw) > limit {
 		return nil, LimitExceeded
 	}
-	if !utf8.Valid(raw) {
+	if !utf8.Valid(raw) || !validUnicodeEscapes(raw) {
 		return nil, InvalidInput
 	}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
@@ -372,4 +372,48 @@ func readValue(decoder *json.Decoder, depth int) (any, error) {
 		}
 		return token, nil
 	}
+}
+
+// encoding/json replaces unpaired UTF-16 escapes; the wire contract rejects them.
+func validUnicodeEscapes(raw []byte) bool {
+	inString := false
+	for i := 0; i < len(raw); i++ {
+		if raw[i] == '"' {
+			inString = !inString
+			continue
+		}
+		if !inString || raw[i] != '\\' {
+			continue
+		}
+		i++
+		if i >= len(raw) {
+			return false
+		}
+		if raw[i] != 'u' {
+			continue
+		}
+		if i+4 >= len(raw) {
+			return false
+		}
+		code, err := strconv.ParseUint(string(raw[i+1:i+5]), 16, 16)
+		if err != nil {
+			return false
+		}
+		i += 4
+		if code >= 0xdc00 && code <= 0xdfff {
+			return false
+		}
+		if code < 0xd800 || code > 0xdbff {
+			continue
+		}
+		if i+6 >= len(raw) || raw[i+1] != '\\' || raw[i+2] != 'u' {
+			return false
+		}
+		low, err := strconv.ParseUint(string(raw[i+3:i+7]), 16, 16)
+		if err != nil || low < 0xdc00 || low > 0xdfff {
+			return false
+		}
+		i += 6
+	}
+	return true
 }

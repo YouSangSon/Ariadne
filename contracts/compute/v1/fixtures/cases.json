@@ -865,6 +865,101 @@
       "name": "type-inputDigest-object",
       "file": "reject-request-type-inputDigest-object.json",
       "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "wrong-version-null-operation",
+      "file": "reject-request-wrong-version-null-operation.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-lone-high",
+      "file": "reject-request-protocol-lone-high.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-lone-low",
+      "file": "reject-request-protocol-lone-low.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-high-before-ascii",
+      "file": "reject-request-protocol-high-before-ascii.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-two-high",
+      "file": "reject-request-protocol-two-high.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-reversed",
+      "file": "reject-request-protocol-reversed.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "protocol-paired",
+      "file": "reject-request-protocol-paired.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "protocol-replacement-literal",
+      "file": "reject-request-protocol-replacement-literal.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "protocol-replacement-escaped",
+      "file": "reject-request-protocol-replacement-escaped.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "protocol-escaped-backslash",
+      "file": "reject-request-protocol-escaped-backslash.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "operation-lone-high",
+      "file": "reject-request-operation-lone-high.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "operation-lone-low",
+      "file": "reject-request-operation-lone-low.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "operation-high-before-ascii",
+      "file": "reject-request-operation-high-before-ascii.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "operation-two-high",
+      "file": "reject-request-operation-two-high.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "operation-reversed",
+      "file": "reject-request-operation-reversed.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "operation-paired",
+      "file": "reject-request-operation-paired.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "operation-replacement-literal",
+      "file": "reject-request-operation-replacement-literal.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "operation-replacement-escaped",
+      "file": "reject-request-operation-replacement-escaped.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "operation-escaped-backslash",
+      "file": "reject-request-operation-escaped-backslash.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
     }
   ],
   "invalidResponses": [
@@ -1131,6 +1226,26 @@
     {
       "name": "type-inputDigest-object",
       "file": "reject-response-type-inputDigest-object.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "protocol-lone-high",
+      "file": "reject-response-protocol-lone-high.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "protocol-lone-low",
+      "file": "reject-response-protocol-lone-low.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "operation-lone-high",
+      "file": "reject-response-operation-lone-high.json",
+      "expectedCode": "PROTOCOL_ERROR"
+    },
+    {
+      "name": "operation-lone-low",
+      "file": "reject-response-operation-lone-low.json",
       "expectedCode": "PROTOCOL_ERROR"
     }
   ],

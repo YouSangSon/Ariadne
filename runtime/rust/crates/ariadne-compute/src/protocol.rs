@@ -160,9 +160,9 @@ pub fn decode_request(raw: &[u8]) -> Result<Request, ErrorCode> {
     Ok(request)
 }
 fn correlation(fields: &BTreeMap<String, Value>) -> Result<(&str, &str), ErrorCode> {
-    if string(fields.get("protocol").ok_or(ErrorCode::InvalidInput)?)? != PROTOCOL
-        || string(fields.get("operation").ok_or(ErrorCode::InvalidInput)?)? != OPERATION
-    {
+    let protocol = string(fields.get("protocol").ok_or(ErrorCode::InvalidInput)?)?;
+    let operation = string(fields.get("operation").ok_or(ErrorCode::InvalidInput)?)?;
+    if protocol != PROTOCOL || operation != OPERATION {
         return Err(ErrorCode::UnsupportedVersion);
     }
     let id = string(fields.get("requestId").ok_or(ErrorCode::InvalidInput)?)?;

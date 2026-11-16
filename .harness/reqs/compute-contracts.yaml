@@ -63,15 +63,15 @@ verification:
       result: passed
       exit_code: 0
       source_state: main18f68dc와 G2a working tree 및 private 최종 hash inventory
-      artifact: .harness/handoff/compute-contracts/go-race-final.jsonl
+      artifact: .harness/handoff/compute-contracts/review-fix-go-race.jsonl
     - criterion_id: AC2
       check: 공통 raw 정상 및 거절 fixture와 같은 오류 code
       result: passed
       exit_code: 0
       source_state: main18f68dc와 G2a working tree
-      artifact: .harness/handoff/compute-contracts/rust-test-final.log
+      artifact: .harness/handoff/compute-contracts/review-fix-rust-green.log
     - criterion_id: AC3
-      check: 실제 TS generator check와 owning full product verify
+      check: 실제 TS generator check 재검증과 동일 TS 소스의 기존 owning full product verify 재사용
       result: passed
       exit_code: 0
       source_state: main18f68dc와 G2a working tree
@@ -81,7 +81,7 @@ verification:
       result: passed
       exit_code: 0
       source_state: main18f68dc와 G2a working tree
-      artifact: .harness/handoff/compute-contracts/rust-architecture-final.log
+      artifact: .harness/handoff/compute-contracts/review-fix-rust-ast.log
 audit:
   must_not_implement:
     - G2b 실행 파일과 framing 및 EOF와 cancel 및 runner와 watchdog
