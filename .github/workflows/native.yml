@@ -92,7 +92,7 @@ jobs:
           mkdir -p "$GOCACHE" "$GOTMPDIR" "$GOPATH"
           cleanup() {
             local check_exit=$?
-            if (cd runtime/go && go clean -modcache) && rm -rf "$RUNNER_TEMP/ariadne-compute"; then
+            if (cd "$GITHUB_WORKSPACE/runtime/go" && go clean -modcache) && rm -rf "$RUNNER_TEMP/ariadne-compute"; then
               exit "$check_exit"
             fi
             if [ "$check_exit" -ne 0 ]; then exit "$check_exit"; fi
