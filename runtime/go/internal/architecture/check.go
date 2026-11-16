@@ -159,7 +159,10 @@ func Check(root string) ([]string, error) {
 				public = public || candidate.record.Layer == "application" && candidate.record.Public
 			}
 			targetRecord := files[0].record
-			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public {
+			transport := file.record.Layer == "infrastructure" && file.record.Context == "code" &&
+				strings.HasPrefix(file.path, "runtime/go/internal/code/adapters/") &&
+				target == "runtime/go/internal/platform/computeprocess" && targetRecord.Context == "platform" && targetRecord.Layer == "infrastructure"
+			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport {
 				violations = append(violations, file.path+": cross-context internal dependency "+dependency)
 			}
 			if !strings.HasSuffix(file.path, "_test.go") && file.record.Context != targetRecord.Context &&

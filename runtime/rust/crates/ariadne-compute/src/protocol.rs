@@ -57,6 +57,7 @@ impl From<CountError> for ErrorCode {
         match error {
             CountError::InvalidInput => Self::InvalidInput,
             CountError::LimitExceeded => Self::LimitExceeded,
+            CountError::Cancelled => Self::Cancelled,
         }
     }
 }
@@ -119,8 +120,30 @@ pub fn encode_request(request: &Request) -> Result<Vec<u8>, ErrorCode> {
     serde_json::to_vec(&serde_json::json!({"protocol":PROTOCOL,"operation":OPERATION,"requestId":request.request_id,"inputDigest":request.input_digest,
         "payload":{"fileCount":request.input.file_count,"commits":request.input.commits}})).map_err(|_|ErrorCode::InvalidInput)
 }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValidatedCorrelation {
+    request_id: String,
+    input_digest: String,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DecodeFailure {
+    pub code: ErrorCode,
+    pub correlation: Option<ValidatedCorrelation>,
+}
 pub fn decode_request(raw: &[u8]) -> Result<Request, ErrorCode> {
-    let value = parse(raw, MAX_REQUEST_BYTES)?;
+    decode_request_correlated(raw).map_err(|failure| failure.code)
+}
+pub fn decode_request_correlated(raw: &[u8]) -> Result<Request, DecodeFailure> {
+    let fail = |code| DecodeFailure {
+        code,
+        correlation: None,
+    };
+    if raw.len() > MAX_REQUEST_BYTES {
+        return Err(fail(ErrorCode::LimitExceeded));
+    }
+    let Envelope(values) =
+        serde_json::from_slice(raw).map_err(|_| fail(ErrorCode::InvalidInput))?;
+    let value = Value::Object(values);
     let fields = object(
         &value,
         &[
@@ -130,34 +153,84 @@ pub fn decode_request(raw: &[u8]) -> Result<Request, ErrorCode> {
             "inputDigest",
             "payload",
         ],
-    )?;
-    let (id, digest) = correlation(fields)?;
-    let payload = object(&fields["payload"], &["fileCount", "commits"])?;
-    let file_count = number(&payload["fileCount"])?;
-    let commits = array(&payload["commits"])?;
-    if file_count > cochange::MAX_FILES || commits.len() > cochange::MAX_COMMITS {
-        return Err(ErrorCode::LimitExceeded);
-    }
-    let mut input = CoChangeInput {
-        file_count,
-        commits: Vec::with_capacity(commits.len()),
+    )
+    .map_err(fail)?;
+    let payload_result = match &fields["payload"] {
+        Value::Raw(raw) => parse(raw.as_bytes(), MAX_REQUEST_BYTES),
+        _ => Err(ErrorCode::InvalidInput),
     };
-    for commit in commits {
-        let ids = array(commit)?;
-        if ids.len() > cochange::MAX_FILES_PER_COMMIT {
+    let payload_parse_error = payload_result.as_ref().err().copied();
+    // Both version fields must be strings before version rejection, as in v1.
+    let protocol = string(&fields["protocol"]).map_err(fail)?;
+    let operation = string(&fields["operation"]).map_err(fail)?;
+    let version_error = protocol != PROTOCOL || operation != OPERATION;
+    let correlation_value = (|| {
+        let id = string(&fields["requestId"])?;
+        let digest = string(&fields["inputDigest"])?;
+        if !valid_id(id) || !valid_digest(digest) {
+            return Err(ErrorCode::InvalidInput);
+        }
+        Ok(ValidatedCorrelation {
+            request_id: id.to_owned(),
+            input_digest: digest.to_owned(),
+        })
+    })();
+    let correlation = match correlation_value {
+        Ok(c) => c,
+        Err(code) => {
+            return Err(fail(payload_parse_error.unwrap_or(if version_error {
+                ErrorCode::UnsupportedVersion
+            } else {
+                code
+            })));
+        }
+    };
+    let failure = |code| DecodeFailure {
+        code,
+        correlation: Some(correlation.clone()),
+    };
+    let payload_value = payload_result.map_err(failure)?;
+    if version_error {
+        return Err(failure(ErrorCode::UnsupportedVersion));
+    }
+    let (id, digest) = (&correlation.request_id, &correlation.input_digest);
+    (|| {
+        let payload = object(&payload_value, &["fileCount", "commits"])?;
+        let file_count = number(&payload["fileCount"])?;
+        let commits = array(&payload["commits"])?;
+        if file_count > cochange::MAX_FILES || commits.len() > cochange::MAX_COMMITS {
             return Err(ErrorCode::LimitExceeded);
         }
-        input
-            .commits
-            .push(ids.iter().map(number).collect::<Result<Vec<_>, _>>()?);
-    }
-    let request = Request {
-        request_id: id.to_owned(),
-        input_digest: digest.to_owned(),
-        input,
-    };
-    validate_request(&request)?;
-    Ok(request)
+        let mut input = CoChangeInput {
+            file_count,
+            commits: Vec::with_capacity(commits.len()),
+        };
+        for commit in commits {
+            let ids = array(commit)?;
+            if ids.len() > cochange::MAX_FILES_PER_COMMIT {
+                return Err(ErrorCode::LimitExceeded);
+            }
+            input
+                .commits
+                .push(ids.iter().map(number).collect::<Result<Vec<_>, _>>()?);
+        }
+        let request = Request {
+            request_id: id.to_owned(),
+            input_digest: digest.to_owned(),
+            input,
+        };
+        validate_request(&request)?;
+        Ok(request)
+    })()
+    .map_err(failure)
+}
+pub fn encode_error(
+    correlation: &ValidatedCorrelation,
+    code: ErrorCode,
+) -> Result<Vec<u8>, ErrorCode> {
+    serde_json::to_vec(&serde_json::json!({"protocol":PROTOCOL,"operation":OPERATION,
+        "requestId":correlation.request_id,"inputDigest":correlation.input_digest,"status":"error","code":code.as_str()}))
+        .map_err(|_|ErrorCode::ProtocolError)
 }
 fn correlation(fields: &BTreeMap<String, Value>) -> Result<(&str, &str), ErrorCode> {
     let protocol = string(fields.get("protocol").ok_or(ErrorCode::InvalidInput)?)?;
@@ -285,6 +358,7 @@ enum Value {
     String(String),
     Number(u32),
     Other,
+    Raw(String),
 }
 impl<'de> Deserialize<'de> for Value {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -364,5 +438,36 @@ fn number(value: &Value) -> Result<u32, ErrorCode> {
         Ok(*n)
     } else {
         Err(ErrorCode::InvalidInput)
+    }
+}
+
+// Parse the envelope once; retain raw payload solely for the strict payload phase.
+struct Envelope(BTreeMap<String, Value>);
+impl<'de> Deserialize<'de> for Envelope {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct EnvelopeVisitor;
+        impl<'de> Visitor<'de> for EnvelopeVisitor {
+            type Value = Envelope;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("compute envelope")
+            }
+            fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Envelope, M::Error> {
+                let mut fields = BTreeMap::new();
+                while let Some(key) = map.next_key::<String>()? {
+                    if fields.contains_key(&key) {
+                        return Err(de::Error::custom("duplicate key"));
+                    }
+                    let value = if key == "payload" {
+                        let raw = map.next_value::<Box<serde_json::value::RawValue>>()?;
+                        Value::Raw(raw.get().to_owned())
+                    } else {
+                        map.next_value::<Value>()?
+                    };
+                    fields.insert(key, value);
+                }
+                Ok(Envelope(fields))
+            }
+        }
+        deserializer.deserialize_map(EnvelopeVisitor)
     }
 }

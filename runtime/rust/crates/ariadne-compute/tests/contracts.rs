@@ -175,3 +175,78 @@ fn bounds_precede_parsing_and_expected_request_is_required() {
         assert_eq!(decode_request(&raw), Err(ErrorCode::LimitExceeded));
     }
 }
+
+#[test]
+fn correlated_payload_errors_preserve_validated_envelope_without_reparse() {
+    use ariadne_compute::protocol::{decode_request_correlated, encode_error};
+    let raw = include_bytes!("../../../../../contracts/compute/v1/fixtures/tiny-request.json");
+    let original = String::from_utf8(raw.to_vec()).unwrap();
+    for payload in [
+        "{\"fileCount\":3,\"fileCount\":3,\"commits\":[]}",
+        "{\"fileCount\":-0,\"commits\":[]}",
+        "{\"fileCount\":3,\"commits\":[[3]]}",
+    ] {
+        let mut value: serde_json::Value = serde_json::from_str(&original).unwrap();
+        value.as_object_mut().unwrap().remove("payload");
+        let envelope = serde_json::to_string(&value).unwrap();
+        // Payload before correlation fields must not lose a validated correlation.
+        let broken = format!("{{\"payload\":{payload},{}", &envelope[1..]);
+        let failure = decode_request_correlated(broken.as_bytes()).unwrap_err();
+        assert_eq!(
+            failure.code,
+            ariadne_compute::protocol::ErrorCode::InvalidInput
+        );
+        assert!(failure.correlation.is_some(), "{broken}");
+        let encoded = encode_error(&failure.correlation.unwrap(), failure.code).unwrap();
+        assert!(
+            String::from_utf8(encoded)
+                .unwrap()
+                .contains("INVALID_INPUT")
+        );
+    }
+}
+
+#[test]
+fn pure_kernel_cancels_during_commits_and_pair_materialization() {
+    use ariadne_compute::cochange::{CoChangeInput, CountError, count_cancellable};
+    let input = CoChangeInput {
+        file_count: 3,
+        commits: vec![vec![0, 1, 2]],
+    };
+    for cancel_at in [2, input.commits.len() + 2] {
+        let mut checkpoints = 0;
+        assert_eq!(
+            count_cancellable(&input, || {
+                checkpoints += 1;
+                checkpoints >= cancel_at
+            }),
+            Err(CountError::Cancelled)
+        );
+        assert_eq!(checkpoints, cancel_at);
+    }
+}
+
+#[test]
+fn missing_payload_is_an_unreadable_envelope() {
+    let failure=ariadne_compute::protocol::decode_request_correlated(br#"{"protocol":"ariadne.compute/1","operation":"cochange-counts/1","requestId":"tiny","inputDigest":"73c33205d9b30fdfdf31e08236aaf51c309f31ebab0c6e98910f013f94e732d6"}"#).unwrap_err();
+    assert_eq!(failure.code, ErrorCode::InvalidInput);
+    assert!(
+        failure.correlation.is_none(),
+        "missing required envelope field must not get an error frame"
+    );
+}
+#[test]
+fn strict_payload_lexical_errors_precede_unsupported_version_even_without_correlation() {
+    for payload in [
+        r#"{"fileCount":-0,"commits":[]}"#,
+        r#"{"fileCount":0,"fileCount":0,"commits":[]}"#,
+    ] {
+        let raw = format!(
+            r#"{{"protocol":"future","operation":"cochange-counts/1","requestId":"!","inputDigest":"73c33205d9b30fdfdf31e08236aaf51c309f31ebab0c6e98910f013f94e732d6","payload":{payload}}}"#
+        );
+        let failure =
+            ariadne_compute::protocol::decode_request_correlated(raw.as_bytes()).unwrap_err();
+        assert_eq!(failure.code, ErrorCode::InvalidInput);
+        assert!(failure.correlation.is_none());
+    }
+}

@@ -149,7 +149,7 @@ and eventual task control is described in the [harness synthesis design](harness
 It preserves these owners and the existing execution policy; its future contracts
 are not implemented capabilities.
 
-## Code numeric compute library (G2a)
+## Code numeric compute and process boundary (G2a/G2b)
 
 `runtime/go/internal/code/domain` owns numeric inputs, counts and their invariants.
 The Code-local `adapters/computewire` owns strict JSON and canonical digest
@@ -161,3 +161,18 @@ outward and cross-module imports. The root inventory discovers nested Cargo
 manifests while excluding Cargo target output. Code's existing test exclusion
 keeps TS tests outside the production map; its fixture generator is inventoried
 as tooling and its actual TS test remains part of the owning package gate.
+
+
+G2b adds the opaque infrastructure package `runtime/go/internal/platform/computeprocess`
+and a typed Code `adapters/computeprocess` counter. Only Code infrastructure may
+import that exact platform package; domain/application, other contexts and other
+platform I/O remain closed, and package/context cycle checks still apply.
+The runner owns an immutable injected installation identity, one slot with no
+queue, private cwd, explicit environment, framing and child cleanup. It never
+imports Code. Its synchronous Code validator is context aware. The separate
+Rust compute `src/main.rs` owns stdio/thread/time and fatal exit only; AST controls
+reject file/network/environment/OS escape APIs and child process construction.
+The pure library restrictions and extension worker contracts remain separate.
+Actual Go→Rust CI runs in `compute-process` alongside the two existing native
+jobs. EOF observation limits, bounded cleanup/quarantine and later installer/DB
+work are defined in the [compute contract](../contracts/compute/v1/README.md).

@@ -960,6 +960,66 @@
       "name": "operation-escaped-backslash",
       "file": "reject-request-operation-escaped-backslash.json",
       "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "cross-v1-good-id-negative-zero",
+      "file": "reject-request-cross-v1-good-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-v1-good-id-duplicate",
+      "file": "reject-request-cross-v1-good-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-v1-good-id-shape",
+      "file": "reject-request-cross-v1-good-id-shape.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-v1-bad-id-negative-zero",
+      "file": "reject-request-cross-v1-bad-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-v1-bad-id-duplicate",
+      "file": "reject-request-cross-v1-bad-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-v1-bad-id-shape",
+      "file": "reject-request-cross-v1-bad-id-shape.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-future-good-id-negative-zero",
+      "file": "reject-request-cross-future-good-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-future-good-id-duplicate",
+      "file": "reject-request-cross-future-good-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-future-good-id-shape",
+      "file": "reject-request-cross-future-good-id-shape.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
+    },
+    {
+      "name": "cross-future-bad-id-negative-zero",
+      "file": "reject-request-cross-future-bad-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-future-bad-id-duplicate",
+      "file": "reject-request-cross-future-bad-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT"
+    },
+    {
+      "name": "cross-future-bad-id-shape",
+      "file": "reject-request-cross-future-bad-id-shape.json",
+      "expectedCode": "UNSUPPORTED_VERSION"
     }
   ],
   "invalidResponses": [
@@ -1259,5 +1319,85 @@
     "error-DEADLINE_EXCEEDED.json",
     "error-PROTOCOL_ERROR.json",
     "error-ENGINE_FAILED.json"
+  ],
+  "processRequests": [
+    {
+      "name": "cross-v1-good-id-negative-zero",
+      "file": "reject-request-cross-v1-good-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "error"
+    },
+    {
+      "name": "cross-v1-good-id-duplicate",
+      "file": "reject-request-cross-v1-good-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "error"
+    },
+    {
+      "name": "cross-v1-good-id-shape",
+      "file": "reject-request-cross-v1-good-id-shape.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "error"
+    },
+    {
+      "name": "cross-v1-bad-id-negative-zero",
+      "file": "reject-request-cross-v1-bad-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    },
+    {
+      "name": "cross-v1-bad-id-duplicate",
+      "file": "reject-request-cross-v1-bad-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    },
+    {
+      "name": "cross-v1-bad-id-shape",
+      "file": "reject-request-cross-v1-bad-id-shape.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    },
+    {
+      "name": "cross-future-good-id-negative-zero",
+      "file": "reject-request-cross-future-good-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "error"
+    },
+    {
+      "name": "cross-future-good-id-duplicate",
+      "file": "reject-request-cross-future-good-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "error"
+    },
+    {
+      "name": "cross-future-good-id-shape",
+      "file": "reject-request-cross-future-good-id-shape.json",
+      "expectedCode": "UNSUPPORTED_VERSION",
+      "frame": "error"
+    },
+    {
+      "name": "cross-future-bad-id-negative-zero",
+      "file": "reject-request-cross-future-bad-id-negative-zero.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    },
+    {
+      "name": "cross-future-bad-id-duplicate",
+      "file": "reject-request-cross-future-bad-id-duplicate.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    },
+    {
+      "name": "cross-future-bad-id-shape",
+      "file": "reject-request-cross-future-bad-id-shape.json",
+      "expectedCode": "UNSUPPORTED_VERSION",
+      "frame": "none"
+    },
+    {
+      "name": "missing-envelope-payload",
+      "file": "reject-request-missing-payload.json",
+      "expectedCode": "INVALID_INPUT",
+      "frame": "none"
+    }
   ]
 }

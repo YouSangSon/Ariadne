@@ -13,13 +13,27 @@ impl Boundaries<'_> {
             _ => None,
         };
         let compute_protocol = ["compute-protocol", "compute-lib"].contains(&self.layer);
-        let forbidden = (compute_protocol
-            && (std_module.is_some_and(|m| {
-                ["fs", "net", "process", "env", "io", "thread", "time"].contains(&m)
-            }) || parts
-                .first()
-                .is_some_and(|p| ["wasmtime", "ariadne_extension_worker"].contains(&p.as_str()))
-                || (parts
+        let entrypoint_forbidden = self.layer == "compute-main"
+            && ((parts.first().is_some_and(|p| p == "std")
+                && (std_module.is_none()
+                    || std_module.is_some_and(|m| {
+                        !["io", "sync", "thread", "time", "process", "panic"].contains(&m)
+                    })))
+                || std_module.is_some_and(|m| ["fs", "net", "env", "os"].contains(&m))
+                || (std_module == Some("process") && parts.last().is_some_and(|p| p != "exit"))
+                || parts.first().is_some_and(|p| {
+                    ["wasmtime", "ariadne_extension_worker"].contains(&p.as_str())
+                }));
+        let forbidden = entrypoint_forbidden
+            || ((compute_protocol || self.layer == "domain")
+                && parts.first().is_some_and(|p| p == "std")
+                && std_module.is_none())
+            || (compute_protocol
+                && (std_module.is_some_and(|m| {
+                    ["fs", "net", "process", "env", "io", "thread", "time", "os"].contains(&m)
+                }) || parts.first().is_some_and(|p| {
+                    ["wasmtime", "ariadne_extension_worker"].contains(&p.as_str())
+                }) || (parts
                     .first()
                     .is_some_and(|p| ["crate", "super"].contains(&p.as_str()))
                     && parts
@@ -30,10 +44,10 @@ impl Boundaries<'_> {
                     .iter()
                     .any(|p| ["protocol", "engine"].contains(&p.as_str())))
             || parts.first().is_some_and(|p| p == "wasmtime_wasi")
-            || (self.layer != "main" && std_module == Some("process"))
+            || (!["main", "compute-main"].contains(&self.layer) && std_module == Some("process"))
             || (self.layer == "domain"
                 && std_module.is_some_and(|module| {
-                    ["fs", "net", "process", "env", "io", "thread", "time"].contains(&module)
+                    ["fs", "net", "process", "env", "io", "thread", "time", "os"].contains(&module)
                 }))
             || (self.layer == "protocol"
                 && std_module.is_some_and(|module| ["fs", "net", "env"].contains(&module)))
@@ -92,6 +106,12 @@ impl Boundaries<'_> {
 }
 
 impl<'ast> Visit<'ast> for Boundaries<'_> {
+    fn visit_item_extern_crate(&mut self, item: &'ast syn::ItemExternCrate) {
+        if ["compute-main", "compute-lib", "compute-protocol", "domain"].contains(&self.layer) {
+            self.errors.push(format!("extern crate {}", item.ident));
+        }
+        visit::visit_item_extern_crate(self, item);
+    }
     fn visit_item_use(&mut self, item: &'ast syn::ItemUse) {
         self.use_tree(&item.tree, Vec::new());
     }
@@ -129,6 +149,7 @@ fn source_layer(path: &str) -> Option<&'static str> {
         "src/engine.rs" => Some("engine"),
         "src/protocol.rs" => Some("protocol"),
         "crates/ariadne-compute/src/lib.rs" => Some("compute-lib"),
+        "crates/ariadne-compute/src/main.rs" => Some("compute-main"),
         "crates/ariadne-compute/src/cochange.rs" => Some("domain"),
         "crates/ariadne-compute/src/protocol.rs" => Some("compute-protocol"),
         _ => None,
@@ -200,7 +221,7 @@ fn gate_rejects_os_io_in_domain_and_protocol() {
     for (layer, modules) in [
         (
             "domain",
-            &["fs", "net", "process", "env", "io", "thread", "time"][..],
+            &["fs", "net", "process", "env", "io", "thread", "time", "os"][..],
         ),
         ("protocol", &["fs", "net", "process", "env"][..]),
         ("lib", &["process"][..]),
@@ -254,6 +275,8 @@ fn compute_sources_reject_io_domain_serialization_and_cross_module_imports() {
         ("domain", "use super::protocol::Request;"),
         ("domain", "fn read() { std::fs::read(path); }"),
         ("compute-protocol", "use std::io::Read;"),
+        ("compute-lib", "use std as hidden;"),
+        ("compute-protocol", "extern crate std as hidden;"),
         ("domain", "use sha2::Sha256;"),
         ("compute-protocol", "use std::{net::TcpStream as Socket};"),
         ("compute-protocol", "use crate::extensions::Registry;"),
@@ -274,7 +297,7 @@ fn compute_sources_reject_io_domain_serialization_and_cross_module_imports() {
 #[test]
 fn compute_library_composition_cannot_gain_os_capabilities() {
     for layer in ["compute-lib", "compute-protocol", "domain"] {
-        for module in ["fs", "net", "env", "process", "io", "thread", "time"] {
+        for module in ["fs", "net", "env", "process", "io", "thread", "time", "os"] {
             for source in [
                 format!("use std::{{{module} as hidden}};"),
                 format!("fn run() {{ std::{module}::operation(); }}"),
@@ -305,4 +328,42 @@ fn compute_unknown_source_file_is_rejected_by_directory_walk() {
     });
     std::fs::remove_dir_all(&root).unwrap();
     assert!(result.is_err());
+}
+
+#[test]
+fn compute_entrypoint_capabilities_are_explicit() {
+    for (source, allowed) in [
+        (
+            "use std::io::{Read,Write}; use std::{thread,time}; fn finish(){std::process::exit(1);}",
+            true,
+        ),
+        ("use std::{fs as files};", false),
+        ("use std::net::TcpStream;", false),
+        ("use std::env;", false),
+        (
+            "use std as hidden; fn escape(){hidden::fs::read(path);}",
+            false,
+        ),
+        ("extern crate std as hidden;", false),
+        ("use std::{os as hidden};", false),
+        (
+            "fn escape(){std::os::unix::process::CommandExt::exec(command);}",
+            false,
+        ),
+        ("use std::{process::Command as Hidden};", false),
+        ("use std::process::Command;", false),
+        ("use ariadne_extension_worker::engine;", false),
+    ] {
+        let mut checker = Boundaries {
+            layer: "compute-main",
+            errors: Vec::new(),
+        };
+        checker.visit_file(&syn::parse_file(source).unwrap());
+        assert_eq!(
+            checker.errors.is_empty(),
+            allowed,
+            "{source}: {:?}",
+            checker.errors
+        );
+    }
 }

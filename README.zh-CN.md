@@ -224,7 +224,7 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 Go 扩展契约、参考报告转换、包检查和不执行扩展的包 registry 处于[实验阶段](docs/extension-implementation-plan.ko.md)。独立的 Go CLI 提供安装、digest 选择、停用和移除。activate 不授予执行权限。Node 产品保持不变，尚不提供用户扩展执行或经过验证的 sandbox。
 Rust worker 和固定 Podman profile 是独立的运行适用性测试工具，尚不提供公开的用户扩展执行功能。
 
-可信 co-change 计算的 G2a Go/Rust 纯库、严格 JSON 契约和实际 TS 离线比较见[独立契约](contracts/compute/v1/README.md)。计算可执行文件、进程连接、DB 发布和性能优势仍未实现或验证。
+可信 co-change 计算的 Go/Rust 纯库、严格 JSON 契约和实际 TS 离线比较见[独立契约](contracts/compute/v1/README.md)。G2b 新增内部 Go 适配器和 Rust 可执行文件，验证帧通信、取消、进程清理以及结果完全一致。现有 Node 产品、公开 CLI、默认 backend 和 DB 发布路径保持不变；这不代表性能优势或提供安装器。
 
 [20 个来源的审查、应用范围与输入格式（韩语）](docs/harness-engineering-adoption.md).
 
