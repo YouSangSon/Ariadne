@@ -1065,6 +1065,14 @@
       "layer": "interfaces",
       "context": "extensions"
     },
+    "contracts/ontology/node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "core/application/product.mjs": {
       "layer": "application",
       "context": "core"
@@ -1570,6 +1578,10 @@
       "layer": "composition",
       "context": "integration"
     },
+    "scripts/ontology-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "scripts/product.mjs": {
       "layer": "composition",
       "context": "core"
@@ -1661,6 +1673,10 @@
     "tests/modules.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/ontology-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
     },
     "tests/ontology.test.mjs": {
       "layer": "tooling",

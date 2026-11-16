@@ -1,5 +1,10 @@
 # Selectable modules and ontology architecture
 
+Selected migration regression cases for the unchanged Node implementation live in
+[the offline Node goldens](../contracts/ontology/node-v1/README.md). They preserve
+raw fingerprint bytes and UTF-16 search behavior; they do not establish Go parity
+or replace the existing filesystem/CLI security tests.
+
 Ariadne has one entry point and independent capability boundaries. Select the
 dependencies needed for a task; each module keeps ownership of its data and rules.
 This boundary supports coding, research, documentation and other agent tasks.

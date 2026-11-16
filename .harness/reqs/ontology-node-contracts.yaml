@@ -1,0 +1,75 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: ontology-node-contracts
+  title: G1 선행 Node 온톨로지 호환 골든과 오프라인 검사
+  status: verified
+  priority: P0
+  owner: ontology-node-contracts
+  intake_started: 2026-11-16
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 G1의 첫 선행 단위로 실제 Node 출력과 원본 및 런타임 근거를 고정한다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 DDD 및 클린 아키텍처와 모듈 경계를 지키며 TDD로 구현한다.
+  desired_outcome: 향후 Go 소비자가 실제 Node의 선택된 Unicode와 fingerprint 및 검색 계약을 literal fixture로 비교할 수 있다.
+  confirmed_facts:
+    - 실제 Node 24.22.2와 ICU 78.3 및 Unicode 17.0을 oracle로 사용한다.
+    - 기존 Node ontology domain과 application 및 파일과 CLI 경로는 변경하지 않는다.
+    - 이 단위는 G1 선행 fixture이며 Go 이식과 production 전환을 포함하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 실제 원본 함수가 raw 입력에서 검증과 검색 및 inspect와 정확한 fingerprint UTF-8 bytes를 생성한다.
+      verification: node scripts/ontology-node-goldens.mjs --check와 root ontology-node-contracts 테스트를 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 출처 읽기 순서와 검증 실패 시 읽지 않는 동작 및 runtime와 source와 corpus 근거를 고정한다.
+      verification: literal expected와 실제 포트 관측을 비교하고 result와 hash 및 provenance 변조가 거절되는지 검사한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 새 source와 test와 contract fixture를 root inventory가 발견하고 기존 ontology 보안 및 root gate를 보존한다.
+      verification: 기존 8개 ontology 테스트와 module-boundaries 및 node scripts/verify.mjs --modules ontology를 실행한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - 실제 원본 domain 및 application과 scrub import closure를 고정하고 오프라인 포트만 주입한다.
+    - Go와 Rust 및 Memory와 Code 및 기존 PG 작업 소스는 변경하지 않는다.
+    - G2의 엄격 JSON 중복키 및 surrogate와 숫자 토큰 거절 규칙을 가져오지 않는다.
+verification:
+  verify_gate_required: true
+  commands:
+    - node scripts/ontology-node-goldens.mjs --check
+    - node --test tests/ontology-node-contracts.test.mjs tests/ontology.test.mjs tests/module-boundaries.test.mjs
+    - node scripts/verify.mjs --modules ontology
+  evidence:
+    - criterion_id: AC1
+      check: 실제 원본 oracle의 literal 결과와 fingerprint UTF-8 hex 재현
+      result: passed
+      exit_code: 0
+      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/check-final.log
+    - criterion_id: AC2
+      check: 읽기 순서와 오류 시 0회 및 결과와 fingerprint 및 provenance의 8가지 변조 거절
+      result: passed
+      exit_code: 0
+      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/focused.log
+    - criterion_id: AC3
+      check: root와 ontology 정규 source tests 및 mirror와 REQ gate
+      result: passed
+      exit_code: 0
+      source_state: main e48e455와 작업 소유 변경 및 private source-freeze.json
+      artifact: .harness/handoff/ontology-node-contracts/root-ontology-verify.log
+audit:
+  must_not_implement:
+    - Go 온톨로지 이식과 수동 Unicode normalizer 및 production 전환
+    - 새 public command나 의존성과 agent runtime 및 권한과 예산 정책
+    - toolchain pin 및 전역 설정 변경과 유료 모델 호출
+  completion_report_should_include:
+    - Node 골든 로컬 검증과 Go 호환성 및 전체 G1과 원격 CI를 구분한다.

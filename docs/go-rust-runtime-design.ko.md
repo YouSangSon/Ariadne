@@ -270,6 +270,8 @@ Core/ontology가 Go로 완전히 전환되면 그 배포에는 Node/Rust toolcha
 
 ## 9. 전환 순서와 되돌리기
 
+G1의 첫 선행 단위는 [Node 온톨로지 이식용 골든](../contracts/ontology/node-v1/README.md)이다. 기존 domain/application을 오프라인 포트로 직접 호출해 선택된 UTF-16·Unicode·raw fingerprint와 검토 상태 및 출처 읽기 동작을 고정한다. 원본 소스와 Node/ICU/Unicode 및 fixture 근거가 달라지면 검사에 실패한다. 이 단위에는 Go 온톨로지·normalizer·호환 wrapper·production 전환이 없으며 G1 전체 완료를 뜻하지 않는다.
+
 현재 상태는 단계별로 구분한다. E0와 비실행 registry V1의 근거는 [확장 구현 계획](extension-implementation-plan.ko.md)에 있다. G2a는 G2 중 순수 계산·엄격 JSON codec·공통 fixture·실제 TS 오프라인 비교를 구현한 단위다. G2b는 subprocess·EOF·취소·runner의 내부 구현과 실제 프로세스 검증을 추가한다. G4의 locale·DB 게시와 G5 설치기 등 나머지 gate는 후속 범위다. 같은 단계에서 언어·DB schema·업무 정책을 함께 바꾸지 않는다. 먼저 참조 결과를 고정하고 한 command family 또는 owner씩 전환한다.
 
 | 단계 | 구현 단위 | 통과 조건·중단 조건 |
