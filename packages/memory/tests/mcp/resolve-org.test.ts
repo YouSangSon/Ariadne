@@ -22,6 +22,32 @@ function makeReq(
 // ---------------------------------------------------------------------------
 
 describe("resolveOrganizationId", () => {
+  describe.each(["static", "oauth"] as const)("%s token binding", (authType) => {
+    const auth = {
+      token: "t",
+      organizationId: "dev-team",
+      authType,
+      scopes: ["akasha:read"],
+    };
+
+    it.each([
+      ["dev-team", "finance-team"],
+      ["finance-team", "dev-team"],
+    ])("rejects header %s and body %s when either conflicts", (headerOrg, bodyOrg) => {
+      expect(resolveOrganizationId(makeReq(headerOrg), bodyOrg, auth)).toEqual({
+        organizationId: "dev-team",
+        conflict: true,
+      });
+    });
+
+    it("accepts matching trimmed header and body organizations", () => {
+      expect(resolveOrganizationId(makeReq(" dev-team "), " dev-team ", auth)).toEqual({
+        organizationId: "dev-team",
+        conflict: false,
+      });
+    });
+  });
+
   describe("token binding takes precedence (no conflict)", () => {
     it("returns the token-bound org when no caller org is provided", () => {
       // Arrange

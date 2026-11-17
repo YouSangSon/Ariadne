@@ -11,6 +11,8 @@ changes; CHANGELOG entries call those out explicitly.
 
 ## [Unreleased]
 
+- Reject conflicting JSON HTTP body organizations for organization-bound static and OAuth tokens even when the organization header matches the token.
+
 - Store inert reported recheck recipes and dependency/derivative references with record-digest concurrency checks. Add read-only `inspect_memory_impact`; unknown source freshness and incomplete dependency coverage stay explicit. Migration 016 preserves metadata through physical archive/restore.
 
 - Add Korean, Japanese, Chinese and cross-language retrieval measurements and an opt-in multilingual MPNet configuration. All 18 new questions retrieve their answer in the top 5 with MPNet, but one Chinese question ranks a similar wrong answer first; strict multilingual qualification remains RED.
