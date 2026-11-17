@@ -30,12 +30,12 @@ functional_contract:
       priority: P0
       statement: Node 24.22.2와 ICU 78.3 및 Unicode 17.0의 원본 closure에서 UTF16 결과와 정확한 계약 payload 및 소스 frame과 오류 순서를 고정한다.
       verification: node scripts/requirements-node-goldens.mjs --check 및 focused Node contracts test
-      passes: null
+      passes: true
     - id: A2
       priority: P0
       statement: source와 payload manifest를 구분하고 runtime 및 fixture drift와 포트 실패 정지 및 생성식 경계 사례를 검증한다.
       verification: node --test tests/requirements-node-contracts.test.mjs tests/loop-contract.test.mjs tests/module-boundaries.test.mjs
-      passes: null
+      passes: true
     - id: A3
       priority: P0
       statement: 승인된 공유 FieldBlock 통합 뒤 private UTF16과 scalar decoder 및 순수 application을 구현하고 정확한 domain 의존 예외만 허용한다.
@@ -64,5 +64,17 @@ verification:
   verify_gate_required: true
   verify_gate_reason: 현재 Node 기준 검증과 후속 최종 Go 통합 gate를 구분한다.
   escalate_after: 3
-  evidence: []
+  evidence:
+    - criterion_id: A1
+      check: Node oracle pinned profile and literal UTF16 payload frames and recipe limits
+      result: passed
+      exit_code: 0
+      source_state: base 4e37409d plus task-owned source and fixture SHA manifests
+      artifact: .harness/handoff/go-requirements/evidence/node-oracle-final.log
+    - criterion_id: A2
+      check: Node Requirements and existing loop and module boundary focused tests
+      result: passed
+      exit_code: 0
+      source_state: final Node oracle files and exact root tooling map records
+      artifact: .harness/handoff/go-requirements/evidence/node-combined-final.log
   attempts: []

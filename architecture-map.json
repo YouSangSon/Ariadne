@@ -1133,6 +1133,14 @@
       "layer": "tooling",
       "context": "ontology"
     },
+    "contracts/requirements/node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "contracts/requirements/node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
     "core/application/product.mjs": {
       "layer": "application",
       "context": "core"
@@ -1796,6 +1804,10 @@
       "layer": "composition",
       "context": "core"
     },
+    "scripts/requirements-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
     "scripts/uninstall.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -1911,6 +1923,10 @@
     "tests/product-node-contracts.test.mjs": {
       "layer": "tooling",
       "context": "core"
+    },
+    "tests/requirements-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/scrub.test.mjs": {
       "layer": "tooling",
