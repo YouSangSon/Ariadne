@@ -193,3 +193,20 @@ retains the complete local product gate. PostgreSQL/pgvector, transformer and
 cross-module MCP checks still belong to their dedicated CI jobs and require their
 explicit disposable environment. Local source/package tests do not establish
 those integration outcomes.
+
+## Experimental Go file and CLI adapter (G1b)
+
+The separate Go executable supports read-only `ontology inspect` and `ontology search`
+from the caller's directory. Run `go run ./cmd/Ariadne ontology --help` inside
+`runtime/go`; the Node product entrypoint remains the default. The adapter consumes
+public Core application ports and preserves authored UTF-16 metadata while converting
+only filesystem I/O paths to UTF-8 replacement text. Manifest hardlink identity is
+rejected and source bodies are never retained in results.
+
+Darwin/Linux descriptor reads reject relative symlinks, nonregular files, protected
+paths, invalid UTF-8, NUL and files larger than 1 MiB, while preserving BOM and allowing
+executable regular text. Other platforms fail closed. This keeps the trusted, stable
+workspace assumption above; it is not an OS sandbox or atomic multifile snapshot.
+The [separate Node file/CLI goldens](../contracts/ontology/files-cli-v1/README.md) own
+paired output and provenance. Actual Linux CI and cutover/performance gates remain
+separate from local macOS results.

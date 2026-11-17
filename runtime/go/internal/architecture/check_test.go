@@ -229,3 +229,34 @@ func TestOntologyApplicationCannotImportJSON(t *testing.T) {
 		t.Fatal(violations)
 	}
 }
+
+func TestCoreProjectPathUnicodePolicyIsExact(t *testing.T) {
+	for _, tt := range []struct {
+		path, owner, layer, dependency string
+		allowed                        bool
+	}{
+		{"internal/core/domain/projectfiles/path.go", "core", "domain", "golang.org/x/text/cases", true},
+		{"internal/core/domain/projectfiles/path.go", "core", "domain", "golang.org/x/text/language", true},
+		{"internal/core/domain/projectfiles/path.go", "core", "domain", "golang.org/x/text/unicode/norm", false},
+		{"internal/core/domain/projectfiles/other.go", "core", "domain", "golang.org/x/text/cases", false},
+		{"internal/core/domain/projectfiles/path.go", "other", "domain", "golang.org/x/text/cases", false},
+		{"internal/core/application/path.go", "core", "application", "golang.org/x/text/cases", false},
+		{"internal/ontology/adapters/files/files.go", "ontology", "infrastructure", "example.test/runtime/internal/core/domain/projectfiles", false},
+	} {
+		t.Run(tt.path+tt.dependency, func(t *testing.T) {
+			sources := map[string]string{tt.path: "package source\nimport _ \"" + tt.dependency + "\""}
+			records := map[string]Record{tt.path: {Layer: tt.layer, Context: tt.owner}}
+			if strings.HasPrefix(tt.dependency, "example.test/") {
+				sources["internal/core/domain/projectfiles/path.go"] = "package projectfiles"
+				records["internal/core/domain/projectfiles/path.go"] = Record{Layer: "domain", Context: "core"}
+			}
+			violations, err := Check(fixture(t, sources, records))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.allowed && len(violations) != 0 || !tt.allowed && len(violations) == 0 {
+				t.Fatal(tt.allowed, violations)
+			}
+		})
+	}
+}
