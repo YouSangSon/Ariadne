@@ -7,6 +7,7 @@ import (
 	ontology "ariadne/runtime/internal/ontology/domain"
 	"errors"
 	"fmt"
+	"golang.org/x/text/encoding/unicode"
 	"io"
 	"strconv"
 	"strings"
@@ -76,6 +77,11 @@ func parse(command string, args []string) (map[string]string, error) {
 	return values, nil
 }
 func Run(args []string, out, errOut io.Writer, newPorts Factory) int {
+	decoded := make([]string, len(args))
+	for i, value := range args {
+		decoded[i], _ = unicode.UTF8.NewDecoder().String(value)
+	}
+	args = decoded
 	if len(args) == 0 || args[0] == "--help" || args[0] == "-h" {
 		if _, err := fmt.Fprintln(out, Usage); err == nil {
 			return 0

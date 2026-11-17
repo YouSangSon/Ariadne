@@ -1,0 +1,66 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-context-files
+  title: G1c3 Go Context 파일과 실험 CLI
+  status: ready_for_routing
+  priority: P0
+  owner: go-context-files
+  intake_started: 2026-11-17
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 Context 포트의 파일 adapter와 별도 실험 CLI를 기존 Node 관측에 맞춘다.
+requirement:
+  user_intent: Go와 Rust 전환을 DDD와 클린 아키텍처 및 모듈 경계를 지키며 TDD로 진행한다.
+  desired_outcome: Context 레코드와 선택 skill 및 CLI가 기존 Node 출력과 읽기 순서와 보안 경계를 보존한다.
+  confirmed_facts:
+    - C2 순수 Context 구현과 272 Node 골든은 별도 소스 근거로 보존한다.
+    - Node production과 기본 launcher 및 Memory와 Execution과 toolchain pin을 유지한다.
+    - Context 메타데이터와 Core project text의 서로 다른 파일 계약을 유지한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 메타데이터의 probe와 lossy UTF-8 및 symlink와 REQ 정렬 계약을 보존한다.
+      verification: 실제 Node 파일 fixture와 Go adapter 비교를 실행한다.
+      passes: null
+    - id: AC2
+      priority: P0
+      statement: skill 읽기의 Core 검증 순서와 raw hash 및 scrubbed UTF-16 길이와 디렉터리 제한을 보존한다.
+      verification: 경계 크기와 링크 및 100-entry 제한과 실제 파일 테스트를 실행한다.
+      passes: null
+    - id: AC3
+      priority: P0
+      statement: 실험 context와 skills CLI의 인자와 출력 및 종료 상태를 보존한다.
+      verification: Node와 실제 native 실행 파일의 other-cwd와 raw argv 비교를 실행한다.
+      passes: null
+    - id: AC4
+      priority: P0
+      statement: 선행 실제 main 통합 후 C2와 C3 결합 검증과 독립 SOURCE 검토를 통과한다.
+      verification: 최종 전체 Go race와 vet 및 AST와 root gate를 실행하고 독립 검토를 받는다.
+      passes: null
+code_mapping:
+  boundary_rules:
+    - Context 파일 adapter는 고정 harness record와 skills 목록을 소유하며 skill 본문은 Core 공개 reader를 사용한다.
+    - Context application과 순수 domain은 파일과 CLI를 import하지 않는다.
+    - composition은 DB와 provider 초기화 전에 별도 실험 CLI를 연결한다.
+verification:
+  verify_gate_required: true
+  verify_gate_reason: 파일 보안 경계와 CLI 계약의 native 검증 및 결합 SOURCE 검토가 필요하다.
+  commands:
+    - node scripts/context-node-goldens.mjs --check
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/verify.mjs --modules core,ontology
+  evidence: []
+audit:
+  must_not_implement:
+    - Node production 및 기본 전환과 provider 및 데이터 변경
+    - 범용 파일 서비스와 문자열 플랫폼 및 임의 timeout
+    - push와 PR 및 merge 게시 전 부모 검토 생략
+  completion_report_should_include:
+    - focused 및 최종 로컬 gate와 SOURCE 및 원격 CI와 게시를 구분한다.
+    - 작업 소유 프로세스와 cache 정리 및 보존 근거를 기록한다.
