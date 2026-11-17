@@ -9,14 +9,19 @@ import (
 	"strconv"
 	"strings"
 
+	corefiles "ariadne/runtime/internal/core/adapters/files"
 	evaluation "ariadne/runtime/internal/evaluation/application"
 	"ariadne/runtime/internal/extensions/adapters/files"
 	"ariadne/runtime/internal/extensions/adapters/sqlite"
 	extensions "ariadne/runtime/internal/extensions/application"
 	"ariadne/runtime/internal/extensions/domain"
+	ontologycli "ariadne/runtime/internal/ontology/adapters/cli"
+	ontologyfiles "ariadne/runtime/internal/ontology/adapters/files"
+	ontologyapp "ariadne/runtime/internal/ontology/application"
 )
 
-const help = `Experimental nonexecuting extensions:
+const help = `Experimental read-only ontology: ontology inspect|search (use ontology --help)
+Experimental nonexecuting extensions:
  extensions inspect --package DIR
  extensions inspect ID [--workspace DIR]
  extensions install --package DIR [--workspace DIR]
@@ -111,6 +116,9 @@ func parse(args []string) (arguments, bool) {
 	return a, true
 }
 func Run(args []string, out, errOut io.Writer) int {
+	if len(args) > 0 && args[0] == "ontology" {
+		return ontologycli.Run(args[1:], out, errOut, func(file string) (ontologyapp.Ports, error) { return ontologyfiles.New(file, corefiles.Reader{}) })
+	}
 	if len(args) == 1 && args[0] == "--help" {
 		fmt.Fprintln(out, help)
 		return 0
