@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: memory-org-binding-conflict
   title: Memory JSON HTTP의 조직 바인딩 충돌 검사 복구
-  status: ready_for_routing
+  status: verified
   priority: P0
   owner: memory
   intake_started: 2026-11-17
@@ -30,17 +30,17 @@ functional_contract:
       priority: P0
       statement: 정적 토큰과 OAuth 모두 헤더 또는 본문 중 하나라도 바인딩 조직과 다르면 기존 403 응답으로 거부하고 registry를 호출하지 않는다.
       verification: npm test -- --maxWorkers=1 tests/mcp/resolve-org.test.ts tests/app/memory-routes-boundary.test.ts
-      passes: null
+      passes: true
     - id: AC2
       priority: P0
       statement: 일치하는 조직의 공백 정규화와 바인딩 없는 요청의 헤더 우선순위 및 기존 입력 검증을 보존한다.
       verification: npm run verify -- --modules memory
-      passes: null
+      passes: true
     - id: AC3
       priority: P0
       statement: Memory 전체 로컬 검증과 빌드를 통과하고 독립 소스 리뷰의 지적을 해소한다.
       verification: npm run verify -- --modules memory 및 packages/memory의 npm run build와 독립 Astra 소스 리뷰
-      passes: null
+      passes: true
 code_mapping:
   code_areas:
     memory:
@@ -59,7 +59,31 @@ verification:
   verify_gate_required: true
   verify_gate_reason: 공유 조직 권한 경계의 회귀를 확인한다.
   escalate_after: 3
-  evidence: []
+  evidence:
+    - criterion_id: AC1
+      check: focused resolver and mocked JSON HTTP regression
+      result: passed
+      exit_code: 0
+      source_state: e2ad4a68483079c7ead98deb2edc1752909a6542 production/test SHA unchanged from GREEN
+      artifact: .harness/handoff/memory-org-binding-conflict/evidence/green.log
+    - criterion_id: AC2
+      check: npm run verify -- --modules memory
+      result: passed
+      exit_code: 0
+      source_state: e2ad4a68483079c7ead98deb2edc1752909a6542 tree 4f26928daa5ca4e224a4e1bf204317c6934d7423 clean before and after
+      artifact: .harness/handoff/memory-org-binding-conflict/evidence/final.json
+    - criterion_id: AC3
+      check: Memory package build
+      result: passed
+      exit_code: 0
+      source_state: e2ad4a68483079c7ead98deb2edc1752909a6542 frozen five non-REQ files unchanged
+      artifact: .harness/handoff/memory-org-binding-conflict/evidence/final-build.log
+    - criterion_id: AC3
+      check: independent Astra source review SOURCE_PASS relayed by parent
+      result: passed
+      exit_code: null
+      source_state: e2ad4a68483079c7ead98deb2edc1752909a6542 frozen production/test SHA matched
+      artifact: .harness/handoff/memory-org-binding-conflict/evidence/source-review.md
   attempts: []
 audit:
   must_not_implement:
