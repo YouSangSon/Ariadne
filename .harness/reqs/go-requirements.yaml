@@ -1,0 +1,68 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-requirements
+  title: Requirements 순수 계약의 Go 이식과 Node 기준 보존
+  status: ready_for_routing
+  priority: P0
+  owner: requirements-owner
+  intake_started: 2026-11-17
+  promoted_at: 2026-11-17
+source:
+  raw_user_prompt: |-
+    Next scoped implementation in approved whole Ariadne Go/Rust refactoring.
+    Start ONLY actual Node oracle/contracts, tests and ready REQ/docs now.
+    Do not write/execute Go implementation yet. Parent will authorize dependency integration and Go phase after C3 SOURCE_PASS.
+  user_language: ko
+requirement:
+  user_intent: 기존 Requirements의 순수 동작을 유지하며 Go 이식의 검증 기준을 만든다.
+  desired_outcome: Node 원본 관측을 고정하고 공유 FieldBlock 통합 뒤 독립 Go domain과 application을 구현한다.
+  confirmed_facts:
+    - 시작 소스는 actual main 4e37409d69d80964fff0bffccc18dc309910f4ff이다.
+    - 기존 Node public exports와 production 소스는 변경하지 않는다.
+    - Requirements는 private immutable lossless UTF16 Text와 엄격한 제한 문법을 소유한다.
+    - Core FieldBlock만 공유하며 Context의 partial parser 정책을 강화하지 않는다.
+    - 현재 단계는 Node oracle과 문서이며 Go 단계는 부모의 별도 통합 승인을 기다린다.
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: A1
+      priority: P0
+      statement: Node 24.22.2와 ICU 78.3 및 Unicode 17.0의 원본 closure에서 UTF16 결과와 정확한 계약 payload 및 소스 frame과 오류 순서를 고정한다.
+      verification: node scripts/requirements-node-goldens.mjs --check 및 focused Node contracts test
+      passes: null
+    - id: A2
+      priority: P0
+      statement: source와 payload manifest를 구분하고 runtime 및 fixture drift와 포트 실패 정지 및 생성식 경계 사례를 검증한다.
+      verification: node --test tests/requirements-node-contracts.test.mjs tests/loop-contract.test.mjs tests/module-boundaries.test.mjs
+      passes: null
+    - id: A3
+      priority: P0
+      statement: 승인된 공유 FieldBlock 통합 뒤 private UTF16과 scalar decoder 및 순수 application을 구현하고 정확한 domain 의존 예외만 허용한다.
+      verification: 부모의 Go 단계 승인 뒤 compiled behavior RED와 focused Go tests 및 AST negative fixtures
+      passes: null
+    - id: A4
+      priority: P0
+      statement: 최종 통합 소스에서 Go race와 vet 및 AST와 root source gate를 한 번 통과하고 작업 전용 자원을 정리한다.
+      verification: 부모가 지정한 최종 독립 combined gate와 SOURCE review 및 cleanup evidence
+      passes: null
+code_mapping:
+  boundary_rules:
+    - contracts/requirements/node-v1 및 scripts/requirements-node-goldens.mjs와 tests/requirements-node-contracts.test.mjs와 이 REQ를 소유한다.
+    - 후속 Go domain과 application 및 정확한 architecture-map 예외와 관련 runtime design 절만 소유한다.
+    - Go domain만 core/domain/requirementfields를 import하며 app와 nested 및 다른 Core와 Context 및 Ontology 의존은 거절한다.
+audit:
+  must_not_implement:
+    - 현재 단계의 Go 구현 또는 Go 실행
+    - Node production 변경과 general Text 또는 JSON 플랫폼 및 Context parser 강화
+    - native Git와 files 및 CLI와 default 전환과 product 및 hooks 및 coreverification
+    - push 또는 PR 또는 merge 및 공유 worktree와 global 설정 변경
+verification:
+  commands:
+    - node scripts/requirements-node-goldens.mjs --check
+    - node --test tests/requirements-node-contracts.test.mjs tests/loop-contract.test.mjs tests/module-boundaries.test.mjs
+  verify_gate_required: true
+  verify_gate_reason: 현재 Node 기준 검증과 후속 최종 Go 통합 gate를 구분한다.
+  escalate_after: 3
+  evidence: []
+  attempts: []
