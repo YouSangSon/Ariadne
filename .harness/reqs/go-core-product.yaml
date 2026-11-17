@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: go-core-product
   title: Go Core product 순수 규칙과 Node 계약 보존
-  status: ready_for_routing
+  status: verified
   priority: P1
   owner: G1c1
   intake_started: "2026-11-17"
@@ -55,7 +55,7 @@ functional_contract:
       priority: P0
       statement: G1b 실제 main을 정상 통합한 최종 소스에서 전체 Go race와 vet 및 AST와 루트 소스 gate가 통과한다.
       verification: go test -race ./... && go vet ./... && go run ./cmd/check-architecture --root ../..; node scripts/verify.mjs
-      passes: null
+      passes: true
 code_mapping:
   code_areas:
     domain:
@@ -75,7 +75,7 @@ verification:
     - node --test tests/product-cli.test.mjs tests/modules.test.mjs tests/command.test.mjs tests/product-node-contracts.test.mjs tests/module-boundaries.test.mjs
     - go test ./internal/core/domain/product ./internal/core/application/product ./internal/architecture
   verify_gate_required: true
-  verify_gate_reason: G1b 실제 main 통합 뒤 최종 전체 gate를 한 번 실행한다.
+  verify_gate_reason: 실제 main c7ac4921 통합 소스 0132435에서 최종 전체 로컬 gate를 한 번 실행해 통과했다. 원격 CI와 게시 및 제품 실행 전환은 별도다.
   escalate_after: 2
   evidence:
     - criterion_id: AC1
@@ -103,11 +103,17 @@ verification:
       source_state: "source-freeze aggregate 90587aa0cc44b014405ec57118a5da7f638d3d1bf6f398633aa124d1de6ff980"
       artifact: .harness/handoff/go-core-product/evidence/go-ast.log
     - criterion_id: AC5
-      check: actual main integration and final complete gates
-      result: not_run
-      exit_code: null
-      source_state: "a42c25b focused source only"
-      artifact: .harness/handoff/go-core-product/progress.md
+      check: final Go race and vet and AST and product oracle and REQ invariant and root source and owned cleanup
+      result: passed
+      exit_code: 0
+      source_state: "013243595bde30cfdf77b53eef7b5b87b6772e1d tree 8b276f52f7240635a7f5ee26833cd4e80766e622; metadata follow-up preserves nonmetadata hashes"
+      artifact: .harness/handoff/go-core-product/evidence/final/results.json
+    - criterion_id: AC5
+      check: "final results SHA256 f92c7a79624646ddba42b1463e34748dfa2e1bedaf9028e061788070c4d771b8"
+      result: passed
+      exit_code: 0
+      source_state: "integration-freeze.json 43 files verified before metadata-only closure"
+      artifact: .harness/handoff/go-core-product/evidence/final/results.json
   attempts: []
 audit:
   must_not_implement:
@@ -117,3 +123,4 @@ audit:
   completion_report_should_include:
     - 소스 commit 및 tree, 소유 파일 hash와 검사 명령 및 종료 상태
     - TDD 실패와 통과 근거, cleanup, main 통합과 CI의 남은 gate
+    - verified는 이 단위의 로컬 검증만 뜻하며 원격 CI와 게시 및 제품 런타임 전환은 별도다.

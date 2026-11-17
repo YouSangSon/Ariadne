@@ -47,7 +47,11 @@ Go가 모듈의 업무 규칙과 실행 수명을 맡고, Rust는 필요한 계�
 
 Node의 eval/knowledge/memory lookup 세 곳에는 own-key 검사만 추가했다. `toString`·`constructor`·`__proto__`가 상속 속성으로 잘못 선택되던 버그를 먼저 재현했다. eval/knowledge는 기존 오류를, memory는 기존 일반 CLI fallback을 유지한다. 수정한 실제 Node export로 127개 계약 사례를 생성하고 Go 결과와 비교했다. [계약과 재현 방법](../contracts/core/product-node-v1/README.md)이 범위·출처·타입 제한을 소유한다.
 
-현재 근거는 해당 Go domain/application·AST focused 검사와 기존 Node product/module/command 및 새 oracle 경계 검사다. G1b의 실제 main 통합 뒤 수행할 전체 Go race/vet/AST·루트 소스 gate, 독립 SOURCE 리뷰와 원격 CI는 아직 남아 있다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
+G1b의 실제 main `c7ac4921`을 정상 통합한 `0132435` 소스에서 전체 Go race/vet/AST, 실제 Node oracle 127개, 커밋 REQ 불변식과 루트 소스 gate가 한 번 모두 통과했다. 독립 SOURCE 검토도 통과했다. 메타데이터 종결 변경에서는 검증한 제품 소스와 Node oracle hash를 유지한다.
+
+작업별 모듈 캐시 정리와 프로세스 group 종료를 확인하고 전체 임시 경로 286,315,287 bytes를 정리했다. 이 수치에는 Go cache 223,776,290 bytes가 포함되며 두 수치를 합산하지 않는다.
+
+원격 CI·게시와 실제 Go 제품 런타임·CLI 전환은 아직 완료하지 않았다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
 
 ## 3. 결정과 대안
 
