@@ -137,12 +137,55 @@ def settle(process):
         time.sleep(0.05)
 
 
+def source_identity(owner, root):
+    def output(command):
+        return owner.capture(command, cwd=root, check=True, label="source-identity").stdout
+    return {
+        "head": output(["git", "rev-parse", "HEAD"]).decode().strip(),
+        "tree": output(["git", "rev-parse", "HEAD^{tree}"]).decode().strip(),
+        "working_diff_sha256": hashlib.sha256(output(["git", "diff", "HEAD", "--binary"])).hexdigest(),
+        "go_source_sha256": {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((root / "runtime/go").rglob("*.go"))},
+        "node_provenance": json.loads((root / "contracts/context/files-cli-v1/expected.json").read_text())["provenance"],
+    }
+
+
+def cleanup_receipt_matches(receipt, expected):
+    """Require this run's source/binary identity and observed nested cleanup."""
+    for key in ["head", "tree", "working_diff_sha256", "go_source_sha256"]:
+        assert receipt["source"][key] == expected["source"][key], key
+    assert receipt["binary_sha256"] == expected["binary_sha256"]
+    assert receipt["run_id"] == expected["run_id"] and len(receipt["run_id"]) == 32
+    assert receipt["cleanup_complete"] is True and receipt["temporary_removed"] is True
+    assert not receipt["unsettled_groups"]
+    assert receipt["process_groups"] and all(g["waited"] and g["state"] == "observed absent" for g in receipt["process_groups"])
+    identity = receipt["scratch_identity"]
+    base = Path(expected["scratch_base"])
+    assert identity["base"] == str(base) and identity["run_id"] == receipt["run_id"]
+    workspace = Path(identity["workspace"])
+    assert workspace.parent == base and workspace.name.startswith("context-native-" + receipt["run_id"] + "-")
+    assert not workspace.exists()
+    assert isinstance(identity["device"], int) and isinstance(identity["inode"], int)
+    return True
+
+
+def prepare_run(binary, scratch, report, marker):
+    assert not marker.exists() and not report.exists(), "run marker/report must be fresh"
+    root = Path(__file__).resolve().parents[1]
+    with ProcessOwner() as owner:
+        source = source_identity(owner, root)
+    expected = {"run_id": uuid.uuid4().hex, "source": source,
+                "binary_sha256": hashlib.sha256(binary.resolve(strict=True).read_bytes()).hexdigest(),
+                "scratch_base": str(scratch.resolve()), "report": str(report.resolve())}
+    marker.write_text(json.dumps(expected, indent=2) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--go-cli", type=Path, required=True)
     parser.add_argument("--node", default="node")
     parser.add_argument("--scratch", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--run-marker", type=Path)
     args = parser.parse_args()
     assert sys.platform == "darwin" or sys.platform.startswith("linux"), sys.platform
     if args.report.exists():
@@ -150,7 +193,9 @@ def main():
     root = Path(__file__).resolve().parents[1]
     binary = args.go_cli.resolve(strict=True)
     args.scratch.mkdir(parents=True, exist_ok=True)
-    run_id = uuid.uuid4().hex
+    expected = json.loads(args.run_marker.read_text()) if args.run_marker else None
+    run_id = expected["run_id"] if expected else uuid.uuid4().hex
+    assert len(run_id) == 32 and all(c in "0123456789abcdef" for c in run_id)
     owner = ProcessOwner()
     records, streams, signals, differences = [], [], [], []
     profile, source, workspace = {}, None, None
@@ -186,13 +231,12 @@ def main():
         assert profile == {"node": "v24.22.2", "icu": "78.3", "unicode": "17.0"}, profile
         assert platform.python_version() == "3.14.5", platform.python_version()
         corpus = json.loads((root / "contracts/context/files-cli-v1/cases.json").read_text())
-        source = {
-            "head": output(["git", "rev-parse", "HEAD"], "source-head").decode().strip(),
-            "tree": output(["git", "rev-parse", "HEAD^{tree}"], "source-tree").decode().strip(),
-            "working_diff_sha256": hashlib.sha256(output(["git", "diff", "HEAD", "--binary"], "source-diff")).hexdigest(),
-            "go_source_sha256": {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((root / "runtime/go").rglob("*.go"))},
-            "node_provenance": json.loads((root / "contracts/context/files-cli-v1/expected.json").read_text())["provenance"],
-        }
+        source = source_identity(owner, root)
+        if expected:
+            assert expected["source"] == source
+            assert expected["binary_sha256"] == binary_sha256
+            assert expected["scratch_base"] == str(args.scratch.resolve())
+            assert expected["report"] == str(args.report.resolve())
         with owner.startup():
             workspace = Path(tempfile.mkdtemp(prefix="context-native-" + run_id + "-", dir=args.scratch))
             stat = workspace.stat()
@@ -345,7 +389,14 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 3 and sys.argv[1] == "--fifo-writer":
+    if len(sys.argv) == 6 and sys.argv[1] == "--prepare-run":
+        prepare_run(*(Path(p) for p in sys.argv[2:]))
+    elif len(sys.argv) == 4 and sys.argv[1] == "--check-cleanup":
+        marker, report = (Path(p) for p in sys.argv[2:])
+        expected = json.loads(marker.read_text())
+        assert expected["report"] == str(report.resolve())
+        cleanup_receipt_matches(json.loads(report.read_text()), expected)
+    elif len(sys.argv) == 3 and sys.argv[1] == "--fifo-writer":
         with open(sys.argv[2], "wb") as stream:
             stream.write(b"x" * (1024 * 1024) + bytes.fromhex("e28200"))
     else:
