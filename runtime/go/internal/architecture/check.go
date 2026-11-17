@@ -139,7 +139,9 @@ func Check(root string) ([]string, error) {
 		inner := file.record.Layer == "domain" || file.record.Layer == "application"
 		for _, dependency := range file.imports {
 			if dependency != module && !strings.HasPrefix(dependency, module+"/") {
-				if inner && !pureImport(dependency, file.record.Layer) {
+				unicodePolicy := file.record.Context == "ontology" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/ontology/domain" &&
+					(dependency == "golang.org/x/text/cases" || dependency == "golang.org/x/text/language" || dependency == "golang.org/x/text/unicode/norm")
+				if inner && !pureImport(dependency, file.record.Layer) && !unicodePolicy {
 					violations = append(violations, file.path+": inward layer imports platform/package "+dependency)
 				}
 				continue
@@ -162,7 +164,8 @@ func Check(root string) ([]string, error) {
 			transport := file.record.Layer == "infrastructure" && file.record.Context == "code" &&
 				strings.HasPrefix(file.path, "runtime/go/internal/code/adapters/") &&
 				target == "runtime/go/internal/platform/computeprocess" && targetRecord.Context == "platform" && targetRecord.Layer == "infrastructure"
-			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport {
+			scrubPolicy := file.record.Context == "ontology" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/ontology/domain" && target == "runtime/go/internal/core/domain/scrub" && targetRecord.Context == "core" && targetRecord.Layer == "domain"
+			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport && !scrubPolicy {
 				violations = append(violations, file.path+": cross-context internal dependency "+dependency)
 			}
 			if !strings.HasSuffix(file.path, "_test.go") && file.record.Context != targetRecord.Context &&

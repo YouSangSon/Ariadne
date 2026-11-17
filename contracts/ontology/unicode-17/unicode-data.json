@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://www.unicode.org/Public/17.0.0/ucd/NormalizationTest.txt",
+    "sha256": "5019ffd530751a741900c849c0e010332f142a3612234639bd200b82138a87db",
+    "bytes": 2827429
+  },
+  {
+    "url": "https://www.unicode.org/Public/17.0.0/ucd/SpecialCasing.txt",
+    "sha256": "efc25faf19de21b92c1194c111c932e03d2a5eaf18194e33f1156e96de4c9588",
+    "bytes": 17049
+  },
+  {
+    "url": "https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt",
+    "sha256": "24c7fed1195c482faaefd5c1e7eb821c5ee1fb6de07ecdbaa64b56a99da22c08",
+    "bytes": 1134783
+  }
+]

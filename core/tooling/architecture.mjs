@@ -161,7 +161,7 @@ export function readInventory(root) {
   const files = {}
   const dependencies = {}
   const scopes = [['', ['.']], ['packages/memory', PACKAGE_AREAS], ['packages/code', PACKAGE_AREAS]]
-  const actual = [...ROOT_CONFIG, ...sourceFiles(root, ['contracts'], [], /\.json$/)]
+  const actual = [...ROOT_CONFIG, ...sourceFiles(root, ['contracts'], [], /\.(?:json|txt)$/)]
   if (existsSync(join(root, 'runtime/go/go.mod'))) actual.push('runtime/go/go.mod')
   actual.push(...sourceFiles(root, ['runtime/rust'], [], /^Cargo\.toml$/))
   for (const path of ['runtime/rust/Cargo.lock', 'runtime/extensions/Containerfile']) if (existsSync(join(root, path))) actual.push(path)

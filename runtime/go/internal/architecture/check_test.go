@@ -165,3 +165,67 @@ func TestComputeTransportExceptionIsExactAndInwardOnly(t *testing.T) {
 		})
 	}
 }
+
+func TestOntologyScrubPolicyIsExact(t *testing.T) {
+	for _, tt := range []struct {
+		from, layer, owner, to, targetOwner, targetLayer string
+		allowed                                          bool
+	}{
+		{"ontology/domain", "domain", "ontology", "core/domain/scrub", "core", "domain", true},
+		{"ontology/application", "application", "ontology", "core/domain/scrub", "core", "domain", false},
+		{"ontology/domain/nested", "domain", "ontology", "core/domain/scrub", "core", "domain", false},
+		{"ontology/domain", "domain", "ontology", "core/domain/other", "core", "domain", false},
+		{"ontology/domain", "domain", "ontology", "core/domain/scrub", "other", "domain", false},
+		{"core/domain/scrub", "domain", "core", "ontology/domain", "ontology", "domain", false},
+		{"memory/domain", "domain", "memory", "core/domain/scrub", "core", "domain", false},
+	} {
+		t.Run(tt.from+"->"+tt.to+"/"+tt.targetOwner, func(t *testing.T) {
+			from, to := "internal/"+tt.from+"/a.go", "internal/"+tt.to+"/b.go"
+			sources := map[string]string{from: "package source\nimport _ \"example.test/runtime/internal/" + tt.to + "\"", to: "package target"}
+			records := map[string]Record{from: {Layer: tt.layer, Context: tt.owner}, to: {Layer: tt.targetLayer, Context: tt.targetOwner}}
+			violations, err := Check(fixture(t, sources, records))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.allowed && len(violations) != 0 || !tt.allowed && len(violations) == 0 {
+				t.Fatal(tt.allowed, violations)
+			}
+		})
+	}
+}
+func TestOntologyUnicodeImportsAreExact(t *testing.T) {
+	for _, tt := range []struct {
+		path, context, layer, dependency string
+		allowed                          bool
+	}{
+		{"internal/ontology/domain/value.go", "ontology", "domain", "golang.org/x/text/cases", true},
+		{"internal/ontology/domain/value.go", "ontology", "domain", "golang.org/x/text/language", true},
+		{"internal/ontology/domain/value.go", "ontology", "domain", "golang.org/x/text/unicode/norm", true},
+		{"internal/ontology/domain/value.go", "ontology", "domain", "golang.org/x/text/transform", false},
+		{"internal/ontology/domain/value.go", "ontology", "domain", "os", false},
+		{"internal/ontology/domain/value.go", "other", "domain", "golang.org/x/text/cases", false},
+		{"internal/ontology/application/value.go", "ontology", "application", "golang.org/x/text/cases", false},
+		{"internal/ontology/domain/nested/value.go", "ontology", "domain", "golang.org/x/text/cases", false},
+		{"internal/core/domain/scrub/value.go", "core", "domain", "golang.org/x/text/cases", false},
+	} {
+		t.Run(tt.path+"/"+tt.context+"/"+tt.dependency, func(t *testing.T) {
+			violations, err := Check(fixture(t, map[string]string{tt.path: "package source\nimport _ \"" + tt.dependency + "\""}, map[string]Record{tt.path: {Layer: tt.layer, Context: tt.context}}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tt.allowed && len(violations) != 0 || !tt.allowed && len(violations) == 0 {
+				t.Fatal(tt.allowed, violations)
+			}
+		})
+	}
+}
+func TestOntologyApplicationCannotImportJSON(t *testing.T) {
+	from, to := "internal/ontology/application/use.go", "internal/ontology/adapters/json/decode.go"
+	violations, err := Check(fixture(t, map[string]string{from: "package application\nimport _ \"example.test/runtime/internal/ontology/adapters/json\"", to: "package ontologyjson"}, map[string]Record{from: {Layer: "application", Context: "ontology"}, to: {Layer: "infrastructure", Context: "ontology"}}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(strings.Join(violations, "\n"), "application depends outward") {
+		t.Fatal(violations)
+	}
+}
