@@ -1,0 +1,1295 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "plan-empty",
+      "op": "plan",
+      "command": "",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan---help",
+      "op": "plan",
+      "command": "--help",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan--h",
+      "op": "plan",
+      "command": "-h",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-help",
+      "op": "plan",
+      "command": "help",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-setup",
+      "op": "plan",
+      "command": "setup",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-verify",
+      "op": "plan",
+      "command": "verify",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-context",
+      "op": "plan",
+      "command": "context",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-skills",
+      "op": "plan",
+      "command": "skills",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-ontology",
+      "op": "plan",
+      "command": "ontology",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-install-rules",
+      "op": "plan",
+      "command": "install-rules",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-build",
+      "op": "plan",
+      "command": "build",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-test",
+      "op": "plan",
+      "command": "test",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-unknown",
+      "op": "plan",
+      "command": "unknown",
+      "args": [
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-compare",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "compare",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-memory-ablation",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "memory-ablation",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-empty",
+      "op": "plan",
+      "command": "eval",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-unknown",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "unknown",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-toString",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "toString",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-constructor",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "constructor",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-eval-__proto__",
+      "op": "plan",
+      "command": "eval",
+      "args": [
+        "__proto__",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-promote",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "promote",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-index",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "index",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-empty",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-unknown",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "unknown",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-toString",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "toString",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-constructor",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "constructor",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-knowledge-__proto__",
+      "op": "plan",
+      "command": "knowledge",
+      "args": [
+        "__proto__",
+        "--file",
+        "a b.json"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-empty",
+      "op": "plan",
+      "command": "code",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-help",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "--help"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-general",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "inspect",
+        "--root",
+        "/target"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--root",
+        "/target"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-hook",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-hook"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent-explicit",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--command",
+        "custom",
+        "--name",
+        "custom-name"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent-equals",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--command=custom",
+        "--name=custom"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-hook-name",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-hook",
+        "--name",
+        "custom"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent-only-name",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--name",
+        "custom"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent-only-command",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--command",
+        "custom"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-agent-empty-command",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--command",
+        ""
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-empty",
+      "op": "plan",
+      "command": "memory",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory---help",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "--help",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory--h",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "-h",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-init",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "init",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-backup-create",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "backup-create",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-serve",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "serve",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-worker",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "worker",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-mcp",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "mcp",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-migrate",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "migrate",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-backup-verify",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "backup-verify",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-restore-smoke",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "restore-smoke",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-pack",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "pack",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-unknown",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "unknown",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-toString",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "toString",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-constructor",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "constructor",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-memory-__proto__",
+      "op": "plan",
+      "command": "memory",
+      "args": [
+        "__proto__",
+        "--example"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "select-all",
+      "op": "select",
+      "args": [],
+      "defaults": [
+        "core",
+        "memory",
+        "code",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-source",
+      "op": "select",
+      "args": [],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-empty",
+      "op": "select",
+      "args": [],
+      "defaults": []
+    },
+    {
+      "id": "select-dedup",
+      "op": "select",
+      "args": [],
+      "defaults": [
+        "code",
+        "core",
+        "code",
+        "memory",
+        "core"
+      ]
+    },
+    {
+      "id": "select-default-values",
+      "op": "select",
+      "args": [],
+      "defaults": [
+        "",
+        "custom",
+        "",
+        "core"
+      ]
+    },
+    {
+      "id": "select-order",
+      "op": "select",
+      "args": [
+        "--modules",
+        "code,core,memory"
+      ],
+      "defaults": []
+    },
+    {
+      "id": "select-equals",
+      "op": "select",
+      "args": [
+        "--modules=ontology,code"
+      ],
+      "defaults": []
+    },
+    {
+      "id": "select-only-core",
+      "op": "select",
+      "args": [
+        "--modules",
+        "core"
+      ],
+      "defaults": []
+    },
+    {
+      "id": "select-invalid-0",
+      "op": "select",
+      "args": [
+        "--modules"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-1",
+      "op": "select",
+      "args": [
+        "--modules="
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-2",
+      "op": "select",
+      "args": [
+        "--modules",
+        ""
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-3",
+      "op": "select",
+      "args": [
+        "--modules",
+        "core,"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-4",
+      "op": "select",
+      "args": [
+        "--modules=memory,,code"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-5",
+      "op": "select",
+      "args": [
+        "--modules=other"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-6",
+      "op": "select",
+      "args": [
+        "--modules=core,core"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-7",
+      "op": "select",
+      "args": [
+        "--modules=code,code"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-8",
+      "op": "select",
+      "args": [
+        "--modules=Core"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-9",
+      "op": "select",
+      "args": [
+        "--modules= code"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-10",
+      "op": "select",
+      "args": [
+        "--modules=core",
+        "extra"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-11",
+      "op": "select",
+      "args": [
+        "--modules=code",
+        "--modules=memory"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-invalid-12",
+      "op": "select",
+      "args": [
+        "--other",
+        "code"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "environment-setup",
+      "op": "environment",
+      "action": "setup",
+      "environment": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "existing",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-setup",
+      "op": "environment",
+      "action": "setup",
+      "environment": {}
+    },
+    {
+      "id": "steps-setup-none",
+      "op": "steps",
+      "action": "setup",
+      "modules": []
+    },
+    {
+      "id": "steps-setup-core",
+      "op": "steps",
+      "action": "setup",
+      "modules": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "steps-setup-memory",
+      "op": "steps",
+      "action": "setup",
+      "modules": [
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "steps-setup-code",
+      "op": "steps",
+      "action": "setup",
+      "modules": [
+        "core",
+        "code"
+      ]
+    },
+    {
+      "id": "steps-setup-reverse",
+      "op": "steps",
+      "action": "setup",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "environment-build",
+      "op": "environment",
+      "action": "build",
+      "environment": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "existing",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-build",
+      "op": "environment",
+      "action": "build",
+      "environment": {}
+    },
+    {
+      "id": "steps-build-none",
+      "op": "steps",
+      "action": "build",
+      "modules": []
+    },
+    {
+      "id": "steps-build-core",
+      "op": "steps",
+      "action": "build",
+      "modules": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "steps-build-memory",
+      "op": "steps",
+      "action": "build",
+      "modules": [
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "steps-build-code",
+      "op": "steps",
+      "action": "build",
+      "modules": [
+        "core",
+        "code"
+      ]
+    },
+    {
+      "id": "steps-build-reverse",
+      "op": "steps",
+      "action": "build",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "environment-test",
+      "op": "environment",
+      "action": "test",
+      "environment": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "existing",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-test",
+      "op": "environment",
+      "action": "test",
+      "environment": {}
+    },
+    {
+      "id": "steps-test-none",
+      "op": "steps",
+      "action": "test",
+      "modules": []
+    },
+    {
+      "id": "steps-test-core",
+      "op": "steps",
+      "action": "test",
+      "modules": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "steps-test-memory",
+      "op": "steps",
+      "action": "test",
+      "modules": [
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "steps-test-code",
+      "op": "steps",
+      "action": "test",
+      "modules": [
+        "core",
+        "code"
+      ]
+    },
+    {
+      "id": "steps-test-reverse",
+      "op": "steps",
+      "action": "test",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "environment-verify",
+      "op": "environment",
+      "action": "verify",
+      "environment": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "existing",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-verify",
+      "op": "environment",
+      "action": "verify",
+      "environment": {}
+    },
+    {
+      "id": "steps-verify-none",
+      "op": "steps",
+      "action": "verify",
+      "modules": []
+    },
+    {
+      "id": "steps-verify-core",
+      "op": "steps",
+      "action": "verify",
+      "modules": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "steps-verify-memory",
+      "op": "steps",
+      "action": "verify",
+      "modules": [
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "steps-verify-code",
+      "op": "steps",
+      "action": "verify",
+      "modules": [
+        "core",
+        "code"
+      ]
+    },
+    {
+      "id": "steps-verify-reverse",
+      "op": "steps",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "environment-other",
+      "op": "environment",
+      "action": "other",
+      "environment": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "existing",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-other",
+      "op": "environment",
+      "action": "other",
+      "environment": {}
+    },
+    {
+      "id": "steps-other-none",
+      "op": "steps",
+      "action": "other",
+      "modules": []
+    },
+    {
+      "id": "steps-other-core",
+      "op": "steps",
+      "action": "other",
+      "modules": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "steps-other-memory",
+      "op": "steps",
+      "action": "other",
+      "modules": [
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "steps-other-code",
+      "op": "steps",
+      "action": "other",
+      "modules": [
+        "core",
+        "code"
+      ]
+    },
+    {
+      "id": "steps-other-reverse",
+      "op": "steps",
+      "action": "other",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-setup-success",
+      "op": "run",
+      "action": "setup",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-build-success",
+      "op": "run",
+      "action": "build",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-test-success",
+      "op": "run",
+      "action": "test",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-verify-success",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-other-success",
+      "op": "run",
+      "action": "other",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ]
+    },
+    {
+      "id": "run-nonzero-first",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "statuses": [
+        17
+      ]
+    },
+    {
+      "id": "run-nonzero-later",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "statuses": [
+        0,
+        0,
+        23
+      ]
+    },
+    {
+      "id": "run-negative",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "statuses": [
+        -2
+      ]
+    },
+    {
+      "id": "run-run-error-first",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "runErrorAt": 0
+    },
+    {
+      "id": "run-run-error-later",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "runErrorAt": 2
+    },
+    {
+      "id": "run-report-error-start",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "reportErrorAt": 0
+    },
+    {
+      "id": "run-report-error-complete",
+      "op": "run",
+      "action": "verify",
+      "modules": [
+        "code",
+        "core",
+        "memory",
+        "ontology"
+      ],
+      "reportErrorAt": 1
+    },
+    {
+      "id": "run-empty-success",
+      "op": "run",
+      "action": "setup",
+      "modules": []
+    },
+    {
+      "id": "plan-code-command-value-is-name-token",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent"
+      ],
+      "codeCommand": "--name"
+    },
+    {
+      "id": "select-invalid-precedes-duplicate",
+      "op": "select",
+      "args": [
+        "--modules=core,core,invalid"
+      ],
+      "defaults": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "plan-context-empty-args",
+      "op": "plan",
+      "command": "context",
+      "args": [],
+      "codeCommand": "/checkout/bin/code.mjs"
+    },
+    {
+      "id": "plan-code-bare-agent-command",
+      "op": "plan",
+      "command": "code",
+      "args": [
+        "install-agent",
+        "--command"
+      ],
+      "codeCommand": "/checkout/bin/code.mjs"
+    }
+  ]
+}
