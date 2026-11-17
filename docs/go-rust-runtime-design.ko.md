@@ -499,4 +499,3 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 로컬 검토 publication이며 actual main은 아직 아니다. 원격 게시 뒤 정상 통합과 한 번의
 최종 전체 Go race/vet/AST 및 root source gate는 남아 있다. Node public
 export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
-

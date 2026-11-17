@@ -22,7 +22,9 @@ requirement:
     - 기존 Node public exports와 production 소스는 변경하지 않는다.
     - Requirements는 private immutable lossless UTF16 Text와 엄격한 제한 문법을 소유한다.
     - Core FieldBlock만 공유하며 Context의 partial parser 정책을 강화하지 않는다.
-    - 부모가 Go 단계를 승인했으며 C3 publication cb1f6864를 정상 merge했다.
+    - 부모가 Go 단계를 승인했으며 C3 publication cb1f6864 및 검토된 local publication 58932fd2를 정상 merge했다.
+    - Requirements와 mode-number 수정의 독립 SOURCE 검토는 통과했으며 최종 통합 전체 gate는 아직 실행하지 않았다.
+    - C3 58932fd2는 local reviewed dependency이며 실제 main은 아직 5c80718이다.
     - 기존 Node 163개와 166개 관측을 보존하고 mode decimal 재현을 추가해 177개로 확장했다.
     - mode는 새 safe-integer 제한 없이 Node Number의 최단 소수 표기로 frame에 넣는다.
   assumptions: []
