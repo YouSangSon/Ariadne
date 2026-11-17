@@ -1436,6 +1436,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/architecture/requirements_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/code/adapters/computeprocess/counter.go": {
       "layer": "infrastructure",
       "context": "code"
@@ -1799,6 +1803,34 @@
     "runtime/go/internal/platform/computeprocess/runner_test.go": {
       "layer": "tooling",
       "context": "platform"
+    },
+    "runtime/go/internal/requirements/application/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/application/requirements.go": {
+      "layer": "application",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/contract.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/scalar.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/source.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/text.go": {
+      "layer": "domain",
+      "context": "requirements"
     },
     "runtime/rust/Cargo.lock": {
       "layer": "tooling",

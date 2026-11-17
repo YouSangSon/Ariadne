@@ -83,15 +83,20 @@ function observeState(entry) {
   const injected = entry.fail ? new Error('injected ' + entry.fail) : undefined
   let updates = 0
   let current
+  let inspected
+  const options = entry.req_id === undefined ? {} : { reqId: entry.req_id }
   result.result = outcome(() => sourceState({
     inspectGit() {
       result.events.push({ call: 'inspectGit' })
       if (entry.fail === 'inspectGit') throw injected
-      return { head: entry.head ?? null, paths: pathsFor(entry) }
+      if (entry.mutations?.inspect_req_id !== undefined) options.reqId = entry.mutations.inspect_req_id
+      inspected = { head: entry.head ?? null, paths: pathsFor(entry) }
+      return inspected
     },
     sourceHasher() {
       result.events.push({ call: 'sourceHasher' })
       if (entry.fail === 'sourceHasher') throw injected
+      if (entry.mutations?.factory_head !== undefined) inspected.head = entry.mutations.factory_head
       const hash = createHash('sha256')
       return {
         update(value) {
@@ -118,7 +123,7 @@ function observeState(entry) {
       assert.ok(current, 'missing offline input: ' + path)
       return { kind: current.kind, mode: current.mode ?? null, content: contentFor(current) }
     },
-  }, entry.req_id === undefined ? {} : { reqId: entry.req_id }), injected)
+  }, options), injected)
   return result
 }
 function observe(entry) {

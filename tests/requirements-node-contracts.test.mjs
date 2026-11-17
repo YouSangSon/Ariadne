@@ -157,3 +157,18 @@ test('check rejects result, bytes, event and independent manifest drift without 
   }
   assert.deepEqual(readFileSync(expectedURL), original)
 })
+
+
+test('source ports observe reqId and nullable head value snapshots at their original boundaries', () => {
+  const value = entry('state-port-value-snapshots')
+  assert.deepEqual(value.result.value.files, ['.harness/reqs/b.yaml'])
+  assert.equal(value.result.value.head, 'before')
+  assert.deepEqual(calls(value.id), ['inspectGit', 'sourceHasher', 'readInput', 'update', 'update', 'digest'])
+})
+
+
+test('plain reserved scalars use ASCII case matching without Unicode long-s folding', () => {
+  assert.equal(entry('scalar-ascii-case-long-s').parse.value.criteria[0].statement, 'falſe')
+  assert.equal(entry('scalar-ascii-case-uppercase-false').parse.error.message, 'REQ unsupported or empty string scalar')
+  assert.equal(entry('scalar-reject-boolean').parse.error.message, 'REQ unsupported or empty string scalar')
+})

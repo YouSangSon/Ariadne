@@ -46,7 +46,7 @@ operation은 `contract`, `slug`, `files`, `state`다. `contract`는 같은 YAML�
 
 `parseContract`는 full YAML/schema validator가 아니다. slug → NUL/indent → top mappings → req_id → status → AC → scope 순서다. schema_version과 kind를 새로 검사하지 않는다. AC에서는 전체 field collection 뒤 id/statement/verification 순서로 scalar를 검사하고, invalid/duplicate ID → priority → passes를 검사한다. 첫 AC의 검증이 끝나야 다음 AC를 처리한다.
 
-literal/folded/chomp, JSON double quote와 YAML single quote, 주석, 잘못된 continuation/indent 및 plain numeric 거절을 고정한다. double quote의 JSON escape는 lone high/low surrogate를 허용한다. JS trim은 ES whitespace를 제거하지만 NEL U+0085는 남긴다. raw LS/PS/CR은 정규식의 줄 경계와 `.` 동작 때문에 escaped 문자열과 다른 결과를 낼 수 있다. literal raw와 escaped 사례를 둘 다 보관한다.
+literal/folded/chomp, JSON double quote와 YAML single quote, 주석, 잘못된 continuation/indent 및 plain numeric 거절을 고정한다. reserved/numeric scalar의 대소문자는 ASCII만 접는다. Node의 `i` without `u` 규칙에 따라 `FALSE`와 `false`는 거절하지만 long-s를 쓴 `falſe`는 원문 그대로 허용한다. double quote의 JSON escape는 lone high/low surrogate를 허용한다. JS trim은 ES whitespace를 제거하지만 NEL U+0085는 남긴다. raw LS/PS/CR은 정규식의 줄 경계와 `.` 동작 때문에 escaped 문자열과 다른 결과를 낼 수 있다. literal raw와 escaped 사례를 둘 다 보관한다.
 
 scope는 다음 순서의 **원문 FieldBlock 문자열 10개**다. 없는 필드는 빈 문자열이며 주석과 내부 CRLF 및 LS/PS를 유지한다. 직접 parser는 adapter의 BOM 제거·CRLF 변환을 수행하지 않는다. leading BOM이 어느 mapping 앞에 놓였는지에 따라 결과가 다를 수 있다.
 
@@ -68,6 +68,8 @@ load 순서는 slug → ReadRequirement → Parse → Hash다. payload는 고정
 `sourceFiles`는 UTF16 exact 중복 제거 → exact 제외 → UTF16 정렬 → 최종 10000 제한이다. `.git`/node_modules는 정확한 경로 component이고, `.harness/handoff` exact 및 prefix는 루트에서만 제외한다. selected REQ 한 경로만 선택적으로 제외한다. reqId를 검증하거나 경로를 Clean/casefold하지 않는다.
 
 `sourceState`는 선택 slug → InspectGit → SourceFiles → SourceHasher factory 한 번 → 정렬한 파일마다 ReadInput 한 번 → 누적 raw content 길이 검사 → Update 두 번 → Digest다. header는 정확히 `JSON.stringify([path,kind,mode,content.length]) + '\n'`다. 그 뒤 raw bytes를 전달하고 빈 bytes도 Update한다. HEAD는 nullable 출처 정보이며 hash 입력이 아니다. kind/mode를 검증하거나 masking하지 않는다. 제한 초과 파일도 읽되 header/content Update를 호출하지 않는다.
+
+callback의 값 복사 시점도 원본 계약이다. reqId는 SourceState 진입 시 읽고 HEAD는 InspectGit이 반환한 즉시 읽는다. InspectGit이 caller의 reqId를 바꾸거나 hasher factory가 반환 record의 HEAD를 바꿔도 이미 읽은 값은 유지한다. `mutations.inspect_req_id`와 `mutations.factory_head`가 이 관측을 재현한다. raw content Buffer는 원본처럼 Update에 직접 넘기며 포트 전체를 deep copy하지 않는다.
 
 native regular/symlink 안전 검사와 파일별 1MiB 제한은 후속 files adapter 경계다. pure oracle의 64MiB 입력은 그 native 정책을 변경하지 않는다. 기존 tracked Unicode corpus가 1MiB를 넘으므로 현재 저장소 전체의 sourceState를 성공 기준으로 사용하지 않는다.
 

@@ -1350,6 +1350,44 @@
       "op": "contract",
       "req_id": "demo",
       "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |- # marker\n        # literal comment\n\n        final\n\n\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "state-port-value-snapshots",
+      "op": "state",
+      "req_id": "a",
+      "head": "before",
+      "paths": [
+        ".harness/reqs/a.yaml",
+        ".harness/reqs/b.yaml"
+      ],
+      "inputs": {
+        ".harness/reqs/a.yaml": {
+          "kind": "file",
+          "mode": null,
+          "content_hex": ""
+        },
+        ".harness/reqs/b.yaml": {
+          "kind": "file",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "mutations": {
+        "inspect_req_id": "b",
+        "factory_head": "after"
+      }
+    },
+    {
+      "id": "scalar-ascii-case-long-s",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: fal\u017fe\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-ascii-case-uppercase-false",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: FALSE\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
     }
   ]
 }

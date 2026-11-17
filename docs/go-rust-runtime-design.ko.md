@@ -467,3 +467,27 @@ FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 
 profile을 소유한다. C2의 272개 순수 골든은 별도로 유지하고 실제 C1 main을 정상
 통합한 Context family에서 전체 Go/race/vet/AST/root gate와 독립 SOURCE 검토를
 마친 뒤 완료로 표시한다. 현재 집중·제한된 native 검증과 전체 gate·CI·게시를 구분한다.
+
+### G1d Requirements 순수 library 구현 범위
+
+Requirements의 private UTF16 Text와 엄격한 canonical-subset parser(정해진 REQ 문법 검사)를
+`runtime/go/internal/requirements/domain`에 추가했다. Core의 기존 `requirementfields`만
+정확한 domain 디렉터리에서 공유한다. Context의 부분 REQ 정책과 공유 필드 추출기는
+변경하지 않는다. app/nested/다른 Core/Context/Ontology와 역방향·cycle·잘못된 ownership은
+AST 음성 fixture에서 계속 거절한다. application은 private JSON string 직렬화로
+Node의 정확한 contract payload와 path/kind/mode/length frame을 만들고 오류를 원래 객체로
+반환한다. native Git/files/CLI와 기본 실행기 전환은 포함하지 않는다.
+
+[실제 Node 계약](../contracts/requirements/node-v1/README.md)의 기존 163개를 보존한 166개 관측과 비교해
+UTF16 lone surrogate, 10개 원문 scope, 제외 필드의 검증, UTF16 정렬과 최종 10000개 제한,
+빈 content의 두 Update, nullable HEAD, 원래 포트 오류와 64MiB aggregate 경계를 보존했다.
+reqId는 첫 포트 전, HEAD는 InspectGit 직후에 값으로 고정해 callback의 뒤늦은 변경과
+분리한다. reserved scalar의 대소문자는 ASCII만 접으므로 `falſe`를 false로 거절하지 않는다.
+두 차이는 실제 Node 재현을 추가한 뒤 Go RED와 최소 수정으로 확인했다.
+Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 focused 비교가
+통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 실제 C3 publication 의존성
+`cb1f6864`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.
+
+현재는 순수 library의 focused 검증 단계다. 최종 C3 actual main의 정상 통합, 독립 SOURCE
+리뷰와 한 번의 최종 전체 Go race/vet/AST 및 root source gate는 아직 남아 있다. Node public
+export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
