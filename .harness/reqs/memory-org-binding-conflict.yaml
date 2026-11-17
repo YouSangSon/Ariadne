@@ -1,0 +1,73 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: memory-org-binding-conflict
+  title: Memory JSON HTTP의 조직 바인딩 충돌 검사 복구
+  status: ready_for_routing
+  priority: P0
+  owner: memory
+  intake_started: 2026-11-17
+  promoted_at: 2026-11-17
+source:
+  raw_user_prompt: "Implement the narrowly approved Node prerequisite fix during Ariadne Go/Rust refactoring."
+  user_language: ko
+  repo: Ariadne
+classification:
+  category: fix
+  confidence: high
+  reason: 게시된 조직 바인딩 계약과 공유 resolver의 불일치를 복구한다.
+requirement:
+  user_intent: 조직에 바인딩된 토큰과 다른 요청 조직은 JSON HTTP handler 실행 전에 거부한다.
+  desired_outcome: 헤더가 토큰 조직과 같아도 본문 조직이 다르면 기존 403 오류로 거부한다.
+  confirmed_facts:
+    - configuration.md와 security.md는 본문 또는 헤더의 조직 불일치에 403을 명시한다.
+    - 공유 resolver는 21개 JSON HTTP route에서 사용하며 MCP HTTP는 별도 경로다.
+    - 기존 handler는 본문 조직을 토큰 조직으로 덮어쓰므로 교차 조직 노출은 확인되지 않았다.
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 정적 토큰과 OAuth 모두 헤더 또는 본문 중 하나라도 바인딩 조직과 다르면 기존 403 응답으로 거부하고 registry를 호출하지 않는다.
+      verification: npm test -- --maxWorkers=1 tests/mcp/resolve-org.test.ts tests/app/memory-routes-boundary.test.ts
+      passes: null
+    - id: AC2
+      priority: P0
+      statement: 일치하는 조직의 공백 정규화와 바인딩 없는 요청의 헤더 우선순위 및 기존 입력 검증을 보존한다.
+      verification: npm run verify -- --modules memory
+      passes: null
+    - id: AC3
+      priority: P0
+      statement: Memory 전체 로컬 검증과 빌드를 통과하고 독립 소스 리뷰의 지적을 해소한다.
+      verification: npm run verify -- --modules memory 및 packages/memory의 npm run build와 독립 Astra 소스 리뷰
+      passes: null
+code_mapping:
+  code_areas:
+    memory:
+      paths:
+        - packages/memory/src/interfaces/http/middleware/organization-resolution.ts
+        - packages/memory/tests/mcp/resolve-org.test.ts
+        - packages/memory/tests/app/memory-routes-boundary.test.ts
+      reason: 기존 공유 조직 해석 경계와 직접 회귀 검사만 수정한다.
+  boundary_rules:
+    - 헤더와 본문의 기존 검증 이후 정규화된 두 값을 바인딩 조직과 각각 비교한다.
+    - MCP 계약과 인증 서비스 및 저장소와 Go 또는 Rust 코드는 변경하지 않는다.
+verification:
+  commands:
+    - npm run verify -- --modules memory
+    - npm --prefix packages/memory run build
+  verify_gate_required: true
+  verify_gate_reason: 공유 조직 권한 경계의 회귀를 확인한다.
+  escalate_after: 3
+  evidence: []
+  attempts: []
+audit:
+  must_not_implement:
+    - 새 인증 서비스와 인프라 및 Go 포트
+    - MCP HTTP의 조직 헤더 처리 변경
+    - 정책 문서를 수정해 기존 결함을 정당화
+    - 공개 보안 이슈 생성과 push 및 PR 생성과 merge
+  completion_report_should_include:
+    - 실제 RED와 GREEN 및 최종 source 상태
+    - 실행 검사와 명시적 DB opt-in skip
+    - 작업 소유 산출물 정리와 남은 gate

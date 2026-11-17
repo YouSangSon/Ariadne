@@ -73,7 +73,10 @@ export function resolveOrganizationId(
   const callerOrg = headerOrg ?? bodyOrg;
 
   if (auth?.organizationId) {
-    if (callerOrg !== undefined && callerOrg !== auth.organizationId) {
+    if (
+      (headerOrg !== undefined && headerOrg !== auth.organizationId) ||
+      (bodyOrg !== undefined && bodyOrg !== auth.organizationId)
+    ) {
       return { organizationId: auth.organizationId, conflict: true };
     }
     return { organizationId: auth.organizationId, conflict: false };
