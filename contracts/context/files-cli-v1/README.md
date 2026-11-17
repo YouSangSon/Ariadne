@@ -65,6 +65,19 @@ SIGINT, SIGTERM and forced SIGKILL observations include raw return code, shell
 status, Wait and process-group absence; no product-wide signal handler is added.
 Native errno message bytes are recorded separately from portable equality.
 
+The qualifier owns every profile, Git, paired CLI, reader and writer child from
+startup through wait and group-absence observation. It defers raising an interrupt
+until Popen returns and the handle is registered; it does not change inherited
+signal masks or install a product handler. Its regression script covers original
+mask preservation, actual startup handshakes and interruption during cleanup.
+Each fresh report has a unique run and scratch identity, source and binary hashes,
+and separate behavior/cleanup outcomes. A caller must preserve its outer paths if
+the matching report is missing or cleanup is incomplete after native work starts.
+CI and the local continuation use the same receipt predicate and a fresh run marker
+that binds source, binary and scratch identities. Regression-driver timeouts still
+run bounded supervisor Wait and authoritative nested-ledger cleanup; uncertain
+cleanup preserves the fixture and blocks outer recursive deletion.
+
 The Go Linux-only reader tests use actual pinned Node on native temporary storage
 for malformed filenames, canonical symlink roots and cwd resolution. macOS/APFS
 rejects malformed native filenames with EILSEQ during setup; that is not a behavior

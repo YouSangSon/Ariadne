@@ -51,7 +51,7 @@ G1b의 실제 main `c7ac4921`을 정상 통합한 `0132435` 소스에서 전체 
 
 작업별 모듈 캐시 정리와 프로세스 group 종료를 확인하고 전체 임시 경로 286,315,287 bytes를 정리했다. 이 수치에는 Go cache 223,776,290 bytes가 포함되며 두 수치를 합산하지 않는다.
 
-원격 CI·게시와 실제 Go 제품 런타임·CLI 전환은 아직 완료하지 않았다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
+이 순수 규칙은 [PR19](https://github.com/YouSangSon/Ariadne/pull/19)로 실제 main `4e37409`에 게시했다. 실제 Go 제품 런타임·기본 CLI 전환과 성능 채택은 별도 단계다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
 
 ## 3. 결정과 대안
 
@@ -384,7 +384,7 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 ## 12. 미확인 사항과 다음 작업
 
-현재 G2a의 숫자 계약과 순수 계산은 [계약 정본](../contracts/compute/v1/README.md)과 [요구사항](../.harness/reqs/compute-contracts.yaml)으로 추적한다. 다음 계산 단위는 G2b의 실제 subprocess·EOF·취소 연결이다. G0의 성능·자원 baseline과 로컬 backup timeout은 별도로 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다.
+G2a의 숫자 계약·순수 계산과 G2b의 실제 subprocess·EOF·취소 연결은 [계약 정본](../contracts/compute/v1/README.md)으로 추적한다. G2b 구현은 [PR13](https://github.com/YouSangSon/Ariadne/pull/13)에 게시했다. 다음 범위는 남은 G1 use case와 G3 Memory·G4 Code·G5 제품 조립이며, G0의 성능·자원 baseline과 로컬 backup timeout도 별도로 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다. 기존 Node Memory의 조직 binding 보정은 [PR20](https://github.com/YouSangSon/Ariadne/pull/20)이며 Go Memory 이식 완료와 구분한다.
 
 - Go MCP SDK의 존재는 확인했지만 현 HTTP/MCP의 OAuth·tool schema·session·오류와의 동등성은 미검증이다.
 - SQLite driver/`sqlite-vec`와 transformers 대체 adapter, TS parser 대체 여부는 선정 전이다. native dependency·라이선스·모델 출력 동등성·플랫폼 검사가 끝나기 전 해당 owner의 Node 제거를 약속하지 않는다.
@@ -393,7 +393,7 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 설계 문서 검증 범위는 실제 코드/기존 목표 대조, 대안 검토, 시나리오 연결, 독립 리뷰, 상대 링크·REQ 형식·diff 확인이다. Go/Rust 빌드·성능·운영 검증과 동일한 상태로 보고하지 않는다.
 
-독립 리뷰에서 G2의 중계 경계, EOF 종료 순서, stable-sort 동률과 소수점 provenance, 임베딩 전처리 누락을 보완했다. 최종 검토에는 미해결 Blocker/Major가 없으며 목표 설계와 G0 준비로 진행할 수 있다는 판정을 받았다. 실제 프로세스 종료·성능·native adapter·운영 cutover 검증은 여전히 남아 있다.
+초기 설계의 독립 리뷰에서 G2의 중계 경계, EOF 종료 순서, stable-sort 동률과 소수점 provenance, 임베딩 전처리 누락을 보완했다. 당시 검토는 목표 설계와 G0 준비를 허용한 판정이다. 이후 G2b의 프로세스 종료·EOF·취소는 PR13과 계산 계약의 범위별 근거로 확인했다. 제품 workload의 성능·다른 native adapter·운영 cutover는 별도 검증 대상이다.
 
 후속 요청으로 GR-D09, §4.1–4.3, §10의 TDD 순서, GR-S16–17을 명시했다. 이는 기존 아키텍처 요구를 구체화한 문서 보완이며 초기 독립 리뷰 이후 추가됐다. 이 요구는 기존 owner·의존성 규칙을 유지한다. 후속 E0/registry와 G2a에서 범위별 Go/Rust 경계 검사와 실패 후 통과 근거를 추가했으며, 전 단계 구현 완료와는 구분한다.
 
@@ -418,8 +418,9 @@ x/text의 cases/language/norm 3개만 허용하며 일반 core 내부 접근은 
 Unicode17 데이터·라이선스·재생성·검사 범위는
 [고정 데이터 안내](../contracts/ontology/unicode-17/README.md)가 소유한다.
 
-이 단위는 filesystem/CLI 연결과 기본 전환을 포함하지 않는다. G1b/G1c와
-실제 CI 및 공개 전환 근거는 각각 확인한 뒤 완료로 표시한다.
+순수 library는 [PR17](https://github.com/YouSangSon/Ariadne/pull/17), 파일·실험
+CLI 연결은 [PR18](https://github.com/YouSangSon/Ariadne/pull/18)에 게시했다.
+제품 기본 전환과 성능 채택은 이 두 구현의 완료와 구분한다.
 
 ### G1c2 Context 순수 library 구현 범위
 
@@ -427,9 +428,9 @@ Context의 domain/application과 Core의 부분 REQ 필드 추출을 Go library�
 [실제 Node 272개 골든](../contracts/context/node-v1/README.md)은 lossless UTF-16 본문,
 전체 예산과 오류·포트 읽기 순서를 고정한다. Context는 자체 private Text를 소유하고
 Core requirementfields의 정확한 순수 정책만 공유한다. 기존 Ontology와 Node 제품은
-변경하지 않는다. 로컬 집중 검사와 기존 Context·skill 보안 검사는 통과했으며,
-실제 선행 Core main 통합 후 최종 전체 Go race/vet/AST/root gate와 독립 SOURCE
-검토가 남아 있다. 파일·CLI는 아래 G1c3에서 연결하며 기본 전환은 별도 범위다.
+변경하지 않는다. C2의 순수 소스와 실제 Node 입력·출력은 별도 출처로 보존한다.
+파일·CLI는 아래 G1c3와 같은 Context family 로컬 검증 단위로 연결하며,
+검증 도구의 실행 profile과 실제 게시·제품 기본 전환은 각각 구분한다.
 ### G1b 파일 연결과 별도 실험용 CLI
 
 G1b는 공개 Core application의 `ProjectTextReader`와 `Scrub` 포트를 통해
@@ -447,8 +448,9 @@ inode를 출처와 비교한다. FD는 읽기 호출이 소유하고 parent를 �
 기존 안정된 workspace 전제는 유지한다. 이 reader는 OS sandbox나 원자적
 다중 파일 snapshot이 아니며, 고정 parent의 외부 rename과 임의 hostile writer를
 완전히 차단하지 않는다. [별도 파일·CLI 계약](../contracts/ontology/files-cli-v1/README.md)은
-실제 Node24.22.2의 portable oracle과 source provenance를 소유한다. macOS 로컬
-검증, Linux 실제 CI, 기본 전환과 자원 성능 gate는 각각 확인해야 한다.
+실제 Node24.22.2의 portable oracle과 source provenance를 소유한다. G1b의
+게시 근거는 PR18이며, 이 문서의 로컬 profile·플랫폼 증명과 제품 기본 전환·
+자원 성능 채택은 각각 구분한다.
 
 ### G1c3 Context 파일과 별도 실험 CLI
 
@@ -464,9 +466,11 @@ resolve 순서를 보존하고, 마지막 raw anchor의 기존 descriptor 검사
 FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 수 있다.
 검증 driver의 kill/wait를 제품의 읽기 timeout이나 OS sandbox로 설명하지 않는다.
 [파일·CLI 계약](../contracts/context/files-cli-v1/README.md)이 실제 oracle과 native
-profile을 소유한다. C2의 272개 순수 골든은 별도로 유지하고 실제 C1 main을 정상
-통합한 Context family에서 전체 Go/race/vet/AST/root gate와 독립 SOURCE 검토를
-마친 뒤 완료로 표시한다. 현재 집중·제한된 native 검증과 전체 gate·CI·게시를 구분한다.
+profile을 소유한다. C2의 272개 순수 골든은 별도로 유지한다. Context family의
+로컬 증거는 순수 계약·파일·실제 바이너리·프로세스 정리를 나눠 기록하며,
+Go runtime이 처리하는 signal과 Python 검증 도구의 자식 signal 상태도 구분한다.
+검증 도구는 생성·등록 중 중단을 지연하고 자식의 원래 signal mask를 유지한다.
+전체 제품의 Node 기본값과 성능 채택은 이 로컬 구현 단위의 결과로 바꾸지 않는다.
 
 ### G1d Requirements 순수 library 구현 범위
 
@@ -488,9 +492,11 @@ mode의 int64 포트 값도 Node Number로 변환한 최단 소수로 직렬화�
 숫자와 JSON frame 표기가 다를 수 있으므로 decimal-text recipe로 RED→GREEN을 검증했다.
 safe-integer 제한·mode 검증·masking을 새로 추가하지 않는다.
 Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 focused 비교가
-통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 실제 C3 publication 의존성
-`cb1f6864`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.
+통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 로컬 검토된 C3 publication 의존성
+`58932fd2`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.
 
-현재는 순수 library의 focused 검증 단계다. 최종 C3 actual main의 정상 통합, 독립 SOURCE
-리뷰와 한 번의 최종 전체 Go race/vet/AST 및 root source gate는 아직 남아 있다. Node public
+현재 순수 library와 mode-number 수정의 독립 SOURCE 검토를 통과했다. C3 의존성은
+로컬 검토 publication이며 actual main은 아직 아니다. 원격 게시 뒤 정상 통합과 한 번의
+최종 전체 Go race/vet/AST 및 root source gate는 남아 있다. Node public
 export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
+

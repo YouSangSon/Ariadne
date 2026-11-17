@@ -2132,6 +2132,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "tools/test_qualify_context_files.py": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "tools/test_qualify_extension_runtime.py": {
       "layer": "tooling",
       "context": "validation"
