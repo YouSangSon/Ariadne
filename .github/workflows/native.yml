@@ -55,6 +55,7 @@ jobs:
           go run ./cmd/check-architecture --root ../..
           go test -race ./...
           go vet ./...
+          python3 -B ../../tools/test_qualify_context_files.py
           go build -o "$RUNNER_TEMP/ariadne-native-cli" ./cmd/Ariadne
           python3 -B ../../tools/qualify_context_files.py --go-cli "$RUNNER_TEMP/ariadne-native-cli" --scratch "$GOTMPDIR" --report "$RUNNER_TEMP/context-files-native.json"
       - name: Preserve native Context qualification proof
