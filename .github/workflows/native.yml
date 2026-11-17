@@ -75,8 +75,8 @@ jobs:
           regression_started=1
           python3 -B ../../tools/test_qualify_context_files.py --cleanup-report "$regression_report" "$regression_run_id"
           go build -o "$RUNNER_TEMP/ariadne-native-cli" ./cmd/Ariadne
-          python3 -B ../../tools/qualify_context_files.py --prepare-run "$RUNNER_TEMP/ariadne-native-cli" "$GOTMPDIR" "$native_report" "$native_marker"
           native_started=1
+          python3 -B ../../tools/qualify_context_files.py --prepare-run "$RUNNER_TEMP/ariadne-native-cli" "$GOTMPDIR" "$native_report" "$native_marker"
           python3 -B ../../tools/qualify_context_files.py --go-cli "$RUNNER_TEMP/ariadne-native-cli" --scratch "$GOTMPDIR" --report "$native_report" --run-marker "$native_marker"
       - name: Preserve native Context qualification proof
         if: always()
