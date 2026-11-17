@@ -166,7 +166,8 @@ func Check(root string) ([]string, error) {
 				strings.HasPrefix(file.path, "runtime/go/internal/code/adapters/") &&
 				target == "runtime/go/internal/platform/computeprocess" && targetRecord.Context == "platform" && targetRecord.Layer == "infrastructure"
 			scrubPolicy := file.record.Context == "ontology" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/ontology/domain" && target == "runtime/go/internal/core/domain/scrub" && targetRecord.Context == "core" && targetRecord.Layer == "domain"
-			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport && !scrubPolicy {
+			requirementPolicy := file.record.Context == "context" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/context/domain" && target == "runtime/go/internal/core/domain/requirementfields" && targetRecord.Context == "shared" && targetRecord.Layer == "domain"
+			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport && !scrubPolicy && !requirementPolicy {
 				violations = append(violations, file.path+": cross-context internal dependency "+dependency)
 			}
 			if !strings.HasSuffix(file.path, "_test.go") && file.record.Context != targetRecord.Context &&

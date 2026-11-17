@@ -1,0 +1,95 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-context-domain
+  title: G1c2 Go Context 순수 도메인과 애플리케이션
+  status: ready_for_routing
+  priority: P0
+  owner: go-context-domain
+  intake_started: 2026-11-17
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 순수 Context library와 공유 부분 REQ 필드 정책을 기존 Node 관측에 맞춘다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 DDD와 클린 아키텍처 및 모듈 경계를 지키며 TDD로 진행한다.
+  desired_outcome: 기존 Node Context의 본문과 예산 및 오류와 포트 읽기 순서를 순수 Go library가 보존한다.
+  confirmed_facts:
+    - G1c2는 순수 Context와 Core partial FieldBlock만 소유한다.
+    - Node production과 기존 Go Ontology 및 전역 설정과 네 가지 toolchain pin을 유지한다.
+    - Context private UTF-16 Text와 최소 실제 연산을 쓰며 Ontology Text 또는 범용 문자열 플랫폼으로 확대하지 않는다.
+    - 최초 173개 실제 Node 골든으로 컴파일된 stub의 동작 RED를 확인했고 현재 272개 사례로 확장했다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: UTF-16 본문과 handoff 및 부분 REQ와 skill metadata의 기존 출력과 오류 우선순위를 보존한다.
+      verification: node scripts/context-node-goldens.mjs --check 및 Go TestNodeGoldens와 literal copy 검사를 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 필수 원문 전체를 보존하고 모든 예산과 최종 counter 자릿수에 맞춰 선택 항목만 제외한다.
+      verification: 골든의 mandatory limit ±1와 astral cut 및 final LIFO 9-to-10 사례를 비교한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: selection과 SHA 및 REQ 검증 순서와 첫 포트 오류를 지키며 catalog 본문을 노출하지 않는다.
+      verification: Go TestNodeGoldens와 TestPortErrorsAreReturnedUnchangedWithoutOutput 및 TestCatalogTypeCannotExposeContent를 실행한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: Context domain에서 정확한 Core requirementfields만 공유하며 전체 최종 gate와 독립 SOURCE 검토를 통과한다.
+      verification: 전체 Go race와 vet 및 AST와 root core-ontology gate 및 독립 SOURCE review를 확인한다.
+      passes: null
+code_mapping:
+  boundary_rules:
+    - Context domain은 자체 domain과 정확한 core-domain-requirementfields의 domain-shared 패키지만 의존한다.
+    - Context application은 자체 domain과 consumer PackStore 및 CatalogStore 포트만 의존한다.
+    - FieldBlock은 선택 경로의 원문과 오류를 보존하며 Execution strict parser로 강화하지 않는다.
+    - 파일 및 CLI와 기본 전환 및 Memory와 Code 및 Execution과 provider는 후속 범위다.
+verification:
+  verify_gate_required: true
+  verify_gate_reason: 실제 선행 main 통합 후 전체 검사와 독립 SOURCE 검토가 필요하다.
+  commands:
+    - node scripts/context-node-goldens.mjs --check
+    - node --test tests/context-node-contracts.test.mjs tests/context-pack.test.mjs tests/skill-catalog.test.mjs tests/module-boundaries.test.mjs
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/verify.mjs --modules core,ontology
+  evidence:
+    - criterion_id: AC1
+      check: Actual Node 272 UTF-16 golden comparisons and immutable Text checks
+      result: passed
+      exit_code: 0
+      source_state: Unit owned focused source before integration and SOURCE review
+      artifact: .harness/handoff/go-context-domain/focused-final.log
+    - criterion_id: AC2
+      check: Entire final pack limits and mandatory text with final LIFO removal
+      result: passed
+      exit_code: 0
+      source_state: Frozen actual Node input-output corpus and focused Go source
+      artifact: contracts/context/node-v1/expected.json
+    - criterion_id: AC3
+      check: Application ordering and port error identity plus typed catalog
+      result: passed
+      exit_code: 0
+      source_state: Unit owned focused source before integration and SOURCE review
+      artifact: .harness/handoff/go-context-domain/focused-final.log
+    - criterion_id: AC4
+      check: Integrated whole final Go race-vet-AST and root gate plus SOURCE
+      result: not_run
+      exit_code: null
+      source_state: Actual B and C1 main integration timing is pending from parent
+      artifact: .harness/handoff/go-context-domain/progress.md
+audit:
+  must_not_implement:
+    - Context files와 CLI 및 root launcher와 process 및 global env와 default adoption
+    - Memory와 Code 및 Execution과 provider 및 data 또는 capabilities 변경
+    - Ontology Text와 normalization 및 quote와 scrub 변경
+    - 범용 문자열 플랫폼과 formal YAML 및 새 dependency와 paid call
+  completion_report_should_include:
+    - 로컬 focused proof와 통합 전체 검사 및 SOURCE와 원격 CI와 게시를 구분한다.
+    - 입력 준비와 환경 오류를 동작 RED로 보고하지 않는다.
+    - 이번 실행 소유 검증 산출물과 cache를 정리하고 다음 gate에 필요한 보존만 명시한다.

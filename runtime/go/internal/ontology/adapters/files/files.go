@@ -10,7 +10,7 @@ import (
 )
 
 func New(file string, reader coreapp.ProjectTextReader) (ontologyapp.Ports, error) {
-	absolute, err := filepath.Abs(file)
+	absolute, err := absoluteFile(file)
 	if err != nil {
 		return ontologyapp.Ports{}, err
 	}

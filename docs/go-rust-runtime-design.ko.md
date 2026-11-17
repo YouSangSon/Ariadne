@@ -421,6 +421,15 @@ Unicode17 데이터·라이선스·재생성·검사 범위는
 이 단위는 filesystem/CLI 연결과 기본 전환을 포함하지 않는다. G1b/G1c와
 실제 CI 및 공개 전환 근거는 각각 확인한 뒤 완료로 표시한다.
 
+### G1c2 Context 순수 library 구현 범위
+
+Context의 domain/application과 Core의 부분 REQ 필드 추출을 Go library로 추가했다.
+[실제 Node 272개 골든](../contracts/context/node-v1/README.md)은 lossless UTF-16 본문,
+전체 예산과 오류·포트 읽기 순서를 고정한다. Context는 자체 private Text를 소유하고
+Core requirementfields의 정확한 순수 정책만 공유한다. 기존 Ontology와 Node 제품은
+변경하지 않는다. 로컬 집중 검사와 기존 Context·skill 보안 검사는 통과했으며,
+실제 선행 Core main 통합 후 최종 전체 Go race/vet/AST/root gate와 독립 SOURCE
+검토가 남아 있다. 파일·CLI는 아래 G1c3에서 연결하며 기본 전환은 별도 범위다.
 ### G1b 파일 연결과 별도 실험용 CLI
 
 G1b는 공개 Core application의 `ProjectTextReader`와 `Scrub` 포트를 통해
@@ -440,3 +449,21 @@ inode를 출처와 비교한다. FD는 읽기 호출이 소유하고 parent를 �
 완전히 차단하지 않는다. [별도 파일·CLI 계약](../contracts/ontology/files-cli-v1/README.md)은
 실제 Node24.22.2의 portable oracle과 source provenance를 소유한다. macOS 로컬
 검증, Linux 실제 CI, 기본 전환과 자원 성능 gate는 각각 확인해야 한다.
+
+### G1c3 Context 파일과 별도 실험 CLI
+
+Go Context의 고정 `.harness` 레코드와 `skills` 목록 adapter를 추가하고,
+skill 본문은 공개 Core reader로 읽는다. 기록의 following read·lossy UTF-8과
+skill 본문의 nofollow·strict UTF-8·크기 제한을 분리한다. 별도 Go 바이너리의
+`context`와 `skills`는 실제 Node 입력·출력과 raw argv 및 다른 cwd로 비교한다.
+기본 Node launcher와 Memory·Execution·provider는 그대로다.
+
+물리 cwd와 root symlink의 OS 문자열은 실제 Node 재현과 독립 설계 검토에 맞춰
+해석한다. Core 전용 private root resolver가 raw stat→readlink decode→lexical
+resolve 순서를 보존하고, 마지막 raw anchor의 기존 descriptor 검사는 유지한다.
+FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 수 있다.
+검증 driver의 kill/wait를 제품의 읽기 timeout이나 OS sandbox로 설명하지 않는다.
+[파일·CLI 계약](../contracts/context/files-cli-v1/README.md)이 실제 oracle과 native
+profile을 소유한다. C2의 272개 순수 골든은 별도로 유지하고 실제 C1 main을 정상
+통합한 Context family에서 전체 Go/race/vet/AST/root gate와 독립 SOURCE 검토를
+마친 뒤 완료로 표시한다. 현재 집중·제한된 native 검증과 전체 gate·CI·게시를 구분한다.
