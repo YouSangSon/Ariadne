@@ -31,14 +31,16 @@ export function commandPlan(command, args, codeCommand) {
   if (command === 'context') return node('lib/context-pack.mjs', args)
   if (command === 'skills') return node('lib/skill-catalog.mjs', args)
   if (command === 'eval') {
-    const script = { compare: 'compare-cli.mjs', 'memory-ablation': 'memory-ablation-cli.mjs' }[args[0]]
+    const scripts = { compare: 'compare-cli.mjs', 'memory-ablation': 'memory-ablation-cli.mjs' }
+    const script = Object.hasOwn(scripts, args[0]) ? scripts[args[0]] : undefined
     if (!script) throw new Error('eval requires compare or memory-ablation --file <path>')
     return node(`evaluation/${script}`, args.slice(1))
   }
   if (command === 'ontology') return node('modules/ontology/cli.mjs', args)
   if (command === 'install-rules') return { ...node('scripts/install.mjs', args), installRoot: true }
   if (command === 'knowledge') {
-    const script = { promote: 'promote.mjs', index: 'graph-index.mjs' }[args[0]]
+    const scripts = { promote: 'promote.mjs', index: 'graph-index.mjs' }
+    const script = Object.hasOwn(scripts, args[0]) ? scripts[args[0]] : undefined
     if (!script) throw new Error('knowledge requires promote or index')
     return node(`modules/llm-wiki/${script}`, args.slice(1))
   }
@@ -54,11 +56,12 @@ export function commandPlan(command, args, codeCommand) {
     if (!args.length || ['--help', '-h'].includes(args[0])) return { kind: 'help' }
     if (args[0] === 'init') return { kind: 'memory-init', path: 'packages/memory/dist/src/cli.js', args, module: 'memory' }
     if (args[0] === 'backup-create') return { kind: 'process', command: 'sh', path: 'packages/memory/scripts/create-backup.sh', args: args.slice(1), cwd: 'packages/memory' }
-    const service = {
+    const services = {
       serve: 'src/app/server.js', worker: 'src/app/worker.js', mcp: 'src/mcp/server.js',
       migrate: 'src/db/migrate.js', 'backup-verify': 'scripts/backup-verify.js',
       'restore-smoke': 'scripts/restore-smoke.js',
-    }[args[0]]
+    }
+    const service = Object.hasOwn(services, args[0]) ? services[args[0]] : undefined
     if (service) return node(`packages/memory/dist/${service}`, args.slice(1), { module: 'memory', ...(args[0] === 'restore-smoke' ? { cwd: 'packages/memory' } : {}) })
     return node('packages/memory/dist/src/cli.js', args, { module: 'memory' })
   }

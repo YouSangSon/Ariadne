@@ -41,6 +41,18 @@ Go가 모듈의 업무 규칙과 실행 수명을 맡고, Rust는 필요한 계�
 
 실제 CPU·최대 메모리·시작 지연·조직별 부하·서비스 SLO는 미측정이다. 임베딩 엔진·모델을 유지한 채 조율 코드만 바꾸면 그 비용은 남는다. 프로세스와 모델 중복 적재, 의존성 설치 범위도 언어와 별도로 비교한다.
 
+### G1c1: Core product 순수 규칙
+
+`runtime/go/internal/core/domain/product`에 명령 계획, 순서 있는 모듈 선택, 환경 복사와 lifecycle step 계획을 추가했다. `internal/core/application/product`는 주입한 실행·보고 포트로 순차 실행을 조율한다. 첫 nonzero 종료값과 포트 오류를 그대로 구분하며, 실패 뒤 실행과 완료 보고를 중단한다. 실제 Go 프로세스·signal·취소 adapter와 제품 CLI 전환은 아직 제공하지 않는다. Node 런처가 기본값이다.
+
+Node의 eval/knowledge/memory lookup 세 곳에는 own-key 검사만 추가했다. `toString`·`constructor`·`__proto__`가 상속 속성으로 잘못 선택되던 버그를 먼저 재현했다. eval/knowledge는 기존 오류를, memory는 기존 일반 CLI fallback을 유지한다. 수정한 실제 Node export로 127개 계약 사례를 생성하고 Go 결과와 비교했다. [계약과 재현 방법](../contracts/core/product-node-v1/README.md)이 범위·출처·타입 제한을 소유한다.
+
+G1b의 실제 main `c7ac4921`을 정상 통합한 `0132435` 소스에서 전체 Go race/vet/AST, 실제 Node oracle 127개, 커밋 REQ 불변식과 루트 소스 gate가 한 번 모두 통과했다. 독립 SOURCE 검토도 통과했다. 메타데이터 종결 변경에서는 검증한 제품 소스와 Node oracle hash를 유지한다.
+
+작업별 모듈 캐시 정리와 프로세스 group 종료를 확인하고 전체 임시 경로 286,315,287 bytes를 정리했다. 이 수치에는 Go cache 223,776,290 bytes가 포함되며 두 수치를 합산하지 않는다.
+
+원격 CI·게시와 실제 Go 제품 런타임·CLI 전환은 아직 완료하지 않았다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
+
 ## 3. 결정과 대안
 
 | ID | 결정과 상태 | 근거·손익 |

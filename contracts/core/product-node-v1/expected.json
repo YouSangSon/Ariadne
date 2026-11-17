@@ -1,0 +1,1718 @@
+{
+  "provenance": {
+    "runtime": {
+      "node": "v24.22.2",
+      "unicode": "17.0",
+      "v8": "13.6.233.17-node.63"
+    },
+    "profile": "typed argv strings, ordered Set modules, string environment, injected sequential run/report; no process launch",
+    "source_sha256": {
+      "core/domain/product.mjs": "56e67726e0f022a90ff3df69bee5caff4a528020adcb33767d2e1a48779c69f5",
+      "core/application/product.mjs": "e5a43ab7dac1ab8cafaad6b5f796f1d708bd0ce4b65bedb33a0b968c5ea7d9be",
+      "lib/module-selection.mjs": "929fb52b4cd2c7028b49053db5fda9f6e269635a678cca69ee20186a812a3477",
+      "bin/Ariadne.mjs": "b4a1b15502d112dffa7d982de23b296299729109fca60f76c3a2ecd4c56fe3db",
+      "scripts/product.mjs": "ad000ae8f629c9dd19fcea4feeae0a58825bc6b424989c05166e2af3f27aafbc",
+      "scripts/verify.mjs": "94f1bb362e25e9d11db9eaec3293e40949073428e1cdad852944e95a13508f89"
+    },
+    "inputs_sha256": "55b7adc1572592ae96f3da52d33443ecf3504a49e04a76dfedba47e59183de0a",
+    "oracle_sha256": "0ff4f589c0b3130837b84447f7418a5ddf56585a69d8ef2ec2bf16e4eb6ebf82"
+  },
+  "cases": [
+    {
+      "id": "plan-empty",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan---help",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan--h",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan-help",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan-setup",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "scripts/product.mjs",
+        "args": [
+          "setup",
+          "--example"
+        ],
+        "cwd": ""
+      }
+    },
+    {
+      "id": "plan-verify",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "scripts/product.mjs",
+        "args": [
+          "verify",
+          "--example"
+        ],
+        "cwd": ""
+      }
+    },
+    {
+      "id": "plan-context",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "lib/context-pack.mjs",
+        "args": [
+          "--example"
+        ]
+      }
+    },
+    {
+      "id": "plan-skills",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "lib/skill-catalog.mjs",
+        "args": [
+          "--example"
+        ]
+      }
+    },
+    {
+      "id": "plan-ontology",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "modules/ontology/cli.mjs",
+        "args": [
+          "--example"
+        ]
+      }
+    },
+    {
+      "id": "plan-install-rules",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "scripts/install.mjs",
+        "args": [
+          "--example"
+        ],
+        "installRoot": true
+      }
+    },
+    {
+      "id": "plan-build",
+      "error": "unknown command: build"
+    },
+    {
+      "id": "plan-test",
+      "error": "unknown command: test"
+    },
+    {
+      "id": "plan-unknown",
+      "error": "unknown command: unknown"
+    },
+    {
+      "id": "plan-eval-compare",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "evaluation/compare-cli.mjs",
+        "args": [
+          "--file",
+          "a b.json"
+        ]
+      }
+    },
+    {
+      "id": "plan-eval-memory-ablation",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "evaluation/memory-ablation-cli.mjs",
+        "args": [
+          "--file",
+          "a b.json"
+        ]
+      }
+    },
+    {
+      "id": "plan-eval-empty",
+      "error": "eval requires compare or memory-ablation --file <path>"
+    },
+    {
+      "id": "plan-eval-unknown",
+      "error": "eval requires compare or memory-ablation --file <path>"
+    },
+    {
+      "id": "plan-eval-toString",
+      "error": "eval requires compare or memory-ablation --file <path>"
+    },
+    {
+      "id": "plan-eval-constructor",
+      "error": "eval requires compare or memory-ablation --file <path>"
+    },
+    {
+      "id": "plan-eval-__proto__",
+      "error": "eval requires compare or memory-ablation --file <path>"
+    },
+    {
+      "id": "plan-knowledge-promote",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "modules/llm-wiki/promote.mjs",
+        "args": [
+          "--file",
+          "a b.json"
+        ]
+      }
+    },
+    {
+      "id": "plan-knowledge-index",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "modules/llm-wiki/graph-index.mjs",
+        "args": [
+          "--file",
+          "a b.json"
+        ]
+      }
+    },
+    {
+      "id": "plan-knowledge-empty",
+      "error": "knowledge requires promote or index"
+    },
+    {
+      "id": "plan-knowledge-unknown",
+      "error": "knowledge requires promote or index"
+    },
+    {
+      "id": "plan-knowledge-toString",
+      "error": "knowledge requires promote or index"
+    },
+    {
+      "id": "plan-knowledge-constructor",
+      "error": "knowledge requires promote or index"
+    },
+    {
+      "id": "plan-knowledge-__proto__",
+      "error": "knowledge requires promote or index"
+    },
+    {
+      "id": "plan-code-empty",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-help",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "--help"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-general",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "inspect",
+          "--root",
+          "/target"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--root",
+          "/target",
+          "--command",
+          "/checkout/bin/code.mjs",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-hook",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-hook",
+          "--command",
+          "/checkout/bin/code.mjs"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent-explicit",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command",
+          "custom",
+          "--name",
+          "custom-name"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent-equals",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command=custom",
+          "--name=custom",
+          "--command",
+          "/checkout/bin/code.mjs",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-hook-name",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-hook",
+          "--name",
+          "custom",
+          "--command",
+          "/checkout/bin/code.mjs"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent-only-name",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--name",
+          "custom",
+          "--command",
+          "/checkout/bin/code.mjs"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent-only-command",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command",
+          "custom",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-code-agent-empty-command",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command",
+          "",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "plan-memory-empty",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan-memory---help",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan-memory--h",
+      "value": {
+        "kind": "help"
+      }
+    },
+    {
+      "id": "plan-memory-init",
+      "value": {
+        "kind": "memory-init",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "init",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-backup-create",
+      "value": {
+        "kind": "process",
+        "command": "sh",
+        "path": "packages/memory/scripts/create-backup.sh",
+        "args": [
+          "--example"
+        ],
+        "cwd": "packages/memory"
+      }
+    },
+    {
+      "id": "plan-memory-serve",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/app/server.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-worker",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/app/worker.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-mcp",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/mcp/server.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-migrate",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/db/migrate.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-backup-verify",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/scripts/backup-verify.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-restore-smoke",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/scripts/restore-smoke.js",
+        "args": [
+          "--example"
+        ],
+        "module": "memory",
+        "cwd": "packages/memory"
+      }
+    },
+    {
+      "id": "plan-memory-pack",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "pack",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-unknown",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "unknown",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-toString",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "toString",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-constructor",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "constructor",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "plan-memory-__proto__",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/memory/dist/src/cli.js",
+        "args": [
+          "__proto__",
+          "--example"
+        ],
+        "module": "memory"
+      }
+    },
+    {
+      "id": "select-all",
+      "value": [
+        "core",
+        "memory",
+        "code",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-source",
+      "value": [
+        "core",
+        "ontology"
+      ]
+    },
+    {
+      "id": "select-empty",
+      "value": []
+    },
+    {
+      "id": "select-dedup",
+      "value": [
+        "code",
+        "core",
+        "memory"
+      ]
+    },
+    {
+      "id": "select-default-values",
+      "value": [
+        "",
+        "custom",
+        "core"
+      ]
+    },
+    {
+      "id": "select-order",
+      "value": [
+        "core",
+        "code",
+        "memory"
+      ]
+    },
+    {
+      "id": "select-equals",
+      "value": [
+        "core",
+        "ontology",
+        "code"
+      ]
+    },
+    {
+      "id": "select-only-core",
+      "value": [
+        "core"
+      ]
+    },
+    {
+      "id": "select-invalid-0",
+      "error": "expected --modules core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-1",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-2",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-3",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-4",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-5",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-6",
+      "error": "duplicate modules are not allowed"
+    },
+    {
+      "id": "select-invalid-7",
+      "error": "duplicate modules are not allowed"
+    },
+    {
+      "id": "select-invalid-8",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-9",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-10",
+      "error": "expected --modules core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-11",
+      "error": "expected --modules core,memory,code,ontology"
+    },
+    {
+      "id": "select-invalid-12",
+      "error": "expected --modules core,memory,code,ontology"
+    },
+    {
+      "id": "environment-setup",
+      "value": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "skip",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-setup",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip"
+      }
+    },
+    {
+      "id": "steps-setup-none",
+      "value": []
+    },
+    {
+      "id": "steps-setup-core",
+      "value": []
+    },
+    {
+      "id": "steps-setup-memory",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "ci"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/memory"
+        }
+      ]
+    },
+    {
+      "id": "steps-setup-code",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "ci"
+          ],
+          "cwd": "packages/code"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "steps-setup-reverse",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "ci"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "ci"
+          ],
+          "cwd": "packages/code"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "environment-build",
+      "value": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "skip",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-build",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip"
+      }
+    },
+    {
+      "id": "steps-build-none",
+      "value": []
+    },
+    {
+      "id": "steps-build-core",
+      "value": []
+    },
+    {
+      "id": "steps-build-memory",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/memory"
+        }
+      ]
+    },
+    {
+      "id": "steps-build-code",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "steps-build-reverse",
+      "value": [
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "build"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "environment-test",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-test",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip"
+      }
+    },
+    {
+      "id": "steps-test-none",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            ""
+          ],
+          "cwd": ""
+        }
+      ]
+    },
+    {
+      "id": "steps-test-core",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,ontology"
+          ],
+          "cwd": ""
+        }
+      ]
+    },
+    {
+      "id": "steps-test-memory",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,memory"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "typecheck"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test",
+            "--",
+            "--maxWorkers=1"
+          ],
+          "cwd": "packages/memory"
+        }
+      ]
+    },
+    {
+      "id": "steps-test-code",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,code"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "steps-test-reverse",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "code,core,memory,ontology"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "typecheck"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test",
+            "--",
+            "--maxWorkers=1"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "environment-verify",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-verify",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip"
+      }
+    },
+    {
+      "id": "steps-verify-none",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            ""
+          ],
+          "cwd": ""
+        }
+      ]
+    },
+    {
+      "id": "steps-verify-core",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,ontology"
+          ],
+          "cwd": ""
+        }
+      ]
+    },
+    {
+      "id": "steps-verify-memory",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,memory"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "typecheck"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test",
+            "--",
+            "--maxWorkers=1"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "audit:dependencies"
+          ],
+          "cwd": "packages/memory"
+        }
+      ]
+    },
+    {
+      "id": "steps-verify-code",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "core,code"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "verify"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "steps-verify-reverse",
+      "value": [
+        {
+          "command": "node",
+          "args": [
+            "scripts/verify.mjs",
+            "--modules",
+            "code,core,memory,ontology"
+          ],
+          "cwd": ""
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "typecheck"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "test",
+            "--",
+            "--maxWorkers=1"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "audit:dependencies"
+          ],
+          "cwd": "packages/memory"
+        },
+        {
+          "command": "npm",
+          "args": [
+            "run",
+            "verify"
+          ],
+          "cwd": "packages/code"
+        }
+      ]
+    },
+    {
+      "id": "environment-other",
+      "value": {
+        "POSTGRES_HOST": "sentinel",
+        "PGVECTOR_TEST_URL": "sentinel",
+        "AKASHA_WRITE_CONCURRENCY_TEST": "sentinel",
+        "RUN_EVAL": "sentinel",
+        "DATABASE_URL": "sentinel",
+        "ARIADNE_SMOKE_DATABASE_URL": "sentinel",
+        "OPENAI_API_KEY": "sentinel",
+        "ANTHROPIC_API_KEY": "sentinel",
+        "CODEX_API_KEY": "sentinel",
+        "ONNXRUNTIME_NODE_INSTALL": "skip",
+        "EMPTY": "",
+        "KEEP": "sentinel",
+        "PATH": "sentinel"
+      }
+    },
+    {
+      "id": "environment-empty-other",
+      "value": {
+        "ONNXRUNTIME_NODE_INSTALL": "skip"
+      }
+    },
+    {
+      "id": "steps-other-none",
+      "value": []
+    },
+    {
+      "id": "steps-other-core",
+      "value": []
+    },
+    {
+      "id": "steps-other-memory",
+      "value": []
+    },
+    {
+      "id": "steps-other-code",
+      "value": []
+    },
+    {
+      "id": "steps-other-reverse",
+      "value": []
+    },
+    {
+      "id": "run-setup-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: setup modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "ci"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "ci"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "build"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "build"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "report",
+          "message": "product: setup complete modules=code,core,memory,ontology"
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "run-build-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: build modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "build"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "build"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "report",
+          "message": "product: build complete modules=code,core,memory,ontology"
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "run-test-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: test modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "typecheck"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test",
+              "--",
+              "--maxWorkers=1"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "report",
+          "message": "product: test complete modules=code,core,memory,ontology"
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "run-verify-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "typecheck"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test",
+              "--",
+              "--maxWorkers=1"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "audit:dependencies"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "verify"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "report",
+          "message": "product: verify complete modules=code,core,memory,ontology"
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "run-other-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: other modules=code,core,memory,ontology"
+        },
+        {
+          "type": "report",
+          "message": "product: other complete modules=code,core,memory,ontology"
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "run-nonzero-first",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        }
+      ],
+      "value": 17
+    },
+    {
+      "id": "run-nonzero-later",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "typecheck"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test",
+              "--",
+              "--maxWorkers=1"
+            ],
+            "cwd": "packages/memory"
+          }
+        }
+      ],
+      "value": 23
+    },
+    {
+      "id": "run-negative",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        }
+      ],
+      "value": -2
+    },
+    {
+      "id": "run-run-error-first",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        }
+      ],
+      "error": "run failed"
+    },
+    {
+      "id": "run-run-error-later",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "typecheck"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test",
+              "--",
+              "--maxWorkers=1"
+            ],
+            "cwd": "packages/memory"
+          }
+        }
+      ],
+      "error": "run failed"
+    },
+    {
+      "id": "run-report-error-start",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        }
+      ],
+      "error": "report failed"
+    },
+    {
+      "id": "run-report-error-complete",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: verify modules=code,core,memory,ontology"
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "node",
+            "args": [
+              "scripts/verify.mjs",
+              "--modules",
+              "code,core,memory,ontology"
+            ],
+            "cwd": ""
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "typecheck"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "test",
+              "--",
+              "--maxWorkers=1"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "audit:dependencies"
+            ],
+            "cwd": "packages/memory"
+          }
+        },
+        {
+          "type": "run",
+          "step": {
+            "command": "npm",
+            "args": [
+              "run",
+              "verify"
+            ],
+            "cwd": "packages/code"
+          }
+        },
+        {
+          "type": "report",
+          "message": "product: verify complete modules=code,core,memory,ontology"
+        }
+      ],
+      "error": "report failed"
+    },
+    {
+      "id": "run-empty-success",
+      "events": [
+        {
+          "type": "report",
+          "message": "product: setup modules="
+        },
+        {
+          "type": "report",
+          "message": "product: setup complete modules="
+        }
+      ],
+      "value": 0
+    },
+    {
+      "id": "plan-code-command-value-is-name-token",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command",
+          "--name",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    },
+    {
+      "id": "select-invalid-precedes-duplicate",
+      "error": "modules must be a nonempty list of core,memory,code,ontology"
+    },
+    {
+      "id": "plan-context-empty-args",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "lib/context-pack.mjs",
+        "args": []
+      }
+    },
+    {
+      "id": "plan-code-bare-agent-command",
+      "value": {
+        "kind": "process",
+        "command": "node",
+        "path": "packages/code/dist/src/cli.js",
+        "args": [
+          "install-agent",
+          "--command",
+          "--name",
+          "ariadne-code"
+        ],
+        "module": "code"
+      }
+    }
+  ]
+}

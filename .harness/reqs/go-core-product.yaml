@@ -1,0 +1,126 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-core-product
+  title: Go Core product 순수 규칙과 Node 계약 보존
+  status: verified
+  priority: P1
+  owner: G1c1
+  intake_started: "2026-11-17"
+  promoted_at: "2026-11-17"
+  source_doc: docs/go-rust-runtime-design.ko.md
+source:
+  raw_user_prompt: "G1c1 Core product pure rules"
+  user_language: ko
+  repo: Ariadne
+classification:
+  category: refactor
+  confidence: high
+  reason: 부모가 전달한 승인 범위와 독립 설계 검토 B를 따른다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 기존 계약과 업무 경계를 보존하며 단위별 구현한다.
+  actor: 제품 런처 및 lifecycle 호출자
+  desired_outcome: 순수 Go 제품 정책과 포트 기반 순차 조율을 실제 Node 계약으로 비교한다.
+  confirmed_facts:
+    - Node 제품 런처가 기본값이다.
+    - eval와 knowledge는 알 수 없는 subcommand를 기존 오류로 거절한다.
+    - memory의 알 수 없는 subcommand는 기존 일반 CLI로 전달한다.
+    - G1b가 다른 worktree에서 별도 Core 파일 및 ontology CLI를 소유한다.
+  assumptions: []
+  rejected_assumptions:
+    - Node 상속 속성 lookup 버그를 Go 호환 목표로 보존한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: Node 세 lookup이 상속 속성을 명령으로 선택하지 않으며 기존 오류와 memory fallback을 보존한다.
+      verification: node --test tests/product-cli.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: Go 명령과 모듈 및 환경과 step 계획이 실제 Node 문자열 입력 계약과 일치하며 caller 입력을 변경하지 않는다.
+      verification: go test ./internal/core/domain/product
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 순차 실행과 보고가 실제 Node 이벤트와 일치하고 첫 nonzero 및 port 오류에서 중단한다.
+      verification: go test ./internal/core/application/product
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: domain I/O와 application adapter 및 cross-context 내부 import를 AST 검사로 거절한다.
+      verification: go test ./internal/architecture
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: G1b 실제 main을 정상 통합한 최종 소스에서 전체 Go race와 vet 및 AST와 루트 소스 gate가 통과한다.
+      verification: go test -race ./... && go vet ./... && go run ./cmd/check-architecture --root ../..; node scripts/verify.mjs
+      passes: true
+code_mapping:
+  code_areas:
+    domain:
+      paths: [core/domain/product.mjs, runtime/go/internal/core/domain/product]
+      reason: 순수 제품 계획과 세 Node lookup 수정
+    application:
+      paths: [runtime/go/internal/core/application/product]
+      reason: 실행 및 보고 포트를 통한 순차 조율
+    contracts:
+      paths: [contracts/core/product-node-v1, scripts/product-node-goldens.mjs, tests/product-node-contracts.test.mjs]
+      reason: 실제 Node oracle와 Go 특성화 비교
+  boundary_rules:
+    - domain과 application에 실제 프로세스나 파일 I/O를 추가하지 않는다.
+    - Node 제품 launcher와 다른 모듈의 원본 export를 유지한다.
+verification:
+  commands:
+    - node --test tests/product-cli.test.mjs tests/modules.test.mjs tests/command.test.mjs tests/product-node-contracts.test.mjs tests/module-boundaries.test.mjs
+    - go test ./internal/core/domain/product ./internal/core/application/product ./internal/architecture
+  verify_gate_required: true
+  verify_gate_reason: 실제 main c7ac4921 통합 소스 0132435에서 최종 전체 로컬 gate를 한 번 실행해 통과했다. 원격 CI와 게시 및 제품 실행 전환은 별도다.
+  escalate_after: 2
+  evidence:
+    - criterion_id: AC1
+      check: node prototype RED 9 then GREEN 9 and focused Node 36
+      result: passed
+      exit_code: 0
+      source_state: "a42c25b + source-freeze aggregate 90587aa0cc44b014405ec57118a5da7f638d3d1bf6f398633aa124d1de6ff980"
+      artifact: .harness/handoff/go-core-product/evidence/node-focused.log
+    - criterion_id: AC2
+      check: Go domain Node golden and defensive copy checks
+      result: passed
+      exit_code: 0
+      source_state: "source-freeze aggregate 90587aa0cc44b014405ec57118a5da7f638d3d1bf6f398633aa124d1de6ff980"
+      artifact: .harness/handoff/go-core-product/evidence/go-focused-green.log
+    - criterion_id: AC3
+      check: Go application actual Node events and original port error identity
+      result: passed
+      exit_code: 0
+      source_state: "source-freeze aggregate 90587aa0cc44b014405ec57118a5da7f638d3d1bf6f398633aa124d1de6ff980"
+      artifact: .harness/handoff/go-core-product/evidence/go-focused-green.log
+    - criterion_id: AC4
+      check: Go negative AST fixtures and actual repository AST
+      result: passed
+      exit_code: 0
+      source_state: "source-freeze aggregate 90587aa0cc44b014405ec57118a5da7f638d3d1bf6f398633aa124d1de6ff980"
+      artifact: .harness/handoff/go-core-product/evidence/go-ast.log
+    - criterion_id: AC5
+      check: final Go race and vet and AST and product oracle and REQ invariant and root source and owned cleanup
+      result: passed
+      exit_code: 0
+      source_state: "013243595bde30cfdf77b53eef7b5b87b6772e1d tree 8b276f52f7240635a7f5ee26833cd4e80766e622; metadata follow-up preserves nonmetadata hashes"
+      artifact: .harness/handoff/go-core-product/evidence/final/results.json
+    - criterion_id: AC5
+      check: "final results SHA256 f92c7a79624646ddba42b1463e34748dfa2e1bedaf9028e061788070c4d771b8"
+      result: passed
+      exit_code: 0
+      source_state: "integration-freeze.json 43 files verified before metadata-only closure"
+      artifact: .harness/handoff/go-core-product/evidence/final/results.json
+  attempts: []
+audit:
+  must_not_implement:
+    - Go launcher, 실제 프로세스와 signal 및 cancel adapter, CLI 또는 기본 런타임 전환
+    - Context, Evaluation, Wiki, Memory, Code의 내부 구현 및 데이터나 module 저장
+    - G1b 소유 파일과 외부 계약 또는 글로벌 설정 및 credential 변경
+  completion_report_should_include:
+    - 소스 commit 및 tree, 소유 파일 hash와 검사 명령 및 종료 상태
+    - TDD 실패와 통과 근거, cleanup, main 통합과 CI의 남은 gate
+    - verified는 이 단위의 로컬 검증만 뜻하며 원격 CI와 게시 및 제품 런타임 전환은 별도다.

@@ -877,6 +877,14 @@
       "layer": "tooling",
       "context": "code"
     },
+    "contracts/core/product-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
+    "contracts/core/product-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "contracts/extensions/v1/fixtures/cases.json": {
       "layer": "tooling",
       "context": "validation"
@@ -1396,6 +1404,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/architecture/product_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/code/adapters/computeprocess/counter.go": {
       "layer": "infrastructure",
       "context": "code"
@@ -1452,6 +1464,14 @@
       "layer": "infrastructure",
       "context": "core"
     },
+    "runtime/go/internal/core/application/product/product.go": {
+      "layer": "application",
+      "context": "core"
+    },
+    "runtime/go/internal/core/application/product/product_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/core/application/project_files.go": {
       "layer": "application",
       "context": "core",
@@ -1461,6 +1481,14 @@
       "layer": "application",
       "context": "core",
       "public": true
+    },
+    "runtime/go/internal/core/domain/product/product.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/product/product_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/core/domain/projectfiles/path.go": {
       "layer": "domain",
@@ -1760,6 +1788,10 @@
       "layer": "tooling",
       "context": "ontology"
     },
+    "scripts/product-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "scripts/product.mjs": {
       "layer": "composition",
       "context": "core"
@@ -1875,6 +1907,10 @@
     "tests/product-mcp.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/product-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "core"
     },
     "tests/scrub.test.mjs": {
       "layer": "tooling",

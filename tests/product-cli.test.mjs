@@ -52,3 +52,18 @@ test('memory ablation is usable through the product CLI from another directory',
   assert.equal(report.observations[0].reported_outcome, 'improvement')
   assert.equal(report.costs.experiment_totals.cost_usd, null)
 })
+
+for (const name of ['toString', 'constructor', '__proto__']) {
+  for (const [command, message] of [
+    ['eval', 'eval requires compare or memory-ablation --file <path>'],
+    ['knowledge', 'knowledge requires promote or index'],
+  ]) test(`command lookup ${command} rejects inherited ${name}`, () => {
+    assert.throws(() => commandPlan(command, [name]), { message })
+  })
+  test(`command lookup memory forwards inherited ${name} to its CLI`, () => {
+    assert.deepEqual(commandPlan('memory', [name, '--example']), {
+      kind: 'process', command: 'node', path: 'packages/memory/dist/src/cli.js',
+      args: [name, '--example'], module: 'memory',
+    })
+  })
+}
