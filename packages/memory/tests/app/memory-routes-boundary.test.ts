@@ -77,6 +77,69 @@ function makeResponse(): ServerResponse & {
 }
 
 describe("createMemoryRoutes boundary validation", () => {
+  describe.each(["static", "oauth"] as const)("%s token binding", (authType) => {
+    const auth = {
+      token: "t",
+      organizationId: "org-a",
+      authType,
+      scopes: ["akasha:read"],
+    };
+
+    it.each([
+      ["org-a", "org-b"],
+      ["org-b", "org-a"],
+    ])("rejects header %s and body %s before registry dispatch", async (headerOrg, bodyOrg) => {
+      const searchMemory = vi.fn().mockResolvedValue({ ok: true });
+      const route = createMemoryRoutes(
+        makeContext({ registry: makeRegistry({ search_memory: searchMemory }) }),
+      ).find((candidate) => candidate.path === "/v1/memory/search")!;
+      const res = makeResponse();
+
+      await route.handle(
+        makeJsonRequest(
+          { organizationId: bodyOrg, projectKey: "p", query: "anything" },
+          { "x-organization-id": headerOrg },
+        ),
+        res,
+        auth,
+      );
+
+      expect(res.status).toBe(403);
+      expect(res.headers).toEqual({ "content-type": "application/json" });
+      expect(JSON.parse(res.body ?? "")).toEqual({
+        success: false,
+        error: {
+          message: "organizationId mismatch: token is bound to a different organization",
+        },
+      });
+      expect(searchMemory).not.toHaveBeenCalled();
+    });
+
+    it("dispatches matching trimmed header and body organizations as the bound organization", async () => {
+      const searchMemory = vi.fn().mockResolvedValue({ ok: true });
+      const route = createMemoryRoutes(
+        makeContext({ registry: makeRegistry({ search_memory: searchMemory }) }),
+      ).find((candidate) => candidate.path === "/v1/memory/search")!;
+      const res = makeResponse();
+
+      await route.handle(
+        makeJsonRequest(
+          { organizationId: " org-a ", projectKey: "p", query: "anything" },
+          { "x-organization-id": " org-a " },
+        ),
+        res,
+        auth,
+      );
+
+      expect(res.status).toBe(200);
+      expect(searchMemory).toHaveBeenCalledWith({
+        organizationId: "org-a",
+        projectKey: "p",
+        query: "anything",
+      });
+    });
+  });
+
   it("forwards the optional context budget with the resolved organization", async () => {
     const build = vi.fn().mockResolvedValue({ ok: true });
     const route = createMemoryRoutes(makeContext({ registry: makeRegistry({ build_context_pack: build }) }))
