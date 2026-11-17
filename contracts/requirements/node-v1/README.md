@@ -38,7 +38,7 @@ operation은 `contract`, `slug`, `files`, `state`다. `contract`는 같은 YAML�
 
 10000개 output을 그대로 추적하지 않는다. recipe case의 기대값은 count, first/last 각 두 항목, **정렬 결과 각 path의 UTF16BE code-unit bytes와 0000 종결자를 이어 붙인 SHA256**이다. 이 recipe에는 NUL path가 없다. 원본 입력의 중복·제외 전 크기와 최종 제한을 구별한다.
 
-`state.inputs[path]`는 kind, nullable mode와 `content_hex` 또는 `content_recipe`를 가진다. content recipe는 `{length, byte}`이며 그 byte를 정확히 length번 반복한다. 64MiB exact, 32MiB 두 파일의 exact 합계, 64MiB 뒤 한 byte 초과, 첫 파일부터 초과를 포함한다. 기록한 recipe와 length와 raw SHA 및 Node aggregate digest로 재현할 수 있다. 큰 tracked binary나 임시 파일은 만들지 않는다.
+`state.inputs[path]`는 kind, nullable mode와 `content_hex` 또는 `content_recipe`를 가진다. 큰 integer mode는 `mode_decimal` 문자열 recipe로 원래 int64 입력을 보존한다. Node oracle은 `Number(mode_decimal)`을, Go fixture는 `ParseInt(..., 64)`를 사용한다. header mode는 Node Number의 shortest-decimal 표기를 따른다. 예를 들어 정확한 integer 1000000000000000128도 JSON frame에는 1000000000000000100으로 들어간다. safe-integer 제한이나 mode masking을 추가하지 않는다. content recipe는 `{length, byte}`이며 그 byte를 정확히 length번 반복한다. 64MiB exact, 32MiB 두 파일의 exact 합계, 64MiB 뒤 한 byte 초과, 첫 파일부터 초과를 포함한다. 기록한 recipe와 length와 raw SHA 및 Node aggregate digest로 재현할 수 있다. 큰 tracked binary나 임시 파일은 만들지 않는다.
 
 `fail`은 `readRequirement`, `hash`, `inspectGit`, `sourceHasher`, `readInput`, `update`, `digest` 중 해당 operation 포트를 실패시킨다. update의 `fail_at`은 header와 content를 모두 세는 0 기반 호출 index다. `fail_path`가 있으면 그 경로의 read만 실패한다. 포트는 event를 기록한 직후 동일 Error 객체를 던진다. 실패 update의 frame도 호출 입력으로 기록하지만 실제 crypto에는 전달하지 않는다.
 

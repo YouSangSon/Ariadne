@@ -172,3 +172,16 @@ test('plain reserved scalars use ASCII case matching without Unicode long-s fold
   assert.equal(entry('scalar-ascii-case-uppercase-false').parse.error.message, 'REQ unsupported or empty string scalar')
   assert.equal(entry('scalar-reject-boolean').parse.error.message, 'REQ unsupported or empty string scalar')
 })
+
+
+test('decimal-text mode recipes retain int64 input and Node shortest Number frames', () => {
+  const header = (suffix) => Buffer.from(entry('state-mode-decimal-' + suffix).updates[0].hex, 'hex').toString('utf8')
+  assert.equal(header('shortest-decimal'), '["a","file",1000000000000000100,0]\n')
+  assert.equal(header('negative-shortest-decimal'), '["a","file",-1000000000000000100,0]\n')
+  assert.equal(header('safe-integer-max'), '["a","file",9007199254740991,0]\n')
+  assert.equal(header('two-to-53-plus-one'), '["a","file",9007199254740992,0]\n')
+  assert.equal(header('negative-two-to-53-plus-one'), '["a","file",-9007199254740992,0]\n')
+  assert.equal(header('int64-max'), '["a","file",9223372036854776000,0]\n')
+  assert.equal(header('int64-min'), '["a","file",-9223372036854776000,0]\n')
+  assert.equal(header('negative-zero'), '["a","file",0,0]\n')
+})

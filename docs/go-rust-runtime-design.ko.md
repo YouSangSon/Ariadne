@@ -478,12 +478,15 @@ AST 음성 fixture에서 계속 거절한다. application은 private JSON string
 Node의 정확한 contract payload와 path/kind/mode/length frame을 만들고 오류를 원래 객체로
 반환한다. native Git/files/CLI와 기본 실행기 전환은 포함하지 않는다.
 
-[실제 Node 계약](../contracts/requirements/node-v1/README.md)의 기존 163개를 보존한 166개 관측과 비교해
+[실제 Node 계약](../contracts/requirements/node-v1/README.md)의 기존 163개와 166개를 보존한 177개 관측과 비교해
 UTF16 lone surrogate, 10개 원문 scope, 제외 필드의 검증, UTF16 정렬과 최종 10000개 제한,
 빈 content의 두 Update, nullable HEAD, 원래 포트 오류와 64MiB aggregate 경계를 보존했다.
 reqId는 첫 포트 전, HEAD는 InspectGit 직후에 값으로 고정해 callback의 뒤늦은 변경과
 분리한다. reserved scalar의 대소문자는 ASCII만 접으므로 `falſe`를 false로 거절하지 않는다.
 두 차이는 실제 Node 재현을 추가한 뒤 Go RED와 최소 수정으로 확인했다.
+mode의 int64 포트 값도 Node Number로 변환한 최단 소수로 직렬화한다. 큰 정수의 작성
+숫자와 JSON frame 표기가 다를 수 있으므로 decimal-text recipe로 RED→GREEN을 검증했다.
+safe-integer 제한·mode 검증·masking을 새로 추가하지 않는다.
 Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 focused 비교가
 통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 실제 C3 publication 의존성
 `cb1f6864`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.

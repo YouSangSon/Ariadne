@@ -121,7 +121,7 @@ function observeState(entry) {
       if (entry.fail === 'readInput' && (!entry.fail_path || path === entry.fail_path)) throw injected
       current = entry.inputs[path]
       assert.ok(current, 'missing offline input: ' + path)
-      return { kind: current.kind, mode: current.mode ?? null, content: contentFor(current) }
+      return { kind: current.kind, mode: current.mode_decimal === undefined ? current.mode ?? null : Number(current.mode_decimal), content: contentFor(current) }
     },
   }, options), injected)
   return result

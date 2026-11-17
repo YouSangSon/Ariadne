@@ -1388,6 +1388,160 @@
       "op": "contract",
       "req_id": "demo",
       "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: FALSE\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "state-mode-decimal-shortest-decimal",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "1000000000000000128",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-shortest-decimal",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-1000000000000000128",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-safe-integer-max",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740991",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740992",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740993",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-two-to-53-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9007199254740993",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9223372036854775807",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max-minus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9223372036854775806",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9223372036854775808",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9223372036854775807",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-zero",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-0",
+          "content_hex": ""
+        }
+      }
     }
   ]
 }

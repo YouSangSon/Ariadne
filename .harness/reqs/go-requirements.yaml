@@ -23,7 +23,8 @@ requirement:
     - Requirements는 private immutable lossless UTF16 Text와 엄격한 제한 문법을 소유한다.
     - Core FieldBlock만 공유하며 Context의 partial parser 정책을 강화하지 않는다.
     - 부모가 Go 단계를 승인했으며 C3 publication cb1f6864를 정상 merge했다.
-    - Node 기준 163개 관측은 보존하고 값 snapshot 및 ASCII case 재현을 추가해 166개로 확장했다.
+    - 기존 Node 163개와 166개 관측을 보존하고 mode decimal 재현을 추가해 177개로 확장했다.
+    - mode는 새 safe-integer 제한 없이 Node Number의 최단 소수 표기로 frame에 넣는다.
   assumptions: []
 functional_contract:
   acceptance_criteria:
@@ -71,18 +72,18 @@ verification:
       check: Node oracle pinned profile and literal UTF16 payload frames and recipe limits
       result: passed
       exit_code: 0
-      source_state: base 4e37409d plus task-owned source and fixture SHA manifests
-      artifact: .harness/handoff/go-requirements/evidence/node-oracle-source-freeze.log
+      source_state: original Node source closure plus phase-specific mode-number-source SHA manifest
+      artifact: .harness/handoff/go-requirements/evidence/node-mode-number-check.log
     - criterion_id: A2
       check: Node Requirements and module boundary focused tests plus preserved previous loop passes
       result: passed
       exit_code: 0
-      source_state: final Node oracle files and exact root tooling map records
-      artifact: .harness/handoff/go-requirements/evidence/node-source-freeze.log
+      source_state: current mode-number Node fixture and prior unchanged tooling boundary records
+      artifact: .harness/handoff/go-requirements/evidence/node-mode-number-tests.log
     - criterion_id: A3
-      check: compiled domain and application behavior RED then focused Go and exact AST policy tests
+      check: compiled behavior RED and focused Go AST baseline plus mode-number RED GREEN and SourceState regression
       result: passed
       exit_code: 0
-      source_state: normal dependency merge cf0343b plus final task-owned Go source manifest
-      artifact: .harness/handoff/go-requirements/evidence/go-focused-final.jsonl
+      source_state: normal dependency merge cf0343b plus mode-number-source SHA manifest
+      artifact: .harness/handoff/go-requirements/evidence/go-mode-source-state-final.jsonl
   attempts: []

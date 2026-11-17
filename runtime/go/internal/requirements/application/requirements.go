@@ -125,7 +125,8 @@ func SourceState(ports SourcePorts, reqID *string) (SourceStateResult, error) {
 		if input.Mode == nil {
 			header = append(header, "null"...)
 		} else {
-			header = strconv.AppendInt(header, *input.Mode, 10)
+			// Match JSON.stringify(Number); large integer modes use the shortest binary64 decimal.
+			header = strconv.AppendFloat(header, float64(*input.Mode), 'f', -1, 64)
 		}
 		header = append(header, ',')
 		header = strconv.AppendInt(header, int64(len(input.Content)), 10)

@@ -36,10 +36,11 @@ type contentRecipe struct {
 	Byte   byte
 }
 type sourceInput struct {
-	Kind    json.RawMessage
-	Mode    *int64
-	Content string         `json:"content_hex"`
-	Recipe  *contentRecipe `json:"content_recipe"`
+	Kind        json.RawMessage
+	Mode        *int64
+	ModeDecimal *string        `json:"mode_decimal"`
+	Content     string         `json:"content_hex"`
+	Recipe      *contentRecipe `json:"content_recipe"`
 }
 type appInput struct {
 	ID, Op string
@@ -351,7 +352,15 @@ func TestSourceStateNodeOracle(t *testing.T) {
 							t.Fatal(e)
 						}
 					}
-					return SourceInput{Kind: fixtureText(t, current.Kind), Mode: current.Mode, Content: content}, nil
+					mode := current.Mode
+					if current.ModeDecimal != nil {
+						value, err := strconv.ParseInt(*current.ModeDecimal, 10, 64)
+						if err != nil {
+							t.Fatal(err)
+						}
+						mode = &value
+					}
+					return SourceInput{Kind: fixtureText(t, current.Kind), Mode: mode, Content: content}, nil
 				},
 			}, reqID)
 			if !reflect.DeepEqual(before, paths) {

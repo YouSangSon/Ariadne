@@ -17,8 +17,8 @@
     }
   },
   "payload_manifest": {
-    "inputs_sha256": "5197599d12c192d47b372312c6abbe8b53f95c8a65b1f8bc4d0a168e200a3dec",
-    "oracle_sha256": "fad88441f0c717afd752524ad625193e7bef3a899441fb87c482fc728c0a493b",
+    "inputs_sha256": "8bf9aa141e1817b44218399c19aa254101fa8402faa5881741a9a5c5c5103d12",
+    "oracle_sha256": "e1c4261ffe03c72cdd620f859b4c9263094f09c0cac5fa87f14ae3d538acefca",
     "contract_payload_sha256": {
       "canonical-missing-scope": [
         "ca8ed0d70287b9ae1ebbce76605280dc4d63049e70131d4db70024b842a8282d"
@@ -7516,6 +7516,633 @@
         "error": {
           "name": "Error",
           "message": "REQ unsupported or empty string scalar"
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-shortest-decimal",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 35,
+          "sha256": "c450c383a9c2fbdaa87fbb3a7bbf29c0c6a17a5518e192a09895826a3d8ef03f",
+          "hex": "5b2261222c2266696c65222c313030303030303030303030303030303130302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "c450c383a9c2fbdaa87fbb3a7bbf29c0c6a17a5518e192a09895826a3d8ef03f",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0063003400350030006300330038003300610039006300320066006200640061006100380037006600620062003300610037006200620066003200390063003000630036006100310037006100350035003100380065003100390032006100300039003800390035003800320036006100330064003800650066003000330066",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-shortest-decimal",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 36,
+          "sha256": "1944f1ea5ebb7ec5b6bd0ea6df755be0f1ac283cd549235884f354b261424b86",
+          "hex": "5b2261222c2266696c65222c2d313030303030303030303030303030303130302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "1944f1ea5ebb7ec5b6bd0ea6df755be0f1ac283cd549235884f354b261424b86",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0031003900340034006600310065006100350065006200620037006500630035006200360062006400300065006100360064006600370035003500620065003000660031006100630032003800330063006400350034003900320033003500380038003400660033003500340062003200360031003400320034006200380036",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-safe-integer-max",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 32,
+          "sha256": "a88ac8f4f86d7484b41bb0aec93b1acd73db38dc9aa07a319feeaea95ca9fbd2",
+          "hex": "5b2261222c2266696c65222c393030373139393235343734303939312c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "a88ac8f4f86d7484b41bb0aec93b1acd73db38dc9aa07a319feeaea95ca9fbd2",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0061003800380061006300380066003400660038003600640037003400380034006200340031006200620030006100650063003900330062003100610063006400370033006400620033003800640063003900610061003000370061003300310039006600650065006100650061003900350063006100390066006200640032",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 32,
+          "sha256": "b918383408bc57ca996e6592f927654d62981e378429417827ae753b897240f4",
+          "hex": "5b2261222c2266696c65222c393030373139393235343734303939322c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "b918383408bc57ca996e6592f927654d62981e378429417827ae753b897240f4",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0062003900310038003300380033003400300038006200630035003700630061003900390036006500360035003900320066003900320037003600350034006400360032003900380031006500330037003800340032003900340031003700380032003700610065003700350033006200380039003700320034003000660034",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53-plus-one",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 32,
+          "sha256": "b918383408bc57ca996e6592f927654d62981e378429417827ae753b897240f4",
+          "hex": "5b2261222c2266696c65222c393030373139393235343734303939322c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "b918383408bc57ca996e6592f927654d62981e378429417827ae753b897240f4",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0062003900310038003300380033003400300038006200630035003700630061003900390036006500360035003900320066003900320037003600350034006400360032003900380031006500330037003800340032003900340031003700380032003700610065003700350033006200380039003700320034003000660034",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-two-to-53-plus-one",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 33,
+          "sha256": "1d4329f2465248598bed4beb7fb1a9d4b3734389f09ed34d50139ba883eb3e42",
+          "hex": "5b2261222c2266696c65222c2d393030373139393235343734303939322c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "1d4329f2465248598bed4beb7fb1a9d4b3734389f09ed34d50139ba883eb3e42",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0031006400340033003200390066003200340036003500320034003800350039003800620065006400340062006500620037006600620031006100390064003400620033003700330034003300380039006600300039006500640033003400640035003000310033003900620061003800380033006500620033006500340032",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 35,
+          "sha256": "958dbbc15ebbf5d658190e2d1dfaf8b3b1bf0fcb5104dcb65bdfa264248281e7",
+          "hex": "5b2261222c2266696c65222c393232333337323033363835343737363030302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "958dbbc15ebbf5d658190e2d1dfaf8b3b1bf0fcb5104dcb65bdfa264248281e7",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0039003500380064006200620063003100350065006200620066003500640036003500380031003900300065003200640031006400660061006600380062003300620031006200660030006600630062003500310030003400640063006200360035006200640066006100320036003400320034003800320038003100650037",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max-minus-one",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 35,
+          "sha256": "958dbbc15ebbf5d658190e2d1dfaf8b3b1bf0fcb5104dcb65bdfa264248281e7",
+          "hex": "5b2261222c2266696c65222c393232333337323033363835343737363030302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "958dbbc15ebbf5d658190e2d1dfaf8b3b1bf0fcb5104dcb65bdfa264248281e7",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0039003500380064006200620063003100350065006200620066003500640036003500380031003900300065003200640031006400660061006600380062003300620031006200660030006600630062003500310030003400640063006200360035006200640066006100320036003400320034003800320038003100650037",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 36,
+          "sha256": "8eac4d1302b9087c8e971b1c54dcf246946be4676caa5a038ca8b8b94ff2e02a",
+          "hex": "5b2261222c2266696c65222c2d393232333337323033363835343737363030302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "8eac4d1302b9087c8e971b1c54dcf246946be4676caa5a038ca8b8b94ff2e02a",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0038006500610063003400640031003300300032006200390030003800370063003800650039003700310062003100630035003400640063006600320034003600390034003600620065003400360037003600630061006100350061003000330038006300610038006200380062003900340066006600320065003000320061",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min-plus-one",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 36,
+          "sha256": "8eac4d1302b9087c8e971b1c54dcf246946be4676caa5a038ca8b8b94ff2e02a",
+          "hex": "5b2261222c2266696c65222c2d393232333337323033363835343737363030302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "8eac4d1302b9087c8e971b1c54dcf246946be4676caa5a038ca8b8b94ff2e02a",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0038006500610063003400640031003300300032006200390030003800370063003800650039003700310062003100630035003400640063006600320034003600390034003600620065003400360037003600630061006100350061003000330038006300610038006200380062003900340066006600320065003000320061",
+          "head": null,
+          "files": [
+            "0061"
+          ]
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-zero",
+      "op": "state",
+      "events": [
+        {
+          "call": "inspectGit"
+        },
+        {
+          "call": "sourceHasher"
+        },
+        {
+          "call": "readInput",
+          "path_utf16_hex": "0061"
+        },
+        {
+          "call": "update",
+          "index": 0
+        },
+        {
+          "call": "update",
+          "index": 1
+        },
+        {
+          "call": "digest"
+        }
+      ],
+      "updates": [
+        {
+          "type": "header",
+          "length": 17,
+          "sha256": "ed4376a89a920033231af6218eef4baac4f40b46f9675d63cafb4ef4077a0fa7",
+          "hex": "5b2261222c2266696c65222c302c305d0a"
+        },
+        {
+          "type": "raw",
+          "length": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "hex": ""
+        }
+      ],
+      "result": {
+        "value": {
+          "hash": "ed4376a89a920033231af6218eef4baac4f40b46f9675d63cafb4ef4077a0fa7",
+          "head": null,
+          "files": [
+            "a"
+          ]
+        },
+        "utf16_hex": {
+          "hash": "0065006400340033003700360061003800390061003900320030003000330033003200330031006100660036003200310038006500650066003400620061006100630034006600340030006200340036006600390036003700350064003600330063006100660062003400650066003400300037003700610030006600610037",
+          "head": null,
+          "files": [
+            "0061"
+          ]
         }
       }
     }
