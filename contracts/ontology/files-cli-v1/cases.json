@@ -1,0 +1,356 @@
+{
+  "files": {
+    "ontology.json": "{\"schema_version\": 1, \"terms\": [{\"id\": \"alpha\", \"name\": \"Alpha <>&\\u2028\\u2029\\ud800\", \"description\": \"\u0067hp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"synonyms\": [\"A\"], \"sources\": [\"source.txt\"]}], \"relations\": []}",
+    "source.txt": "\ufeffsource\n",
+    " ontology.json ": "{\"schema_version\": 1, \"terms\": [{\"id\": \"alpha\", \"name\": \"Alpha <>&\\u2028\\u2029\\ud800\", \"description\": \"\u0067hp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"synonyms\": [\"A\"], \"sources\": [\"source.txt\"]}], \"relations\": []}",
+    "bad.json": "{\"bad\":\"raw-private-document\"",
+    "bom.json": "\ufeff{\"schema_version\": 1, \"terms\": [{\"id\": \"alpha\", \"name\": \"Alpha <>&\\u2028\\u2029\\ud800\", \"description\": \"\u0067hp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"synonyms\": [\"A\"], \"sources\": [\"source.txt\"]}], \"relations\": []}",
+    "empty.json": "{\"schema_version\":1,\"terms\":[],\"relations\":[]}",
+    "\ufffd.md": "same replacement filename\n",
+    "unicode.json": "{\"schema_version\": 1, \"terms\": [{\"id\": \"io\", \"name\": \"IO\", \"sources\": [\"\\ud800.md\", \"\\ufffd.md\", \"\\udfff.md\"], \"description\": \"test\", \"synonyms\": []}], \"relations\": []}",
+    "relations.json": "{\"schema_version\": 1, \"terms\": [{\"id\": \"a\", \"name\": \"Alpha\", \"description\": \"test\", \"synonyms\": [], \"sources\": []}, {\"id\": \"b\", \"name\": \"Beta\", \"description\": \"test\", \"synonyms\": [], \"sources\": []}], \"relations\": [{\"from\": \"a\", \"type\": \"refers\", \"to\": \"b\", \"sources\": []}]}",
+    "\u0130D_rsa": "allowed"
+  },
+  "cases": [
+    {
+      "name": "help",
+      "args": []
+    },
+    {
+      "name": "help-long",
+      "args": [
+        "--help",
+        "ignored"
+      ]
+    },
+    {
+      "name": "help-short",
+      "args": [
+        "-h"
+      ]
+    },
+    {
+      "name": "unknown-command",
+      "args": [
+        "nope"
+      ]
+    },
+    {
+      "name": "inspect",
+      "args": [
+        "inspect",
+        "--file",
+        "ontology.json"
+      ]
+    },
+    {
+      "name": "search",
+      "args": [
+        "search",
+        "--query=alpha",
+        "--limit=1",
+        "--file=ontology.json"
+      ]
+    },
+    {
+      "name": "none",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=absent"
+      ]
+    },
+    {
+      "name": "spaced-file",
+      "args": [
+        "inspect",
+        "--file",
+        " ontology.json "
+      ]
+    },
+    {
+      "name": "empty-arrays",
+      "args": [
+        "inspect",
+        "--file=empty.json"
+      ]
+    },
+    {
+      "name": "terminator",
+      "args": [
+        "inspect",
+        "--file=ontology.json",
+        "--"
+      ]
+    },
+    {
+      "name": "bad-json",
+      "args": [
+        "inspect",
+        "--file=bad.json"
+      ]
+    },
+    {
+      "name": "bom-json",
+      "args": [
+        "inspect",
+        "--file=bom.json"
+      ]
+    },
+    {
+      "name": "no-file",
+      "args": [
+        "inspect"
+      ]
+    },
+    {
+      "name": "space-file",
+      "args": [
+        "inspect",
+        "--file=\ufeff\u00a0"
+      ]
+    },
+    {
+      "name": "space-query",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=\ufeff "
+      ]
+    },
+    {
+      "name": "duplicate-empty",
+      "args": [
+        "inspect",
+        "--file=",
+        "--file=ontology.json"
+      ]
+    },
+    {
+      "name": "duplicate",
+      "args": [
+        "inspect",
+        "--file=ontology.json",
+        "--file=ontology.json"
+      ]
+    },
+    {
+      "name": "limit-zero",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=a",
+        "--limit=0"
+      ]
+    },
+    {
+      "name": "limit-leading-zero",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=a",
+        "--limit=01"
+      ]
+    },
+    {
+      "name": "limit-space",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=a",
+        "--limit= 1"
+      ]
+    },
+    {
+      "name": "limit-empty",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query=a",
+        "--limit="
+      ]
+    },
+    {
+      "name": "query-original",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query= alpha "
+      ]
+    },
+    {
+      "name": "inspect-help",
+      "args": [
+        "inspect",
+        "--help"
+      ]
+    },
+    {
+      "name": "inspect-query",
+      "args": [
+        "inspect",
+        "--query=a"
+      ]
+    },
+    {
+      "name": "unknown-option",
+      "args": [
+        "inspect",
+        "--nope=a"
+      ]
+    },
+    {
+      "name": "positional",
+      "args": [
+        "inspect",
+        "extra"
+      ]
+    },
+    {
+      "name": "missing",
+      "args": [
+        "inspect",
+        "--file"
+      ]
+    },
+    {
+      "name": "ambiguous",
+      "args": [
+        "inspect",
+        "--file",
+        "--query=x"
+      ]
+    },
+    {
+      "name": "short",
+      "args": [
+        "inspect",
+        "-abc"
+      ]
+    },
+    {
+      "name": "single-dash",
+      "args": [
+        "inspect",
+        "-"
+      ]
+    },
+    {
+      "name": "after-terminator",
+      "args": [
+        "inspect",
+        "--",
+        "--file=x"
+      ]
+    },
+    {
+      "name": "secret-error",
+      "args": [
+        "inspect",
+        "--\u0067hp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    {
+      "name": "missing-file",
+      "args": [
+        "inspect",
+        "--file=missing.json"
+      ]
+    },
+    {
+      "name": "utf16-source-io",
+      "args": [
+        "inspect",
+        "--file=unicode.json"
+      ]
+    },
+    {
+      "name": "relation-output",
+      "args": [
+        "search",
+        "--file=relations.json",
+        "--query=alpha"
+      ]
+    },
+    {
+      "name": "short-astral",
+      "args": [
+        "inspect",
+        "-\ud83d\ude00"
+      ]
+    },
+    {
+      "name": "empty-positional",
+      "args": [
+        "inspect",
+        ""
+      ]
+    },
+    {
+      "name": "limit20",
+      "args": [
+        "search",
+        "--limit=20",
+        "--query=alpha",
+        "--file=ontology.json"
+      ]
+    },
+    {
+      "name": "short-inline",
+      "args": [
+        "inspect",
+        "-f=x"
+      ]
+    },
+    {
+      "name": "query-option-empty",
+      "args": [
+        "search",
+        "--file=ontology.json",
+        "--query="
+      ]
+    },
+    {
+      "name": "unknown-before-duplicate",
+      "args": [
+        "inspect",
+        "--file=",
+        "--file=",
+        "--oops"
+      ]
+    },
+    {
+      "name": "inline-equals",
+      "args": [
+        "inspect",
+        "--file=ontology.json=extra"
+      ]
+    },
+    {
+      "name": "utf16-source-search",
+      "args": [
+        "search",
+        "--file=unicode.json",
+        "--query=io"
+      ]
+    }
+  ],
+  "bytes": {
+    "invalid.txt": "/w==",
+    "nul.txt": "YQBi"
+  },
+  "reader_paths": [
+    "source.txt",
+    "invalid.txt",
+    "nul.txt",
+    "missing",
+    "\u0130D_rsa",
+    "file.\u212aEY",
+    "../a",
+    "a//b",
+    ".env",
+    "C:a",
+    "a\\b",
+    "AGENTS.MD"
+  ]
+}

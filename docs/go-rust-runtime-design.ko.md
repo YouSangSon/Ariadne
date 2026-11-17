@@ -416,3 +416,23 @@ Unicode17 데이터·라이선스·재생성·검사 범위는
 
 이 단위는 filesystem/CLI 연결과 기본 전환을 포함하지 않는다. G1b/G1c와
 실제 CI 및 공개 전환 근거는 각각 확인한 뒤 완료로 표시한다.
+
+### G1b 파일 연결과 별도 실험용 CLI
+
+G1b는 공개 Core application의 `ProjectTextReader`와 `Scrub` 포트를 통해
+Go ontology에 읽기 전용 파일 I/O와 별도 CLI를 연결한다. `runtime/go`에서
+`go run ./cmd/Ariadne ontology --help`로 확인한다. Node 제품 진입점과
+기본 backend 및 기존 extension 명령은 유지한다.
+
+상대 경로 정책은 검색용 NFKC와 분리한 lowercase만 사용한다. Darwin/Linux의
+공개 x/sys/unix v0.50.0으로 canonical root와 상대 경로를 descriptor 기준으로
+걸으며 nofollow·nonblock·regular file·1MiB·UTF-8/NUL·identity와 읽기 전후
+관측을 검사한다. BOM과 executable regular text를 허용하고, manifest의 실제
+inode를 출처와 비교한다. FD는 읽기 호출이 소유하고 parent를 즉시 닫아 깊이에
+따라 누적하지 않는다. 다른 플랫폼에서는 명시적으로 실패한다.
+
+기존 안정된 workspace 전제는 유지한다. 이 reader는 OS sandbox나 원자적
+다중 파일 snapshot이 아니며, 고정 parent의 외부 rename과 임의 hostile writer를
+완전히 차단하지 않는다. [별도 파일·CLI 계약](../contracts/ontology/files-cli-v1/README.md)은
+실제 Node24.22.2의 portable oracle과 source provenance를 소유한다. macOS 로컬
+검증, Linux 실제 CI, 기본 전환과 자원 성능 gate는 각각 확인해야 한다.

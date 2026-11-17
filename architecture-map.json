@@ -1077,6 +1077,22 @@
       "layer": "interfaces",
       "context": "extensions"
     },
+    "contracts/ontology/files-cli-v1/cases.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/files-cli-v1/dependency-provenance.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/files-cli-v1/expected.json": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
+    "contracts/ontology/files-cli-v1/x-sys-LICENSE.txt": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "contracts/ontology/node-v1/cases.json": {
       "layer": "tooling",
       "context": "ontology"
@@ -1424,6 +1440,30 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/composition/ontology_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/core/adapters/files/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/core/adapters/files/project_text.go": {
+      "layer": "infrastructure",
+      "context": "core"
+    },
+    "runtime/go/internal/core/adapters/files/project_text_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/core/adapters/files/read_unix.go": {
+      "layer": "infrastructure",
+      "context": "core"
+    },
+    "runtime/go/internal/core/adapters/files/read_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "core"
+    },
     "runtime/go/internal/core/application/product/product.go": {
       "layer": "application",
       "context": "core"
@@ -1432,11 +1472,29 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/core/application/project_files.go": {
+      "layer": "application",
+      "context": "core",
+      "public": true
+    },
+    "runtime/go/internal/core/application/scrub.go": {
+      "layer": "application",
+      "context": "core",
+      "public": true
+    },
     "runtime/go/internal/core/domain/product/product.go": {
       "layer": "domain",
       "context": "core"
     },
     "runtime/go/internal/core/domain/product/product_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/core/domain/projectfiles/path.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/projectfiles/path_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -1522,6 +1580,18 @@
       "layer": "domain",
       "context": "extensions"
     },
+    "runtime/go/internal/ontology/adapters/cli/cli.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/files/files.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/files/files_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/ontology/adapters/json/contracts_test.go": {
       "layer": "tooling",
       "context": "ontology"
@@ -1535,6 +1605,10 @@
       "context": "ontology"
     },
     "runtime/go/internal/ontology/adapters/json/quote.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/json/result.go": {
       "layer": "infrastructure",
       "context": "ontology"
     },
@@ -1698,6 +1772,10 @@
       "layer": "composition",
       "context": "integration"
     },
+    "scripts/ontology-files-cli-goldens.mjs": {
+      "layer": "tooling",
+      "context": "ontology"
+    },
     "scripts/ontology-node-goldens.mjs": {
       "layer": "tooling",
       "context": "ontology"
@@ -1803,6 +1881,10 @@
       "context": "validation"
     },
     "tests/modules.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/ontology-files-cli-contracts.test.mjs": {
       "layer": "tooling",
       "context": "validation"
     },

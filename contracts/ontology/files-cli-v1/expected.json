@@ -1,0 +1,326 @@
+{
+  "node": "v24.22.2",
+  "icu": "78.3",
+  "unicode": "17.0",
+  "inputs_sha256": "8a2dc17fc443c7acc72fdd6e7f7f66bb7e51669b7cdb9ceb6e5aae49fadfd975",
+  "oracle_sha256": "ef827613ee4f21c90b40dd81594fa91feac0b19043873e85e4214087138b5ffa",
+  "owners": {
+    "core/domain/project-files.mjs": "da3324e4a501784291c034e3bcee6cf9bf152bfcf1716513614077f0e4fd8f77",
+    "core/infrastructure/project-files.mjs": "21a3dafde3ad9f16cce863b295896c3491d71bc422c98b98d1325d8cb3f59712",
+    "modules/ontology/files.mjs": "3ff79b9f64d812bd3c82840ce93148137e9a2f1171cc45a4689b5eedd59b1225",
+    "modules/ontology/cli.mjs": "3011cd39a5b20fc59398de7776d755fc8d0e17589ec5e2e8cee8b5eb2f506eb2",
+    "lib/scrub.mjs": "9c9b1b233e2af96e3ef106e8c85d7efb94f06d3acd14d70a8959ee1c2990fb7a"
+  },
+  "reader": [
+    {
+      "path": "source.txt",
+      "sha256": "1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7",
+      "bytes": "efbbbf736f757263650a"
+    },
+    {
+      "path": "invalid.txt",
+      "error": "Project files must contain UTF-8 text"
+    },
+    {
+      "path": "nul.txt",
+      "error": "Binary project files are denied"
+    },
+    {
+      "path": "missing",
+      "error": "Project file does not exist"
+    },
+    {
+      "path": "İD_rsa",
+      "sha256": "eabc01f12ec3e7cb6db0ada0f8f37323b0cfe6d08a2a73479e7d5b62d7e63529",
+      "bytes": "616c6c6f776564"
+    },
+    {
+      "path": "file.KEY",
+      "error": "Protected project path is denied"
+    },
+    {
+      "path": "../a",
+      "error": "Project path must be a contained relative path"
+    },
+    {
+      "path": "a//b",
+      "error": "Project path must be a contained relative path"
+    },
+    {
+      "path": ".env",
+      "error": "Protected project path is denied"
+    },
+    {
+      "path": "C:a",
+      "error": "Project path is denied"
+    },
+    {
+      "path": "a\\b",
+      "error": "Project path is denied"
+    },
+    {
+      "path": "AGENTS.MD",
+      "error": "Protected project path is denied"
+    }
+  ],
+  "cases": [
+    {
+      "name": "help",
+      "status": 0,
+      "stdout": "Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n",
+      "stderr": ""
+    },
+    {
+      "name": "help-long",
+      "status": 0,
+      "stdout": "Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n",
+      "stderr": ""
+    },
+    {
+      "name": "help-short",
+      "status": 0,
+      "stdout": "Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n",
+      "stderr": ""
+    },
+    {
+      "name": "unknown-command",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n"
+    },
+    {
+      "name": "inspect",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"term_count\": 1,\n  \"relation_count\": 0,\n  \"terms_without_sources\": 0,\n  \"relations_without_sources\": 0,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "search",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \"alpha\",\n  \"total_matches\": 1,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [\n    {\n      \"id\": \"alpha\",\n      \"name\": \"Alpha <>&  \\ud800\",\n      \"description\": \"[REDACTED_GITHUB_TOKEN]\",\n      \"synonyms\": [\n        \"A\"\n      ],\n      \"sources\": [\n        \"source.txt\"\n      ]\n    }\n  ],\n  \"relations\": [],\n  \"total_relations\": 0,\n  \"relations_truncated\": false,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "none",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \"absent\",\n  \"total_matches\": 0,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [],\n  \"relations\": [],\n  \"total_relations\": 0,\n  \"relations_truncated\": false,\n  \"source_hashes\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "spaced-file",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"term_count\": 1,\n  \"relation_count\": 0,\n  \"terms_without_sources\": 0,\n  \"relations_without_sources\": 0,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "empty-arrays",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"53bcda5fb0b16a5d93d4c9f4949d95176625e22cc18e1ac708a149ac397e7752\",\n  \"review_status\": \"unreviewed\",\n  \"term_count\": 0,\n  \"relation_count\": 0,\n  \"terms_without_sources\": 0,\n  \"relations_without_sources\": 0,\n  \"source_hashes\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "terminator",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"term_count\": 1,\n  \"relation_count\": 0,\n  \"terms_without_sources\": 0,\n  \"relations_without_sources\": 0,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "bad-json",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Invalid ontology JSON\n"
+    },
+    {
+      "name": "bom-json",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Invalid ontology JSON\n"
+    },
+    {
+      "name": "no-file",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n"
+    },
+    {
+      "name": "space-file",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n"
+    },
+    {
+      "name": "space-query",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n"
+    },
+    {
+      "name": "duplicate-empty",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Duplicate ontology option\n"
+    },
+    {
+      "name": "duplicate",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Duplicate ontology option\n"
+    },
+    {
+      "name": "limit-zero",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: limit must be an integer from 1 to 20\n"
+    },
+    {
+      "name": "limit-leading-zero",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: limit must be an integer from 1 to 20\n"
+    },
+    {
+      "name": "limit-space",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: limit must be an integer from 1 to 20\n"
+    },
+    {
+      "name": "limit-empty",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: limit must be an integer from 1 to 20\n"
+    },
+    {
+      "name": "query-original",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \" alpha \",\n  \"total_matches\": 1,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [\n    {\n      \"id\": \"alpha\",\n      \"name\": \"Alpha <>&  \\ud800\",\n      \"description\": \"[REDACTED_GITHUB_TOKEN]\",\n      \"synonyms\": [\n        \"A\"\n      ],\n      \"sources\": [\n        \"source.txt\"\n      ]\n    }\n  ],\n  \"relations\": [],\n  \"total_relations\": 0,\n  \"relations_truncated\": false,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "inspect-help",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '--help'\n"
+    },
+    {
+      "name": "inspect-query",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '--query'\n"
+    },
+    {
+      "name": "unknown-option",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '--nope'\n"
+    },
+    {
+      "name": "positional",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unexpected argument 'extra'. This command does not take positional arguments\n"
+    },
+    {
+      "name": "missing",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Option '--file <value>' argument missing\n"
+    },
+    {
+      "name": "ambiguous",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Option '--file' argument is ambiguous.\nDid you forget to specify the option argument for '--file'?\nTo specify an option argument starting with a dash use '--file=-XYZ'.\n"
+    },
+    {
+      "name": "short",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '-a'\n"
+    },
+    {
+      "name": "single-dash",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unexpected argument '-'. This command does not take positional arguments\n"
+    },
+    {
+      "name": "after-terminator",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unexpected argument '--file=x'. This command does not take positional arguments\n"
+    },
+    {
+      "name": "secret-error",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '--[REDACTED_GITHUB_TOKEN]'\n"
+    },
+    {
+      "name": "missing-file",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Project file does not exist\n"
+    },
+    {
+      "name": "utf16-source-io",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"420f3ce0bcdb259bc7d5823243ffefa58f789ef83c5717711bc8ac33ed90a3d5\",\n  \"review_status\": \"unreviewed\",\n  \"term_count\": 1,\n  \"relation_count\": 0,\n  \"terms_without_sources\": 0,\n  \"relations_without_sources\": 0,\n  \"source_hashes\": [\n    {\n      \"path\": \"\\ud800.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    },\n    {\n      \"path\": \"\\udfff.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    },\n    {\n      \"path\": \"�.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "relation-output",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d29116b4371d859e2b2f5279898000f24710baa774d151e438a413d59e127376\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \"alpha\",\n  \"total_matches\": 1,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [\n    {\n      \"id\": \"a\",\n      \"name\": \"Alpha\",\n      \"description\": \"test\",\n      \"synonyms\": [],\n      \"sources\": []\n    }\n  ],\n  \"relations\": [\n    {\n      \"from\": \"a\",\n      \"type\": \"refers\",\n      \"to\": \"b\",\n      \"sources\": []\n    }\n  ],\n  \"total_relations\": 1,\n  \"relations_truncated\": false,\n  \"source_hashes\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "short-astral",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '-�'\n"
+    },
+    {
+      "name": "empty-positional",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unexpected argument ''. This command does not take positional arguments\n"
+    },
+    {
+      "name": "limit20",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"d2a8c2a0b94ec41bc6091bca8bffa3ee41686bcb16deae297858a945a95e3ed4\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \"alpha\",\n  \"total_matches\": 1,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [\n    {\n      \"id\": \"alpha\",\n      \"name\": \"Alpha <>&  \\ud800\",\n      \"description\": \"[REDACTED_GITHUB_TOKEN]\",\n      \"synonyms\": [\n        \"A\"\n      ],\n      \"sources\": [\n        \"source.txt\"\n      ]\n    }\n  ],\n  \"relations\": [],\n  \"total_relations\": 0,\n  \"relations_truncated\": false,\n  \"source_hashes\": [\n    {\n      \"path\": \"source.txt\",\n      \"sha256\": \"1dce75f49319dd1146ec02e5a7c27fe637698cf0d448479628363222bfc4e7b7\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "short-inline",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '-f'\n"
+    },
+    {
+      "name": "query-option-empty",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Ariadne ontology inspect --file ontology.json\nAriadne ontology search --file ontology.json --query text [--limit 5]\nRead-only local vocabulary lookup. No model, SQL execution or factual answerability claim.\n"
+    },
+    {
+      "name": "unknown-before-duplicate",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Unknown option '--oops'\n"
+    },
+    {
+      "name": "inline-equals",
+      "status": 2,
+      "stdout": "",
+      "stderr": "Ariadne ontology: Project file does not exist\n"
+    },
+    {
+      "name": "utf16-source-search",
+      "status": 0,
+      "stdout": "{\n  \"schema_version\": 1,\n  \"digest\": \"420f3ce0bcdb259bc7d5823243ffefa58f789ef83c5717711bc8ac33ed90a3d5\",\n  \"review_status\": \"unreviewed\",\n  \"query\": \"io\",\n  \"total_matches\": 1,\n  \"ambiguous\": false,\n  \"truncated\": false,\n  \"terms\": [\n    {\n      \"id\": \"io\",\n      \"name\": \"IO\",\n      \"description\": \"test\",\n      \"synonyms\": [],\n      \"sources\": [\n        \"\\ud800.md\",\n        \"�.md\",\n        \"\\udfff.md\"\n      ]\n    }\n  ],\n  \"relations\": [],\n  \"total_relations\": 0,\n  \"relations_truncated\": false,\n  \"source_hashes\": [\n    {\n      \"path\": \"\\ud800.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    },\n    {\n      \"path\": \"\\udfff.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    },\n    {\n      \"path\": \"�.md\",\n      \"sha256\": \"fb26c1540ec9fc309062b18ea48c5fa9934ebb4b6dabf32b7857df4c3c28e714\"\n    }\n  ]\n}\n",
+      "stderr": ""
+    }
+  ]
+}

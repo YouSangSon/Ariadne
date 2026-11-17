@@ -1,0 +1,90 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-ontology-files
+  title: G1b Go 읽기 전용 프로젝트 파일과 실험용 온톨로지 CLI
+  status: verified
+  priority: P0
+  owner: go-ontology-files
+  intake_started: 2026-11-17
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 승인된 G1b가 기존 Node 파일과 CLI 계약을 별도 Go 명령으로 연결한다.
+requirement:
+  user_intent: 승인된 Go와 Rust 전환을 모듈 경계를 유지하며 실제 실패와 검증에 근거해 구현한다.
+  desired_outcome: Go ontology inspect와 search가 안전한 파일 읽기와 기존 Node 결과 및 오류 계약을 보존한다.
+  confirmed_facts:
+    - Node 제품 진입점과 기본 runtime 및 G1a domain과 parser와 Unicode 정책은 유지한다.
+    - Darwin과 Linux의 공개 x-sys unix API를 사용하며 다른 플랫폼은 명시적으로 실패한다.
+    - 신뢰되고 안정된 workspace가 전제이며 OS sandbox와 원자적 다중 파일 snapshot은 제공하지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: Core reader가 경로와 UTF-8 및 NUL과 1MiB와 실제 파일 identity와 descriptor 수명을 보존한다.
+      verification: 실제 파일과 성장과 root 및 ancestor와 leaf 교체 child deadline 및 FD와 close 실패를 검사한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 파일 기반 ontology가 manifest hardlink 자기 참조를 거절하고 UTF-16 메타데이터와 SHA만 보존한다.
+      verification: 실제 self 및 hardlink 파일과 세 surrogate 경로의 동일 UTF-8 파일 I/O를 Node 결과와 비교한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 실험용 Go CLI가 실제 Node 옵션과 결과 및 scrub과 고정 JSON 출력 계약을 보존한다.
+      verification: 별도 43개 CLI와 12개 reader Node 골든 및 다른 cwd와 exact stdout 및 stderr와 exit를 비교한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: 공개 Core application 경계와 정확한 경로 lowercase 의존만 열고 기존 제품과 보안 정책을 유지한다.
+      verification: inventory와 negative AST와 Go race 및 vet와 root ontology 및 secret scanner를 실행한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - Ontology 파일과 CLI 및 JSON 어댑터는 다른 context의 공개 Core application 포트만 사용한다.
+    - Core projectfiles path-go에만 x-text cases와 language를 허용한다.
+    - CLI 진입점은 ontology를 기존 extension SQLite dispatch 전에 조합한다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/ontology-files-cli-goldens.mjs
+    - node scripts/ontology-node-goldens.mjs --check
+    - node scripts/verify.mjs --modules ontology
+  evidence:
+    - criterion_id: AC1
+      check: Actual macOS files and deterministic FIFO and symlink and inode races plus FD cleanup
+      result: passed
+      exit_code: 0
+      source_state: G1b production freeze ef9d36b13452f3b2aa3a170400c4c0ad34221b0d7126d798013f03728ef66ce9
+      artifact: .harness/handoff/go-ontology-files/evidence/final-go-race.log
+    - criterion_id: AC2
+      check: Self and hardlink inode rejection plus three distinct UTF-16 metadata paths with shared replacement filename
+      result: passed
+      exit_code: 0
+      source_state: G1b unchanged production freeze
+      artifact: .harness/handoff/go-ontology-files/evidence/focused-unicode-relation-green.log
+    - criterion_id: AC3
+      check: Actual 43 Node CLI and 12 reader goldens with byte-exact Go composition and raw reader comparison
+      result: passed
+      exit_code: 0
+      source_state: Node24.22.2 and Go1.27.4 darwin arm64
+      artifact: .harness/handoff/go-ontology-files/evidence/final-node-files-cli.log
+    - criterion_id: AC4
+      check: Go race and vet and AST plus root source and mirror passes with corrected local commit invariant and zero-leak scanner
+      result: passed
+      exit_code: 0
+      source_state: Source and mirror gate reused from identical production freeze; commit invariant checked separately after message-only correction
+      artifact: .harness/handoff/go-ontology-files/evidence/focused-final-commit-invariant.log
+audit:
+  must_not_implement:
+    - Node 기본 전환과 G1c 및 다른 context의 제품 runtime 변경
+    - 쓰기와 새로운 저장소와 사용자 extension 실행 및 provider 호출
+    - OS sandbox와 원자적 snapshot 및 성능 우위 주장
+  completion_report_should_include:
+    - macOS 로컬 검증과 Linux 실제 CI 및 main 통합을 구분한다.
+    - CLI 선행 RED와 구현 후 추가 filesystem 검사 및 재사용 G1a 근거를 구분한다.

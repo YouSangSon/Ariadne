@@ -141,7 +141,8 @@ func Check(root string) ([]string, error) {
 			if dependency != module && !strings.HasPrefix(dependency, module+"/") {
 				unicodePolicy := file.record.Context == "ontology" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/ontology/domain" &&
 					(dependency == "golang.org/x/text/cases" || dependency == "golang.org/x/text/language" || dependency == "golang.org/x/text/unicode/norm")
-				if inner && !pureImport(dependency, file.record.Layer) && !unicodePolicy {
+				projectPathPolicy := file.path == "runtime/go/internal/core/domain/projectfiles/path.go" && file.record.Context == "core" && file.record.Layer == "domain" && (dependency == "golang.org/x/text/cases" || dependency == "golang.org/x/text/language")
+				if inner && !pureImport(dependency, file.record.Layer) && !unicodePolicy && !projectPathPolicy {
 					violations = append(violations, file.path+": inward layer imports platform/package "+dependency)
 				}
 				continue
