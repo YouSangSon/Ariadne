@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: go-context-files
   title: G1c3 Go Context 파일과 실험 CLI
-  status: ready_for_routing
+  status: verified
   priority: P0
   owner: go-context-files
   intake_started: 2026-11-17
@@ -25,22 +25,22 @@ functional_contract:
       priority: P0
       statement: 메타데이터의 probe와 lossy UTF-8 및 symlink와 REQ 정렬 계약을 보존한다.
       verification: 실제 Node 파일 fixture와 Go adapter 비교를 실행한다.
-      passes: null
+      passes: true
     - id: AC2
       priority: P0
       statement: skill 읽기의 Core 검증 순서와 raw hash 및 scrubbed UTF-16 길이와 디렉터리 제한을 보존한다.
       verification: 경계 크기와 링크 및 100-entry 제한과 실제 파일 테스트를 실행한다.
-      passes: null
+      passes: true
     - id: AC3
       priority: P0
       statement: 실험 context와 skills CLI의 인자와 출력 및 종료 상태를 보존한다.
       verification: Node와 실제 native 실행 파일의 other-cwd와 raw argv 비교를 실행한다.
-      passes: null
+      passes: true
     - id: AC4
       priority: P0
       statement: 선행 실제 main 통합 후 C2와 C3 결합 검증과 독립 SOURCE 검토를 통과한다.
       verification: 최종 전체 Go race와 vet 및 AST와 root gate를 실행하고 독립 검토를 받는다.
-      passes: null
+      passes: true
 code_mapping:
   boundary_rules:
     - Context 파일 adapter는 고정 harness record와 skills 목록을 소유하며 skill 본문은 Core 공개 reader를 사용한다.
@@ -51,11 +51,36 @@ verification:
   verify_gate_reason: 파일 보안 경계와 CLI 계약의 native 검증 및 결합 SOURCE 검토가 필요하다.
   commands:
     - node scripts/context-node-goldens.mjs --check
+    - node scripts/context-files-node-goldens.mjs --check
     - go test -race ./...
     - go vet ./...
     - go run ./cmd/check-architecture --root ../..
     - node scripts/verify.mjs --modules core,ontology
-  evidence: []
+  evidence:
+    - criterion_id: AC1
+      check: Actual Node file50 oracle and Go file boundaries including full filename sort
+      result: passed
+      exit_code: 0
+      source_state: 947 individual oracle-race PASS; all97 Go bytes retained through58932
+      artifact: .harness/handoff/go-context-files/final-closure.json
+    - criterion_id: AC2
+      check: Core skill validation ordering, byte and UTF16 counters, listing limits and FD cleanup
+      result: passed
+      exit_code: 0
+      source_state: Historical whole race plus corrected-profile four-package targeted race58932
+      artifact: .harness/handoff/go-context-files/final-closure.json
+    - criterion_id: AC3
+      check: macOS CGO1 native58 exact pairs plus1 documented errno status-only case, FIFO2 and signals6
+      result: passed
+      exit_code: 0
+      source_state: Node24.22.2 Go1.27.4 Python3.14.5; native run063a8c18d0624cd5801066778c801c0f
+      artifact: .harness/handoff/go-context-files/evidence/continuation/native-58932fd-run-20261117.json
+    - criterion_id: AC4
+      check: Local combined gates and independent SOURCE with original aggregate15 and continuation0 kept separate
+      result: passed
+      exit_code: 0
+      source_state: Actual C1 main4e and Auth main5c normally integrated; source58932 frozen and unchanged
+      artifact: .harness/handoff/go-context-files/final-closure.json
 audit:
   must_not_implement:
     - Node production 및 기본 전환과 provider 및 데이터 변경
