@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 
+	contextcli "ariadne/runtime/internal/context/adapters/cli"
+	contextfiles "ariadne/runtime/internal/context/adapters/files"
+	contextapp "ariadne/runtime/internal/context/application"
 	corefiles "ariadne/runtime/internal/core/adapters/files"
 	evaluation "ariadne/runtime/internal/evaluation/application"
 	"ariadne/runtime/internal/extensions/adapters/files"
@@ -20,7 +23,8 @@ import (
 	ontologyapp "ariadne/runtime/internal/ontology/application"
 )
 
-const help = `Experimental read-only ontology: ontology inspect|search (use ontology --help)
+const help = `Experimental read-only context: context [--root DIR] [--req SLUG] [--budget NAME] [--skill SLUG@SHA256]; skills [--root DIR]
+Experimental read-only ontology: ontology inspect|search (use ontology --help)
 Experimental nonexecuting extensions:
  extensions inspect --package DIR
  extensions inspect ID [--workspace DIR]
@@ -116,6 +120,12 @@ func parse(args []string) (arguments, bool) {
 	return a, true
 }
 func Run(args []string, out, errOut io.Writer) int {
+	if len(args) > 0 && args[0] == "context" {
+		return contextcli.RunContext(args[1:], out, errOut, func(root string) contextapp.PackStore { return contextfiles.New(root, corefiles.Reader{}) })
+	}
+	if len(args) > 0 && args[0] == "skills" {
+		return contextcli.RunSkills(args[1:], out, errOut, func(root string) contextapp.CatalogStore { return contextfiles.New(root, corefiles.Reader{}) })
+	}
 	if len(args) > 0 && args[0] == "ontology" {
 		return ontologycli.Run(args[1:], out, errOut, func(file string) (ontologyapp.Ports, error) { return ontologyfiles.New(file, corefiles.Reader{}) })
 	}

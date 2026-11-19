@@ -159,3 +159,19 @@ test('nested Cargo manifests and ontology JSON fixtures cannot escape metadata i
   assert.ok(inventory.actual.includes('contracts/ontology/node-v1/unregistered.txt'))
   assert.match(boundaryErrors({ ...inventory, sources: () => '' }).join('\n'), /unowned source contracts\/ontology\/node-v1\/unregistered.json/)
 })
+
+test('Context JSON fixtures cannot escape metadata inventory', (t) => {
+  const workspace = mkdtempSync(join(tmpdir(), 'ariadne-context-boundaries-'))
+  t.after(() => rmSync(workspace, { recursive: true, force: true }))
+  for (const prefix of ['', 'packages/memory', 'packages/code']) {
+    mkdirSync(join(workspace, prefix), { recursive: true })
+    writeFileSync(join(workspace, prefix, 'architecture-map.json'), JSON.stringify({ schema_version: 1, files: {} }))
+    if (prefix) writeFileSync(join(workspace, prefix, 'package.json'), '{}')
+  }
+  for (const directory of ['.github/workflows', 'samples', 'contracts/context/node-v1']) mkdirSync(join(workspace, directory), { recursive: true })
+  const path = 'contracts/context/node-v1/unregistered.json'
+  writeFileSync(join(workspace, path), '{}')
+  const inventory = readInventory(workspace)
+  assert.ok(inventory.actual.includes(path))
+  assert.match(boundaryErrors({ ...inventory, sources: () => '' }).join('\n'), /unowned source contracts\/context\/node-v1\/unregistered.json/)
+})

@@ -1,0 +1,1547 @@
+{
+  "fixture_version": 1,
+  "cases": [
+    {
+      "id": "canonical-missing-scope",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "all-scope-blocks",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: Original intent # retained\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-comment-spacing",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: Original intent  # changed spacing\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "nonhashed-fields-change",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: verified\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P2\n      statement: First result\n      verification: Observe result\n      passes: true\nrequirement:\n  user_intent: Original intent # retained\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: [changed]\n  evidence: [passed]\n"
+    },
+    {
+      "id": "status-needs_intake",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: needs_intake\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "status-needs_clarification",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: needs_clarification\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "status-verified",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: verified\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "schema-kind-not-validated",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: [ignored]\nkind: true\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "schema-kind-omitted",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "metadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "optional-priority-passes-omitted",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      statement: First result\n      verification: Observe result\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "two-criteria",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC_1.a-2\n      statement: First result\n      verification: Observe result\n    - id: AC2\n      statement: Second result\n      verification: Observe next\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-single-quote",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: 'User''s result: # literal' # comment\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-double-escape",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"quote \\\" slash \\\\ solidus \\/ tab \\t back \\b form \\f return \\r newline \\n\" # comment\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-lone-high",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\ud800\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-lone-low",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\udfff\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-surrogate-pair",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\ud83d\\ude00\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-lone-high",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\ud800\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-astral",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\ud83d\ude00\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-ls-ps",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"line\u2028paragraph\u2029end\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-nel",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \u0085\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-plain-hash",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: value#literal\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-plain-comment",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: value # ignored\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-numeric-looking-word",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: 12cats\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-strip",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |-\n        First line\n        # literal\n        Last line\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-clip",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: | # comment\n        First line\n\n        Last line\n\n\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-empty",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |-\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-indent",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |-\n          more indent\n        base\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-folded-strip",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: >-\n        First\n        second\n\n        paragraph\n          indented\n        last\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-folded-clip",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: >\n        first\n        second\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-comment-continuation",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: value\n        # comment\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ecmascript-trim-whitespace",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \t\u000b\f \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeffresult\t\u000b\f \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "double-quoted-es-whitespace-empty",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\t\\u000b\\f \\u00a0\\u1680\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "double-quoted-nel-not-empty",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\u0085\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "direct-crlf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\r\nkind: harness.requirement\r\nmetadata:\r\n  req_id: demo\r\n  status: ready_for_routing\r\nfunctional_contract:\r\n  acceptance_criteria:\r\n    - id: AC1\r\n      priority: P0\r\n      statement: First result\r\n      verification: Observe result\r\n      passes: null\r\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "direct-bom",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "\ufeffschema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-direct-cr",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: first\rlast\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-direct-lf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: first\n        last\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "slug-before-control",
+      "op": "contract",
+      "req_id": "../demo",
+      "yaml": "\u0000\tinvalidverification:\n  evidence: []\n"
+    },
+    {
+      "id": "control-before-top",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nbad key\n\u0000verification:\n  evidence: []\n"
+    },
+    {
+      "id": "indent-tab-before-metadata",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  \treq_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "top-before-metadata",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "bad key\nschema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: wrong\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "top-duplicate",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nmetadata:\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "reqid-before-status",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: wrong\n  status: paused\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "missing-reqid-before-status",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  status: paused\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "status-before-ac",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: paused\nfunctional_contract:\n  acceptance_criteria:\n    - id: ?bad\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "missing-status",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "quoted-top-key",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\n\"metadata\":\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "inline-parent",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata: {req_id: demo}\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "wrong-parent-indent",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n   req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "duplicate-metadata-reqid",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "quoted-metadata-key",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  \"req_id\": demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "alias-before-metadata",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  extra: *bad\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-inline-empty",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria: []\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-duplicate-block",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-empty",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-inline-item",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - {id: AC1, statement: result}\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-wrong-indentation",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n   - id: AC1\n     statement: result\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-field-collection-before-scalars",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: ?bad\n      extra: bad\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-duplicate-field-before-missing",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      statement: result\n      statement: duplicate\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-id-before-statement-verification",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: null\n      statement: null\n      verification: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-statement-before-verification",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      statement: null\n      verification: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-missing-statement-before-verification",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      verification: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-missing-verification",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      statement: result\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-invalid-id-after-required-scalars",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: ?bad\n      statement: result\n      verification: observe\n      priority: P9\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-duplicate-id-before-priority",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      statement: first\n      verification: observe\n    - id: AC1\n      statement: second\n      verification: observe\n      priority: P9\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "priority-before-passes",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P9\n      statement: First result\n      verification: Observe result\n      passes: invalid\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "passes-invalid",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: invalid\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "passes-continuation",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: true\n        content\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "passes-comment",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: false # accepted\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scope-after-ac",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: null\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: one\n  user_intent: two\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-duplicate",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: one\n  user_intent: two\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-alias",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: *anchor\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-quoted-key",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  \"user_intent\": Original intent # retained\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-raw-crlf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\r\n  user_intent: Original intent # retained\r\n  desired_outcome: Original outcome\r\n  confirmed_facts: []\r\n  assumptions: []\r\ncode_mapping:\r\n  boundary_rules: []\r\naudit:\r\n  must_not_implement: []\r\nverification:\r\n  commands: [node --test]\r\n  verify_gate_required: true\r\n  verify_gate_reason: Gate reason\r\n  escalate_after: 3\r\n  attempts: []\r\n  evidence: []\r\n"
+    },
+    {
+      "id": "scalar-reject-null",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: null\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-tilde",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: ~\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-uppercase-boolean",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: TRUE\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-boolean",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: false\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-integer",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: 12\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-decimal",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: -1.5\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-exponent",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: 1e3\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-infinity",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: .inf\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-nan",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: +.nan\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-sequence",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: [x]\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-mapping",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: {x}\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-colon-space",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: value: text\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-trailing-colon",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: value:\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-tag",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: !tag\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-anchor",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: &anchor value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-alias",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: *alias\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-question-prefix",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: ? value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-dash-prefix",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: - value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-colon-prefix",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: : value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-at-prefix",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: @value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-reject-backtick-prefix",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: `value\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-double-escape",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\x20\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-double-unicode",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\\uD80\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-double-control",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"raw\ttab\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-single",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: 'unclosed\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-marker",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |+\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-marker-indent",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |2\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-bad-marker-body",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |-\n       wrong\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-plain-continuation",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: first\n        next\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "read-error",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n",
+      "fail": "readRequirement"
+    },
+    {
+      "id": "hash-error",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n",
+      "fail": "hash"
+    },
+    {
+      "id": "slug-105",
+      "op": "slug",
+      "req_id": "demo"
+    },
+    {
+      "id": "slug-106",
+      "op": "slug",
+      "req_id": "a"
+    },
+    {
+      "id": "slug-107",
+      "op": "slug",
+      "req_id": "0"
+    },
+    {
+      "id": "slug-108",
+      "op": "slug",
+      "req_id": "a--"
+    },
+    {
+      "id": "slug-109",
+      "op": "slug",
+      "req_id": ""
+    },
+    {
+      "id": "slug-110",
+      "op": "slug",
+      "req_id": "Demo"
+    },
+    {
+      "id": "slug-111",
+      "op": "slug",
+      "req_id": "-demo"
+    },
+    {
+      "id": "slug-112",
+      "op": "slug",
+      "req_id": "demo/child"
+    },
+    {
+      "id": "slug-113",
+      "op": "slug",
+      "req_id": "demo_1"
+    },
+    {
+      "id": "slug-114",
+      "op": "slug",
+      "req_id": "demo\n"
+    },
+    {
+      "id": "slug-115",
+      "op": "slug",
+      "req_id": "demo\u0085"
+    },
+    {
+      "id": "files-exact-exclusions-utf16",
+      "op": "files",
+      "req_id": "demo",
+      "paths": [
+        "z",
+        "a",
+        "a",
+        "\ud83d\ude00",
+        "\ue000",
+        "\ud800",
+        "\udc00",
+        ".git/config",
+        "a/.git/b",
+        "node_modules/a",
+        "a/node_modules/b",
+        ".gitignore",
+        "a/.git-more/b",
+        "node_modulesx/a",
+        ".harness/handoff",
+        ".harness/handoff/a",
+        ".harness/handoffx/a",
+        "nested/.harness/handoff/a",
+        "./.harness/handoff/a",
+        ".harness/reqs/demo.yaml",
+        ".harness/reqs/other.yaml",
+        ".harness/reqs/demo.yaml.more",
+        "../raw",
+        "a//b",
+        "UPPER",
+        "upper",
+        "a\\b"
+      ]
+    },
+    {
+      "id": "files-no-selected-req",
+      "op": "files",
+      "paths": [
+        ".harness/reqs/demo.yaml",
+        ".harness/reqs/undefined.yaml"
+      ]
+    },
+    {
+      "id": "files-invalid-reqid-is-not-validated",
+      "op": "files",
+      "req_id": "../raw",
+      "paths": [
+        ".harness/reqs/../raw.yaml",
+        "keep"
+      ]
+    },
+    {
+      "id": "files-limit-10000",
+      "op": "files",
+      "path_recipe": {
+        "count": 10000,
+        "duplicates": 2,
+        "excluded": 3
+      }
+    },
+    {
+      "id": "files-limit-10001",
+      "op": "files",
+      "path_recipe": {
+        "count": 10001,
+        "duplicates": 2,
+        "excluded": 3
+      }
+    },
+    {
+      "id": "files-filter-before-limit",
+      "op": "files",
+      "path_recipe": {
+        "count": 10000,
+        "duplicates": 5,
+        "excluded": 10001
+      }
+    },
+    {
+      "id": "state-raw-bytes-null-head",
+      "op": "state",
+      "paths": [
+        "z",
+        "a",
+        "a",
+        "missing"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-head-is-provenance",
+      "op": "state",
+      "paths": [
+        "z",
+        "a",
+        "missing"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "head": "different-head"
+    },
+    {
+      "id": "state-empty",
+      "op": "state",
+      "paths": [],
+      "inputs": {}
+    },
+    {
+      "id": "state-empty-filtered",
+      "op": "state",
+      "paths": [
+        "node_modules/a",
+        ".harness/handoff/a"
+      ],
+      "inputs": {}
+    },
+    {
+      "id": "state-req-excluded",
+      "op": "state",
+      "paths": [
+        ".harness/reqs/demo.yaml",
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        }
+      },
+      "req_id": "demo"
+    },
+    {
+      "id": "state-raw-kind-and-mode",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "custom",
+          "mode": -123456,
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-string-escaping-utf16",
+      "op": "state",
+      "paths": [
+        "\ud800<>&\u2028\u2029\ud83d\ude00"
+      ],
+      "inputs": {
+        "\ud800<>&\u2028\u2029\ud83d\ude00": {
+          "kind": "strange\"\\",
+          "mode": null,
+          "content_hex": "c080"
+        }
+      }
+    },
+    {
+      "id": "state-invalid-slug",
+      "op": "state",
+      "paths": [],
+      "inputs": {},
+      "req_id": "../demo"
+    },
+    {
+      "id": "state-fail-inspectGit",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "inspectGit"
+    },
+    {
+      "id": "state-fail-sourceHasher",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "sourceHasher"
+    },
+    {
+      "id": "state-fail-readInput",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "readInput"
+    },
+    {
+      "id": "state-fail-digest",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "digest"
+    },
+    {
+      "id": "state-fail-update-0",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "update",
+      "fail_at": 0
+    },
+    {
+      "id": "state-fail-update-1",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "update",
+      "fail_at": 1
+    },
+    {
+      "id": "state-fail-update-2",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "update",
+      "fail_at": 2
+    },
+    {
+      "id": "state-fail-update-3",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "update",
+      "fail_at": 3
+    },
+    {
+      "id": "state-fail-read-second",
+      "op": "state",
+      "paths": [
+        "a",
+        "z"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "00ff0a"
+        },
+        "z": {
+          "kind": "symlink",
+          "mode": 493,
+          "content_hex": "2e2e2f746172676574"
+        },
+        "missing": {
+          "kind": "missing",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "fail": "readInput",
+      "fail_path": "z"
+    },
+    {
+      "id": "state-filecount-before-factory",
+      "op": "state",
+      "inputs": {},
+      "path_recipe": {
+        "count": 10001
+      }
+    },
+    {
+      "id": "state-limit-exact",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_recipe": {
+            "length": 67108864,
+            "byte": 97
+          }
+        }
+      }
+    },
+    {
+      "id": "state-limit-plus-one",
+      "op": "state",
+      "paths": [
+        "a",
+        "b"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_recipe": {
+            "length": 67108864,
+            "byte": 97
+          }
+        },
+        "b": {
+          "kind": "file",
+          "mode": 420,
+          "content_hex": "62"
+        }
+      }
+    },
+    {
+      "id": "state-limit-first-file-over",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": null,
+          "content_recipe": {
+            "length": 67108865,
+            "byte": 0
+          }
+        }
+      }
+    },
+    {
+      "id": "scalar-escaped-ls-ps",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"line\\u2028paragraph\\u2029end\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-trim-nonline-es-whitespace",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \t\u000b\f \u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\ufeffresult\t\u00a0\ufeff\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-escaped-cr-lf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"first\\r\\nlast\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-single-quote-lone-low",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: '\udc00'\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scope-interior-crlf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: |-\r\n    first\r\n    next\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-interior-ls-ps",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: first\u2028second\u2029last\n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "scope-empty-leaf",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nrequirement:\n  user_intent: \n  desired_outcome: Original outcome\n  confirmed_facts: []\n  assumptions: []\ncode_mapping:\n  boundary_rules: []\naudit:\n  must_not_implement: []\nverification:\n  commands: [node --test]\n  verify_gate_required: true\n  verify_gate_reason: Gate reason\n  escalate_after: 3\n  attempts: []\n  evidence: []\n"
+    },
+    {
+      "id": "direct-bom-metadata",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "\ufeffmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "priority-p1",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P1\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "priority-quoted-numeric",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: \"1\"\n      statement: First result\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "priority-scalar-error-before-passes",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: null\n      statement: First result\n      verification: Observe result\n      passes: invalid\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "ac-first-priority-before-second-required",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P9\n      statement: First result\n      verification: Observe result\n      passes: null\n    - id: AC2\n      statement: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "files-selected-filter-before-limit",
+      "op": "files",
+      "req_id": "demo",
+      "paths": [
+        ".harness/reqs/demo.yaml"
+      ],
+      "path_recipe": {
+        "count": 10000
+      }
+    },
+    {
+      "id": "state-mode-0",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 0,
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-65535",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 65535,
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-limit-exact-multifile",
+      "op": "state",
+      "paths": [
+        "b",
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode": 420,
+          "content_recipe": {
+            "length": 33554432,
+            "byte": 97
+          }
+        },
+        "b": {
+          "kind": "file",
+          "mode": 420,
+          "content_recipe": {
+            "length": 33554432,
+            "byte": 98
+          }
+        }
+      }
+    },
+    {
+      "id": "scalar-json-html-escaping",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"<>& / \\\\ \\\"\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-empty-double-quote",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: \"\"\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-empty-single-quote",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: ''\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-literal-comments-and-blank",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: |- # marker\n        # literal comment\n\n        final\n\n\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "state-port-value-snapshots",
+      "op": "state",
+      "req_id": "a",
+      "head": "before",
+      "paths": [
+        ".harness/reqs/a.yaml",
+        ".harness/reqs/b.yaml"
+      ],
+      "inputs": {
+        ".harness/reqs/a.yaml": {
+          "kind": "file",
+          "mode": null,
+          "content_hex": ""
+        },
+        ".harness/reqs/b.yaml": {
+          "kind": "file",
+          "mode": null,
+          "content_hex": ""
+        }
+      },
+      "mutations": {
+        "inspect_req_id": "b",
+        "factory_head": "after"
+      }
+    },
+    {
+      "id": "scalar-ascii-case-long-s",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: fal\u017fe\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "scalar-ascii-case-uppercase-false",
+      "op": "contract",
+      "req_id": "demo",
+      "yaml": "schema_version: 1\nkind: harness.requirement\nmetadata:\n  req_id: demo\n  status: ready_for_routing\nfunctional_contract:\n  acceptance_criteria:\n    - id: AC1\n      priority: P0\n      statement: FALSE\n      verification: Observe result\n      passes: null\nverification:\n  evidence: []\n"
+    },
+    {
+      "id": "state-mode-decimal-shortest-decimal",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "1000000000000000128",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-shortest-decimal",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-1000000000000000128",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-safe-integer-max",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740991",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740992",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-two-to-53-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9007199254740993",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-two-to-53-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9007199254740993",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9223372036854775807",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-max-minus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "9223372036854775806",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9223372036854775808",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-int64-min-plus-one",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-9223372036854775807",
+          "content_hex": ""
+        }
+      }
+    },
+    {
+      "id": "state-mode-decimal-negative-zero",
+      "op": "state",
+      "paths": [
+        "a"
+      ],
+      "inputs": {
+        "a": {
+          "kind": "file",
+          "mode_decimal": "-0",
+          "content_hex": ""
+        }
+      }
+    }
+  ]
+}
