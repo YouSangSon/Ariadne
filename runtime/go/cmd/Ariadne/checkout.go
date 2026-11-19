@@ -21,7 +21,12 @@ import (
 var checkoutRootHex, checkoutNodeHex string
 
 func runCheckout(args []string) (int, bool) {
-	if checkoutRootHex == "" && checkoutNodeHex == "" || len(args) == 0 || (args[0] != "setup" && args[0] != "verify") {
+	if checkoutRootHex == "" && checkoutNodeHex == "" || len(args) == 0 {
+		return 0, false
+	}
+	switch args[0] {
+	case "setup", "verify", "eval":
+	default:
 		return 0, false
 	}
 	root, rootErr := hex.DecodeString(checkoutRootHex)
@@ -31,13 +36,22 @@ func runCheckout(args []string) (int, bool) {
 		return 2, true
 	}
 	plan, err := product.CommandPlan(args[0], args[1:], "")
-	if err != nil || plan.Kind != "process" || plan.Command != "node" || plan.Path != "scripts/product.mjs" ||
-		plan.CWD == nil || *plan.CWD != "" || plan.Module != "" || plan.InstallRoot {
-		fmt.Fprintln(os.Stderr, "Ariadne: invalid checkout lifecycle command plan")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Ariadne:", err)
+		return 2, true
+	}
+	validTarget := plan.Path == "scripts/product.mjs" && plan.CWD != nil && *plan.CWD == ""
+	if args[0] == "eval" {
+		validTarget = plan.CWD == nil && (plan.Path == "evaluation/compare-cli.mjs" || plan.Path == "evaluation/memory-ablation-cli.mjs")
+	}
+	if !validTarget || plan.Kind != "process" || plan.Command != "node" || plan.Module != "" || plan.InstallRoot {
+		fmt.Fprintln(os.Stderr, "Ariadne: invalid checkout command plan")
 		return 2, true
 	}
 	child := exec.Command(string(node), append([]string{filepath.Join(string(root), plan.Path)}, plan.Args...)...)
-	child.Dir = string(root)
+	if plan.CWD != nil {
+		child.Dir = string(root)
+	}
 	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 	// A nil Env would let os/exec rewrite PWD to the child's working directory.
 	child.Env = os.Environ()
