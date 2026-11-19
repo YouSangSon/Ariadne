@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import { createHash } from 'node:crypto'
 import assert from 'node:assert/strict'
-import { closeSync, openSync, statSync, truncateSync, writeSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, fstatSync, ftruncateSync, openSync, statSync, writeSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
@@ -279,22 +279,22 @@ test('Git fingerprints include every byte through the 64 MiB aggregate boundary'
   const large = join(root, 'b.bin')
   const size = 64 * 1024 * 1024 - 1
   writeFileSync(small, Buffer.from([255]))
-  writeFileSync(large, '')
-  truncateSync(large, size)
-  const buffer = Buffer.alloc(32768)
-  const expected = createHash('sha256')
-  expected.update(JSON.stringify(['a', 'file', statSync(small).mode & 0o777, 1]) + '\n')
-  expected.update(Buffer.from([255]))
-  expected.update(JSON.stringify(['b.bin', 'file', statSync(large).mode & 0o777, size]) + '\n')
-  for (let offset = 0; offset < size; offset += buffer.length) {
-    expected.update(buffer.subarray(0, Math.min(size - offset, buffer.length)))
-  }
-  const result = sourceState(root)
-  assert.deepEqual(result, { hash: expected.digest('hex'), head: null, files: ['a', 'b.bin'] })
-  const fd = openSync(large, 'r+')
-  try { writeSync(fd, Buffer.from([1]), 0, 1, size - 1) }
-  finally { closeSync(fd) }
-  assert.notEqual(sourceState(root).hash, result.hash)
-  truncateSync(large, size + 1)
-  assert.throws(() => sourceState(root), { message: 'Source input size exceeds 64 MiB' })
+  const fd = openSync(large, 'wx+')
+  try {
+    ftruncateSync(fd, size)
+    const buffer = Buffer.alloc(32768)
+    const expected = createHash('sha256')
+    expected.update(JSON.stringify(['a', 'file', statSync(small).mode & 0o777, 1]) + '\n')
+    expected.update(Buffer.from([255]))
+    expected.update(JSON.stringify(['b.bin', 'file', fstatSync(fd).mode & 0o777, size]) + '\n')
+    for (let offset = 0; offset < size; offset += buffer.length) {
+      expected.update(buffer.subarray(0, Math.min(size - offset, buffer.length)))
+    }
+    const result = sourceState(root)
+    assert.deepEqual(result, { hash: expected.digest('hex'), head: null, files: ['a', 'b.bin'] })
+    writeSync(fd, Buffer.from([1]), 0, 1, size - 1)
+    assert.notEqual(sourceState(root).hash, result.hash)
+    ftruncateSync(fd, size + 1)
+    assert.throws(() => sourceState(root), { message: 'Source input size exceeds 64 MiB' })
+  } finally { closeSync(fd) }
 })
