@@ -165,10 +165,13 @@ func Check(root string) ([]string, error) {
 			transport := file.record.Layer == "infrastructure" && file.record.Context == "code" &&
 				strings.HasPrefix(file.path, "runtime/go/internal/code/adapters/") &&
 				target == "runtime/go/internal/platform/computeprocess" && targetRecord.Context == "platform" && targetRecord.Layer == "infrastructure"
+			fileRoot := file.record.Layer == "infrastructure" && (file.record.Context == "core" || file.record.Context == "requirements") &&
+				path.Dir(file.path) == "runtime/go/internal/"+file.record.Context+"/adapters/files" &&
+				target == "runtime/go/internal/platform/nodepath" && targetRecord.Layer == "infrastructure" && targetRecord.Context == "platform"
 			scrubPolicy := file.record.Context == "ontology" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/ontology/domain" && target == "runtime/go/internal/core/domain/scrub" && targetRecord.Context == "core" && targetRecord.Layer == "domain"
 			requirementPolicy := file.record.Context == "context" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/context/domain" && target == "runtime/go/internal/core/domain/requirementfields" && targetRecord.Context == "shared" && targetRecord.Layer == "domain"
 			requirementsPolicy := file.record.Context == "requirements" && file.record.Layer == "domain" && path.Dir(file.path) == "runtime/go/internal/requirements/domain" && target == "runtime/go/internal/core/domain/requirementfields" && targetRecord.Context == "shared" && targetRecord.Layer == "domain"
-			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !transport && !scrubPolicy && !requirementPolicy && !requirementsPolicy {
+			if file.record.Layer != "tooling" && file.record.Layer != "composition" && file.record.Context != targetRecord.Context && !public && !fileRoot && !transport && !scrubPolicy && !requirementPolicy && !requirementsPolicy {
 				violations = append(violations, file.path+": cross-context internal dependency "+dependency)
 			}
 			if !strings.HasSuffix(file.path, "_test.go") && file.record.Context != targetRecord.Context &&

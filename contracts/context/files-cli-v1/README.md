@@ -50,9 +50,9 @@ whole-value scrub replacer. Errors use `skills:` and exit 2. Unix argv decodes
 before option checks and path use; existing ontology CLI has the same private
 argv boundary. Relative Core roots and ontology manifests resolve from a physical
 syscall cwd, decoded before lexical path construction. Absolute paths do not read
-cwd. The Core-private root resolver checks each raw symlink target first, decodes
-readlink bytes, lexically resolves that target and restarts. Its final physical OS
-anchor stays raw for the existing nofollow descriptor walk. Strict file UTF-8 is
+cwd. Core and Requirements share Node-compatible root resolution. On first visiting a
+link, the resolver checks the raw target before decoding and resolving its text.
+Core pins the final physical OS path for its nofollow descriptor walk. Strict file UTF-8 is
 unchanged. Metadata with explicit `--root .` keeps relative path behavior.
 
 ## Native proof and limitations

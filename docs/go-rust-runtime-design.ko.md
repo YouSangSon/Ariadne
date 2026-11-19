@@ -469,8 +469,8 @@ skill 본문의 nofollow·strict UTF-8·크기 제한을 분리한다. 별도 Go
 기본 Node launcher와 Memory·Execution·provider는 그대로다.
 
 물리 cwd와 root symlink의 OS 문자열은 실제 Node 재현과 독립 설계 검토에 맞춰
-해석한다. Core 전용 private root resolver가 raw stat→readlink decode→lexical
-resolve 순서를 보존하고, 마지막 raw anchor의 기존 descriptor 검사는 유지한다.
+해석한다. Core와 Requirements의 파일 어댑터는 루트 해석을 공유한다. 처음 만나는 링크는 실제
+대상을 확인하고 링크 문자열을 디코딩한 뒤 경로를 해석한다. Core는 마지막 물리 경로를 디스크립터로 고정한다.
 FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 수 있다.
 검증 driver의 kill/wait를 제품의 읽기 timeout이나 OS sandbox로 설명하지 않는다.
 [파일·CLI 계약](../contracts/context/files-cli-v1/README.md)이 실제 oracle과 native
@@ -508,3 +508,17 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 통과했다. Context PR #21이 병합된 `main`의 `926f9fe7`을 통합한 뒤 검증에 사용한
 코드, 테스트, 픽스처가 바이트 단위로 같은 것을 확인했다. Requirements REQ의 `verified`는
 이 로컬 검증의 결과다. 원격 CI와 PR 병합은 게시 단계에서 확인한다.
+
+### Requirements 계약 파일 읽기
+
+`internal/requirements/adapters/files.LoadPorts(root)`를 `application.LoadContract`에
+전달하면 macOS와 Linux에서 프로젝트의 `.harness/reqs/<slug>.yaml`을 읽는다.
+읽기 직전에 루트를 해석하므로 같은 포트에서 루트 별칭의 변경을 관측한다.
+하위 디렉터리는 검색 권한으로 열고 링크 경유를 거절한다. 일반 파일만 최대 1 MiB까지
+읽으며 엄격한 UTF-8 검사 뒤 선두 BOM 하나를 제거하고 CRLF를 LF로 바꾼다.
+application이 직렬화한 계약에 SHA-256을 적용한다. 이 읽기 경로는 Git을 실행하지 않는다.
+
+macOS arm64의 `57cd54f`에서 실제 파일을 읽는 Node·Go 비교와 전체 Go race, vet, AST,
+루트 소스 검사가 통과했다. 공용 루트 해석 경로의 Context와 skills 회귀 검사에서는
+58개 사례에서 출력 바이트와 종료 상태가 일치했다. 운영체제 오류 문구가 다른 1개는 양쪽 종료 상태가
+1이었다. FIFO 2건, 시그널 6건과 프로세스 그룹 132개의 종료를 확인했다.
