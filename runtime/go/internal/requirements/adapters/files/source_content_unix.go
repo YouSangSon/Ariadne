@@ -49,14 +49,14 @@ func sourceLengthMatches(file *os.File, size int64) (bool, error) {
 	var probe [1]byte
 	if size > 0 {
 		if _, err := file.ReadAt(probe[:], size-1); err != nil {
-			if errors.Is(err, io.EOF) || cannotPosition(err) {
+			if err == io.EOF || cannotPosition(err) {
 				return false, nil
 			}
 			return false, err
 		}
 	}
 	_, err := file.ReadAt(probe[:], size)
-	if errors.Is(err, io.EOF) {
+	if err == io.EOF {
 		return true, nil
 	}
 	if cannotPosition(err) {
@@ -99,10 +99,15 @@ func spoolSourceContent(file io.Reader, prefix []byte, remaining int64, consume 
 	}
 	if n == left {
 		var extra [1]byte
-		if n, err := io.ReadFull(file, extra[:]); n > 0 {
-			return application.ErrSourceInputLimit
-		} else if !errors.Is(err, io.EOF) {
+		n, err := file.Read(extra[:])
+		if err != nil && err != io.EOF {
 			return err
+		}
+		if n > 0 {
+			return application.ErrSourceInputLimit
+		}
+		if err == nil {
+			return io.ErrNoProgress
 		}
 	}
 	if _, err := spool.Seek(0, io.SeekStart); err != nil {

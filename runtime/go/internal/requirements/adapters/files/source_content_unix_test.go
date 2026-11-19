@@ -7,7 +7,10 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -158,5 +161,63 @@ func TestGitCommandBounds(t *testing.T) {
 				t.Fatalf("owned command survived the output or time bound for %v", elapsed)
 			}
 		})
+	}
+}
+
+func TestGitCommandCollectsInheritedOutput(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	git := filepath.Join(root, "git")
+	sourceTestOK(t, os.WriteFile(git, []byte("#!/bin/sh\n( /bin/sleep 0.25; printf delayed ) &\nexit 0\n"), 0700))
+	got, err := runSourceGit(root, "rev-parse", "--show-toplevel")
+	if err != nil || got != "delayed" {
+		t.Fatalf("inherited output %q, error %v", got, err)
+	}
+}
+
+func TestGitCommandSeparatesUnbornFromBlockedInheritedOutput(t *testing.T) {
+	root := t.TempDir()
+	t.Setenv("PATH", root+string(os.PathListSeparator)+os.Getenv("PATH"))
+	git := filepath.Join(root, "git")
+	sourceTestOK(t, os.WriteFile(git, []byte("#!/bin/sh\nexit 1\n"), 0700))
+	_, err := runSourceGit(root, "rev-parse", "--verify", "--quiet", "HEAD")
+	var status *exec.ExitError
+	if !errors.As(err, &status) || status.ExitCode() != 1 {
+		t.Fatalf("bare exit1 yielded %v", err)
+	}
+
+	pidPath := filepath.Join(root, "group")
+	t.Setenv("ARIADNE_TEST_GIT_GROUP", pidPath)
+	const script = "#!/bin/sh\nprintf '%s' \"$$\" > \"$ARIADNE_TEST_GIT_GROUP\"\n( /bin/sleep 30; printf late ) &\nexit 1\n"
+	sourceTestOK(t, os.WriteFile(git, []byte(script), 0700))
+	_, err = runSourceGit(root, "rev-parse", "--verify", "--quiet", "HEAD")
+	pid, readErr := os.ReadFile(pidPath)
+	sourceTestOK(t, readErr)
+	group, parseErr := strconv.Atoi(string(pid))
+	sourceTestOK(t, parseErr)
+	t.Cleanup(func() { _ = unix.Kill(-group, unix.SIGKILL) })
+	if !errors.Is(err, errGitInspection) {
+		t.Fatalf("blocked inherited stream yielded %v, want inspection error", err)
+	}
+
+	deadline := time.Now().Add(time.Second)
+	for {
+		list, err := exec.Command("/bin/ps", "-axo", "pgid=,stat=").Output()
+		sourceTestOK(t, err)
+		running := false
+		for line := range strings.SplitSeq(string(list), "\n") {
+			columns := strings.Fields(line)
+			if len(columns) == 2 && columns[0] == string(pid) && !strings.HasPrefix(columns[1], "Z") {
+				running = true
+				break
+			}
+		}
+		if !running {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("a process from the timed-out Git group is still running")
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }

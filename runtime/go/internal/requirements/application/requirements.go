@@ -214,8 +214,8 @@ func hashSourceContent(hasher SourceHasher, content io.Reader, size int64, buffe
 		return ErrSourceInputChanged
 	}
 	for remaining := size; remaining > 0; {
-		n, err := content.Read(buffer[:min(remaining, int64(len(buffer)))])
-		if err != nil && !errors.Is(err, io.EOF) {
+		n, err := readSourceChunk(content, buffer[:min(remaining, int64(len(buffer)))])
+		if err != nil && err != io.EOF {
 			return err
 		}
 		if n > 0 {
@@ -224,27 +224,37 @@ func hashSourceContent(hasher SourceHasher, content io.Reader, size int64, buffe
 			}
 			remaining -= int64(n)
 		}
-		if errors.Is(err, io.EOF) {
+		if err == io.EOF {
 			if remaining == 0 {
 				return nil
 			}
 			return ErrSourceInputChanged
 		}
-		if n == 0 {
-			return io.ErrNoProgress
-		}
 	}
-	n, err := content.Read(buffer[:1])
-	if n != 0 {
-		return ErrSourceInputChanged
-	}
-	if errors.Is(err, io.EOF) {
+	n, err := readSourceChunk(content, buffer[:1])
+	if err == io.EOF && n == 0 {
 		return nil
 	}
-	if err == nil {
-		return io.ErrNoProgress
+	if err != nil && err != io.EOF {
+		return err
 	}
-	return err
+	return ErrSourceInputChanged
+}
+
+func readSourceChunk(content io.Reader, buffer []byte) (int, error) {
+	for range 100 {
+		n, err := content.Read(buffer)
+		if err != nil && err != io.EOF {
+			return 0, err
+		}
+		if n < 0 || n > len(buffer) {
+			return 0, ErrSourceInputChanged
+		}
+		if n != 0 || err != nil {
+			return n, err
+		}
+	}
+	return 0, io.ErrNoProgress
 }
 
 // quote matches JSON.stringify string bytes, including lone units and unescaped LS/PS and HTML.

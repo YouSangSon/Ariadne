@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
@@ -67,16 +68,61 @@ func runSourceGit(directory string, args ...string) (string, error) {
 		}
 		return err
 	}
-	cmd.WaitDelay = 100 * time.Millisecond
+	out, outWriter, err := os.Pipe()
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+	stderr, stderrWriter, err := os.Pipe()
+	if err != nil {
+		return "", errors.Join(err, outWriter.Close())
+	}
+	defer stderr.Close()
+
+	cmd.Stdout, cmd.Stderr = outWriter, stderrWriter
+	startErr := cmd.Start()
+	closeErr := errors.Join(outWriter.Close(), stderrWriter.Close())
+	if startErr != nil {
+		return "", errors.Join(startErr, closeErr)
+	}
+	if closeErr != nil {
+		cancel()
+		_ = cmd.Cancel()
+		_ = cmd.Wait()
+		return "", errGitInspection
+	}
+
 	var stdout bytes.Buffer
 	var remaining atomic.Int64
 	remaining.Store(outputLimit)
-	cmd.Stdout = &gitOutput{remaining: &remaining, buffer: &stdout, cancel: cancel}
-	cmd.Stderr = &gitOutput{remaining: &remaining, cancel: cancel}
-	err := cmd.Run()
-	if errors.Is(err, exec.ErrWaitDelay) {
+	copied := make(chan error, 2)
+	copyPipe := func(file *os.File, target *gitOutput) {
+		_, err := io.Copy(target, file)
+		copied <- err
+	}
+	go copyPipe(out, &gitOutput{remaining: &remaining, buffer: &stdout})
+	go copyPipe(stderr, &gitOutput{remaining: &remaining})
+
+	// Inherited writers share the command deadline. Reap the leader after the pipes settle.
+	for pending := 2; pending > 0; {
+		select {
+		case err := <-copied:
+			pending--
+			if err != nil {
+				cancel()
+			}
+		case <-ctx.Done():
+			_ = out.Close()
+			_ = stderr.Close()
+			for ; pending > 0; pending-- {
+				<-copied
+			}
+		}
+	}
+	if ctx.Err() != nil {
 		_ = cmd.Cancel()
 	}
+	err = cmd.Wait()
 	if ctx.Err() != nil {
 		return "", errGitInspection
 	}
@@ -89,12 +135,10 @@ func runSourceGit(directory string, args ...string) (string, error) {
 type gitOutput struct {
 	remaining *atomic.Int64
 	buffer    *bytes.Buffer
-	cancel    context.CancelFunc
 }
 
 func (output *gitOutput) Write(p []byte) (int, error) {
 	if output.remaining.Add(-int64(len(p))) < 0 {
-		output.cancel()
 		return 0, errGitInspection
 	}
 	if output.buffer != nil {
