@@ -27,19 +27,28 @@ export function sourceState(store, { reqId } = {}) {
       continue
     }
     let visited = false
-    store.visitInput(path, remaining, (kind, mode, length, write) => {
+    let failure
+    // A port may catch a callback error. A rejected frame can never produce a digest.
+    const checked = (callback) => (...args) => {
+      if (failure) throw failure.error
+      try { return callback(...args) }
+      catch (error) { failure ??= { error }; throw failure.error }
+    }
+    store.visitInput(path, remaining, checked((kind, mode, length, write) => {
       if (visited || !Number.isSafeInteger(length) || length < 0) throw new Error('Invalid source input frame')
       visited = true
       header(kind, mode, length)
       let written = 0
-      write((chunk) => {
+      write(checked((chunk) => {
         if (!(chunk instanceof Uint8Array)) throw new Error('Source input must contain bytes')
-        written += chunk.byteLength
-        if (written > length) throw new Error('Source input length mismatch')
+        if (chunk.byteLength > length - written) throw new Error('Source input length mismatch')
         hash.update(chunk)
-      })
+        written += chunk.byteLength
+      }))
+      if (failure) throw failure.error
       if (written !== length) throw new Error('Source input length mismatch')
-    })
+    }))
+    if (failure) throw failure.error
     if (!visited) throw new Error('Source input was not delivered')
   }
   return { hash: hash.digest(), head, files }

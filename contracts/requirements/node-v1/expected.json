@@ -8,7 +8,7 @@
     },
     "import_closure_sha256": {
       "modules/requirements/domain.mjs": "d663579aa62b8781703475f271a8ceb8dfa1e92c09c933876764259bbe3d6bee",
-      "modules/requirements/application.mjs": "0c336e295930f9c9c1ba23bc2ca3c3eceb2eea4746d6c52bc5cd9ff39506cab2",
+      "modules/requirements/application.mjs": "bbadef9bfb6acbc9e483e6c98402b90761d57482629d93f65a17e136bb1f8209",
       "core/domain/requirement-fields.mjs": "b42ba8decc94483dca7affac81be03c3a977266cb2b16a4f20de6178675397de"
     },
     "retained_reference_sha256": {
@@ -19,7 +19,7 @@
   },
   "payload_manifest": {
     "inputs_sha256": "8bf9aa141e1817b44218399c19aa254101fa8402faa5881741a9a5c5c5103d12",
-    "oracle_sha256": "13cc4760c07659835113a9d746674a034dc5649cf9c9a7feb2b67b06479a2e04",
+    "oracle_sha256": "ce879232fa0bd8bda3225325687bb4abe37f465fb9f5a0840fd861310369a2e6",
     "contract_payload_sha256": {
       "canonical-missing-scope": [
         "ca8ed0d70287b9ae1ebbce76605280dc4d63049e70131d4db70024b842a8282d"

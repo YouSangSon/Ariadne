@@ -13,7 +13,7 @@ const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex')
 const profile = { node: 'v24.22.2', icu: '78.3', unicode: '17.0' }
 const reviewedSources = {
   'modules/requirements/domain.mjs': 'd663579aa62b8781703475f271a8ceb8dfa1e92c09c933876764259bbe3d6bee',
-  'modules/requirements/application.mjs': '0c336e295930f9c9c1ba23bc2ca3c3eceb2eea4746d6c52bc5cd9ff39506cab2',
+  'modules/requirements/application.mjs': 'bbadef9bfb6acbc9e483e6c98402b90761d57482629d93f65a17e136bb1f8209',
   'core/domain/requirement-fields.mjs': 'b42ba8decc94483dca7affac81be03c3a977266cb2b16a4f20de6178675397de',
 }
 // Retained public/files boundaries are provenance, not exercised native-adapter contracts.
