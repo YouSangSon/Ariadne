@@ -901,6 +901,14 @@
       "layer": "tooling",
       "context": "core"
     },
+    "contracts/core/verification-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
+    "contracts/core/verification-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "contracts/extensions/v1/fixtures/cases.json": {
       "layer": "tooling",
       "context": "validation"
@@ -1440,6 +1448,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/architecture/verification_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/code/adapters/computeprocess/counter.go": {
       "layer": "infrastructure",
       "context": "code"
@@ -1606,6 +1618,14 @@
       "context": "core",
       "public": true
     },
+    "runtime/go/internal/core/application/verification/verification.go": {
+      "layer": "application",
+      "context": "core"
+    },
+    "runtime/go/internal/core/application/verification/verification_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/core/domain/product/product.go": {
       "layer": "domain",
       "context": "core"
@@ -1637,6 +1657,22 @@
     "runtime/go/internal/core/domain/scrub/scrub_test.go": {
       "layer": "tooling",
       "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/commit.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/sources.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/text.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/verification_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/evaluation/application/projection.go": {
       "layer": "application",
@@ -1940,6 +1976,10 @@
       "layer": "tooling",
       "context": "context"
     },
+    "scripts/core-verification-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "scripts/generate-mirrors.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -2023,6 +2063,10 @@
     "tests/context-pack.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/core-verification-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "core"
     },
     "tests/evaluation-compare.test.mjs": {
       "layer": "tooling",
