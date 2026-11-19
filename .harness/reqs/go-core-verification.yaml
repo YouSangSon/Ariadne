@@ -1,0 +1,116 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-core-verification
+  title: Go Core verification 순수 계약 보존
+  status: verified
+  priority: P1
+  owner: G1e
+  intake_started: "2026-11-17"
+  promoted_at: "2026-11-17"
+  source_doc: docs/go-rust-runtime-design.ko.md
+source:
+  raw_user_prompt: "Implement the next APPROVED G1 pure Core verification family in whole Ariadne Go/Rust refactoring."
+  user_language: ko
+  repo: Ariadne
+classification:
+  category: refactor
+  confidence: high
+  reason: 부모가 전달한 독립 설계 검토 A의 승인 범위와 Node 원본 계약을 따른다.
+requirement:
+  user_intent: 기존 Node 동작을 유지하며 Go Core verification 단위를 구현한다.
+  actor: 커밋 명령 검사 및 소스 검증 호출자
+  desired_outcome: UTF-16 순수 정책과 포트 조율을 실제 Node oracle로 검증한다.
+  confirmed_facts:
+    - 커밋 검사는 shell parser가 아닌 텍스트 heuristic과 REQ 구문 검사다.
+    - Node hook과 기본 검증 실행 경로는 계속 Node를 사용한다.
+  assumptions: []
+  rejected_assumptions:
+    - REQ 구문 일치가 파일 존재나 ready 상태를 검증한다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 고정 Node 24.22.2 oracle이 UTF-16 입력과 출력 및 이벤트와 소스 drift를 검증한다.
+      verification: node --test tests/core-verification-node-contracts.test.mjs
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: Go domain이 커밋 텍스트와 REQ 구문 및 테스트 선택과 로그 오류의 Node 결과를 손실 없이 보존한다.
+      verification: go test ./internal/core/domain/verification
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: Go application이 catch 범위와 null 및 빈 토큰의 차이와 port 오류의 원본 identity 및 중단 위치를 보존한다.
+      verification: go test ./internal/core/application/verification
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: Core 안쪽 계층의 I/O와 adapter 및 context 침범을 거절한다.
+      verification: go test ./internal/architecture
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 부모가 지정한 실제 Context와 Requirements 통합 뒤 최종 전체 gate와 정리를 완료한다.
+      verification: 부모가 통합 후 한 번 배정하는 전체 gate
+      passes: true
+code_mapping:
+  code_areas:
+    domain:
+      paths: [runtime/go/internal/core/domain/verification]
+      reason: private lossless UTF-16 값과 순수 정책
+    application:
+      paths: [runtime/go/internal/core/application/verification]
+      reason: 오프라인 port 기반 순차 조율
+    contracts:
+      paths: [contracts/core/verification-node-v1, scripts/core-verification-node-goldens.mjs, tests/core-verification-node-contracts.test.mjs]
+      reason: 실제 Node 계약 고정
+  boundary_rules:
+    - domain과 application은 I/O와 다른 context 내부를 참조하지 않는다.
+verification:
+  commands:
+    - node --test tests/core-verification-node-contracts.test.mjs tests/hooks.test.mjs tests/verify.test.mjs tests/modules.test.mjs
+    - go test ./internal/core/domain/verification ./internal/core/application/verification ./internal/architecture
+  verify_gate_required: true
+  verify_gate_reason: 실제 통합 소스의 전체 검증은 부모 배정 후 실행한다.
+  escalate_after: 2
+  evidence:
+    - criterion_id: AC1
+      check: Node 24.22.2와 ICU 78.3에서 94개 UTF-16 골든 및 소스 해시를 대조
+      result: passed
+      exit_code: 0
+      source_state: dbd0d43
+      artifact: .harness/handoff/go-core-verification/evidence/final/node-oracle.log
+    - criterion_id: AC2
+      check: Go domain의 커밋과 REQ 구문, 테스트 선택 및 로그 오류를 Node 골든과 대조
+      result: passed
+      exit_code: 0
+      source_state: dbd0d43
+      artifact: .harness/handoff/go-core-verification/evidence/final/go-race.log
+    - criterion_id: AC3
+      check: Go application의 이벤트 순서와 원본 오류, 빈 토큰 및 목록 조회 중 선택 변경을 대조
+      result: passed
+      exit_code: 0
+      source_state: dbd0d43
+      artifact: .harness/handoff/go-core-verification/evidence/final/go-race.log
+    - criterion_id: AC4
+      check: Go 경계 거절 fixture와 실제 저장소의 AST 검사
+      result: passed
+      exit_code: 0
+      source_state: dbd0d43
+      artifact: .harness/handoff/go-core-verification/evidence/final/go-ast.log
+    - criterion_id: AC5
+      check: 전체 Go race와 vet 및 AST, 고정 Node 원본 대조와 루트 소스 검증 및 전용 경로 정리
+      result: passed
+      exit_code: 0
+      source_state: dbd0d4356f563dc953a2d986d6191ec330d45f7f tree 11b56f2f5f52e6a4ba32eb31705de97781f1e153 with results SHA256 809c9463e84a2db864fa8c9897c691b7cdfeaf8a943b41d8e11fef5cd758abe1
+      artifact: .harness/handoff/go-core-verification/evidence/final/results.json
+  attempts: []
+audit:
+  must_not_implement:
+    - Node production, 공개 export, hook 등록, CLI, 기본 실행 경로 변경
+    - 실제 process나 files adapter 및 공통 runner 또는 Core 전역 Text 변경
+    - 다른 worktree, 글로벌 설정, credential, 서비스, 유료 모델 변경
+  completion_report_should_include:
+    - 소스 commit과 tree 및 hash, RED와 GREEN 로그, 검사 범위와 정리
+    - 실제 통합과 전체 gate 및 원격 CI의 미확인 상태
