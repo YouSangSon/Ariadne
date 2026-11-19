@@ -195,7 +195,12 @@ func TestGitCommandSeparatesUnbornFromBlockedInheritedOutput(t *testing.T) {
 	sourceTestOK(t, readErr)
 	group, parseErr := strconv.Atoi(string(pid))
 	sourceTestOK(t, parseErr)
-	t.Cleanup(func() { _ = unix.Kill(-group, unix.SIGKILL) })
+	settled := false
+	t.Cleanup(func() {
+		if !settled {
+			_ = unix.Kill(-group, unix.SIGKILL)
+		}
+	})
 	if !errors.Is(err, errGitInspection) {
 		t.Fatalf("blocked inherited stream yielded %v, want inspection error", err)
 	}
@@ -213,6 +218,7 @@ func TestGitCommandSeparatesUnbornFromBlockedInheritedOutput(t *testing.T) {
 			}
 		}
 		if !running {
+			settled = true
 			break
 		}
 		if time.Now().After(deadline) {
