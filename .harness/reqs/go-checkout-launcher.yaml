@@ -55,6 +55,12 @@ verification:
       exit_code: 0
       source_state: darwin/arm64에서 Go 1.27.4와 Node 24.22.2로 실행한 소스 검증
       artifact: .harness/handoff/go-checkout-launcher/evidence/launcher-race.log
+    - criterion_id: A1
+      check: 상속된 GOARCH와 GOENV의 타깃이 호스트와 다를 때 실제 바이너리의 아키텍처와 별도 컴파일 설정과 실행을 확인
+      result: passed
+      exit_code: 0
+      source_state: darwin/arm64에서 Go 1.27.4와 Node 24.22.2로 실행한 좁은 회귀 검증
+      artifact: .harness/handoff/go-checkout-launcher/evidence/host-arch-green.log
     - criterion_id: A2
       check: 기존 Node CLI 비교와 표준 입출력 및 npm 실패와 Node 시작 실패
       result: passed

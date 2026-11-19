@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"debug/buildinfo"
 	"encoding/json"
 	"errors"
 	"io"
@@ -137,12 +138,26 @@ func TestCheckoutLauncher(t *testing.T) {
 	checkoutMust(t, os.Symlink(root, alias))
 	build := checkoutProcess(t, 3*time.Minute, caller, boundNode, "--preserve-symlinks-main", filepath.Join(alias, "scripts/build-go-checkout.mjs"), "../bound ' Ariadne")
 	goExecutable := filepath.Join(runtime.GOROOT(), "bin/go")
-	build.Env = append(build.Environ(), "PATH="+filepath.Dir(goExecutable)+string(os.PathListSeparator)+os.Getenv("PATH"))
+	goEnvironment := filepath.Join(area, "go.env")
+	const fixtureGCFlags = "ariadne/runtime/cmd/Ariadne=-N"
+	checkoutMust(t, os.WriteFile(goEnvironment, []byte("GOARCH=wasm\nGOFLAGS=-gcflags="+fixtureGCFlags+"\n"), 0600))
+	build.Env = append(build.Environ(), "PATH="+filepath.Dir(goExecutable)+string(os.PathListSeparator)+os.Getenv("PATH"),
+		"GOARCH=wasm", "GOENV="+goEnvironment, "GOFLAGS=")
 	if result := checkoutRun(t, build); result.status != 0 {
 		t.Fatalf("build failed: %+v", result)
 	}
 	checkoutMust(t, os.Remove(alias))
 	binary := filepath.Join(area, "bound ' Ariadne")
+	info, err := buildinfo.ReadFile(binary)
+	checkoutMust(t, err)
+	settings := make(map[string]string)
+	for _, setting := range info.Settings {
+		settings[setting.Key] = setting.Value
+	}
+	if settings["GOOS"] != runtime.GOOS || settings["GOARCH"] != runtime.GOARCH || settings["-gcflags"] != fixtureGCFlags {
+		t.Fatalf("build settings: got %s/%s -gcflags=%q, want %s/%s -gcflags=%q",
+			settings["GOOS"], settings["GOARCH"], settings["-gcflags"], runtime.GOOS, runtime.GOARCH, fixtureGCFlags)
+	}
 	unbound := filepath.Join(area, "unbound Ariadne")
 	if result := checkoutRun(t, checkoutProcess(t, 3*time.Minute, filepath.Join(root, "runtime/go"), goExecutable, "build", "-o", unbound, "./cmd/Ariadne")); result.status != 0 {
 		t.Fatalf("unbound build failed: %+v", result)
