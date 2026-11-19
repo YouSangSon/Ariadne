@@ -53,6 +53,14 @@ G1b의 실제 main `c7ac4921`을 정상 통합한 `0132435` 소스에서 전체 
 
 이 순수 규칙은 [PR19](https://github.com/YouSangSon/Ariadne/pull/19)로 실제 main `4e37409`에 게시했다. 실제 Go 제품 런타임·기본 CLI 전환과 성능 채택은 별도 단계다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
 
+### G1e Core 검증 규칙
+
+`runtime/go/internal/core/domain/verification`은 커밋 명령 텍스트, REQ 줄의 구문, 소스 테스트 선택, 커밋 로그 오류를 검사한다. 명령 텍스트에서는 처음으로 형식에 맞는 `-m` 인용 메시지를 찾는다. REQ 줄은 형식만 검사한다. 이 패키지의 `Text`는 UTF-16 코드 단위를 보관해 Node의 제목 길이, 테스트 이름 정렬, 로그 접두사 자르기를 재현한다.
+
+`runtime/go/internal/core/application/verification`은 테스트 실행, 미러 검사, 커밋 로그 검사를 포트로 순서대로 호출한다. 시작할 때의 모듈 선택으로 단계 이름을 정하고, 테스트 목록을 받은 뒤 현재 선택을 다시 읽어 실행할 테스트를 고른다. 목록 조회와 테스트 선택에서 잡힌 오류는 메시지를 완료 콜백에 전달한다. 빈 메시지는 다음 단계로 이어진다. 다른 포트 오류가 발생하면 그 자리에서 원본 오류를 반환한다. 제품 CLI와 커밋 훅은 Node 실행 경로를 사용한다.
+
+Node 24.22.2/ICU 78.3의 실제 정책 함수에서 얻은 94개 결과와 이벤트, 원본 파일 해시를 고정한다. `asdf exec node --test tests/core-verification-node-contracts.test.mjs`로 골든을 대조하고, `runtime/go`에서 domain·application 테스트와 AST 경계 검사로 Go 구현을 확인한다. Context·Requirements 통합과 전체 gate 및 원격 CI는 별도 검증 단계다. [고정 사례와 소스 정보](../contracts/core/verification-node-v1/expected.json)
+
 ## 3. 결정과 대안
 
 | ID | 결정과 상태 | 근거·손익 |
@@ -478,8 +486,8 @@ skill 본문의 nofollow·strict UTF-8·크기 제한을 분리한다. 별도 Go
 기본 Node launcher와 Memory·Execution·provider는 그대로다.
 
 물리 cwd와 root symlink의 OS 문자열은 실제 Node 재현과 독립 설계 검토에 맞춰
-해석한다. Core 전용 private root resolver가 raw stat→readlink decode→lexical
-resolve 순서를 보존하고, 마지막 raw anchor의 기존 descriptor 검사는 유지한다.
+해석한다. Core와 Requirements의 파일 어댑터는 루트 해석을 공유한다. 처음 만나는 링크는 실제
+대상을 확인하고 링크 문자열을 디코딩한 뒤 경로를 해석한다. Core는 마지막 물리 경로를 디스크립터로 고정한다.
 FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 수 있다.
 검증 driver의 kill/wait를 제품의 읽기 timeout이나 OS sandbox로 설명하지 않는다.
 [파일·CLI 계약](../contracts/context/files-cli-v1/README.md)이 실제 oracle과 native
@@ -517,3 +525,35 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 통과했다. Context PR #21이 병합된 `main`의 `926f9fe7`을 통합한 뒤 검증에 사용한
 코드, 테스트, 픽스처가 바이트 단위로 같은 것을 확인했다. Requirements REQ의 `verified`는
 이 로컬 검증의 결과다. 원격 CI와 PR 병합은 게시 단계에서 확인한다.
+
+### Requirements Git 지문
+
+Node의 `sourceState(root)`와 macOS·Linux의 Go `files.SourceState(root, reqID)`는
+Git이 선택한 작업 파일을 같은 순서로 읽는다. SHA-256 입력은 경로, 종류, 권한, 실제 길이가
+담긴 헤더와 내용 바이트다. 파일별로 버퍼를 나누어 읽으므로 1 MiB를 넘는 파일도 포함한다.
+내용 합계가 정확히 64 MiB면 성공하고, 1바이트라도 초과하거나 읽던 파일의 변경을 감지하면
+지문을 반환하지 않는다. HEAD는 결과에 별도로 기록한다.
+Go가 PATH에서 처음 찾은 Git 실행 파일은 절대 경로 항목(예: `/usr/bin`)에 있어야 한다.
+상대 경로 항목에서 Git이 먼저 발견되면 저장소 검사 오류를 반환한다.
+
+[Requirements 계약](../contracts/requirements/node-v1/README.md)에 파일 선택, 링크·누락 파일과
+보고된 길이가 실제 길이와 다른 파일의 처리 방식을 기록했다. 같은 체크아웃의 경로 목록,
+HEAD와 지문을 두 언어로 대조하려면 저장소 루트에서 다음 검사를 실행한다.
+
+```sh
+(cd runtime/go && ARIADNE_TEST_SOURCE_STATE_ROOT="$(git rev-parse --show-toplevel)" go test -count=1 -run '^TestSourceStateCurrentRepository$' -v ./internal/requirements/adapters/files)
+```
+
+### Requirements 계약 파일 읽기
+
+`internal/requirements/adapters/files.LoadPorts(root)`를 `application.LoadContract`에
+전달하면 macOS와 Linux에서 프로젝트의 `.harness/reqs/<slug>.yaml`을 읽는다.
+읽기 직전에 루트를 해석하므로 같은 포트에서 루트 별칭의 변경을 관측한다.
+하위 디렉터리는 검색 권한으로 열고 링크 경유를 거절한다. 일반 파일만 최대 1 MiB까지
+읽으며 엄격한 UTF-8 검사 뒤 선두 BOM 하나를 제거하고 CRLF를 LF로 바꾼다.
+application이 직렬화한 계약에 SHA-256을 적용한다. 이 읽기 경로는 Git을 실행하지 않는다.
+
+macOS arm64의 `57cd54f`에서 실제 파일을 읽는 Node·Go 비교와 전체 Go race, vet, AST,
+루트 소스 검사가 통과했다. 공용 루트 해석 경로의 Context와 skills 회귀 검사에서는
+58개 사례에서 출력 바이트와 종료 상태가 일치했다. 운영체제 오류 문구가 다른 1개는 양쪽 종료 상태가
+1이었다. FIFO 2건, 시그널 6건과 프로세스 그룹 132개의 종료를 확인했다.

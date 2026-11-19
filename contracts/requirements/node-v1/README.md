@@ -1,6 +1,6 @@
 # Requirements Node 기준 계약
 
-기존 Node Requirements의 선택 동작을 Go 이식 전에 보존한다. Node production과 public exports는 변경하지 않는다. Go 구현·native 파일/Git 어댑터·CLI·기본 실행기 전환·자동 승인 실행은 이 fixture의 완료 주장이 아니다.
+기존 Node Requirements의 계약 해시와 인메모리 포트 동작을 보존한다. Go 구현·native 파일/Git 어댑터·CLI·기본 실행기 전환·자동 승인 실행은 이 fixture의 완료 주장이 아니다.
 
 ## 실행
 
@@ -71,7 +71,13 @@ load 순서는 slug → ReadRequirement → Parse → Hash다. payload는 고정
 
 callback의 값 복사 시점도 원본 계약이다. reqId는 SourceState 진입 시 읽고 HEAD는 InspectGit이 반환한 즉시 읽는다. InspectGit이 caller의 reqId를 바꾸거나 hasher factory가 반환 record의 HEAD를 바꿔도 이미 읽은 값은 유지한다. `mutations.inspect_req_id`와 `mutations.factory_head`가 이 관측을 재현한다. raw content Buffer는 원본처럼 Update에 직접 넘기며 포트 전체를 deep copy하지 않는다.
 
-native regular/symlink 안전 검사와 파일별 1MiB 제한은 후속 files adapter 경계다. pure oracle의 64MiB 입력은 그 native 정책을 변경하지 않는다. 기존 tracked Unicode corpus가 1MiB를 넘으므로 현재 저장소 전체의 sourceState를 성공 기준으로 사용하지 않는다.
+### Git 파일 읽기
+
+Git 지문은 선택한 파일의 내용을 합해 64 MiB까지 처리한다. REQ 본문과 프로젝트 텍스트를 읽는 API는 파일당 1 MiB를 유지한다. 2026-11-19 [범위 결정](../../../.harness/reqs/git-fingerprint-stream.yaml)은 Git 입력에 적용하던 개별 1 MiB 제한을 대체한다.
+
+파일 어댑터는 일반 파일을 한 번 열어 최대 64 KiB씩 읽는다. 헤더의 길이는 실제 내용 바이트 수다. 작은 입력은 첫 버퍼에서 길이를 알 수 있다. 큰 파일은 보고된 끝 위치를 확인하고 곧바로 해시한다. 파일이 보고한 길이를 신뢰할 수 없고 데이터가 버퍼보다 크면, 접근 권한 0600의 임시 파일을 열고 즉시 이름을 지운 뒤 실제 길이를 세면서 기록한다. 이 경우에만 최대 남은 입력 예산만큼 임시 디스크 공간이 필요하다. 모든 경로에서 디스크립터를 닫는다.
+
+일반 파일은 바이너리를 그대로 포함한다. 최종 심볼릭 링크는 링크 대상 문자열을 바이트로 인코딩하고 누락 파일은 빈 내용을 사용한다. 파일별 mode와 정렬 순서, 선택 제외 규칙 및 직렬화는 기존 규칙을 따른다. 합계 초과, 읽기 오류, 관측한 변경 또는 전달 길이 불일치가 발생하면 성공 지문을 반환하지 않는다. 파일마다 확인하므로 작업공간 전체의 한 시점 스냅샷은 보장하지 않는다.
 
 ## 이식과 남은 검증
 

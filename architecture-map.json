@@ -901,6 +901,14 @@
       "layer": "tooling",
       "context": "core"
     },
+    "contracts/core/verification-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
+    "contracts/core/verification-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "contracts/extensions/v1/fixtures/cases.json": {
       "layer": "tooling",
       "context": "validation"
@@ -1392,6 +1400,10 @@
       "layer": "domain",
       "context": "requirements"
     },
+    "modules/requirements/file-stream.mjs": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "modules/requirements/files.mjs": {
       "layer": "infrastructure",
       "context": "requirements"
@@ -1449,6 +1461,10 @@
       "context": "validation"
     },
     "runtime/go/internal/architecture/requirements_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/architecture/verification_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -1592,10 +1608,6 @@
       "layer": "infrastructure",
       "context": "core"
     },
-    "runtime/go/internal/core/adapters/files/root_unix.go": {
-      "layer": "infrastructure",
-      "context": "core"
-    },
     "runtime/go/internal/core/adapters/files/root_unix_test.go": {
       "layer": "tooling",
       "context": "validation"
@@ -1617,6 +1629,14 @@
       "layer": "application",
       "context": "core",
       "public": true
+    },
+    "runtime/go/internal/core/application/verification/verification.go": {
+      "layer": "application",
+      "context": "core"
+    },
+    "runtime/go/internal/core/application/verification/verification_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/core/domain/product/product.go": {
       "layer": "domain",
@@ -1649,6 +1669,22 @@
     "runtime/go/internal/core/domain/scrub/scrub_test.go": {
       "layer": "tooling",
       "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/commit.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/sources.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/text.go": {
+      "layer": "domain",
+      "context": "core"
+    },
+    "runtime/go/internal/core/domain/verification/verification_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/evaluation/application/projection.go": {
       "layer": "application",
@@ -1816,12 +1852,68 @@
       "layer": "tooling",
       "context": "platform"
     },
+    "runtime/go/internal/platform/nodepath/realpath_unix.go": {
+      "layer": "infrastructure",
+      "context": "platform"
+    },
+    "runtime/go/internal/requirements/adapters/files/git_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/read_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/read_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/reader.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/reader_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/search_darwin.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/search_linux.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_content_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_content_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "runtime/go/internal/requirements/application/node_contracts_test.go": {
       "layer": "tooling",
       "context": "requirements"
     },
     "runtime/go/internal/requirements/application/requirements.go": {
       "layer": "application",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/application/stream_test.go": {
+      "layer": "tooling",
       "context": "requirements"
     },
     "runtime/go/internal/requirements/domain/contract.go": {
@@ -1956,6 +2048,10 @@
       "layer": "tooling",
       "context": "context"
     },
+    "scripts/core-verification-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "scripts/generate-mirrors.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -2040,6 +2136,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "tests/core-verification-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "core"
+    },
     "tests/evaluation-compare.test.mjs": {
       "layer": "tooling",
       "context": "evaluation"
@@ -2051,6 +2151,10 @@
     "tests/generators.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/git-fingerprint-stream.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/gitignore.test.mjs": {
       "layer": "tooling",
@@ -2123,6 +2227,10 @@
     "tests/product-node-contracts.test.mjs": {
       "layer": "tooling",
       "context": "core"
+    },
+    "tests/requirement-reader.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/requirements-node-contracts.test.mjs": {
       "layer": "tooling",

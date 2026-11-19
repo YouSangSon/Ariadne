@@ -10,6 +10,11 @@ func TestRequirementsRequirementPolicyIsExact(t *testing.T) {
 		from, layer, owner, to, targetOwner, targetLayer string
 		public, allowed                                  bool
 	}{
+		{"core/adapters/files", "infrastructure", "core", "platform/nodepath", "platform", "infrastructure", false, true},
+		{"requirements/adapters/files", "infrastructure", "requirements", "platform/nodepath", "platform", "infrastructure", false, true},
+		{"requirements/application", "application", "requirements", "platform/nodepath", "platform", "infrastructure", false, false},
+		{"context/adapters/files", "infrastructure", "context", "platform/nodepath", "platform", "infrastructure", false, false},
+		{"requirements/adapters/files", "infrastructure", "requirements", "platform/computeprocess", "platform", "infrastructure", false, false},
 		{"requirements/domain", "domain", "requirements", "core/domain/requirementfields", "shared", "domain", false, true},
 		{"requirements/application", "application", "requirements", "core/domain/requirementfields", "shared", "domain", false, false},
 		{"requirements/domain/nested", "domain", "requirements", "core/domain/requirementfields", "shared", "domain", false, false},

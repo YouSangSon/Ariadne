@@ -5,8 +5,10 @@ package corefiles
 import (
 	coreapp "ariadne/runtime/internal/core/application"
 	"ariadne/runtime/internal/core/domain/projectfiles"
+	"ariadne/runtime/internal/platform/nodepath"
 	"errors"
 	"golang.org/x/sys/unix"
+	"path/filepath"
 	"strings"
 )
 
@@ -42,7 +44,12 @@ func (r Reader) close(fd int) error {
 	return unix.Close(fd)
 }
 func (r Reader) read(root string, parts []string) (data []byte, id coreapp.FileIdentity, err error) {
-	canonical, err := resolveRoot(root)
+	canonical, err := nodepath.RealPath(root)
+	if err != nil {
+		return nil, id, err
+	}
+	// Resolve the final physical anchor without decoding it again.
+	canonical, err = filepath.EvalSymlinks(canonical)
 	if err != nil {
 		return nil, id, err
 	}
