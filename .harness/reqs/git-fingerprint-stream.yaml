@@ -1,0 +1,56 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: git-fingerprint-stream
+  title: Git 입력 전체의 스트리밍 지문
+  status: ready_for_routing
+  priority: P0
+  owner: requirements
+  intake_started: 2026-11-19
+  promoted_at: 2026-11-19
+  source_doc: docs/go-rust-runtime-design.ko.md
+source:
+  raw_user_prompt: 추천안 적용
+  user_language: ko
+requirement:
+  user_intent: 큰 파일을 빠짐없이 포함해 Ariadne 프로젝트 전체의 Git 입력 지문을 계산한다.
+  desired_outcome: Node와 Go가 같은 입력에서 같은 SHA-256을 반환하며 메모리 사용을 파일 크기에 비례해 늘리지 않는다.
+  confirmed_facts:
+    - 2026-11-19 사용자가 Git 지문만 스트리밍으로 바꾸고 합계 64 MiB를 유지하는 안을 선택했다.
+    - 기존 Requirements 체크아웃에서 입력 1627개의 합계는 19379692바이트이며 3개가 1 MiB를 넘었다.
+    - 이전에 성공한 입력의 해시와 경로 선택 및 순서를 보존한다.
+    - REQ 본문과 다른 프로젝트 텍스트 API의 파일당 1 MiB 제한은 유지한다.
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: Git이 선택한 누락 파일과 심볼릭 링크 및 일반 파일의 프레임과 원문을 순서대로 해시한다.
+      verification: 작은 기존 입력과 바이너리 및 1 MiB 초과 입력의 Node 및 Go 지문을 독립 해시와 대조한다.
+      passes: null
+    - id: AC2
+      priority: P0
+      statement: 합계 64 MiB까지 허용하고 1바이트라도 더 크거나 읽기 실패가 발생하면 지문을 반환하지 않는다.
+      verification: 상한과 초과 및 자원 정리를 실제 파일로 검증한다.
+      passes: null
+    - id: AC3
+      priority: P0
+      statement: 기존 인메모리 포트 결과와 REQ 본문 제한을 유지하며 실제 Ariadne 체크아웃의 지문을 양쪽 구현으로 계산한다.
+      verification: 기존 순수 골든과 REQ 경계 및 동일한 Git 목록과 해시를 확인한다.
+      passes: null
+code_mapping:
+  boundary_rules:
+    - Requirements application이 선택과 프레임 및 한도를 소유한다.
+    - Requirements 파일 어댑터가 Git과 파일 핸들 및 읽기 종료를 소유한다.
+verification:
+  commands:
+    - node --test tests/loop-contract.test.mjs tests/requirements-node-contracts.test.mjs
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+  verify_gate_required: true
+  verify_gate_reason: Node와 Go 호환성과 파일 및 자원 경계를 실제 입력에서 검증한다.
+audit:
+  must_not_implement:
+    - 파일 제외로 지문을 축소하거나 원문 및 임시 복제본을 로그에 남기는 동작
+    - REQ 본문 상한이나 기존 공개 제품 CLI 변경
