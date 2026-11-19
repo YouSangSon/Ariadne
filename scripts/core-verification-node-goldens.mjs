@@ -35,12 +35,15 @@ export function verificationGoldens() {
         case 'sources': entry.value = sourceTests(input.names.map(decode), new Set(input.code ? ['code'] : [])).map(encode); break
         case 'run': {
           entry.events = []
+          const modules = new Set(input.code ? ['code'] : [])
           let starts = 0, finishes = 0
           const fail = (name, index = 0) => { if (input.throwAt === name && (input.throwIndex ?? 0) === index) throw original }
-          entry.value = verifySources(new Set(input.code ? ['code'] : []), {
+          entry.value = verifySources(modules, {
             listTests() {
               entry.events.push({ type: 'listTests' })
               if ('listError' in input) throw new Error(decode(input.listError))
+              if (input.listCode === true) modules.add('code')
+              if (input.listCode === false) modules.delete('code')
               return input.names.map(decode)
             },
             runTests(names) { entry.events.push({ type: 'runTests', names: names.map(encode) }); fail('runTests'); return input.tokens?.[0] == null ? null : decode(input.tokens[0]) },

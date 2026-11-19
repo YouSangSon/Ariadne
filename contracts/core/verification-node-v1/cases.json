@@ -607,6 +607,26 @@
       "log": "005200450051003a00200061",
       "throwAt": "finish",
       "throwIndex": 2
+    },
+    {
+      "id": "run-list-adds-code",
+      "op": "run",
+      "names": [
+        "0061002e0074006500730074002e006d006a0073"
+      ],
+      "log": "",
+      "listCode": true
+    },
+    {
+      "id": "run-list-removes-code",
+      "op": "run",
+      "names": [
+        "00700072006f0064007500630074002d0063006f00640065002e0074006500730074002e006d006a0073",
+        "0061002e0074006500730074002e006d006a0073"
+      ],
+      "log": "",
+      "code": true,
+      "listCode": false
     }
   ]
 }

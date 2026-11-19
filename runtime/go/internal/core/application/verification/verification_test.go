@@ -46,12 +46,14 @@ type input struct {
 	Log        *string
 	Tokens     []*string
 	ListError  *string
+	ListCode   *bool
 	ThrowAt    string
 	ThrowIndex int
 }
 type port struct {
 	t                *testing.T
 	in               input
+	modules          map[string]struct{}
 	events           []map[string]any
 	original         error
 	starts, finishes int
@@ -73,6 +75,13 @@ func (p *port) ListTests() ([]v.Text, *v.Text) {
 	if p.in.ListError != nil {
 		s := text(p.t, *p.in.ListError)
 		return nil, &s
+	}
+	if p.in.ListCode != nil {
+		if *p.in.ListCode {
+			p.modules["code"] = struct{}{}
+		} else {
+			delete(p.modules, "code")
+		}
 	}
 	r := make([]v.Text, len(p.in.Names))
 	for i, s := range p.in.Names {
@@ -153,9 +162,13 @@ func TestNodeGoldenApplication(t *testing.T) {
 			continue
 		}
 		t.Run(c.ID, func(t *testing.T) {
-			p := &port{t: t, in: c, original: errors.New("original port failure"), events: []map[string]any{}}
+			modules := make(map[string]struct{})
+			if c.Code {
+				modules["code"] = struct{}{}
+			}
+			p := &port{t: t, in: c, modules: modules, original: errors.New("original port failure"), events: []map[string]any{}}
 			before, _ := json.Marshal(c)
-			code, err := app.VerifySources(c.Code, p)
+			code, err := app.VerifySources(modules, p)
 			after, _ := json.Marshal(c)
 			if string(before) != string(after) {
 				t.Fatal("application mutated input")
@@ -218,7 +231,7 @@ func TestVerifySourcesPassesFinishTokenByValue(t *testing.T) {
 		port:     port{t: t, in: input{Names: []string{encoded(v.TextOf("one.test.mjs"))}, Log: &emptyLog}},
 		runToken: v.TextOf("failed"),
 	}
-	code, err := app.VerifySources(false, p)
+	code, err := app.VerifySources(nil, p)
 	if err != nil || code != 1 || !p.rewritten || p.runToken.String() != "failed" || p.finishes != 1 {
 		t.Fatalf("finish rewrote the source token or failure: code=%d error=%v token=%q finishes=%d", code, err, p.runToken, p.finishes)
 	}

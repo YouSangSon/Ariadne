@@ -14,9 +14,10 @@ type Ports interface {
 }
 
 // VerifySources returns an exit code when no uncaught port error occurred.
-func VerifySources(withCode bool, ports Ports) (int, error) {
+// A callback can update the caller's module set before tests are selected.
+func VerifySources(modules map[string]struct{}, ports Ports) (int, error) {
 	testStep := "source tests only"
-	if withCode {
+	if _, withCode := modules["code"]; withCode {
 		testStep = "source tests + code integration"
 	}
 	steps := [...]struct {
@@ -28,6 +29,7 @@ func VerifySources(withCode bool, ports Ports) (int, error) {
 			if caught != nil {
 				return caught, nil
 			}
+			_, withCode := modules["code"]
 			tests, err := v.SourceTests(names, withCode)
 			if err != nil {
 				message := v.TextOf(err.Error())
