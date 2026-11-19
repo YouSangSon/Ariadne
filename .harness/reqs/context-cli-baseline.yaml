@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: context-cli-baseline
   title: G0 macOS Context CLI 자원 기준선
-  status: ready_for_routing
+  status: verified
   priority: P0
   source_doc: docs/context-cli-baseline.ko.md
 classification:
@@ -27,7 +27,7 @@ functional_contract:
       priority: P0
       statement: 측정 도구의 검증과 프로젝트 소스 검사를 마치고 작업 전용 임시 산출물을 정리한다.
       verification: 로컬 소스 게이트와 하위 프로세스 종료 및 범위 내 임시 경로 확인
-      passes: false
+      passes: true
 code_mapping:
   boundary_rules:
     - 검증 도구는 두 실행 파일을 외부 명령으로 호출한다.
@@ -49,6 +49,12 @@ verification:
       exit_code: 0
       source_state: macOS 15.8.2 arm64에서 244개 시료를 기록하고 SHA-256을 전후 대조했다.
       artifact: .harness/handoff/context-cli-baseline/evidence/receipt.json
+    - criterion_id: AC3
+      check: 출력 불일치와 대기 상한을 검사하고 통합 소스에서 선택 모듈 verify를 통과했다. 작업 디렉터리 제거와 소유 프로세스 종료를 확인했다.
+      result: passed
+      exit_code: 0
+      source_state: 실제 PR 27 main을 통합한 16a74ff에서 소스 검증했다. 후속 커밋은 이 REQ의 검증 기록을 갱신한다.
+      artifact: .harness/handoff/context-cli-baseline/evidence/gate-receipt.json
   notes:
     - 두 실제 명령의 입력과 실행법 및 관측량 정의는 docs/context-cli-baseline.ko.md에 기록한다.
 audit:
