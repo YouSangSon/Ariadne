@@ -1,6 +1,7 @@
 import { test } from 'node:test'
+import { createHash } from 'node:crypto'
 import assert from 'node:assert/strict'
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, openSync, statSync, truncateSync, writeSync, chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { execFileSync } from 'node:child_process'
@@ -249,7 +250,7 @@ test('path, mode, kind, deletion, and symlink target affect source hash without 
   assert.notEqual(sourceState(root).hash, linked.hash)
 })
 
-test('sourceState rejects symlink ancestors and oversized regular input files', (t) => {
+test('sourceState rejects symlink ancestors', (t) => {
   const root = repository(t)
   mkdirSync(join(root, 'src'))
   writeFileSync(join(root, 'src/code.txt'), 'inside')
@@ -259,9 +260,7 @@ test('sourceState rejects symlink ancestors and oversized regular input files', 
   writeFileSync(join(outside, 'code.txt'), 'outside')
   symlinkSync(outside, join(root, 'src'))
   assert.throws(() => sourceState(root), /symlink|symbolic/i)
-  unlinkSync(join(root, 'src'))
-  writeFileSync(join(root, 'sample.txt'), 'x'.repeat(1024 * 1024 + 1))
-  assert.throws(() => sourceState(root), /size|MiB|large/i)
+
 })
 
 test('sourceState supports an unborn HEAD and rejects non-repositories', (t) => {
@@ -270,4 +269,32 @@ test('sourceState supports an unborn HEAD and rejects non-repositories', (t) => 
   git(root, 'init', '-q')
   assert.equal(sourceState(root).head, null)
   assert.equal(readFileSync(join(root, '.harness/reqs/demo.yaml'), 'utf8'), req())
+})
+
+test('Git fingerprints include every byte through the 64 MiB aggregate boundary', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'ariadne-source-stream-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  git(root, 'init', '-q')
+  const small = join(root, 'a')
+  const large = join(root, 'b.bin')
+  const size = 64 * 1024 * 1024 - 1
+  writeFileSync(small, Buffer.from([255]))
+  writeFileSync(large, '')
+  truncateSync(large, size)
+  const buffer = Buffer.alloc(32768)
+  const expected = createHash('sha256')
+  expected.update(JSON.stringify(['a', 'file', statSync(small).mode & 0o777, 1]) + '\n')
+  expected.update(Buffer.from([255]))
+  expected.update(JSON.stringify(['b.bin', 'file', statSync(large).mode & 0o777, size]) + '\n')
+  for (let offset = 0; offset < size; offset += buffer.length) {
+    expected.update(buffer.subarray(0, Math.min(size - offset, buffer.length)))
+  }
+  const result = sourceState(root)
+  assert.deepEqual(result, { hash: expected.digest('hex'), head: null, files: ['a', 'b.bin'] })
+  const fd = openSync(large, 'r+')
+  try { writeSync(fd, Buffer.from([1]), 0, 1, size - 1) }
+  finally { closeSync(fd) }
+  assert.notEqual(sourceState(root).hash, result.hash)
+  truncateSync(large, size + 1)
+  assert.throws(() => sourceState(root), { message: 'Source input size exceeds 64 MiB' })
 })

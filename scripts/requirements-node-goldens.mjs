@@ -11,14 +11,15 @@ const directory = new URL('contracts/requirements/node-v1/', root)
 const read = (path) => readFileSync(new URL(path, root))
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex')
 const profile = { node: 'v24.22.2', icu: '78.3', unicode: '17.0' }
-const originalSources = {
+const reviewedSources = {
   'modules/requirements/domain.mjs': 'd663579aa62b8781703475f271a8ceb8dfa1e92c09c933876764259bbe3d6bee',
-  'modules/requirements/application.mjs': '27b2b40f93a0cf8df9c6d5b9ae5d4a44a2e75eab7d9262f8566ead31d0541e71',
+  'modules/requirements/application.mjs': '0c336e295930f9c9c1ba23bc2ca3c3eceb2eea4746d6c52bc5cd9ff39506cab2',
   'core/domain/requirement-fields.mjs': 'b42ba8decc94483dca7affac81be03c3a977266cb2b16a4f20de6178675397de',
 }
 // Retained public/files boundaries are provenance, not exercised native-adapter contracts.
-const originalReferences = {
-  'modules/requirements/files.mjs': '90f29d5181eb3aabc66d06bd78e868fb6c4915c6e54b2df9f8df0358ddcda1e1',
+const reviewedReferences = {
+  'modules/requirements/file-stream.mjs': '5fabb5dbb4ccea711227cba4adf236e3246336f4600933918aa8cd1a133e14a4',
+  'modules/requirements/files.mjs': 'ed0bc83722b95fa42d67ac5b49909175cff740cba491b3462cb47e9c9f59b784',
   'modules/loop/contract.mjs': '4f39e0d188d0643a07b0dc0ce294e3416d856b143ed7582129ea33f122e1fe0e',
 }
 
@@ -144,10 +145,10 @@ function observe(entry) {
 export function generateRequirementsGoldens() {
   const runtime = { node: process.version, icu: process.versions.icu, unicode: process.versions.unicode }
   assert.deepEqual(runtime, profile, 'requirements oracle runtime drift; use the reviewed Node profile')
-  const sourceSHA = Object.fromEntries(Object.keys(originalSources).map((path) => [path, sha256(read(path))]))
-  const referenceSHA = Object.fromEntries(Object.keys(originalReferences).map((path) => [path, sha256(read(path))]))
-  assert.deepEqual(sourceSHA, originalSources, 'requirements source drift; review frozen import closure')
-  assert.deepEqual(referenceSHA, originalReferences, 'requirements reference source drift; review public/files boundary')
+  const sourceSHA = Object.fromEntries(Object.keys(reviewedSources).map((path) => [path, sha256(read(path))]))
+  const referenceSHA = Object.fromEntries(Object.keys(reviewedReferences).map((path) => [path, sha256(read(path))]))
+  assert.deepEqual(sourceSHA, reviewedSources, 'requirements source drift; review frozen import closure')
+  assert.deepEqual(referenceSHA, reviewedReferences, 'requirements reference source drift; review public/files boundary')
   const inputs = 'contracts/requirements/node-v1/cases.json'
   const oracle = 'scripts/requirements-node-goldens.mjs'
   const corpus = JSON.parse(read(inputs))

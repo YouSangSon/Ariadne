@@ -1392,6 +1392,10 @@
       "layer": "domain",
       "context": "requirements"
     },
+    "modules/requirements/file-stream.mjs": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "modules/requirements/files.mjs": {
       "layer": "infrastructure",
       "context": "requirements"
@@ -2059,6 +2063,10 @@
     "tests/generators.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/git-fingerprint-stream.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/gitignore.test.mjs": {
       "layer": "tooling",
