@@ -17,12 +17,12 @@ functional_contract:
       priority: P0
       statement: 실제 커밋의 입력과 기본 예산 및 예산 초과의 출력을 고정하고 측정 전과 각 호출에서 stdout과 stderr의 바이트 및 종료값을 대조한다.
       verification: 두 CLI의 사전 비교와 각 호출 검증 및 고정 출력 불일치 거절
-      passes: false
+      passes: true
     - id: AC2
       priority: P0
       statement: 첫 호출과 짝지은 반복의 wall 및 CPU와 RSS를 기록하고 통계와 단위 및 적용 범위를 문서화한다.
       verification: 순서가 교차된 60쌍의 반복과 최초 관측 및 영수증과 보고서의 대조
-      passes: false
+      passes: true
     - id: AC3
       priority: P0
       statement: 측정 도구의 검증과 프로젝트 소스 검사를 마치고 작업 전용 임시 산출물을 정리한다.
@@ -35,7 +35,20 @@ code_mapping:
 verification:
   verify_gate_required: true
   commands:
-    - asdf exec node scripts/verify.mjs --modules core,ontology
+    - asdf exec npm run verify -- --modules core,ontology
+  evidence:
+    - criterion_id: AC1
+      check: 실제 공개 Node와 non-race Go CLI에서 고정 출력 4건과 각 측정 및 예열 호출을 검증했다.
+      result: passed
+      exit_code: 0
+      source_state: 기준 제품 소스 0808fc65와 동일한 제품 파일을 사용했다.
+      artifact: .harness/handoff/context-cli-baseline/evidence/receipt.json
+    - criterion_id: AC2
+      check: 각 입력의 첫 호출과 반복 60쌍의 wall 및 CPU와 최대 RSS를 기록했다.
+      result: passed
+      exit_code: 0
+      source_state: macOS 15.8.2 arm64에서 244개 시료를 기록하고 SHA-256을 전후 대조했다.
+      artifact: .harness/handoff/context-cli-baseline/evidence/receipt.json
   notes:
     - 두 실제 명령의 입력과 실행법 및 관측량 정의는 docs/context-cli-baseline.ko.md에 기록한다.
 audit:

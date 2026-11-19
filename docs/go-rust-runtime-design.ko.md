@@ -379,6 +379,8 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 첫 실험은 고정 fixture에서 결과 차이 0건, 보안/취소 시나리오 통과가 필수다. 이후 동일 입력의 짝지은 반복 측정으로 실행 편차와 성능·메모리 차이를 기록한다. 운영 예산이 미정이면 승패 기준을 사후에 고르지 않고 측정 전 비교 목적과 허용 회귀를 기록한다. 이 기준을 정하기 전에는 실험 backend만 제공하고 기본값은 유지한다. 이득이 없으면 Rust 계약 실험을 종료하거나 보류하며 Rust 사용량을 늘리는 것을 성공으로 삼지 않는다.
 
+macOS의 [Context CLI 자원 기준선](context-cli-baseline.ko.md)은 고정된 기본 성공과 예산 초과에서 공개 Node 런처와 실험 Go 바이너리를 대조한다. 프로세스 트리 메모리 합계와 제품 채택은 후속 검증 범위다.
+
 ### 작업 자원 정리
 
 후속 빌드의 `CARGO_TARGET_DIR`, `GOCACHE`, 임시 cwd와 로그는 실행 ID가 있는 전용 경로에 둔다. 공유 module/download cache와 기존 의존성은 자동 삭제하지 않는다. 검증 요약·exit code·실패 재현 fixture를 기존 private handoff에 보존한 뒤 이번 실행 소유의 불필요한 출력만 삭제한다. cleanup은 프로세스 종료 확인 후 수행한다. 정리 실패·남은 PID/경로·용량은 보고하고 전체 prune을 사용하지 않는다. `.parallax`, `.akasha`, 원본 DB/모델, 기존 컨테이너는 검사 없이 정리하지 않는다.
@@ -409,7 +411,7 @@ G0에서 실제 대표 입력 snapshot과 digest를 고정하고, 기본 범위�
 
 ## 12. 미확인 사항과 다음 작업
 
-G2a의 숫자 계약·순수 계산과 G2b의 실제 subprocess·EOF·취소 연결은 [계약 정본](../contracts/compute/v1/README.md)으로 추적한다. G2b 구현은 [PR13](https://github.com/YouSangSon/Ariadne/pull/13)에 게시했다. 다음 범위는 남은 G1 use case와 G3 Memory·G4 Code·G5 제품 조립이며, G0의 성능·자원 baseline과 로컬 backup timeout도 별도로 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다. 기존 Node Memory의 조직 binding 보정은 [PR20](https://github.com/YouSangSon/Ariadne/pull/20)이며 Go Memory 이식 완료와 구분한다.
+G2a의 숫자 계약·순수 계산과 G2b의 실제 subprocess·EOF·취소 연결은 [계약 정본](../contracts/compute/v1/README.md)으로 추적한다. G2b 구현은 [PR13](https://github.com/YouSangSon/Ariadne/pull/13)에 게시했다. 다음 범위는 남은 G1 use case와 G3 Memory·G4 Code·G5 제품 조립이다. Context CLI 외의 G0 성능·자원 검증과 로컬 backup timeout의 원인 확인도 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다. 기존 Node Memory의 조직 binding 보정은 [PR20](https://github.com/YouSangSon/Ariadne/pull/20)이며 Go Memory 이식 완료와 구분한다.
 
 - Go MCP SDK의 존재는 확인했지만 현 HTTP/MCP의 OAuth·tool schema·session·오류와의 동등성은 미검증이다.
 - SQLite driver/`sqlite-vec`와 transformers 대체 adapter, TS parser 대체 여부는 선정 전이다. native dependency·라이선스·모델 출력 동등성·플랫폼 검사가 끝나기 전 해당 owner의 Node 제거를 약속하지 않는다.
