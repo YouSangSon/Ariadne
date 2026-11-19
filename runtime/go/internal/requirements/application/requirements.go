@@ -3,6 +3,7 @@ package application
 
 import (
 	"errors"
+	"io"
 	"strconv"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -37,11 +38,29 @@ type SourcePorts struct {
 	SourceHasher func() (SourceHasher, error)
 	ReadInput    func(domain.Text) (SourceInput, error)
 }
+type StreamInput struct {
+	Kind    domain.Text
+	Mode    *int64
+	Size    int64
+	Content io.Reader
+}
+type StreamSourcePorts struct {
+	InspectGit   func() (GitState, error)
+	SourceHasher func() (SourceHasher, error)
+	// WithInput supplies one synchronous input and closes its resources before returning.
+	WithInput func(path domain.Text, remaining int64, consume func(StreamInput) error) error
+}
 type SourceStateResult struct {
 	Hash  string
 	Head  *string
 	Files []domain.Text
 }
+
+var (
+	ErrSourceInputLimit   = errors.New("Source input size exceeds 64 MiB")
+	ErrSourceInputChanged = errors.New("Source input changed during read")
+	errSourceFrameCount   = errors.New("Source input must provide exactly one frame")
+)
 
 func LoadContract(ports LoadPorts, reqID string) (Contract, error) {
 	if _, err := domain.Slug(reqID); err != nil {
@@ -84,6 +103,54 @@ func LoadContract(ports LoadPorts, reqID string) (Contract, error) {
 	return Contract{reqID, parsed.Status, parsed.Criteria, hash}, nil
 }
 func SourceState(ports SourcePorts, reqID *string) (SourceStateResult, error) {
+	return sourceState(ports.InspectGit, ports.SourceHasher, reqID, func(hasher SourceHasher, path domain.Text, remaining int64) (int64, error) {
+		input, err := ports.ReadInput(path)
+		if err != nil {
+			return 0, err
+		}
+		size := int64(len(input.Content))
+		if err := hashSourceHeader(hasher, path, input.Kind, input.Mode, size, remaining); err != nil {
+			return 0, err
+		}
+		return size, hasher.Update(input.Content)
+	})
+}
+
+func StreamSourceState(ports StreamSourcePorts, reqID *string) (SourceStateResult, error) {
+	buffer := make([]byte, 64<<10)
+	return sourceState(ports.InspectGit, ports.SourceHasher, reqID, func(hasher SourceHasher, path domain.Text, remaining int64) (int64, error) {
+		var used int64
+		var received bool
+		var callbackErr error
+		err := ports.WithInput(path, remaining, func(input StreamInput) error {
+			if received {
+				if callbackErr == nil {
+					callbackErr = errSourceFrameCount
+				}
+				return callbackErr
+			}
+			received = true
+			err := hashSourceHeader(hasher, path, input.Kind, input.Mode, input.Size, remaining)
+			if err == nil && callbackErr == nil {
+				err = hashSourceContent(hasher, input.Content, input.Size, buffer)
+			}
+			if callbackErr == nil {
+				callbackErr = err
+			}
+			used = input.Size
+			return callbackErr
+		})
+		if err != nil {
+			return 0, err
+		}
+		if !received {
+			return 0, errSourceFrameCount
+		}
+		return used, callbackErr
+	})
+}
+
+func sourceState(inspect func() (GitState, error), makeHasher func() (SourceHasher, error), reqID *string, hashInput func(SourceHasher, domain.Text, int64) (int64, error)) (SourceStateResult, error) {
 	if reqID != nil {
 		value := *reqID
 		reqID = &value
@@ -91,7 +158,7 @@ func SourceState(ports SourcePorts, reqID *string) (SourceStateResult, error) {
 			return SourceStateResult{}, err
 		}
 	}
-	git, err := ports.InspectGit()
+	git, err := inspect()
 	if err != nil {
 		return SourceStateResult{}, err
 	}
@@ -104,45 +171,80 @@ func SourceState(ports SourcePorts, reqID *string) (SourceStateResult, error) {
 	if err != nil {
 		return SourceStateResult{}, err
 	}
-	hasher, err := ports.SourceHasher()
+	hasher, err := makeHasher()
 	if err != nil {
 		return SourceStateResult{}, err
 	}
-	total := uint64(0)
+	remaining := int64(64 << 20)
 	for _, path := range files {
-		input, err := ports.ReadInput(path)
+		used, err := hashInput(hasher, path, remaining)
 		if err != nil {
 			return SourceStateResult{}, err
 		}
-		total += uint64(len(input.Content))
-		if total > 64*1024*1024 {
-			return SourceStateResult{}, errors.New("Source input size exceeds 64 MiB")
-		}
-		header := append([]byte{'['}, quote(path)...)
-		header = append(header, ',')
-		header = append(header, quote(input.Kind)...)
-		header = append(header, ',')
-		if input.Mode == nil {
-			header = append(header, "null"...)
-		} else {
-			// Match JSON.stringify(Number); large integer modes use the shortest binary64 decimal.
-			header = strconv.AppendFloat(header, float64(*input.Mode), 'f', -1, 64)
-		}
-		header = append(header, ',')
-		header = strconv.AppendInt(header, int64(len(input.Content)), 10)
-		header = append(header, ']', 10)
-		if err := hasher.Update(header); err != nil {
-			return SourceStateResult{}, err
-		}
-		if err := hasher.Update(input.Content); err != nil {
-			return SourceStateResult{}, err
-		}
+		remaining -= used
 	}
 	digest, err := hasher.Digest()
 	if err != nil {
 		return SourceStateResult{}, err
 	}
 	return SourceStateResult{digest, head, files}, nil
+}
+
+func hashSourceHeader(hasher SourceHasher, path, kind domain.Text, mode *int64, size, remaining int64) error {
+	if size < 0 || size > remaining {
+		return ErrSourceInputLimit
+	}
+	header := append([]byte{'['}, quote(path)...)
+	header = append(header, ',')
+	header = append(header, quote(kind)...)
+	header = append(header, ',')
+	if mode == nil {
+		header = append(header, "null"...)
+	} else {
+		// Match JSON.stringify(Number) for mode values supplied by a buffered port.
+		header = strconv.AppendFloat(header, float64(*mode), 'f', -1, 64)
+	}
+	header = append(header, ',')
+	header = strconv.AppendInt(header, size, 10)
+	return hasher.Update(append(header, ']', '\n'))
+}
+
+func hashSourceContent(hasher SourceHasher, content io.Reader, size int64, buffer []byte) error {
+	if content == nil {
+		return ErrSourceInputChanged
+	}
+	for remaining := size; remaining > 0; {
+		n, err := content.Read(buffer[:min(remaining, int64(len(buffer)))])
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+		if n > 0 {
+			if err := hasher.Update(buffer[:n]); err != nil {
+				return err
+			}
+			remaining -= int64(n)
+		}
+		if errors.Is(err, io.EOF) {
+			if remaining == 0 {
+				return nil
+			}
+			return ErrSourceInputChanged
+		}
+		if n == 0 {
+			return io.ErrNoProgress
+		}
+	}
+	n, err := content.Read(buffer[:1])
+	if n != 0 {
+		return ErrSourceInputChanged
+	}
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
+	if err == nil {
+		return io.ErrNoProgress
+	}
+	return err
 }
 
 // quote matches JSON.stringify string bytes, including lone units and unescaped LS/PS and HTML.
