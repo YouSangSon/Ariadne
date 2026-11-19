@@ -198,6 +198,41 @@ console.log('verify fixture', process.cwd(), process.argv.slice(2).join(' '),
 			}
 		}
 	})
+	t.Run("offline evaluation", func(t *testing.T) {
+		for _, path := range []string{
+			"core/domain/project-files.mjs", "core/infrastructure/project-files.mjs",
+			"evaluation/compare-cli.mjs", "evaluation/comparison.mjs",
+			"evaluation/memory-ablation-cli.mjs", "evaluation/memory-ablation.mjs",
+		} {
+			checkoutCopy(t, filepath.Join(source, path), filepath.Join(root, path))
+		}
+		checkoutMust(t, os.Mkdir(filepath.Join(caller, "evaluation"), 0700))
+		for _, script := range []string{"compare-cli.mjs", "memory-ablation-cli.mjs"} {
+			checkoutMust(t, os.WriteFile(filepath.Join(caller, "evaluation", script), []byte("process.exit(98)"), 0600))
+		}
+		checkoutCopy(t, filepath.Join(source, "evaluation/comparison-example.json"), filepath.Join(caller, "compare input.json"))
+		checkoutCopy(t, filepath.Join(source, "evaluation/memory-ablation-example.json"), filepath.Join(caller, "records", "ablation.json"))
+		for _, tc := range []struct {
+			args   []string
+			status int
+		}{
+			{[]string{"eval", "compare", "--file", "compare input.json"}, 0},
+			{[]string{"eval", "memory-ablation", "--root", "records", "--file", "ablation.json"}, 0},
+			{[]string{"eval", "compare", "--file", "../outside.json"}, 2},
+			{[]string{"eval", "memory-ablation"}, 2},
+			{[]string{"eval"}, 2},
+			{[]string{"eval", "constructor"}, 2},
+		} {
+			want := checkoutRun(t, launch(t, node, append([]string{filepath.Join(root, "bin/Ariadne.mjs")}, tc.args...)...))
+			got := checkoutRun(t, launch(t, binary, tc.args...))
+			if want.status != tc.status || got != want || (tc.status == 0 && !json.Valid([]byte(got.stdout))) {
+				t.Fatalf("%q: Node status %d, Go status %d, stdout equal %t; Node stderr %q; Go stderr %q", tc.args, want.status, got.status, want.stdout == got.stdout, want.stderr, got.stderr)
+			}
+		}
+		if result := checkoutRun(t, launch(t, unbound, "eval", "compare", "--file", "compare input.json")); result != (checkoutResult{2, "", "unsupported extensions command or option; use --help\n"}) {
+			t.Fatalf("unbound eval: %+v", result)
+		}
+	})
 	t.Run("existing lifecycle policy", func(t *testing.T) {
 		memory, code := filepath.Join(root, "packages/memory"), filepath.Join(root, "packages/code")
 		for _, c := range []struct {

@@ -1,0 +1,55 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-checkout-eval
+  title: Go 체크아웃 런처에서 기록된 실행 비교
+  status: verified
+  priority: P1
+  owner: core-owner
+  intake_started: 2026-11-19
+  source_doc: docs/go-rust-runtime-design.ko.md
+requirement:
+  user_intent: 모듈형 Go 런처를 통해 기존 Ariadne 평가 기능을 사용한다.
+  desired_outcome: 체크아웃용 바이너리가 기존 평가기를 호출해 사용자의 프로젝트에 있는 기록을 비교한다.
+  confirmed_facts:
+    - Go의 CommandPlan과 기존 Node CLI는 compare와 memory-ablation을 오프라인 평가 스크립트로 연결한다.
+    - 두 평가기는 호출 디렉터리 또는 사용자가 고른 루트를 기준으로 입력을 읽는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 두 평가에서 기존 Node CLI와 같은 보고서와 종료값을 반환한다.
+      verification: 체크아웃 밖의 상대 입력과 명시적 루트를 실제 두 진입점으로 실행하고 표준 출력과 오류 및 종료값을 대조한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: 평가 스크립트와 Node는 빌드 시 고른 체크아웃과 실행 파일을 사용하고 허용된 명령만 실행한다.
+      verification: 잘못된 평가 명령과 파일 옵션 및 일반 Go 빌드에서의 동작을 검사한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - Go의 Core 명령 계획이 스크립트를 고르고 평가 모듈이 입력 검증과 보고서 생성을 소유한다.
+verification:
+  commands:
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/verify.mjs --modules core,ontology
+  verify_gate_required: true
+  verify_gate_reason: 실제 빌드와 기존 평가기의 호출 계약을 보존한다.
+  evidence:
+    - criterion_id: AC1
+      check: 실제 Node와 Go 런처에서 상대 경로와 명시적 루트로 두 평가를 실행하고 출력과 종료값 대조
+      result: passed
+      exit_code: 0
+      source_state: 8a0f4830549bccb7fce1c86d0cde07cb38999e10에서 Go 1.27.4와 Node 24.22.2로 실행
+      artifact: .harness/handoff/go-checkout-eval/evidence/green.log
+    - criterion_id: AC2
+      check: 호출 위치의 대체 스크립트와 PATH의 대체 Node 및 허용 범위 밖 입력을 실제 바이너리로 검사
+      result: passed
+      exit_code: 0
+      source_state: 같은 소스에서 Go 전체 race와 vet 및 아키텍처 검사와 core 및 ontology 검증 통과
+      artifact: .harness/handoff/go-checkout-eval/evidence/race.log
+audit:
+  must_not_implement:
+    - 기록된 입력을 평가하는 동안 외부 모델이나 provider를 호출하는 동작

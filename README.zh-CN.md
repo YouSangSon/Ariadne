@@ -223,7 +223,7 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 开发与验证通过 `.tool-versions` 管理 Go `1.27.4`、Node `24.22.2`、Rust `1.93.0` 和 Python `3.14.5`，使用 `asdf install` 准备这些工具。Python 仅用于 native qualification tooling。Go SQLite 检查需要 CGO 和 C compiler；实际版本检查与任务专用 cache 清理请遵循 [native gate](docs/extension-implementation-plan.ko.md#별도-native-gate)。
 
-可以通过 Go 启动器运行现有的 `setup` 和 `verify` 命令。[构建源码检出专用的 Go 启动器](docs/go-rust-runtime-design.ko.md#소스-체크아웃용-go-런처)。
+可以通过源码检出专用的 Go 启动器运行 `setup`、`verify`、`eval compare` 和 `eval memory-ablation`。[构建源码检出专用的 Go 启动器](docs/go-rust-runtime-design.ko.md#소스-체크아웃용-go-런처)。
 
 Go 扩展契约、参考报告转换、包检查和不执行扩展的包 registry 处于[实验阶段](docs/extension-implementation-plan.ko.md)。独立的 Go CLI 提供安装、digest 选择、停用和移除。activate 不授予执行权限。Node 产品保持不变，尚不提供用户扩展执行或经过验证的 sandbox。
 Rust worker 和固定 Podman profile 是独立的运行适用性测试工具，尚不提供公开的用户扩展执行功能。

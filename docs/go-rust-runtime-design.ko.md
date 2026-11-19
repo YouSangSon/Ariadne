@@ -290,18 +290,22 @@ Core/ontology가 Go로 완전히 전환되면 그 배포에는 Node/Rust toolcha
 
 ### 소스 체크아웃용 Go 런처
 
-macOS와 Linux에서 기존 `setup`과 `verify`를 Go 진입점으로 호출해 볼 수 있다. 프로젝트의 Go·Node 버전과 CGO용 C 컴파일러를 준비한 뒤 체크아웃에서 실행한다. [요구사항](../.harness/reqs/go-checkout-launcher.yaml).
+macOS와 Linux의 체크아웃용 Go 런처는 `setup`, `verify`, `eval compare`, `eval memory-ablation`을 지원한다. 프로젝트의 Go·Node 버전과 CGO용 C 컴파일러를 준비한 뒤 체크아웃에서 실행한다. [요구사항](../.harness/reqs/go-checkout-launcher.yaml).
 
 ```sh
 build_dir="$(mktemp -d)"
 asdf exec node scripts/build-go-checkout.mjs "$build_dir/Ariadne"
 "$build_dir/Ariadne" setup --modules core,ontology
 "$build_dir/Ariadne" verify --modules core,ontology
+"$build_dir/Ariadne" eval compare --file evaluation/comparison-example.json
+"$build_dir/Ariadne" eval memory-ablation --file evaluation/memory-ablation-example.json
 ```
 
-빌드는 실행 중인 Go 도구의 호스트 아키텍처를 대상으로 한다. 이 스크립트의 실제 소스 체크아웃과 실행 중인 Node의 절대 경로를 바이너리에 기록한다. 다른 디렉터리에서 호출해도 기록한 체크아웃에서 `scripts/product.mjs`를 실행한다. 출력의 상대 경로는 빌드 명령을 실행한 디렉터리를 기준으로 한다. 신뢰하는 로컬 체크아웃과 Node에 의존하므로 둘 중 하나를 옮겼다면 다시 빌드한다.
+빌드는 실행 중인 Go 도구의 호스트 아키텍처를 대상으로 한다. 이 스크립트의 실제 소스 체크아웃과 실행 중인 Node의 절대 경로를 바이너리에 기록한다. `setup`과 `verify`는 기록한 체크아웃을 작업 디렉터리로 사용해 `scripts/product.mjs`를 실행한다. 출력의 상대 경로는 빌드 명령을 실행한 디렉터리를 기준으로 한다. 신뢰하는 로컬 체크아웃과 Node에 의존하므로 둘 중 하나를 옮겼다면 다시 빌드한다.
 
-Go는 두 명령의 인자, 환경, 표준 입출력을 Node에 전달한다. 모듈 선택과 `verify`의 환경 필터링은 기존 Node 코드가 담당한다. SIGINT와 SIGTERM은 직계 Node 자식에게 전달하며 종료를 기다린다. 자식이 시그널을 처리하고 정상 종료하면 그 종료값을, 시그널로 종료하면 128에 시그널 번호를 더한 값을 반환한다. Node를 시작할 수 없을 때는 종료값 2를 반환한다.
+두 `eval` 명령은 체크아웃에 있는 Node 평가기를 호출자의 작업 디렉터리에서 실행한다. `--file`은 호출 디렉터리 또는 `--root`로 고른 프로젝트를 기준으로 해석한다. 평가기는 기록된 입력을 읽어 JSON 보고서를 출력한다. [평가 호출 계약](../.harness/reqs/go-checkout-eval.yaml)
+
+Go는 각 명령의 인자, 환경, 표준 입출력을 Node에 전달한다. 모듈 선택과 `verify`의 환경 필터링은 기존 Node 코드가 담당한다. SIGINT와 SIGTERM은 직계 Node 자식에게 전달하며 종료를 기다린다. 자식이 시그널을 처리하고 정상 종료하면 그 종료값을, 시그널로 종료하면 128에 시그널 번호를 더한 값을 반환한다. Node를 시작할 수 없을 때는 종료값 2를 반환한다.
 
 npm 기본 진입점은 `bin/Ariadne.mjs`다. 일반 `go build`로 만든 실험 CLI는 기존 명령 범위와 도움말을 유지한다. 이 경로는 G1의 소스 체크아웃 실험이다. G5 설치·배포 검증은 별도 단계다.
 
