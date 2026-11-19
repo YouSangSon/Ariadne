@@ -7,10 +7,16 @@ permissions:
   contents: read
 jobs:
   native-contracts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ${{ github.workspace }}/.tool-versions
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: ${{ github.workspace }}/.tool-versions
       - uses: actions/setup-go@v7
         with:
           go-version-file: runtime/go/go.mod
@@ -22,14 +28,31 @@ jobs:
           GOFLAGS: -mod=readonly
           GOCACHE: ${{ runner.temp }}/ariadne-native-cache
           GOTMPDIR: ${{ runner.temp }}/ariadne-native-tmp
+          TMPDIR: ${{ runner.temp }}/ariadne-native-tmp
           GOPATH: ${{ runner.temp }}/ariadne-native-deps
           GOMODCACHE: ${{ runner.temp }}/ariadne-native-deps/pkg/mod
         run: |
           mkdir -p "$GOCACHE" "$GOTMPDIR" "$GOPATH"
+          regression_started=0
+          native_started=0
+          regression_report="$RUNNER_TEMP/context-owner-cleanup.json"
+          native_report="$RUNNER_TEMP/context-files-native.json"
+          native_marker="$RUNNER_TEMP/context-files-run.json"
           cleanup() {
             local check_exit=$?
-            if go clean -modcache && rm -rf "$GOCACHE" "$GOTMPDIR" "$GOPATH"; then
-              exit "$check_exit"
+            local cleanup_safe=1
+            if [ "$regression_started" -eq 1 ] && ! python3 -B ../../tools/test_qualify_context_files.py --check-cleanup "$regression_report" "$regression_run_id"; then
+              cleanup_safe=0
+            fi
+            if [ "$native_started" -eq 1 ] && ! python3 -B ../../tools/qualify_context_files.py --check-cleanup "$native_marker" "$native_report"; then
+              cleanup_safe=0
+            fi
+            if [ "$cleanup_safe" -eq 1 ]; then
+              if go clean -modcache && rm -rf "$GOCACHE" "$GOTMPDIR" "$GOPATH" "$RUNNER_TEMP/ariadne-native-cli"; then
+                exit "$check_exit"
+              fi
+            else
+              echo "Nested cleanup receipt missing/unsettled: preserving native cache, binary and scratch" >&2
             fi
             if [ "$check_exit" -ne 0 ]; then
               exit "$check_exit"
@@ -40,10 +63,31 @@ jobs:
           project_go=$(awk '$1 == "golang" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
           test "$(go env GOVERSION)" = "go$project_go"
           go env GOVERSION GOOS GOARCH CGO_ENABLED
+          project_node=$(awk '$1 == "nodejs" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test "$(node --version)" = "v$project_node"
+          project_python=$(awk '$1 == "python" { print $2 }' "$GITHUB_WORKSPACE/.tool-versions")
+          test "$(python3 -B -c 'import platform; print(platform.python_version())')" = "$project_python"
           test -z "$(gofmt -l .)"
           go run ./cmd/check-architecture --root ../..
           go test -race ./...
           go vet ./...
+          regression_run_id=$(python3 -B -c 'import uuid; print(uuid.uuid4().hex)')
+          regression_started=1
+          python3 -B ../../tools/test_qualify_context_files.py --cleanup-report "$regression_report" "$regression_run_id"
+          go build -o "$RUNNER_TEMP/ariadne-native-cli" ./cmd/Ariadne
+          native_started=1
+          python3 -B ../../tools/qualify_context_files.py --prepare-run "$RUNNER_TEMP/ariadne-native-cli" "$GOTMPDIR" "$native_report" "$native_marker"
+          python3 -B ../../tools/qualify_context_files.py --go-cli "$RUNNER_TEMP/ariadne-native-cli" --scratch "$GOTMPDIR" --report "$native_report" --run-marker "$native_marker"
+      - name: Preserve native Context qualification proof
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: context-files-native
+          path: |
+            ${{ runner.temp }}/context-files-native.json
+            ${{ runner.temp }}/context-files-run.json
+            ${{ runner.temp }}/context-owner-cleanup.json
+          if-no-files-found: error
   extension-worker:
     runs-on: ubuntu-24.04
     timeout-minutes: 20

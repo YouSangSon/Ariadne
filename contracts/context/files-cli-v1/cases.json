@@ -1,0 +1,2061 @@
+{
+  "fixture_version": 1,
+  "cases": [
+    {
+      "id": "missing-root-handoff",
+      "method": "readHandoff",
+      "files": [],
+      "missing_root": true
+    },
+    {
+      "id": "missing-root-skills",
+      "method": "listSkills",
+      "files": [],
+      "missing_root": true
+    },
+    {
+      "id": "blank-catalog",
+      "method": "catalog",
+      "files": []
+    },
+    {
+      "id": "blank-pack",
+      "method": "pack",
+      "files": []
+    },
+    {
+      "id": "lossy-e282",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "e282"
+        }
+      ]
+    },
+    {
+      "id": "lossy-8081",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "8081"
+        }
+      ]
+    },
+    {
+      "id": "lossy-c0af",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "c0af"
+        }
+      ]
+    },
+    {
+      "id": "lossy-eda080",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "eda080"
+        }
+      ]
+    },
+    {
+      "id": "lossy-f4908080",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "f4908080"
+        }
+      ]
+    },
+    {
+      "id": "lossy-e241",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "e241"
+        }
+      ]
+    },
+    {
+      "id": "lossy-efbbbf41",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "efbbbf41"
+        }
+      ]
+    },
+    {
+      "id": "lossy-410042",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "410042"
+        }
+      ]
+    },
+    {
+      "id": "lossy-f09f9880",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "f09f9880"
+        }
+      ]
+    },
+    {
+      "id": "record-symlink",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": "target",
+          "hex": "6465636973696f6e20f09f9880"
+        },
+        {
+          "path": ".harness/decisions.md",
+          "kind": "symlink",
+          "target": "../target"
+        }
+      ]
+    },
+    {
+      "id": "record-dangling",
+      "method": "readDecisions",
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "kind": "symlink",
+          "target": "absent"
+        }
+      ]
+    },
+    {
+      "id": "req-dangling",
+      "method": "hasRequirement",
+      "files": [
+        {
+          "path": ".harness/reqs/a.yaml",
+          "kind": "symlink",
+          "target": "absent"
+        }
+      ],
+      "arg": "a"
+    },
+    {
+      "id": "req-missing",
+      "method": "readRequirement",
+      "files": [],
+      "arg": "a"
+    },
+    {
+      "id": "req-names-all-kinds",
+      "method": "listRequirements",
+      "files": [
+        {
+          "path": ".harness/reqs/z.yaml",
+          "hex": ""
+        },
+        {
+          "path": ".harness/reqs/a.yaml",
+          "kind": "dir"
+        },
+        {
+          "path": ".harness/reqs/b.yaml",
+          "kind": "symlink",
+          "target": "absent"
+        },
+        {
+          "path": ".harness/reqs/C.YAML",
+          "hex": ""
+        },
+        {
+          "path": ".harness/reqs/😀.yaml",
+          "hex": ""
+        },
+        {
+          "path": ".harness/reqs/.yaml",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "valid-skill",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a206c6f63616c207265666572656e63650a2d2d2d0a426f647920f09f98800a"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "valid-catalog",
+      "method": "catalog",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a206c6f63616c207265666572656e63650a2d2d2d0a426f647920f09f98800a"
+        },
+        {
+          "path": "skills/beta/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20626574610a6465736372697074696f6e3a20226c696e65203c3e26205c7564383030220a2d2d2d0a426f647920f09f98800a"
+        }
+      ]
+    },
+    {
+      "id": "skill-scrub-raw-hash",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a202242656172657220787878787878787878787878787878787878787878787878220a2d2d2d0a736b2d5151515151515151515151515151515151515151515120f09f98800a"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-65535",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 65535,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-65536",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 65536,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-65537",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 65537,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-1048575",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 1048575,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-1048576",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 1048576,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-bytes-1048577",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "prefix": "---\nname: alpha\ndescription: local\n---\n",
+          "size": 1048577,
+          "fill_hex": "78"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-strict-e282",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "e282"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-strict-410042",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "410042"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "skill-strict-efbbbf",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "efbbbf"
+        }
+      ],
+      "arg": "alpha"
+    },
+    {
+      "id": "invalid-slug-missing-first",
+      "method": "readSkill",
+      "files": [],
+      "arg": "BAD"
+    },
+    {
+      "id": "invalid-slug-existing",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/BAD/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a204241440a6465736372697074696f6e3a206c6f63616c207265666572656e63650a2d2d2d0a426f647920f09f98800a"
+        }
+      ],
+      "arg": "BAD"
+    },
+    {
+      "id": "protected-id-first",
+      "method": "readSkill",
+      "files": [],
+      "arg": "../.env"
+    },
+    {
+      "id": "secret-id-first",
+      "method": "readSkill",
+      "files": [],
+      "arg": "sk-qqqqqqqqqqqqqqqqqqqqqq"
+    },
+    {
+      "id": "skill-body-symlink",
+      "method": "readSkill",
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a206c6f63616c207265666572656e63650a2d2d2d0a426f647920f09f98800a"
+        },
+        {
+          "path": "skills/beta/SKILL.md",
+          "kind": "symlink",
+          "target": "../../alpha/SKILL.md"
+        }
+      ],
+      "arg": "beta"
+    },
+    {
+      "id": "skills-root-file",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills",
+          "hex": "66696c65"
+        }
+      ]
+    },
+    {
+      "id": "skills-root-link",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "target",
+          "kind": "dir"
+        },
+        {
+          "path": "skills",
+          "kind": "symlink",
+          "target": "target"
+        }
+      ]
+    },
+    {
+      "id": "skills-entry-link",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills/a",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/link",
+          "kind": "symlink",
+          "target": "a"
+        }
+      ]
+    },
+    {
+      "id": "skills-only-dirs-sort",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills/z",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/a",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/BAD",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/😀",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/file",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "skills-cap-100",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills/f0",
+          "hex": ""
+        },
+        {
+          "path": "skills/f1",
+          "hex": ""
+        },
+        {
+          "path": "skills/f2",
+          "hex": ""
+        },
+        {
+          "path": "skills/f3",
+          "hex": ""
+        },
+        {
+          "path": "skills/f4",
+          "hex": ""
+        },
+        {
+          "path": "skills/f5",
+          "hex": ""
+        },
+        {
+          "path": "skills/f6",
+          "hex": ""
+        },
+        {
+          "path": "skills/f7",
+          "hex": ""
+        },
+        {
+          "path": "skills/f8",
+          "hex": ""
+        },
+        {
+          "path": "skills/f9",
+          "hex": ""
+        },
+        {
+          "path": "skills/f10",
+          "hex": ""
+        },
+        {
+          "path": "skills/f11",
+          "hex": ""
+        },
+        {
+          "path": "skills/f12",
+          "hex": ""
+        },
+        {
+          "path": "skills/f13",
+          "hex": ""
+        },
+        {
+          "path": "skills/f14",
+          "hex": ""
+        },
+        {
+          "path": "skills/f15",
+          "hex": ""
+        },
+        {
+          "path": "skills/f16",
+          "hex": ""
+        },
+        {
+          "path": "skills/f17",
+          "hex": ""
+        },
+        {
+          "path": "skills/f18",
+          "hex": ""
+        },
+        {
+          "path": "skills/f19",
+          "hex": ""
+        },
+        {
+          "path": "skills/f20",
+          "hex": ""
+        },
+        {
+          "path": "skills/f21",
+          "hex": ""
+        },
+        {
+          "path": "skills/f22",
+          "hex": ""
+        },
+        {
+          "path": "skills/f23",
+          "hex": ""
+        },
+        {
+          "path": "skills/f24",
+          "hex": ""
+        },
+        {
+          "path": "skills/f25",
+          "hex": ""
+        },
+        {
+          "path": "skills/f26",
+          "hex": ""
+        },
+        {
+          "path": "skills/f27",
+          "hex": ""
+        },
+        {
+          "path": "skills/f28",
+          "hex": ""
+        },
+        {
+          "path": "skills/f29",
+          "hex": ""
+        },
+        {
+          "path": "skills/f30",
+          "hex": ""
+        },
+        {
+          "path": "skills/f31",
+          "hex": ""
+        },
+        {
+          "path": "skills/f32",
+          "hex": ""
+        },
+        {
+          "path": "skills/f33",
+          "hex": ""
+        },
+        {
+          "path": "skills/f34",
+          "hex": ""
+        },
+        {
+          "path": "skills/f35",
+          "hex": ""
+        },
+        {
+          "path": "skills/f36",
+          "hex": ""
+        },
+        {
+          "path": "skills/f37",
+          "hex": ""
+        },
+        {
+          "path": "skills/f38",
+          "hex": ""
+        },
+        {
+          "path": "skills/f39",
+          "hex": ""
+        },
+        {
+          "path": "skills/f40",
+          "hex": ""
+        },
+        {
+          "path": "skills/f41",
+          "hex": ""
+        },
+        {
+          "path": "skills/f42",
+          "hex": ""
+        },
+        {
+          "path": "skills/f43",
+          "hex": ""
+        },
+        {
+          "path": "skills/f44",
+          "hex": ""
+        },
+        {
+          "path": "skills/f45",
+          "hex": ""
+        },
+        {
+          "path": "skills/f46",
+          "hex": ""
+        },
+        {
+          "path": "skills/f47",
+          "hex": ""
+        },
+        {
+          "path": "skills/f48",
+          "hex": ""
+        },
+        {
+          "path": "skills/f49",
+          "hex": ""
+        },
+        {
+          "path": "skills/f50",
+          "hex": ""
+        },
+        {
+          "path": "skills/f51",
+          "hex": ""
+        },
+        {
+          "path": "skills/f52",
+          "hex": ""
+        },
+        {
+          "path": "skills/f53",
+          "hex": ""
+        },
+        {
+          "path": "skills/f54",
+          "hex": ""
+        },
+        {
+          "path": "skills/f55",
+          "hex": ""
+        },
+        {
+          "path": "skills/f56",
+          "hex": ""
+        },
+        {
+          "path": "skills/f57",
+          "hex": ""
+        },
+        {
+          "path": "skills/f58",
+          "hex": ""
+        },
+        {
+          "path": "skills/f59",
+          "hex": ""
+        },
+        {
+          "path": "skills/f60",
+          "hex": ""
+        },
+        {
+          "path": "skills/f61",
+          "hex": ""
+        },
+        {
+          "path": "skills/f62",
+          "hex": ""
+        },
+        {
+          "path": "skills/f63",
+          "hex": ""
+        },
+        {
+          "path": "skills/f64",
+          "hex": ""
+        },
+        {
+          "path": "skills/f65",
+          "hex": ""
+        },
+        {
+          "path": "skills/f66",
+          "hex": ""
+        },
+        {
+          "path": "skills/f67",
+          "hex": ""
+        },
+        {
+          "path": "skills/f68",
+          "hex": ""
+        },
+        {
+          "path": "skills/f69",
+          "hex": ""
+        },
+        {
+          "path": "skills/f70",
+          "hex": ""
+        },
+        {
+          "path": "skills/f71",
+          "hex": ""
+        },
+        {
+          "path": "skills/f72",
+          "hex": ""
+        },
+        {
+          "path": "skills/f73",
+          "hex": ""
+        },
+        {
+          "path": "skills/f74",
+          "hex": ""
+        },
+        {
+          "path": "skills/f75",
+          "hex": ""
+        },
+        {
+          "path": "skills/f76",
+          "hex": ""
+        },
+        {
+          "path": "skills/f77",
+          "hex": ""
+        },
+        {
+          "path": "skills/f78",
+          "hex": ""
+        },
+        {
+          "path": "skills/f79",
+          "hex": ""
+        },
+        {
+          "path": "skills/f80",
+          "hex": ""
+        },
+        {
+          "path": "skills/f81",
+          "hex": ""
+        },
+        {
+          "path": "skills/f82",
+          "hex": ""
+        },
+        {
+          "path": "skills/f83",
+          "hex": ""
+        },
+        {
+          "path": "skills/f84",
+          "hex": ""
+        },
+        {
+          "path": "skills/f85",
+          "hex": ""
+        },
+        {
+          "path": "skills/f86",
+          "hex": ""
+        },
+        {
+          "path": "skills/f87",
+          "hex": ""
+        },
+        {
+          "path": "skills/f88",
+          "hex": ""
+        },
+        {
+          "path": "skills/f89",
+          "hex": ""
+        },
+        {
+          "path": "skills/f90",
+          "hex": ""
+        },
+        {
+          "path": "skills/f91",
+          "hex": ""
+        },
+        {
+          "path": "skills/f92",
+          "hex": ""
+        },
+        {
+          "path": "skills/f93",
+          "hex": ""
+        },
+        {
+          "path": "skills/f94",
+          "hex": ""
+        },
+        {
+          "path": "skills/f95",
+          "hex": ""
+        },
+        {
+          "path": "skills/f96",
+          "hex": ""
+        },
+        {
+          "path": "skills/f97",
+          "hex": ""
+        },
+        {
+          "path": "skills/f98",
+          "hex": ""
+        },
+        {
+          "path": "skills/f99",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "skills-cap-101",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills/f0",
+          "hex": ""
+        },
+        {
+          "path": "skills/f1",
+          "hex": ""
+        },
+        {
+          "path": "skills/f2",
+          "hex": ""
+        },
+        {
+          "path": "skills/f3",
+          "hex": ""
+        },
+        {
+          "path": "skills/f4",
+          "hex": ""
+        },
+        {
+          "path": "skills/f5",
+          "hex": ""
+        },
+        {
+          "path": "skills/f6",
+          "hex": ""
+        },
+        {
+          "path": "skills/f7",
+          "hex": ""
+        },
+        {
+          "path": "skills/f8",
+          "hex": ""
+        },
+        {
+          "path": "skills/f9",
+          "hex": ""
+        },
+        {
+          "path": "skills/f10",
+          "hex": ""
+        },
+        {
+          "path": "skills/f11",
+          "hex": ""
+        },
+        {
+          "path": "skills/f12",
+          "hex": ""
+        },
+        {
+          "path": "skills/f13",
+          "hex": ""
+        },
+        {
+          "path": "skills/f14",
+          "hex": ""
+        },
+        {
+          "path": "skills/f15",
+          "hex": ""
+        },
+        {
+          "path": "skills/f16",
+          "hex": ""
+        },
+        {
+          "path": "skills/f17",
+          "hex": ""
+        },
+        {
+          "path": "skills/f18",
+          "hex": ""
+        },
+        {
+          "path": "skills/f19",
+          "hex": ""
+        },
+        {
+          "path": "skills/f20",
+          "hex": ""
+        },
+        {
+          "path": "skills/f21",
+          "hex": ""
+        },
+        {
+          "path": "skills/f22",
+          "hex": ""
+        },
+        {
+          "path": "skills/f23",
+          "hex": ""
+        },
+        {
+          "path": "skills/f24",
+          "hex": ""
+        },
+        {
+          "path": "skills/f25",
+          "hex": ""
+        },
+        {
+          "path": "skills/f26",
+          "hex": ""
+        },
+        {
+          "path": "skills/f27",
+          "hex": ""
+        },
+        {
+          "path": "skills/f28",
+          "hex": ""
+        },
+        {
+          "path": "skills/f29",
+          "hex": ""
+        },
+        {
+          "path": "skills/f30",
+          "hex": ""
+        },
+        {
+          "path": "skills/f31",
+          "hex": ""
+        },
+        {
+          "path": "skills/f32",
+          "hex": ""
+        },
+        {
+          "path": "skills/f33",
+          "hex": ""
+        },
+        {
+          "path": "skills/f34",
+          "hex": ""
+        },
+        {
+          "path": "skills/f35",
+          "hex": ""
+        },
+        {
+          "path": "skills/f36",
+          "hex": ""
+        },
+        {
+          "path": "skills/f37",
+          "hex": ""
+        },
+        {
+          "path": "skills/f38",
+          "hex": ""
+        },
+        {
+          "path": "skills/f39",
+          "hex": ""
+        },
+        {
+          "path": "skills/f40",
+          "hex": ""
+        },
+        {
+          "path": "skills/f41",
+          "hex": ""
+        },
+        {
+          "path": "skills/f42",
+          "hex": ""
+        },
+        {
+          "path": "skills/f43",
+          "hex": ""
+        },
+        {
+          "path": "skills/f44",
+          "hex": ""
+        },
+        {
+          "path": "skills/f45",
+          "hex": ""
+        },
+        {
+          "path": "skills/f46",
+          "hex": ""
+        },
+        {
+          "path": "skills/f47",
+          "hex": ""
+        },
+        {
+          "path": "skills/f48",
+          "hex": ""
+        },
+        {
+          "path": "skills/f49",
+          "hex": ""
+        },
+        {
+          "path": "skills/f50",
+          "hex": ""
+        },
+        {
+          "path": "skills/f51",
+          "hex": ""
+        },
+        {
+          "path": "skills/f52",
+          "hex": ""
+        },
+        {
+          "path": "skills/f53",
+          "hex": ""
+        },
+        {
+          "path": "skills/f54",
+          "hex": ""
+        },
+        {
+          "path": "skills/f55",
+          "hex": ""
+        },
+        {
+          "path": "skills/f56",
+          "hex": ""
+        },
+        {
+          "path": "skills/f57",
+          "hex": ""
+        },
+        {
+          "path": "skills/f58",
+          "hex": ""
+        },
+        {
+          "path": "skills/f59",
+          "hex": ""
+        },
+        {
+          "path": "skills/f60",
+          "hex": ""
+        },
+        {
+          "path": "skills/f61",
+          "hex": ""
+        },
+        {
+          "path": "skills/f62",
+          "hex": ""
+        },
+        {
+          "path": "skills/f63",
+          "hex": ""
+        },
+        {
+          "path": "skills/f64",
+          "hex": ""
+        },
+        {
+          "path": "skills/f65",
+          "hex": ""
+        },
+        {
+          "path": "skills/f66",
+          "hex": ""
+        },
+        {
+          "path": "skills/f67",
+          "hex": ""
+        },
+        {
+          "path": "skills/f68",
+          "hex": ""
+        },
+        {
+          "path": "skills/f69",
+          "hex": ""
+        },
+        {
+          "path": "skills/f70",
+          "hex": ""
+        },
+        {
+          "path": "skills/f71",
+          "hex": ""
+        },
+        {
+          "path": "skills/f72",
+          "hex": ""
+        },
+        {
+          "path": "skills/f73",
+          "hex": ""
+        },
+        {
+          "path": "skills/f74",
+          "hex": ""
+        },
+        {
+          "path": "skills/f75",
+          "hex": ""
+        },
+        {
+          "path": "skills/f76",
+          "hex": ""
+        },
+        {
+          "path": "skills/f77",
+          "hex": ""
+        },
+        {
+          "path": "skills/f78",
+          "hex": ""
+        },
+        {
+          "path": "skills/f79",
+          "hex": ""
+        },
+        {
+          "path": "skills/f80",
+          "hex": ""
+        },
+        {
+          "path": "skills/f81",
+          "hex": ""
+        },
+        {
+          "path": "skills/f82",
+          "hex": ""
+        },
+        {
+          "path": "skills/f83",
+          "hex": ""
+        },
+        {
+          "path": "skills/f84",
+          "hex": ""
+        },
+        {
+          "path": "skills/f85",
+          "hex": ""
+        },
+        {
+          "path": "skills/f86",
+          "hex": ""
+        },
+        {
+          "path": "skills/f87",
+          "hex": ""
+        },
+        {
+          "path": "skills/f88",
+          "hex": ""
+        },
+        {
+          "path": "skills/f89",
+          "hex": ""
+        },
+        {
+          "path": "skills/f90",
+          "hex": ""
+        },
+        {
+          "path": "skills/f91",
+          "hex": ""
+        },
+        {
+          "path": "skills/f92",
+          "hex": ""
+        },
+        {
+          "path": "skills/f93",
+          "hex": ""
+        },
+        {
+          "path": "skills/f94",
+          "hex": ""
+        },
+        {
+          "path": "skills/f95",
+          "hex": ""
+        },
+        {
+          "path": "skills/f96",
+          "hex": ""
+        },
+        {
+          "path": "skills/f97",
+          "hex": ""
+        },
+        {
+          "path": "skills/f98",
+          "hex": ""
+        },
+        {
+          "path": "skills/f99",
+          "hex": ""
+        },
+        {
+          "path": "skills/f100",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "skills-cap-before-link",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills/f0",
+          "hex": ""
+        },
+        {
+          "path": "skills/f1",
+          "hex": ""
+        },
+        {
+          "path": "skills/f2",
+          "hex": ""
+        },
+        {
+          "path": "skills/f3",
+          "hex": ""
+        },
+        {
+          "path": "skills/f4",
+          "hex": ""
+        },
+        {
+          "path": "skills/f5",
+          "hex": ""
+        },
+        {
+          "path": "skills/f6",
+          "hex": ""
+        },
+        {
+          "path": "skills/f7",
+          "hex": ""
+        },
+        {
+          "path": "skills/f8",
+          "hex": ""
+        },
+        {
+          "path": "skills/f9",
+          "hex": ""
+        },
+        {
+          "path": "skills/f10",
+          "hex": ""
+        },
+        {
+          "path": "skills/f11",
+          "hex": ""
+        },
+        {
+          "path": "skills/f12",
+          "hex": ""
+        },
+        {
+          "path": "skills/f13",
+          "hex": ""
+        },
+        {
+          "path": "skills/f14",
+          "hex": ""
+        },
+        {
+          "path": "skills/f15",
+          "hex": ""
+        },
+        {
+          "path": "skills/f16",
+          "hex": ""
+        },
+        {
+          "path": "skills/f17",
+          "hex": ""
+        },
+        {
+          "path": "skills/f18",
+          "hex": ""
+        },
+        {
+          "path": "skills/f19",
+          "hex": ""
+        },
+        {
+          "path": "skills/f20",
+          "hex": ""
+        },
+        {
+          "path": "skills/f21",
+          "hex": ""
+        },
+        {
+          "path": "skills/f22",
+          "hex": ""
+        },
+        {
+          "path": "skills/f23",
+          "hex": ""
+        },
+        {
+          "path": "skills/f24",
+          "hex": ""
+        },
+        {
+          "path": "skills/f25",
+          "hex": ""
+        },
+        {
+          "path": "skills/f26",
+          "hex": ""
+        },
+        {
+          "path": "skills/f27",
+          "hex": ""
+        },
+        {
+          "path": "skills/f28",
+          "hex": ""
+        },
+        {
+          "path": "skills/f29",
+          "hex": ""
+        },
+        {
+          "path": "skills/f30",
+          "hex": ""
+        },
+        {
+          "path": "skills/f31",
+          "hex": ""
+        },
+        {
+          "path": "skills/f32",
+          "hex": ""
+        },
+        {
+          "path": "skills/f33",
+          "hex": ""
+        },
+        {
+          "path": "skills/f34",
+          "hex": ""
+        },
+        {
+          "path": "skills/f35",
+          "hex": ""
+        },
+        {
+          "path": "skills/f36",
+          "hex": ""
+        },
+        {
+          "path": "skills/f37",
+          "hex": ""
+        },
+        {
+          "path": "skills/f38",
+          "hex": ""
+        },
+        {
+          "path": "skills/f39",
+          "hex": ""
+        },
+        {
+          "path": "skills/f40",
+          "hex": ""
+        },
+        {
+          "path": "skills/f41",
+          "hex": ""
+        },
+        {
+          "path": "skills/f42",
+          "hex": ""
+        },
+        {
+          "path": "skills/f43",
+          "hex": ""
+        },
+        {
+          "path": "skills/f44",
+          "hex": ""
+        },
+        {
+          "path": "skills/f45",
+          "hex": ""
+        },
+        {
+          "path": "skills/f46",
+          "hex": ""
+        },
+        {
+          "path": "skills/f47",
+          "hex": ""
+        },
+        {
+          "path": "skills/f48",
+          "hex": ""
+        },
+        {
+          "path": "skills/f49",
+          "hex": ""
+        },
+        {
+          "path": "skills/f50",
+          "hex": ""
+        },
+        {
+          "path": "skills/f51",
+          "hex": ""
+        },
+        {
+          "path": "skills/f52",
+          "hex": ""
+        },
+        {
+          "path": "skills/f53",
+          "hex": ""
+        },
+        {
+          "path": "skills/f54",
+          "hex": ""
+        },
+        {
+          "path": "skills/f55",
+          "hex": ""
+        },
+        {
+          "path": "skills/f56",
+          "hex": ""
+        },
+        {
+          "path": "skills/f57",
+          "hex": ""
+        },
+        {
+          "path": "skills/f58",
+          "hex": ""
+        },
+        {
+          "path": "skills/f59",
+          "hex": ""
+        },
+        {
+          "path": "skills/f60",
+          "hex": ""
+        },
+        {
+          "path": "skills/f61",
+          "hex": ""
+        },
+        {
+          "path": "skills/f62",
+          "hex": ""
+        },
+        {
+          "path": "skills/f63",
+          "hex": ""
+        },
+        {
+          "path": "skills/f64",
+          "hex": ""
+        },
+        {
+          "path": "skills/f65",
+          "hex": ""
+        },
+        {
+          "path": "skills/f66",
+          "hex": ""
+        },
+        {
+          "path": "skills/f67",
+          "hex": ""
+        },
+        {
+          "path": "skills/f68",
+          "hex": ""
+        },
+        {
+          "path": "skills/f69",
+          "hex": ""
+        },
+        {
+          "path": "skills/f70",
+          "hex": ""
+        },
+        {
+          "path": "skills/f71",
+          "hex": ""
+        },
+        {
+          "path": "skills/f72",
+          "hex": ""
+        },
+        {
+          "path": "skills/f73",
+          "hex": ""
+        },
+        {
+          "path": "skills/f74",
+          "hex": ""
+        },
+        {
+          "path": "skills/f75",
+          "hex": ""
+        },
+        {
+          "path": "skills/f76",
+          "hex": ""
+        },
+        {
+          "path": "skills/f77",
+          "hex": ""
+        },
+        {
+          "path": "skills/f78",
+          "hex": ""
+        },
+        {
+          "path": "skills/f79",
+          "hex": ""
+        },
+        {
+          "path": "skills/f80",
+          "hex": ""
+        },
+        {
+          "path": "skills/f81",
+          "hex": ""
+        },
+        {
+          "path": "skills/f82",
+          "hex": ""
+        },
+        {
+          "path": "skills/f83",
+          "hex": ""
+        },
+        {
+          "path": "skills/f84",
+          "hex": ""
+        },
+        {
+          "path": "skills/f85",
+          "hex": ""
+        },
+        {
+          "path": "skills/f86",
+          "hex": ""
+        },
+        {
+          "path": "skills/f87",
+          "hex": ""
+        },
+        {
+          "path": "skills/f88",
+          "hex": ""
+        },
+        {
+          "path": "skills/f89",
+          "hex": ""
+        },
+        {
+          "path": "skills/f90",
+          "hex": ""
+        },
+        {
+          "path": "skills/f91",
+          "hex": ""
+        },
+        {
+          "path": "skills/f92",
+          "hex": ""
+        },
+        {
+          "path": "skills/f93",
+          "hex": ""
+        },
+        {
+          "path": "skills/f94",
+          "hex": ""
+        },
+        {
+          "path": "skills/f95",
+          "hex": ""
+        },
+        {
+          "path": "skills/f96",
+          "hex": ""
+        },
+        {
+          "path": "skills/f97",
+          "hex": ""
+        },
+        {
+          "path": "skills/f98",
+          "hex": ""
+        },
+        {
+          "path": "skills/f99",
+          "hex": ""
+        },
+        {
+          "path": "skills/link",
+          "kind": "symlink",
+          "target": "absent"
+        }
+      ]
+    },
+    {
+      "id": "skills-empty-directory",
+      "method": "listSkills",
+      "files": [
+        {
+          "path": "skills",
+          "kind": "dir"
+        }
+      ]
+    },
+    {
+      "id": "probe-true-read-disappears",
+      "method": "readDecisions",
+      "probe_race": true,
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "41"
+        }
+      ]
+    },
+    {
+      "id": "compound-core-before-skill-65537-80",
+      "method": "readSkill",
+      "arg": "BAD",
+      "files": [
+        {
+          "path": "skills/BAD/SKILL.md",
+          "prefix": "",
+          "size": 65537,
+          "fill_hex": "80"
+        }
+      ]
+    },
+    {
+      "id": "compound-core-before-skill-65537-00",
+      "method": "readSkill",
+      "arg": "BAD",
+      "files": [
+        {
+          "path": "skills/BAD/SKILL.md",
+          "prefix": "",
+          "size": 65537,
+          "fill_hex": "00"
+        }
+      ]
+    },
+    {
+      "id": "compound-core-before-skill-1048577-80",
+      "method": "readSkill",
+      "arg": "BAD",
+      "files": [
+        {
+          "path": "skills/BAD/SKILL.md",
+          "prefix": "",
+          "size": 1048577,
+          "fill_hex": "80"
+        }
+      ]
+    },
+    {
+      "id": "compound-core-before-skill-1048577-00",
+      "method": "readSkill",
+      "arg": "BAD",
+      "files": [
+        {
+          "path": "skills/BAD/SKILL.md",
+          "prefix": "",
+          "size": 1048577,
+          "fill_hex": "00"
+        }
+      ]
+    },
+    {
+      "id": "req-sort-full-name-before-trim",
+      "method": "listRequirements",
+      "files": [
+        {
+          "path": ".harness/reqs/a.yaml",
+          "hex": ""
+        },
+        {
+          "path": ".harness/reqs/a-b.yaml",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "pack-first-error-sorts-full-req-name",
+      "method": "pack",
+      "files": [
+        {
+          "path": ".harness/reqs/a.yaml",
+          "hex": "6d657461646174613a0a20207374617475733a20696e76616c69642d610a"
+        },
+        {
+          "path": ".harness/reqs/a-b.yaml",
+          "hex": "6d657461646174613a0a20207374617475733a20696e76616c69642d620a"
+        }
+      ]
+    }
+  ],
+  "cli": [
+    {
+      "id": "context-empty",
+      "command": "context",
+      "args": [],
+      "files": []
+    },
+    {
+      "id": "skills-empty",
+      "command": "skills",
+      "args": [],
+      "files": []
+    },
+    {
+      "id": "context-missing-root",
+      "command": "context",
+      "args": [
+        "--root",
+        "absent"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-missing-root",
+      "command": "skills",
+      "args": [
+        "--root",
+        "absent"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-valid",
+      "command": "context",
+      "args": [],
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "2d206465636973696f6e20f09f98800a"
+        }
+      ]
+    },
+    {
+      "id": "skills-valid",
+      "command": "skills",
+      "args": [],
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a206c6f63616c207265666572656e63650a2d2d2d0a426f647920f09f98800a"
+        },
+        {
+          "path": "skills/beta/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20626574610a6465736372697074696f6e3a20226c696e65203c3e26205c7564383030205c75323032385c7532303239220a2d2d2d0a426f647920f09f98800a"
+        }
+      ]
+    },
+    {
+      "id": "context-args-6",
+      "command": "context",
+      "args": [
+        "--help"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-7",
+      "command": "context",
+      "args": [
+        "--root=x"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-8",
+      "command": "context",
+      "args": [
+        "--acceptance"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-9",
+      "command": "context",
+      "args": [
+        "stray"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-10",
+      "command": "context",
+      "args": [
+        "--root"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-11",
+      "command": "context",
+      "args": [
+        "--root",
+        ""
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-12",
+      "command": "context",
+      "args": [
+        "--root",
+        "--req"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-13",
+      "command": "context",
+      "args": [
+        "--root",
+        ".",
+        "--root"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-14",
+      "command": "context",
+      "args": [
+        "--root",
+        ".",
+        "--root",
+        "."
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-15",
+      "command": "context",
+      "args": [
+        "--req",
+        "INVALID"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-16",
+      "command": "context",
+      "args": [
+        "--budget",
+        "unknown"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-17",
+      "command": "context",
+      "args": [
+        "--skill",
+        "bad"
+      ],
+      "files": []
+    },
+    {
+      "id": "context-args-18",
+      "command": "context",
+      "args": [
+        "--budget",
+        "brief",
+        "--budget",
+        "deep"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-19",
+      "command": "skills",
+      "args": [
+        "--help"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-20",
+      "command": "skills",
+      "args": [
+        "--root"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-21",
+      "command": "skills",
+      "args": [
+        "--root",
+        ""
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-22",
+      "command": "skills",
+      "args": [
+        "--root",
+        "--bad"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-23",
+      "command": "skills",
+      "args": [
+        "--root",
+        ".",
+        "x"
+      ],
+      "files": []
+    },
+    {
+      "id": "skills-args-24",
+      "command": "skills",
+      "args": [
+        "--root=."
+      ],
+      "files": []
+    },
+    {
+      "id": "context-lossy",
+      "command": "context",
+      "args": [],
+      "files": [
+        {
+          "path": ".harness/decisions.md",
+          "hex": "e28200efbbbf"
+        }
+      ]
+    },
+    {
+      "id": "skills-no-replacer",
+      "command": "skills",
+      "args": [],
+      "files": [
+        {
+          "path": "skills/alpha/SKILL.md",
+          "hex": "2d2d2d0a6e616d653a20616c7068610a6465736372697074696f6e3a202242656172657220787878787878787878787878787878787878787878787878220a2d2d2d0a426f647920f09f98800a"
+        }
+      ]
+    }
+  ],
+  "native_linux": [
+    {
+      "id": "req-native-name-decoding",
+      "method": "listRequirements",
+      "files": [
+        {
+          "raw_path_hex": "2e6861726e6573732f726571732fe2822e79616d6c",
+          "hex": ""
+        },
+        {
+          "path": ".harness/reqs/�.yaml",
+          "hex": ""
+        }
+      ]
+    },
+    {
+      "id": "skills-native-name-decoding",
+      "method": "listSkills",
+      "files": [
+        {
+          "raw_path_hex": "736b696c6c732fe282",
+          "kind": "dir"
+        },
+        {
+          "path": "skills/�",
+          "kind": "dir"
+        }
+      ]
+    }
+  ]
+}

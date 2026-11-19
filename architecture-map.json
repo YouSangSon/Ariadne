@@ -877,6 +877,22 @@
       "layer": "tooling",
       "context": "code"
     },
+    "contracts/context/files-cli-v1/cases.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/context/files-cli-v1/expected.json": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "contracts/context/node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "contracts/context/node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "context"
+    },
     "contracts/core/product-node-v1/cases.json": {
       "layer": "tooling",
       "context": "core"
@@ -1404,6 +1420,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/architecture/context_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/architecture/product_test.go": {
       "layer": "tooling",
       "context": "validation"
@@ -1440,7 +1460,91 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/composition/context_linux_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/composition/context_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/composition/ontology_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/context/adapters/cli/cli.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/cli/cwd_unix.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/cli/cwd_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/directory_unix.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/directory_unix_test.go": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/directory_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/native_linux_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/context/adapters/files/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/store.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/files/utf8.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/adapters/json/catalog.go": {
+      "layer": "infrastructure",
+      "context": "context"
+    },
+    "runtime/go/internal/context/application/context.go": {
+      "layer": "application",
+      "context": "context"
+    },
+    "runtime/go/internal/context/application/context_test.go": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "runtime/go/internal/context/domain/pack.go": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "runtime/go/internal/context/domain/requirements.go": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "runtime/go/internal/context/domain/skills.go": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "runtime/go/internal/context/domain/text.go": {
+      "layer": "domain",
+      "context": "context"
+    },
+    "runtime/go/internal/context/domain/text_test.go": {
+      "layer": "tooling",
+      "context": "context"
+    },
+    "runtime/go/internal/core/adapters/files/cycle_linux_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -1463,6 +1567,14 @@
     "runtime/go/internal/core/adapters/files/read_unsupported.go": {
       "layer": "infrastructure",
       "context": "core"
+    },
+    "runtime/go/internal/core/adapters/files/root_unix.go": {
+      "layer": "infrastructure",
+      "context": "core"
+    },
+    "runtime/go/internal/core/adapters/files/root_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/core/application/product/product.go": {
       "layer": "application",
@@ -1497,6 +1609,14 @@
     "runtime/go/internal/core/domain/projectfiles/path_test.go": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "runtime/go/internal/core/domain/requirementfields/fields.go": {
+      "layer": "domain",
+      "context": "shared"
+    },
+    "runtime/go/internal/core/domain/requirementfields/fields_test.go": {
+      "layer": "tooling",
+      "context": "shared"
     },
     "runtime/go/internal/core/domain/scrub/scrub.go": {
       "layer": "domain",
@@ -1584,6 +1704,10 @@
       "layer": "infrastructure",
       "context": "ontology"
     },
+    "runtime/go/internal/ontology/adapters/files/cwd_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/ontology/adapters/files/files.go": {
       "layer": "infrastructure",
       "context": "ontology"
@@ -1591,6 +1715,18 @@
     "runtime/go/internal/ontology/adapters/files/files_test.go": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "runtime/go/internal/ontology/adapters/files/native_linux_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/ontology/adapters/files/path_unix.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
+    },
+    "runtime/go/internal/ontology/adapters/files/path_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "ontology"
     },
     "runtime/go/internal/ontology/adapters/json/contracts_test.go": {
       "layer": "tooling",
@@ -1756,6 +1892,14 @@
       "layer": "composition",
       "context": "integration"
     },
+    "scripts/context-files-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "scripts/context-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "context"
+    },
     "scripts/generate-mirrors.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -1823,6 +1967,14 @@
     "tests/command.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/context-files-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tests/context-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "context"
     },
     "tests/context-pack.test.mjs": {
       "layer": "tooling",
@@ -1924,7 +2076,15 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "tools/qualify_context_files.py": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "tools/qualify_extension_runtime.py": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "tools/test_qualify_context_files.py": {
       "layer": "tooling",
       "context": "validation"
     },
