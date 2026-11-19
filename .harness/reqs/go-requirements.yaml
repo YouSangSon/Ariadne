@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: go-requirements
   title: Requirements 순수 계약의 Go 이식과 Node 기준 보존
-  status: ready_for_routing
+  status: verified
   priority: P0
   owner: requirements-owner
   intake_started: 2026-11-17
@@ -49,7 +49,7 @@ functional_contract:
       priority: P0
       statement: 최종 통합 소스에서 Go race와 vet 및 AST와 root source gate를 한 번 통과하고 작업 전용 자원을 정리한다.
       verification: 부모가 지정한 최종 독립 combined gate와 SOURCE review 및 cleanup evidence
-      passes: null
+      passes: true
 code_mapping:
   boundary_rules:
     - contracts/requirements/node-v1 및 scripts/requirements-node-goldens.mjs와 tests/requirements-node-contracts.test.mjs와 이 REQ를 소유한다.
@@ -88,4 +88,10 @@ verification:
       exit_code: 0
       source_state: normal dependency merge cf0343b plus mode-number-source SHA manifest
       artifact: .harness/handoff/go-requirements/evidence/go-mode-source-state-final.jsonl
+    - criterion_id: A4
+      check: Node 177 oracle, whole Go race, vet, AST, root source, independent SOURCE review and owned cleanup
+      result: passed
+      exit_code: 0
+      source_state: "e63132f1 passed all 16 phases on darwin/arm64. Actual main 926f9fe7 merged at 583464f6 with identical code, tests and fixtures."
+      artifact: .harness/handoff/go-requirements/evidence/local-closure.json
   attempts: []

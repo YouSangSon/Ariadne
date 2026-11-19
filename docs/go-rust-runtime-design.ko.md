@@ -495,10 +495,11 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 로컬 검토된 C3 publication 의존성
 `58932fd2`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.
 
-현재 순수 library와 mode-number 수정의 독립 SOURCE 검토를 통과했다. C3 의존성은
-로컬 검토 publication이며 actual main은 아직 아니다. 원격 게시 뒤 정상 통합과 한 번의
-최종 전체 Go race/vet/AST 및 root source gate는 남아 있다. Node public
-export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
+순수 라이브러리와 mode-number 수정은 독립 소스 검토를 통과했다. `e63132f1`에서
+177개 Node 관측을 Go 결과와 비교했고 전체 Go race, vet, AST 검사와 루트 소스 검사가
+통과했다. Context PR #21이 병합된 `main`의 `926f9fe7`을 통합한 뒤 검증에 사용한
+코드, 테스트, 픽스처가 바이트 단위로 같은 것을 확인했다. Requirements REQ의 `verified`는
+이 로컬 검증의 결과다. 원격 CI와 PR 병합은 게시 단계에서 확인한다.
 
 ### Requirements 계약 파일 읽기
 
