@@ -1,0 +1,51 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-requirement-reader
+  title: Go Requirements 계약 파일 읽기
+  status: ready_for_routing
+  priority: P0
+  owner: requirements
+  intake_started: 2026-11-19
+  promoted_at: 2026-11-19
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: refactor
+  confidence: high
+  reason: 기존 Requirements 계약 읽기를 Go application 포트에 연결한다.
+requirement:
+  user_intent: 기존 공개 동작을 보존하며 Go와 Rust 모듈형 하네스로 전환한다.
+  desired_outcome: 사용자가 선택한 프로젝트에서 REQ의 승인 조건과 해시를 Node와 같은 값으로 읽는다.
+  confirmed_facts:
+    - loadContract와 sourceState는 별도 진입점이다.
+    - SHA-256 입력은 application에서 직렬화한 계약이다.
+  assumptions: []
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 읽을 때마다 루트를 해석하고 일반 파일과 크기 및 링크 경계를 적용한다.
+      verification: 실제 파일에서 Node와 Go의 성공 및 오류를 비교하고 파일 핸들 정리를 확인한다.
+      passes: null
+    - id: AC2
+      priority: P0
+      statement: 엄격한 UTF-8 해석과 첫 BOM 제거 및 CRLF 정규화와 계약 해시를 보존한다.
+      verification: 같은 계약의 원본과 인코딩 변형에서 읽은 본문 및 최종 해시를 대조한다.
+      passes: null
+code_mapping:
+  boundary_rules:
+    - Requirements 파일 adapter가 application.LoadPorts를 제공한다.
+    - 도메인과 application은 파일 시스템 및 해시 구현을 import하지 않는다.
+verification:
+  commands:
+    - node --test tests/requirement-reader.test.mjs
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node scripts/verify.mjs --modules core,ontology
+  verify_gate_required: true
+  verify_gate_reason: 실제 OS 파일 읽기와 기존 Node 오류 계약을 대조한다.
+  evidence: []
+audit:
+  must_not_implement:
+    - Git 소스 스냅샷과 제품 기본 CLI 변경
