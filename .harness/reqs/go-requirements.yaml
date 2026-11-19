@@ -1,3 +1,4 @@
+# requirement.confirmed_facts는 2026-11-17 소스 동결 당시의 기록이다.
 schema_version: 1
 kind: harness.requirement
 metadata:
