@@ -3,7 +3,7 @@ kind: harness.requirement
 metadata:
   req_id: go-checkout-launcher
   title: 소스 체크아웃에서 선택하는 Go 제품 런처
-  status: ready_for_routing
+  status: verified
   priority: P0
   owner: core-owner
   intake_started: 2026-11-19
@@ -36,7 +36,7 @@ functional_contract:
       priority: P0
       statement: 기존 Node 및 Go 진입점의 계약을 보존한다. 새 실행의 지원 범위와 절대 경로 의존성을 문서화하고 최종 통합 소스의 gate와 독립 검토를 통과한다.
       verification: 기존 도움말과 Node 모듈 검사 및 native AST와 최종 통합 gate
-      passes: false
+      passes: true
 code_mapping:
   boundary_rules:
     - Go 명령 진입점에서 setup과 verify를 기존 제품 스크립트에 연결한다.
@@ -73,6 +73,12 @@ verification:
       exit_code: 0
       source_state: darwin/arm64에서 실제 직계 Node 자식과 실행
       artifact: .harness/handoff/go-checkout-launcher/evidence/launcher-race.log
+    - criterion_id: A4
+      check: 독립 소스 검토와 실제 main 통합 뒤 12개 경로 대조와 Go race 및 vet와 AST와 실제 런처의 setup 및 선택 모듈 verify
+      result: passed
+      exit_code: 0
+      source_state: 662c3506962f111c262e17705b64d5362e81abc7에서 darwin/arm64의 로컬 검사 27단계와 작업 자원 정리 통과
+      artifact: .harness/handoff/go-checkout-launcher/evidence/final/receipt.json
 audit:
   must_not_implement:
     - 임의 스크립트 실행 또는 제품 배포용 installer 생성
