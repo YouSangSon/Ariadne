@@ -1400,6 +1400,10 @@
       "layer": "domain",
       "context": "requirements"
     },
+    "modules/requirements/file-stream.mjs": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "modules/requirements/files.mjs": {
       "layer": "infrastructure",
       "context": "requirements"
@@ -1840,6 +1844,10 @@
       "layer": "infrastructure",
       "context": "platform"
     },
+    "runtime/go/internal/requirements/adapters/files/git_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "runtime/go/internal/requirements/adapters/files/read_unix.go": {
       "layer": "infrastructure",
       "context": "requirements"
@@ -1864,12 +1872,36 @@
       "layer": "infrastructure",
       "context": "requirements"
     },
+    "runtime/go/internal/requirements/adapters/files/source_content_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_content_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/source_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
     "runtime/go/internal/requirements/application/node_contracts_test.go": {
       "layer": "tooling",
       "context": "requirements"
     },
     "runtime/go/internal/requirements/application/requirements.go": {
       "layer": "application",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/application/stream_test.go": {
+      "layer": "tooling",
       "context": "requirements"
     },
     "runtime/go/internal/requirements/domain/contract.go": {
@@ -2103,6 +2135,10 @@
     "tests/generators.test.mjs": {
       "layer": "tooling",
       "context": "validation"
+    },
+    "tests/git-fingerprint-stream.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/gitignore.test.mjs": {
       "layer": "tooling",

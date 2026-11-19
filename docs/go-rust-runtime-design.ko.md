@@ -509,6 +509,24 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 코드, 테스트, 픽스처가 바이트 단위로 같은 것을 확인했다. Requirements REQ의 `verified`는
 이 로컬 검증의 결과다. 원격 CI와 PR 병합은 게시 단계에서 확인한다.
 
+### Requirements Git 지문
+
+Node의 `sourceState(root)`와 macOS·Linux의 Go `files.SourceState(root, reqID)`는
+Git이 선택한 작업 파일을 같은 순서로 읽는다. SHA-256 입력은 경로, 종류, 권한, 실제 길이가
+담긴 헤더와 내용 바이트다. 파일별로 버퍼를 나누어 읽으므로 1 MiB를 넘는 파일도 포함한다.
+내용 합계가 정확히 64 MiB면 성공하고, 1바이트라도 초과하거나 읽던 파일의 변경을 감지하면
+지문을 반환하지 않는다. HEAD는 결과에 별도로 기록한다.
+Go가 PATH에서 처음 찾은 Git 실행 파일은 절대 경로 항목(예: `/usr/bin`)에 있어야 한다.
+상대 경로 항목에서 Git이 먼저 발견되면 저장소 검사 오류를 반환한다.
+
+[Requirements 계약](../contracts/requirements/node-v1/README.md)에 파일 선택, 링크·누락 파일과
+보고된 길이가 실제 길이와 다른 파일의 처리 방식을 기록했다. 같은 체크아웃의 경로 목록,
+HEAD와 지문을 두 언어로 대조하려면 저장소 루트에서 다음 검사를 실행한다.
+
+```sh
+(cd runtime/go && ARIADNE_TEST_SOURCE_STATE_ROOT="$(git rev-parse --show-toplevel)" go test -count=1 -run '^TestSourceStateCurrentRepository$' -v ./internal/requirements/adapters/files)
+```
+
 ### Requirements 계약 파일 읽기
 
 `internal/requirements/adapters/files.LoadPorts(root)`를 `application.LoadContract`에
