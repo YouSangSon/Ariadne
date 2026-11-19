@@ -1,0 +1,54 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-checkout-launcher
+  title: 소스 체크아웃에서 선택하는 Go 제품 런처
+  status: ready_for_routing
+  priority: P0
+  owner: core-owner
+  intake_started: 2026-11-19
+  source_doc: docs/go-rust-runtime-design.ko.md
+requirement:
+  user_intent: Go와 Rust 전환의 G1 단계에서 실제 제품 명령으로 이어지는 경로를 검증한다.
+  desired_outcome: 개발자가 선택해 빌드한 Ariadne 바이너리에서 기존 setup과 verify를 실행한다.
+  confirmed_facts:
+    - actual main 5a1fc1aa6554f55187670c9a526d3612a873ed1d에서 시작한다.
+    - Go CommandPlan은 setup과 verify를 기존 Node 제품 스크립트와 체크아웃 작업 디렉터리로 연결한다.
+    - npm 기본 진입점은 Node이며 기존 Go 빌드는 실험 CLI 명령과 도움말을 제공한다.
+functional_contract:
+  acceptance_criteria:
+    - id: A1
+      priority: P0
+      statement: 개발자 빌드 시 실제 소스 체크아웃과 빌드에 사용한 Node의 절대 경로를 기록한다. 경로에 공백과 작은따옴표가 있어도 다른 디렉터리에서 동작한다.
+      verification: 다른 CWD와 PATH의 가짜 Node를 둔 실제 빌드 및 실행
+      passes: false
+    - id: A2
+      priority: P0
+      statement: 추가된 두 명령은 Go CommandPlan을 통해 scripts/product.mjs를 실행하고 원래 인자와 환경 및 표준 입출력 및 종료값을 전달한다. 첫 명령 시작 실패와 npm 실패를 구분한다.
+      verification: 실제 빌드의 stdio 및 상태 검사와 기존 제품 스크립트 및 가짜 npm 비교
+      passes: false
+    - id: A3
+      priority: P0
+      statement: SIGINT와 SIGTERM을 직계 자식에게 전달하고 종료를 기다린다. 자식의 정상 종료값과 시그널 종료값 128+번호를 보존한다.
+      verification: 실제 자식의 시그널 처리와 종료 시 표준 출력 및 종료 상태 검사
+      passes: false
+    - id: A4
+      priority: P0
+      statement: 기존 Node 및 Go 진입점의 계약을 보존한다. 새 실행의 지원 범위와 절대 경로 의존성을 문서화하고 최종 통합 소스의 gate와 독립 검토를 통과한다.
+      verification: 기존 도움말과 Node 모듈 검사 및 native AST와 최종 통합 gate
+      passes: false
+code_mapping:
+  boundary_rules:
+    - Go 명령 진입점에서 setup과 verify를 기존 제품 스크립트에 연결한다.
+    - 체크아웃과 Node 선택은 개발자 빌드가 소유한다. 호출자의 환경이나 설정이나 인자로 선택할 수 없다.
+    - 기존 Node가 모듈 선택과 설치 및 검증 정책을 계속 실행한다.
+verification:
+  verify_gate_required: true
+  commands:
+    - go -C runtime/go test -count=1 ./cmd/Ariadne
+    - go -C runtime/go run ./cmd/check-architecture --root ../..
+    - node --test tests/command.test.mjs tests/modules.test.mjs tests/product-cli.test.mjs tests/module-boundaries.test.mjs
+audit:
+  must_not_implement:
+    - 임의 스크립트 실행 또는 제품 배포용 installer 생성
+    - 명령 기본값 변경 또는 G5 제품 채택 판정
