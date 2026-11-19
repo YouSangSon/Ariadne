@@ -223,6 +223,8 @@ node bin/Ariadne.mjs eval memory-ablation --file evaluation/memory-ablation-exam
 
 開発・検証の言語バージョンは `.tool-versions` で Go `1.27.4`、Node `24.22.2`、Rust `1.93.0`、Python `3.14.5` を管理し、`asdf install` で準備します。Python は native qualification tooling のみに使用します。Go SQLite 検証には CGO と C compiler が必要です。実際のバージョン確認と専用 cache の削除は [native gate](docs/extension-implementation-plan.ko.md#별도-native-gate) に従います。
 
+既存の `setup` と `verify` を Go ランチャーから実行できます。[ソースのチェックアウト用 Go ランチャーのビルド](docs/go-rust-runtime-design.ko.md#소스-체크아웃용-go-런처)。
+
 Go の拡張契約、参照用レポート変換、パッケージ検査と実行を伴わないパッケージ registry は[実験段階](docs/extension-implementation-plan.ko.md)です。独立した Go CLI はインストール、digest の選択、無効化と削除を提供します。activate は実行権限を与えません。Node 製品は変更せず、ユーザー拡張の実行や検証済み sandbox は提供しません。
 Rust worker と固定 Podman profile は独立した実行適合性試験用ツールであり、ユーザー拡張の公開実行機能はまだ提供しません。
 

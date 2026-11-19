@@ -26,7 +26,7 @@ Go가 모듈의 업무 규칙과 실행 수명을 맡고, Rust는 필요한 계�
 
 ## 2. 현재 구조와 자원 근거
 
-현재 실행 경로는 `bin/Ariadne.mjs` → `core/domain/product.mjs:commandPlan` → `lib/command.mjs:runCommand` → 선택 명령이다. 런처는 자식 Node 프로세스의 종료를 기다린다. `lib/module-selection.mjs:selectModules`는 `core,memory,code,ontology`를 선택하며 core는 항상 포함한다. 선택은 설치·검증 명령에만 적용되고 저장되지 않으며 데이터나 다른 명령을 삭제하지 않는다.
+기본 실행 경로는 `bin/Ariadne.mjs` → `core/domain/product.mjs:commandPlan` → `lib/command.mjs:runCommand` → 선택 명령이다. 런처는 자식 Node 프로세스의 종료를 기다린다. `lib/module-selection.mjs:selectModules`는 `core,memory,code,ontology`를 선택하며 core는 항상 포함한다. 선택은 설치·검증 명령에만 적용되고 저장되지 않으며 데이터나 다른 명령을 삭제하지 않는다.
 
 | 현재 계약 | 확인한 정본 | 전환에 주는 제약 |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ Go가 모듈의 업무 규칙과 실행 수명을 맡고, Rust는 필요한 계�
 
 ### G1c1: Core product 순수 규칙
 
-`runtime/go/internal/core/domain/product`에 명령 계획, 순서 있는 모듈 선택, 환경 복사와 lifecycle step 계획을 추가했다. `internal/core/application/product`는 주입한 실행·보고 포트로 순차 실행을 조율한다. 첫 nonzero 종료값과 포트 오류를 그대로 구분하며, 실패 뒤 실행과 완료 보고를 중단한다. 실제 Go 프로세스·signal·취소 adapter와 제품 CLI 전환은 아직 제공하지 않는다. Node 런처가 기본값이다.
+`runtime/go/internal/core/domain/product`에 명령 계획, 순서 있는 모듈 선택, 환경 복사와 lifecycle step 계획을 추가했다. `internal/core/application/product`는 주입한 실행·보고 포트로 순차 실행을 조율한다. 첫 nonzero 종료값과 포트 오류를 그대로 구분하며, 실패 뒤 실행과 완료 보고를 중단한다. `setup`과 `verify`를 실제로 실행하는 개발용 경로는 [소스 체크아웃용 Go 런처](#소스-체크아웃용-go-런처)에 있다.
 
 Node의 eval/knowledge/memory lookup 세 곳에는 own-key 검사만 추가했다. `toString`·`constructor`·`__proto__`가 상속 속성으로 잘못 선택되던 버그를 먼저 재현했다. eval/knowledge는 기존 오류를, memory는 기존 일반 CLI fallback을 유지한다. 수정한 실제 Node export로 127개 계약 사례를 생성하고 Go 결과와 비교했다. [계약과 재현 방법](../contracts/core/product-node-v1/README.md)이 범위·출처·타입 제한을 소유한다.
 
@@ -287,6 +287,23 @@ Go 기본 executable에는 core 기능만 직접 등록한다. 선택 모듈은 
 Rust target 설치만으로 linker·시스템 라이브러리·native SDK가 준비됐다고 가정하지 않는다. Linux libc 최소 버전과 동적 라이브러리를 manifest에 명시하고 clean 환경에서 검사한다. 처음부터 모든 target을 macOS 하나에서 cross compile하지 않는다. Windows 이름·권한·종료 방식은 별도 검증한다.
 
 Core/ontology가 Go로 완전히 전환되면 그 배포에는 Node/Rust toolchain이 필요하지 않는 것이 목표다. Code의 TS parser/export 또는 Memory의 기존 transformers adapter가 남아 있으면 Node가 필요한 **과도기 패키지**라고 표시한다. 최종 사용자에게 Go/Cargo compiler를 요구하지 않는 것과 Node/ONNX runtime이 전혀 필요 없는 것은 다른 주장이다. 모든 모듈을 Node 없이 배포하려면 파서·SQLite/vector·임베딩의 동등성 gate를 각각 통과해야 한다.
+
+### 소스 체크아웃용 Go 런처
+
+macOS와 Linux에서 기존 `setup`과 `verify`를 Go 진입점으로 호출해 볼 수 있다. 프로젝트의 Go·Node 버전과 CGO용 C 컴파일러를 준비한 뒤 체크아웃에서 실행한다. [요구사항](../.harness/reqs/go-checkout-launcher.yaml).
+
+```sh
+build_dir="$(mktemp -d)"
+asdf exec node scripts/build-go-checkout.mjs "$build_dir/Ariadne"
+"$build_dir/Ariadne" setup --modules core,ontology
+"$build_dir/Ariadne" verify --modules core,ontology
+```
+
+빌드는 실행 중인 Go 도구의 호스트 아키텍처를 대상으로 한다. 이 스크립트의 실제 소스 체크아웃과 실행 중인 Node의 절대 경로를 바이너리에 기록한다. 다른 디렉터리에서 호출해도 기록한 체크아웃에서 `scripts/product.mjs`를 실행한다. 출력의 상대 경로는 빌드 명령을 실행한 디렉터리를 기준으로 한다. 신뢰하는 로컬 체크아웃과 Node에 의존하므로 둘 중 하나를 옮겼다면 다시 빌드한다.
+
+Go는 두 명령의 인자, 환경, 표준 입출력을 Node에 전달한다. 모듈 선택과 `verify`의 환경 필터링은 기존 Node 코드가 담당한다. SIGINT와 SIGTERM은 직계 Node 자식에게 전달하며 종료를 기다린다. 자식이 시그널을 처리하고 정상 종료하면 그 종료값을, 시그널로 종료하면 128에 시그널 번호를 더한 값을 반환한다. Node를 시작할 수 없을 때는 종료값 2를 반환한다.
+
+npm 기본 진입점은 `bin/Ariadne.mjs`다. 일반 `go build`로 만든 실험 CLI는 기존 명령 범위와 도움말을 유지한다. 이 경로는 G1의 소스 체크아웃 실험이다. G5 설치·배포 검증은 별도 단계다.
 
 ## 9. 전환 순서와 되돌리기
 

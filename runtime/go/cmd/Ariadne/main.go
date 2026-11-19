@@ -5,4 +5,10 @@ import (
 	"os"
 )
 
-func main() { os.Exit(composition.Run(os.Args[1:], os.Stdout, os.Stderr)) }
+func main() {
+	args := os.Args[1:]
+	if status, handled := runCheckout(args); handled {
+		os.Exit(status)
+	}
+	os.Exit(composition.Run(args, os.Stdout, os.Stderr))
+}

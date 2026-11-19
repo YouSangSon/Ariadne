@@ -1416,6 +1416,18 @@
       "layer": "tooling",
       "context": "extensions"
     },
+    "runtime/go/cmd/Ariadne/checkout.go": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "runtime/go/cmd/Ariadne/checkout_other.go": {
+      "layer": "composition",
+      "context": "core"
+    },
+    "runtime/go/cmd/Ariadne/checkout_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/cmd/Ariadne/main.go": {
       "layer": "composition",
       "context": "core"
@@ -2019,6 +2031,10 @@
     "scripts/adapt-remove.mjs": {
       "layer": "composition",
       "context": "integration"
+    },
+    "scripts/build-go-checkout.mjs": {
+      "layer": "tooling",
+      "context": "core"
     },
     "scripts/check-mirror.mjs": {
       "layer": "composition",
