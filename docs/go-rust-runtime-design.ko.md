@@ -53,6 +53,14 @@ G1b의 실제 main `c7ac4921`을 정상 통합한 `0132435` 소스에서 전체 
 
 원격 CI·게시와 실제 Go 제품 런타임·CLI 전환은 아직 완료하지 않았다. 이 단위를 전체 Core 또는 제품 전환 완료로 해석하지 않는다.
 
+### G1e Core 검증 규칙
+
+`runtime/go/internal/core/domain/verification`은 커밋 명령 텍스트, REQ 줄의 구문, 소스 테스트 선택, 커밋 로그 오류를 검사한다. 명령 텍스트에서는 처음으로 형식에 맞는 `-m` 인용 메시지를 찾는다. REQ 줄은 형식만 검사한다. 이 패키지의 `Text`는 UTF-16 코드 단위를 보관해 Node의 제목 길이, 테스트 이름 정렬, 로그 접두사 자르기를 재현한다.
+
+`runtime/go/internal/core/application/verification`은 테스트 실행, 미러 검사, 커밋 로그 검사를 포트로 순서대로 호출한다. 목록 조회와 테스트 선택에서 잡힌 오류는 메시지를 완료 콜백에 전달한다. 빈 메시지는 다음 단계로 이어진다. 다른 포트 오류가 발생하면 그 자리에서 원본 오류를 반환한다. 제품 CLI와 커밋 훅은 Node 실행 경로를 사용한다.
+
+Node 24.22.2/ICU 78.3의 실제 정책 함수에서 얻은 92개 결과와 이벤트, 원본 파일 해시를 고정한다. `asdf exec node --test tests/core-verification-node-contracts.test.mjs`로 골든을 대조하고, `runtime/go`에서 domain·application 테스트와 AST 경계 검사로 Go 구현을 확인한다. Context·Requirements 통합과 전체 gate 및 원격 CI는 별도 검증 단계다. [고정 사례와 소스 정보](../contracts/core/verification-node-v1/expected.json)
+
 ## 3. 결정과 대안
 
 | ID | 결정과 상태 | 근거·손익 |
