@@ -1,0 +1,44 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: context-cli-baseline
+  title: G0 macOS Context CLI 자원 기준선
+  status: ready_for_routing
+  priority: P0
+  source_doc: docs/context-cli-baseline.ko.md
+classification:
+  category: docs
+requirement:
+  user_intent: Go와 Rust 전환의 G0 단계에서 기존 Context CLI 두 실행 경로의 로컬 자원 사용량을 확인한다.
+  desired_outcome: 동일한 실제 프로젝트 문맥에서 공개 Node 런처와 실험 Go 바이너리의 결과와 실행 비용을 재현할 수 있다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: 실제 커밋의 입력과 기본 예산 및 예산 초과의 출력을 고정하고 측정 전과 각 호출에서 stdout과 stderr의 바이트 및 종료값을 대조한다.
+      verification: 두 CLI의 사전 비교와 각 호출 검증 및 고정 출력 불일치 거절
+      passes: false
+    - id: AC2
+      priority: P0
+      statement: 첫 호출과 짝지은 반복의 wall 및 CPU와 RSS를 기록하고 통계와 단위 및 적용 범위를 문서화한다.
+      verification: 순서가 교차된 60쌍의 반복과 최초 관측 및 영수증과 보고서의 대조
+      passes: false
+    - id: AC3
+      priority: P0
+      statement: 측정 도구의 검증과 프로젝트 소스 검사를 마치고 작업 전용 임시 산출물을 정리한다.
+      verification: 로컬 소스 게이트와 하위 프로세스 종료 및 범위 내 임시 경로 확인
+      passes: false
+code_mapping:
+  boundary_rules:
+    - 검증 도구는 두 실행 파일을 외부 명령으로 호출한다.
+    - 사용자에게 공개하는 실행기와 기본 경로 및 데이터 계약을 바꾸지 않는다.
+verification:
+  verify_gate_required: true
+  commands:
+    - asdf exec node scripts/verify.mjs --modules core,ontology
+  notes:
+    - 두 실제 명령의 입력과 실행법 및 관측량 정의는 docs/context-cli-baseline.ko.md에 기록한다.
+audit:
+  must_not_implement:
+    - 제품 기본값 변경이나 채택 임계값 추가
+    - Rust와 외부 서비스나 모델 호출 및 플랫폼 설정 변경

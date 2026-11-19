@@ -2248,6 +2248,10 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "tools/measure_context_cli.py": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "tools/qualify_context_files.py": {
       "layer": "tooling",
       "context": "validation"
