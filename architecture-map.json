@@ -1580,10 +1580,6 @@
       "layer": "infrastructure",
       "context": "core"
     },
-    "runtime/go/internal/core/adapters/files/root_unix.go": {
-      "layer": "infrastructure",
-      "context": "core"
-    },
     "runtime/go/internal/core/adapters/files/root_unix_test.go": {
       "layer": "tooling",
       "context": "validation"
@@ -1803,6 +1799,34 @@
     "runtime/go/internal/platform/computeprocess/runner_test.go": {
       "layer": "tooling",
       "context": "platform"
+    },
+    "runtime/go/internal/platform/nodepath/realpath_unix.go": {
+      "layer": "infrastructure",
+      "context": "platform"
+    },
+    "runtime/go/internal/requirements/adapters/files/read_unix.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/read_unsupported.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/reader.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/reader_unix_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/requirements/adapters/files/search_darwin.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/adapters/files/search_linux.go": {
+      "layer": "infrastructure",
+      "context": "requirements"
     },
     "runtime/go/internal/requirements/application/node_contracts_test.go": {
       "layer": "tooling",
@@ -2107,6 +2131,10 @@
     "tests/product-node-contracts.test.mjs": {
       "layer": "tooling",
       "context": "core"
+    },
+    "tests/requirement-reader.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/requirements-node-contracts.test.mjs": {
       "layer": "tooling",

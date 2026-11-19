@@ -461,8 +461,8 @@ skill 본문의 nofollow·strict UTF-8·크기 제한을 분리한다. 별도 Go
 기본 Node launcher와 Memory·Execution·provider는 그대로다.
 
 물리 cwd와 root symlink의 OS 문자열은 실제 Node 재현과 독립 설계 검토에 맞춰
-해석한다. Core 전용 private root resolver가 raw stat→readlink decode→lexical
-resolve 순서를 보존하고, 마지막 raw anchor의 기존 descriptor 검사는 유지한다.
+해석한다. Core와 Requirements의 파일 어댑터는 루트 해석을 공유한다. 처음 만나는 링크는 실제
+대상을 확인하고 링크 문자열을 디코딩한 뒤 경로를 해석한다. Core는 마지막 물리 경로를 디스크립터로 고정한다.
 FIFO와 decoded-only root cycle은 기존 Node처럼 외부 중단이 필요할 수 있다.
 검증 driver의 kill/wait를 제품의 읽기 timeout이나 OS sandbox로 설명하지 않는다.
 [파일·CLI 계약](../contracts/context/files-cli-v1/README.md)이 실제 oracle과 native
@@ -499,3 +499,12 @@ Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 f
 로컬 검토 publication이며 actual main은 아직 아니다. 원격 게시 뒤 정상 통합과 한 번의
 최종 전체 Go race/vet/AST 및 root source gate는 남아 있다. Node public
 export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
+
+### Requirements 계약 파일 읽기
+
+`internal/requirements/adapters/files.LoadPorts(root)`를 `application.LoadContract`에
+전달하면 macOS와 Linux에서 프로젝트의 `.harness/reqs/<slug>.yaml`을 읽는다.
+읽기 직전에 루트를 해석하므로 같은 포트에서 루트 별칭의 변경을 관측한다.
+하위 디렉터리는 검색 권한으로 열고 링크 경유를 거절한다. 일반 파일만 최대 1 MiB까지
+읽으며 엄격한 UTF-8 검사 뒤 선두 BOM 하나를 제거하고 CRLF를 LF로 바꾼다.
+application이 직렬화한 계약에 SHA-256을 적용한다. 이 읽기 경로는 Git을 실행하지 않는다.
