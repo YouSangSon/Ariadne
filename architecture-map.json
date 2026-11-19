@@ -1149,6 +1149,14 @@
       "layer": "tooling",
       "context": "ontology"
     },
+    "contracts/requirements/node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "contracts/requirements/node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
     "core/application/product.mjs": {
       "layer": "application",
       "context": "core"
@@ -1425,6 +1433,10 @@
       "context": "validation"
     },
     "runtime/go/internal/architecture/product_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/architecture/requirements_test.go": {
       "layer": "tooling",
       "context": "validation"
     },
@@ -1792,6 +1804,34 @@
       "layer": "tooling",
       "context": "platform"
     },
+    "runtime/go/internal/requirements/application/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/application/requirements.go": {
+      "layer": "application",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/contract.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/scalar.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/source.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
+    "runtime/go/internal/requirements/domain/text.go": {
+      "layer": "domain",
+      "context": "requirements"
+    },
     "runtime/rust/Cargo.lock": {
       "layer": "tooling",
       "context": "extensions"
@@ -1940,6 +1980,10 @@
       "layer": "composition",
       "context": "core"
     },
+    "scripts/requirements-node-goldens.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
+    },
     "scripts/uninstall.mjs": {
       "layer": "composition",
       "context": "integration"
@@ -2063,6 +2107,10 @@
     "tests/product-node-contracts.test.mjs": {
       "layer": "tooling",
       "context": "core"
+    },
+    "tests/requirements-node-contracts.test.mjs": {
+      "layer": "tooling",
+      "context": "requirements"
     },
     "tests/scrub.test.mjs": {
       "layer": "tooling",

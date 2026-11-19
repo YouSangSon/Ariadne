@@ -471,3 +471,31 @@ profile을 소유한다. C2의 272개 순수 골든은 별도로 유지한다. C
 Go runtime이 처리하는 signal과 Python 검증 도구의 자식 signal 상태도 구분한다.
 검증 도구는 생성·등록 중 중단을 지연하고 자식의 원래 signal mask를 유지한다.
 전체 제품의 Node 기본값과 성능 채택은 이 로컬 구현 단위의 결과로 바꾸지 않는다.
+
+### G1d Requirements 순수 library 구현 범위
+
+Requirements의 private UTF16 Text와 엄격한 canonical-subset parser(정해진 REQ 문법 검사)를
+`runtime/go/internal/requirements/domain`에 추가했다. Core의 기존 `requirementfields`만
+정확한 domain 디렉터리에서 공유한다. Context의 부분 REQ 정책과 공유 필드 추출기는
+변경하지 않는다. app/nested/다른 Core/Context/Ontology와 역방향·cycle·잘못된 ownership은
+AST 음성 fixture에서 계속 거절한다. application은 private JSON string 직렬화로
+Node의 정확한 contract payload와 path/kind/mode/length frame을 만들고 오류를 원래 객체로
+반환한다. native Git/files/CLI와 기본 실행기 전환은 포함하지 않는다.
+
+[실제 Node 계약](../contracts/requirements/node-v1/README.md)의 기존 163개와 166개를 보존한 177개 관측과 비교해
+UTF16 lone surrogate, 10개 원문 scope, 제외 필드의 검증, UTF16 정렬과 최종 10000개 제한,
+빈 content의 두 Update, nullable HEAD, 원래 포트 오류와 64MiB aggregate 경계를 보존했다.
+reqId는 첫 포트 전, HEAD는 InspectGit 직후에 값으로 고정해 callback의 뒤늦은 변경과
+분리한다. reserved scalar의 대소문자는 ASCII만 접으므로 `falſe`를 false로 거절하지 않는다.
+두 차이는 실제 Node 재현을 추가한 뒤 Go RED와 최소 수정으로 확인했다.
+mode의 int64 포트 값도 Node Number로 변환한 최단 소수로 직렬화한다. 큰 정수의 작성
+숫자와 JSON frame 표기가 다를 수 있으므로 decimal-text recipe로 RED→GREEN을 검증했다.
+safe-integer 제한·mode 검증·masking을 새로 추가하지 않는다.
+Go domain/application은 compile 가능한 stub의 동작 RED 뒤 구현했고 focused 비교가
+통과했다. 정확한 AST 허용 경로도 거절 RED 뒤 추가했다. 로컬 검토된 C3 publication 의존성
+`58932fd2`를 정상 merge했고 최근 20개 커밋의 `REQ: ` 불변식을 확인했다.
+
+현재 순수 library와 mode-number 수정의 독립 SOURCE 검토를 통과했다. C3 의존성은
+로컬 검토 publication이며 actual main은 아직 아니다. 원격 게시 뒤 정상 통합과 한 번의
+최종 전체 Go race/vet/AST 및 root source gate는 남아 있다. Node public
+export와 제품 기본 실행은 유지하며 원격 CI·게시·자동 승인 런타임 완료를 뜻하지 않는다.
