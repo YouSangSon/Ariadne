@@ -1,0 +1,2152 @@
+{
+  "fixture_version": 1,
+  "source_manifest": {
+    "runtime": "v24.22.2",
+    "sources_sha256": {
+      "packages/memory/src/interfaces/http/middleware/oauth-token-auth.ts": "d5b19d14e8b8f901e2b3484bdcf1f370d96527b17bfcba34dd7178c26577f38d",
+      "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
+      "packages/memory/package-lock.json": "016515a6f1ed1c60c0fd85433d45a316ee79ac1b237890e8e524c08e2a0d4823",
+      "packages/memory/scripts/oauth-contract-goldens.ts": "df2f00f5f67410286cbd7fdb2da4a9ac19d0612dce3077bee6b0d164a7d17bdc"
+    },
+    "inputs_sha256": "47df44a410779d6d0ffb88fa5155362f37277a1122e5f7c35b4e583704d61d8e",
+    "material_sha256": "7a3fcc23370a8c993ce78b1c06c35587e3197019545b9af824c2fe2010fe131b"
+  },
+  "cases": [
+    {
+      "id": "config-disabled",
+      "protected_resource": null,
+      "verifier": null
+    },
+    {
+      "id": "config-empty-servers",
+      "error": "Invalid MCP_OAUTH_AUTHORIZATION_SERVERS: entries must not be blank"
+    },
+    {
+      "id": "config-default",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-discovery-only",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ]
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-root-resource",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource"
+      },
+      "verifier": {
+        "resource": "https://memory.example/",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-normalized-urls",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/",
+            "https://issuer.example:8443/tenant"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          },
+          {
+            "authorizationServer": "https://issuer.example:8443/tenant",
+            "issuerCandidates": [
+              "https://issuer.example:8443/tenant"
+            ],
+            "metadataUrls": [
+              "https://issuer.example:8443/.well-known/oauth-authorization-server/tenant",
+              "https://issuer.example:8443/.well-known/openid-configuration/tenant",
+              "https://issuer.example:8443/tenant/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example:8443/tenant/keys?v=2"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-trailing-dot-host",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example./"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example./",
+            "issuerCandidates": [
+              "https://issuer.example./",
+              "https://issuer.example."
+            ],
+            "metadataUrls": [
+              "https://issuer.example./.well-known/oauth-authorization-server",
+              "https://issuer.example./.well-known/openid-configuration"
+            ]
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-ipv4-host",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://192.168.1.20:9443/mcp",
+          "authorization_servers": [
+            "https://10.0.0.7/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://192.168.1.20:9443/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://192.168.1.20:9443/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://10.0.0.7/",
+            "issuerCandidates": [
+              "https://10.0.0.7/",
+              "https://10.0.0.7"
+            ],
+            "metadataUrls": [
+              "https://10.0.0.7/.well-known/oauth-authorization-server",
+              "https://10.0.0.7/.well-known/openid-configuration"
+            ]
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-empty-query-resource",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp?",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp?",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-empty-fragment-server",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/#"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/#",
+            "issuerCandidates": [
+              "https://issuer.example/#"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ]
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-scopes",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:read",
+            "akasha:write",
+            "akasha:admin"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-metadata-strings",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ],
+          "resource_name": "Ariadne \"Memory\"",
+          "resource_documentation": "https://docs.example/memory"
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-verifier-options",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "ES256"
+        ],
+        "clockToleranceSeconds": 30,
+        "organizationClaim": "tenant",
+        "requiredType": "at+jwt",
+        "jwksTimeoutMs": 2147483647
+      }
+    },
+    {
+      "id": "config-empty-numeric-defaults",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 60,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-zero-tolerance",
+      "protected_resource": {
+        "metadata": {
+          "resource": "https://memory.example/mcp",
+          "authorization_servers": [
+            "https://issuer.example/"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ],
+          "scopes_supported": [
+            "akasha:memory"
+          ]
+        },
+        "metadataUrl": "https://memory.example/.well-known/oauth-protected-resource/mcp"
+      },
+      "verifier": {
+        "resource": "https://memory.example/mcp",
+        "issuers": [
+          {
+            "authorizationServer": "https://issuer.example/",
+            "issuerCandidates": [
+              "https://issuer.example/",
+              "https://issuer.example"
+            ],
+            "metadataUrls": [
+              "https://issuer.example/.well-known/oauth-authorization-server",
+              "https://issuer.example/.well-known/openid-configuration"
+            ],
+            "jwksUrl": "https://issuer.example/jwks.json"
+          }
+        ],
+        "algorithms": [
+          "RS256",
+          "RS384",
+          "RS512",
+          "PS256",
+          "PS384",
+          "PS512",
+          "ES256",
+          "ES384",
+          "ES512",
+          "EdDSA"
+        ],
+        "clockToleranceSeconds": 0,
+        "organizationClaim": "organization_id",
+        "jwksTimeoutMs": 5000
+      }
+    },
+    {
+      "id": "config-missing-resource",
+      "error": "Missing required environment variable: MCP_OAUTH_RESOURCE_URL"
+    },
+    {
+      "id": "config-blank-resource",
+      "error": "Missing required environment variable: MCP_OAUTH_RESOURCE_URL"
+    },
+    {
+      "id": "config-http-resource",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: expected an HTTPS URL"
+    },
+    {
+      "id": "config-relative-resource",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: expected an absolute HTTPS URL"
+    },
+    {
+      "id": "config-resource-fragment",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: URL must not include a fragment"
+    },
+    {
+      "id": "config-resource-query",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: URL must not include a query string"
+    },
+    {
+      "id": "config-resource-path",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: path must be \"/\" or \"/mcp\""
+    },
+    {
+      "id": "config-resource-mcp-slash",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: path must be \"/\" or \"/mcp\""
+    },
+    {
+      "id": "config-bad-port",
+      "error": "Invalid MCP_OAUTH_RESOURCE_URL: expected an absolute HTTPS URL"
+    },
+    {
+      "id": "config-blank-server-entry",
+      "error": "Invalid MCP_OAUTH_AUTHORIZATION_SERVERS: entries must not be blank"
+    },
+    {
+      "id": "config-http-server",
+      "error": "Invalid MCP_OAUTH_AUTHORIZATION_SERVERS: expected an HTTPS URL"
+    },
+    {
+      "id": "config-scope-space",
+      "error": "Invalid MCP_OAUTH_SCOPES entry: \"akasha write\" contains unsupported characters"
+    },
+    {
+      "id": "config-scope-quote",
+      "error": "Invalid MCP_OAUTH_SCOPES entry: \"akasha\"read\" contains unsupported characters"
+    },
+    {
+      "id": "config-blank-name",
+      "error": "Invalid MCP_OAUTH_RESOURCE_NAME: must contain non-whitespace text"
+    },
+    {
+      "id": "config-http-documentation",
+      "error": "Invalid MCP_OAUTH_RESOURCE_DOCUMENTATION_URL: expected an HTTPS URL"
+    },
+    {
+      "id": "config-jwks-count",
+      "error": "Invalid MCP_OAUTH_JWKS_URLS: when set, provide one JWKS URL per MCP_OAUTH_AUTHORIZATION_SERVERS entry"
+    },
+    {
+      "id": "config-jwks-http",
+      "error": "Invalid MCP_OAUTH_JWKS_URLS: expected an HTTPS URL"
+    },
+    {
+      "id": "config-jwks-blank-entry",
+      "error": "Invalid MCP_OAUTH_JWKS_URLS: entries must not be blank"
+    },
+    {
+      "id": "config-algorithm-space",
+      "error": "Invalid MCP_OAUTH_JWT_ALGORITHMS entry: \"ES 256\" contains unsupported characters"
+    },
+    {
+      "id": "config-algorithm-backslash",
+      "error": "Invalid MCP_OAUTH_JWT_ALGORITHMS entry: \"RS256\\\" contains unsupported characters"
+    },
+    {
+      "id": "config-tolerance-negative",
+      "error": "Invalid MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: expected a non-negative integer"
+    },
+    {
+      "id": "config-tolerance-decimal",
+      "error": "Invalid MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: expected a non-negative integer"
+    },
+    {
+      "id": "config-tolerance-unsafe",
+      "error": "Invalid MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS: expected a non-negative integer"
+    },
+    {
+      "id": "config-timeout-zero",
+      "error": "Invalid MCP_OAUTH_JWKS_TIMEOUT_MS: expected a positive integer"
+    },
+    {
+      "id": "config-timeout-too-large",
+      "error": "Invalid MCP_OAUTH_JWKS_TIMEOUT_MS: expected a positive integer up to 2147483647"
+    },
+    {
+      "id": "config-blank-org-claim",
+      "error": "Invalid MCP_OAUTH_ORGANIZATION_CLAIM: must contain non-whitespace text"
+    },
+    {
+      "id": "config-blank-type",
+      "error": "Invalid MCP_OAUTH_JWT_TYPE: must contain non-whitespace text"
+    },
+    {
+      "id": "verify-algorithms",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs384",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "rs512",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "ps256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "ps384",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "ps512",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "es256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "es384",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "es512",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "eddsa",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-ed25519-alg-not-allowed-by-default",
+      "steps": [
+        {
+          "token": "ed25519-alg",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-ed25519-alg-allowed",
+      "steps": [
+        {
+          "token": "ed25519-alg",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verify-signature-failures",
+      "steps": [
+        {
+          "token": "es256-with-rs-kid",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256-wrong-signer",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "rs256-no-signature",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "rs256-truncated-signature",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "es256-der-signature",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "rs256-plus-in-signature",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-algorithm-header",
+      "steps": [
+        {
+          "token": "alg-none",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "alg-hs256",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "alg-missing",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "alg-empty",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-hs256-configured",
+      "steps": [
+        {
+          "token": "alg-hs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-algorithm-allowlist",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "es256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verify-key-selection",
+      "steps": [
+        {
+          "token": "kid-unknown",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "kid-number",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-absent",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-kidless-single",
+      "steps": [
+        {
+          "token": "kid-absent",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-kidless-pair",
+      "steps": [
+        {
+          "token": "kid-absent",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verify-jwk-filters",
+      "steps": [
+        {
+          "token": "kid-use-enc",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "kid-alg-rs384",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-alg-rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "kid-ops-sign-verify",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-ops-verify",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "kid-ops-sign",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-ops-duplicate",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-ext-string",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-ext-false",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "kid-use-sig",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "kid-crv-mismatch",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-small-rsa",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "kid-private",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-crit-and-b64",
+      "steps": [
+        {
+          "token": "crit-b64-true",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "crit-unknown",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "crit-empty",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "crit-b64-false",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "crit-b64-missing",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "b64-false-without-crit",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-encoding",
+      "steps": [
+        {
+          "token": "header-bom",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "header-array",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "header-not-json",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "payload-array",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "payload-not-json",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "payload-bom",
+          "identity": {
+            "organizationId": null,
+            "scopes": []
+          },
+          "fetches": []
+        },
+        {
+          "token": "payload-duplicate-iss",
+          "identity": {
+            "organizationId": null,
+            "scopes": []
+          },
+          "fetches": []
+        },
+        {
+          "token": "payload-infinite-exp",
+          "identity": {
+            "organizationId": null,
+            "scopes": []
+          },
+          "fetches": []
+        },
+        {
+          "token": "payload-padded",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "payload-inner-space",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "payload-plus-char",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "two-dots",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "five-parts",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "empty-parts",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "not-jwt",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-issuer-and-audience",
+      "steps": [
+        {
+          "token": "iss-without-slash",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "iss-other",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "iss-number",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "iss-missing",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "aud-array",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "aud-other",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "aud-array-without",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "aud-missing",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "aud-number",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-time-claims",
+      "steps": [
+        {
+          "token": "exp-past",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "exp-at-tolerance",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "exp-inside-tolerance",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "exp-missing",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "exp-string",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "exp-fraction",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "nbf-at-tolerance",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "nbf-beyond-tolerance",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "nbf-string",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "iat-future",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "iat-string",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-zero-tolerance",
+      "steps": [
+        {
+          "token": "exp-inside-tolerance",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "nbf-at-tolerance",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-scopes-and-organization",
+      "steps": [
+        {
+          "token": "scope-scp-mixed",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write",
+              "akasha:admin"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "scope-scp-string",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:memory",
+              "openid"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "scope-none",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": []
+          },
+          "fetches": []
+        },
+        {
+          "token": "scope-number",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": []
+          },
+          "fetches": []
+        },
+        {
+          "token": "scope-nel-separator",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "ab",
+              "c"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "org-missing",
+          "identity": {
+            "organizationId": null,
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "org-trimmed",
+          "identity": {
+            "organizationId": "org-b",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "org-blank",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "org-number",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "org-null-claim",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-custom-organization-claim",
+      "steps": [
+        {
+          "token": "tenant-claim",
+          "identity": {
+            "organizationId": "tenant-7",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "org-number",
+          "identity": {
+            "organizationId": null,
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-required-type",
+      "steps": [
+        {
+          "token": "typ-at-jwt-upper",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "typ-application",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "typ-jwt",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "typ-number",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-type-not-required",
+      "steps": [
+        {
+          "token": "typ-jwt",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "typ-number",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-jwks-cache-and-expiry",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "es256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verify-unknown-kid-cooldown",
+      "steps": [
+        {
+          "token": "kid-new",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "kid-new",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "kid-new",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        },
+        {
+          "token": "kid-new",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-jwks-failures",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-jwks-unreachable",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "verify-no-fetch-before-issuer-match",
+      "steps": [
+        {
+          "token": "iss-other",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "not-jwt",
+          "identity": null,
+          "fetches": []
+        },
+        {
+          "token": "payload-array",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-discovery",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/.well-known/oauth-authorization-server",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/.well-known/openid-configuration",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/keys",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "es256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-discovery-path-issuer",
+      "steps": [
+        {
+          "token": "tenant-iss",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/.well-known/oauth-authorization-server/tenant",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/.well-known/openid-configuration/tenant",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/tenant/.well-known/openid-configuration",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/tenant/keys",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-discovery-failure-retried",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://issuer.example/.well-known/oauth-authorization-server",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/.well-known/openid-configuration",
+              "accept": "application/json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/.well-known/oauth-authorization-server",
+              "accept": "application/json"
+            },
+            {
+              "url": "https://issuer.example/keys",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": []
+        }
+      ]
+    },
+    {
+      "id": "verify-multiple-issuers",
+      "steps": [
+        {
+          "token": "rs256",
+          "identity": {
+            "organizationId": "org-a",
+            "scopes": [
+              "akasha:read",
+              "akasha:write"
+            ]
+          },
+          "fetches": [
+            {
+              "url": "https://issuer.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        },
+        {
+          "token": "iss-other",
+          "identity": null,
+          "fetches": [
+            {
+              "url": "https://other.example/jwks.json",
+              "accept": "application/json, application/jwk-set+json"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

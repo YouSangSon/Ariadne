@@ -1,0 +1,284 @@
+{
+  "fixture_version": 1,
+  "now": 1767225600,
+  "default_env": {
+    "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/",
+    "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp",
+    "MCP_OAUTH_JWKS_URLS": "https://issuer.example/jwks.json"
+  },
+  "default_responses": {
+    "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "main" }]
+  },
+  "keys": {
+    "rs": { "type": "rsa", "bits": 2048 },
+    "rs_other": { "type": "rsa", "bits": 2048 },
+    "rs_small": { "type": "rsa", "bits": 1024 },
+    "rs_private": { "type": "rsa", "bits": 2048 },
+    "ps": { "type": "rsa", "bits": 2048 },
+    "es256": { "type": "ec", "curve": "P-256" },
+    "es384": { "type": "ec", "curve": "P-384" },
+    "es521": { "type": "ec", "curve": "P-521" },
+    "ed": { "type": "ed25519" }
+  },
+  "jwks": {
+    "main": [
+      { "key": "rs", "kid": "k-rs" },
+      { "key": "ps", "kid": "k-ps" },
+      { "key": "es256", "kid": "k-es256" },
+      { "key": "es384", "kid": "k-es384" },
+      { "key": "es521", "kid": "k-es521" },
+      { "key": "ed", "kid": "k-ed" }
+    ],
+    "rotated": [
+      { "key": "rs", "kid": "k-rs" },
+      { "key": "rs_other", "kid": "k-new" }
+    ],
+    "kidless_single": [{ "key": "rs" }],
+    "kidless_pair": [{ "key": "rs" }, { "key": "rs_other" }],
+    "filtered_members": [
+      { "key": "rs", "kid": "use-enc", "members": { "use": "enc" } },
+      { "key": "rs", "kid": "alg-rs384", "members": { "alg": "RS384" } },
+      { "key": "rs", "kid": "alg-rs256", "members": { "alg": "RS256" } },
+      { "key": "rs", "kid": "ops-sign-verify", "members": { "key_ops": ["sign", "verify"] } },
+      { "key": "rs", "kid": "ops-verify", "members": { "key_ops": ["verify"] } },
+      { "key": "rs", "kid": "ops-sign", "members": { "key_ops": ["sign"] } },
+      { "key": "rs", "kid": "ops-duplicate", "members": { "key_ops": ["verify", "verify"] } },
+      { "key": "rs", "kid": "ext-string", "members": { "ext": "true" } },
+      { "key": "rs", "kid": "ext-false", "members": { "ext": false } },
+      { "key": "rs", "kid": "use-sig", "members": { "use": "sig" } },
+      { "key": "es256", "kid": "crv-mismatch", "members": { "crv": "P-384" } },
+      { "key": "rs_small", "kid": "k-small" },
+      { "key": "rs_private", "kid": "k-private", "private": true }
+    ]
+  },
+  "tokens": {
+    "rs256": { "key": "rs", "alg": "RS256" },
+    "rs384": { "key": "rs", "alg": "RS384" },
+    "rs512": { "key": "rs", "alg": "RS512" },
+    "ps256": { "key": "ps", "alg": "PS256" },
+    "ps384": { "key": "ps", "alg": "PS384" },
+    "ps512": { "key": "ps", "alg": "PS512" },
+    "es256": { "key": "es256", "alg": "ES256" },
+    "es384": { "key": "es384", "alg": "ES384" },
+    "es512": { "key": "es521", "alg": "ES512" },
+    "eddsa": { "key": "ed", "alg": "EdDSA" },
+    "ed25519-alg": { "key": "ed", "alg": "Ed25519" },
+    "es256-with-rs-kid": { "key": "es256", "alg": "ES256", "header": { "kid": "k-rs" } },
+    "rs256-wrong-signer": { "key": "rs", "alg": "RS256", "sign_with": "rs_other" },
+    "rs256-no-signature": { "key": "rs", "alg": "RS256", "signature": "" },
+    "rs256-truncated-signature": { "key": "rs", "alg": "RS256", "signature": "truncate" },
+    "es256-der-signature": { "key": "es256", "alg": "ES256", "signature": "der" },
+    "rs256-plus-in-signature": { "key": "rs", "alg": "RS256", "signature": "plus" },
+    "alg-none": { "key": "rs", "alg": "none", "signature": "" },
+    "alg-hs256": { "key": "rs", "alg": "HS256", "signature": "hmac" },
+    "alg-missing": { "key": "rs", "alg": "RS256", "header": { "alg": null } },
+    "alg-empty": { "key": "rs", "alg": "RS256", "header": { "alg": "" } },
+    "kid-unknown": { "key": "rs", "alg": "RS256", "header": { "kid": "k-missing" } },
+    "kid-number": { "key": "rs", "alg": "RS256", "header": { "kid": 7 } },
+    "kid-absent": { "key": "rs", "alg": "RS256", "header": { "kid": null } },
+    "kid-new": { "key": "rs_other", "alg": "RS256", "header": { "kid": "k-new" } },
+    "kid-use-enc": { "key": "rs", "alg": "RS256", "header": { "kid": "use-enc" } },
+    "kid-alg-rs384": { "key": "rs", "alg": "RS256", "header": { "kid": "alg-rs384" } },
+    "kid-alg-rs256": { "key": "rs", "alg": "RS256", "header": { "kid": "alg-rs256" } },
+    "kid-ops-sign-verify": { "key": "rs", "alg": "RS256", "header": { "kid": "ops-sign-verify" } },
+    "kid-ops-verify": { "key": "rs", "alg": "RS256", "header": { "kid": "ops-verify" } },
+    "kid-ops-sign": { "key": "rs", "alg": "RS256", "header": { "kid": "ops-sign" } },
+    "kid-ops-duplicate": { "key": "rs", "alg": "RS256", "header": { "kid": "ops-duplicate" } },
+    "kid-ext-string": { "key": "rs", "alg": "RS256", "header": { "kid": "ext-string" } },
+    "kid-ext-false": { "key": "rs", "alg": "RS256", "header": { "kid": "ext-false" } },
+    "kid-use-sig": { "key": "rs", "alg": "RS256", "header": { "kid": "use-sig" } },
+    "kid-crv-mismatch": { "key": "es256", "alg": "ES256", "header": { "kid": "crv-mismatch" } },
+    "kid-small-rsa": { "key": "rs_small", "alg": "RS256", "header": { "kid": "k-small" } },
+    "kid-private": { "key": "rs_private", "alg": "RS256", "header": { "kid": "k-private" } },
+    "crit-b64-true": { "key": "rs", "alg": "RS256", "header": { "crit": ["b64"], "b64": true } },
+    "crit-unknown": { "key": "rs", "alg": "RS256", "header": { "crit": ["exp"], "exp": 1 } },
+    "crit-empty": { "key": "rs", "alg": "RS256", "header": { "crit": [] } },
+    "crit-b64-false": { "key": "rs", "alg": "RS256", "header": { "crit": ["b64"], "b64": false } },
+    "crit-b64-missing": { "key": "rs", "alg": "RS256", "header": { "crit": ["b64"] } },
+    "b64-false-without-crit": { "key": "rs", "alg": "RS256", "header": { "b64": false } },
+    "header-bom": { "key": "rs", "alg": "RS256", "header_json": "﻿{\"alg\":\"RS256\",\"kid\":\"k-rs\"}" },
+    "header-array": { "key": "rs", "alg": "RS256", "header_json": "[\"RS256\"]" },
+    "header-not-json": { "key": "rs", "alg": "RS256", "header_json": "{alg:RS256}" },
+    "payload-array": { "key": "rs", "alg": "RS256", "payload_json": "[1,2]" },
+    "payload-not-json": { "key": "rs", "alg": "RS256", "payload_json": "not json" },
+    "payload-bom": { "key": "rs", "alg": "RS256", "payload_json": "﻿{\"iss\":\"https://issuer.example/\",\"aud\":\"https://memory.example/mcp\"}" },
+    "payload-duplicate-iss": { "key": "rs", "alg": "RS256", "payload_json": "{\"iss\":\"https://evil.example/\",\"aud\":\"https://memory.example/mcp\",\"iss\":\"https://issuer.example/\"}" },
+    "payload-infinite-exp": { "key": "rs", "alg": "RS256", "payload_json": "{\"iss\":\"https://issuer.example/\",\"aud\":\"https://memory.example/mcp\",\"exp\":1e400}" },
+    "payload-padded": { "key": "rs", "alg": "RS256", "transform": "pad_payload" },
+    "payload-inner-space": { "key": "rs", "alg": "RS256", "transform": "space_payload" },
+    "payload-plus-char": { "key": "rs", "alg": "RS256", "transform": "plus_payload" },
+    "iss-without-slash": { "key": "rs", "alg": "RS256", "payload": { "iss": "https://issuer.example" } },
+    "iss-other": { "key": "rs", "alg": "RS256", "payload": { "iss": "https://other.example/" } },
+    "iss-number": { "key": "rs", "alg": "RS256", "payload": { "iss": 1 } },
+    "iss-missing": { "key": "rs", "alg": "RS256", "payload": { "iss": null } },
+    "aud-array": { "key": "rs", "alg": "RS256", "payload": { "aud": ["https://other.example/", "https://memory.example/mcp"] } },
+    "aud-other": { "key": "rs", "alg": "RS256", "payload": { "aud": "https://memory.example/" } },
+    "aud-array-without": { "key": "rs", "alg": "RS256", "payload": { "aud": ["https://memory.example/"] } },
+    "aud-missing": { "key": "rs", "alg": "RS256", "payload": { "aud": null } },
+    "aud-number": { "key": "rs", "alg": "RS256", "payload": { "aud": 5 } },
+    "exp-past": { "key": "rs", "alg": "RS256", "payload": { "exp": { "$now": -61 } } },
+    "exp-at-tolerance": { "key": "rs", "alg": "RS256", "payload": { "exp": { "$now": -60 } } },
+    "exp-inside-tolerance": { "key": "rs", "alg": "RS256", "payload": { "exp": { "$now": -59 } } },
+    "exp-missing": { "key": "rs", "alg": "RS256", "payload": { "exp": null } },
+    "exp-string": { "key": "rs", "alg": "RS256", "payload": { "exp": "4102444800" } },
+    "exp-fraction": { "key": "rs", "alg": "RS256", "payload": { "exp": { "$now": -59.5 } } },
+    "nbf-at-tolerance": { "key": "rs", "alg": "RS256", "payload": { "nbf": { "$now": 60 } } },
+    "nbf-beyond-tolerance": { "key": "rs", "alg": "RS256", "payload": { "nbf": { "$now": 61 } } },
+    "nbf-string": { "key": "rs", "alg": "RS256", "payload": { "nbf": "0" } },
+    "iat-future": { "key": "rs", "alg": "RS256", "payload": { "iat": { "$now": 86400 } } },
+    "iat-string": { "key": "rs", "alg": "RS256", "payload": { "iat": "0" } },
+    "scope-scp-mixed": { "key": "rs", "alg": "RS256", "payload": { "scope": " akasha:read\takasha:write akasha:read ", "scp": ["akasha:admin", "", 3, "akasha:read"] } },
+    "scope-scp-string": { "key": "rs", "alg": "RS256", "payload": { "scope": null, "scp": "akasha:memory openid" } },
+    "scope-none": { "key": "rs", "alg": "RS256", "payload": { "scope": null } },
+    "scope-number": { "key": "rs", "alg": "RS256", "payload": { "scope": 12, "scp": { "x": 1 } } },
+    "scope-nel-separator": { "key": "rs", "alg": "RS256", "payload": { "scope": "a\u0085b c" } },
+    "org-missing": { "key": "rs", "alg": "RS256", "payload": { "organization_id": null } },
+    "org-trimmed": { "key": "rs", "alg": "RS256", "payload": { "organization_id": "　org-b " } },
+    "org-blank": { "key": "rs", "alg": "RS256", "payload": { "organization_id": "  " } },
+    "org-number": { "key": "rs", "alg": "RS256", "payload": { "organization_id": 9 } },
+    "org-null-claim": { "key": "rs", "alg": "RS256", "payload_json": "{\"iss\":\"https://issuer.example/\",\"aud\":\"https://memory.example/mcp\",\"organization_id\":null}" },
+    "tenant-claim": { "key": "rs", "alg": "RS256", "payload": { "tenant": "tenant-7" } },
+    "typ-at-jwt-upper": { "key": "rs", "alg": "RS256", "header": { "typ": "at+JWT" } },
+    "typ-application": { "key": "rs", "alg": "RS256", "header": { "typ": "application/at+jwt" } },
+    "typ-jwt": { "key": "rs", "alg": "RS256", "header": { "typ": "JWT" } },
+    "typ-number": { "key": "rs", "alg": "RS256", "header": { "typ": 1 } },
+    "tenant-iss": { "key": "rs", "alg": "RS256", "payload": { "iss": "https://issuer.example/tenant/" } },
+    "two-dots": { "raw": "a.b" },
+    "five-parts": { "raw": "a.b.c.d.e" },
+    "empty-parts": { "raw": ".." },
+    "not-jwt": { "raw": "opaque-access-token" }
+  },
+  "cases": [
+    { "id": "config-disabled", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": null, "MCP_OAUTH_RESOURCE_URL": null, "MCP_OAUTH_JWKS_URLS": null } },
+    { "id": "config-empty-servers", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "" } },
+    { "id": "config-default", "op": "config", "env": {} },
+    { "id": "config-discovery-only", "op": "config", "env": { "MCP_OAUTH_JWKS_URLS": null } },
+    { "id": "config-root-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example" } },
+    { "id": "config-normalized-urls", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": " HTTPS://Issuer.Example:443 , https://issuer.example:8443/tenant ", "MCP_OAUTH_RESOURCE_URL": "https://MEMORY.example:0443/mcp", "MCP_OAUTH_JWKS_URLS": "https://issuer.example/jwks.json,https://issuer.example:8443/tenant/keys?v=2" } },
+    { "id": "config-trailing-dot-host", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example./", "MCP_OAUTH_JWKS_URLS": null } },
+    { "id": "config-ipv4-host", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://10.0.0.7/", "MCP_OAUTH_RESOURCE_URL": "https://192.168.1.20:9443/mcp", "MCP_OAUTH_JWKS_URLS": null } },
+    { "id": "config-empty-query-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp?" } },
+    { "id": "config-empty-fragment-server", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/#", "MCP_OAUTH_JWKS_URLS": null } },
+    { "id": "config-scopes", "op": "config", "env": { "MCP_OAUTH_SCOPES": " akasha:read , akasha:write,akasha:admin " } },
+    { "id": "config-metadata-strings", "op": "config", "env": { "MCP_OAUTH_RESOURCE_NAME": " Ariadne \"Memory\" ", "MCP_OAUTH_RESOURCE_DOCUMENTATION_URL": "https://docs.example/memory" } },
+    { "id": "config-verifier-options", "op": "config", "env": { "MCP_OAUTH_JWT_ALGORITHMS": " RS256 , ES256 ", "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": " 30 ", "MCP_OAUTH_JWKS_TIMEOUT_MS": "2147483647", "MCP_OAUTH_ORGANIZATION_CLAIM": " tenant ", "MCP_OAUTH_JWT_TYPE": " at+jwt " } },
+    { "id": "config-empty-numeric-defaults", "op": "config", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "", "MCP_OAUTH_JWKS_TIMEOUT_MS": "" } },
+    { "id": "config-zero-tolerance", "op": "config", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "0" } },
+    { "id": "config-missing-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": null } },
+    { "id": "config-blank-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "   " } },
+    { "id": "config-http-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "http://memory.example/mcp" } },
+    { "id": "config-relative-resource", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "memory.example/mcp" } },
+    { "id": "config-resource-fragment", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp#x" } },
+    { "id": "config-resource-query", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp?x=1" } },
+    { "id": "config-resource-path", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example/api" } },
+    { "id": "config-resource-mcp-slash", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp/" } },
+    { "id": "config-bad-port", "op": "config", "env": { "MCP_OAUTH_RESOURCE_URL": "https://memory.example:70000/mcp" } },
+    { "id": "config-blank-server-entry", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/,," } },
+    { "id": "config-http-server", "op": "config", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "http://issuer.example/" } },
+    { "id": "config-scope-space", "op": "config", "env": { "MCP_OAUTH_SCOPES": "akasha:read,akasha write" } },
+    { "id": "config-scope-quote", "op": "config", "env": { "MCP_OAUTH_SCOPES": "akasha\"read" } },
+    { "id": "config-blank-name", "op": "config", "env": { "MCP_OAUTH_RESOURCE_NAME": " " } },
+    { "id": "config-http-documentation", "op": "config", "env": { "MCP_OAUTH_RESOURCE_DOCUMENTATION_URL": "http://docs.example/" } },
+    { "id": "config-jwks-count", "op": "config", "env": { "MCP_OAUTH_JWKS_URLS": "https://a.example/1,https://a.example/2" } },
+    { "id": "config-jwks-http", "op": "config", "env": { "MCP_OAUTH_JWKS_URLS": "http://issuer.example/jwks.json" } },
+    { "id": "config-jwks-blank-entry", "op": "config", "env": { "MCP_OAUTH_JWKS_URLS": " " } },
+    { "id": "config-algorithm-space", "op": "config", "env": { "MCP_OAUTH_JWT_ALGORITHMS": "RS256,ES 256" } },
+    { "id": "config-algorithm-backslash", "op": "config", "env": { "MCP_OAUTH_JWT_ALGORITHMS": "RS256\\" } },
+    { "id": "config-tolerance-negative", "op": "config", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "-1" } },
+    { "id": "config-tolerance-decimal", "op": "config", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "1.5" } },
+    { "id": "config-tolerance-unsafe", "op": "config", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "9007199254740993" } },
+    { "id": "config-timeout-zero", "op": "config", "env": { "MCP_OAUTH_JWKS_TIMEOUT_MS": "0" } },
+    { "id": "config-timeout-too-large", "op": "config", "env": { "MCP_OAUTH_JWKS_TIMEOUT_MS": "2147483648" } },
+    { "id": "config-blank-org-claim", "op": "config", "env": { "MCP_OAUTH_ORGANIZATION_CLAIM": "  " } },
+    { "id": "config-blank-type", "op": "config", "env": { "MCP_OAUTH_JWT_TYPE": "" } },
+
+    { "id": "verify-algorithms", "op": "verify", "steps": [
+      { "token": "rs256" }, { "token": "rs384" }, { "token": "rs512" }, { "token": "ps256" }, { "token": "ps384" },
+      { "token": "ps512" }, { "token": "es256" }, { "token": "es384" }, { "token": "es512" }, { "token": "eddsa" }
+    ] },
+    { "id": "verify-ed25519-alg-not-allowed-by-default", "op": "verify", "steps": [{ "token": "ed25519-alg" }] },
+    { "id": "verify-ed25519-alg-allowed", "op": "verify", "env": { "MCP_OAUTH_JWT_ALGORITHMS": "Ed25519" }, "steps": [{ "token": "ed25519-alg" }] },
+    { "id": "verify-signature-failures", "op": "verify", "steps": [
+      { "token": "es256-with-rs-kid" }, { "token": "rs256-wrong-signer" }, { "token": "rs256-no-signature" },
+      { "token": "rs256-truncated-signature" }, { "token": "es256-der-signature" }, { "token": "rs256-plus-in-signature" }
+    ] },
+    { "id": "verify-algorithm-header", "op": "verify", "steps": [
+      { "token": "alg-none" }, { "token": "alg-hs256" }, { "token": "alg-missing" }, { "token": "alg-empty" }
+    ] },
+    { "id": "verify-hs256-configured", "op": "verify", "env": { "MCP_OAUTH_JWT_ALGORITHMS": "HS256,RS256" }, "steps": [{ "token": "alg-hs256" }, { "token": "rs256" }] },
+    { "id": "verify-algorithm-allowlist", "op": "verify", "env": { "MCP_OAUTH_JWT_ALGORITHMS": "ES256" }, "steps": [{ "token": "rs256" }, { "token": "es256" }] },
+    { "id": "verify-key-selection", "op": "verify", "steps": [
+      { "token": "kid-unknown" }, { "token": "kid-number" }, { "token": "kid-absent" }
+    ] },
+    { "id": "verify-kidless-single", "op": "verify", "responses": { "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "kidless_single" }] }, "steps": [{ "token": "kid-absent" }, { "token": "rs256" }] },
+    { "id": "verify-kidless-pair", "op": "verify", "responses": { "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "kidless_pair" }] }, "steps": [{ "token": "kid-absent" }] },
+    { "id": "verify-jwk-filters", "op": "verify", "responses": { "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "filtered_members" }] }, "steps": [
+      { "token": "kid-use-enc" }, { "token": "kid-alg-rs384" }, { "token": "kid-alg-rs256" }, { "token": "kid-ops-sign-verify" },
+      { "token": "kid-ops-verify" }, { "token": "kid-ops-sign" }, { "token": "kid-ops-duplicate" }, { "token": "kid-ext-string" },
+      { "token": "kid-ext-false" }, { "token": "kid-use-sig" }, { "token": "kid-crv-mismatch" }, { "token": "kid-small-rsa" }, { "token": "kid-private" }
+    ] },
+    { "id": "verify-crit-and-b64", "op": "verify", "steps": [
+      { "token": "crit-b64-true" }, { "token": "crit-unknown" }, { "token": "crit-empty" }, { "token": "crit-b64-false" },
+      { "token": "crit-b64-missing" }, { "token": "b64-false-without-crit" }
+    ] },
+    { "id": "verify-encoding", "op": "verify", "steps": [
+      { "token": "header-bom" }, { "token": "header-array" }, { "token": "header-not-json" }, { "token": "payload-array" },
+      { "token": "payload-not-json" }, { "token": "payload-bom" }, { "token": "payload-duplicate-iss" }, { "token": "payload-infinite-exp" },
+      { "token": "payload-padded" }, { "token": "payload-inner-space" }, { "token": "payload-plus-char" },
+      { "token": "two-dots" }, { "token": "five-parts" }, { "token": "empty-parts" }, { "token": "not-jwt" }
+    ] },
+    { "id": "verify-issuer-and-audience", "op": "verify", "steps": [
+      { "token": "iss-without-slash" }, { "token": "iss-other" }, { "token": "iss-number" }, { "token": "iss-missing" },
+      { "token": "aud-array" }, { "token": "aud-other" }, { "token": "aud-array-without" }, { "token": "aud-missing" }, { "token": "aud-number" }
+    ] },
+    { "id": "verify-time-claims", "op": "verify", "steps": [
+      { "token": "exp-past" }, { "token": "exp-at-tolerance" }, { "token": "exp-inside-tolerance" }, { "token": "exp-missing" },
+      { "token": "exp-string" }, { "token": "exp-fraction" }, { "token": "nbf-at-tolerance" }, { "token": "nbf-beyond-tolerance" },
+      { "token": "nbf-string" }, { "token": "iat-future" }, { "token": "iat-string" }
+    ] },
+    { "id": "verify-zero-tolerance", "op": "verify", "env": { "MCP_OAUTH_JWT_CLOCK_TOLERANCE_SECONDS": "0" }, "steps": [
+      { "token": "exp-inside-tolerance" }, { "token": "nbf-at-tolerance" }
+    ] },
+    { "id": "verify-scopes-and-organization", "op": "verify", "steps": [
+      { "token": "scope-scp-mixed" }, { "token": "scope-scp-string" }, { "token": "scope-none" }, { "token": "scope-number" },
+      { "token": "scope-nel-separator" }, { "token": "org-missing" }, { "token": "org-trimmed" }, { "token": "org-blank" },
+      { "token": "org-number" }, { "token": "org-null-claim" }
+    ] },
+    { "id": "verify-custom-organization-claim", "op": "verify", "env": { "MCP_OAUTH_ORGANIZATION_CLAIM": "tenant" }, "steps": [{ "token": "tenant-claim" }, { "token": "org-number" }] },
+    { "id": "verify-required-type", "op": "verify", "env": { "MCP_OAUTH_JWT_TYPE": "at+jwt" }, "steps": [
+      { "token": "typ-at-jwt-upper" }, { "token": "typ-application" }, { "token": "typ-jwt" }, { "token": "typ-number" }, { "token": "rs256" }
+    ] },
+    { "id": "verify-type-not-required", "op": "verify", "steps": [{ "token": "typ-jwt" }, { "token": "typ-number" }] },
+    { "id": "verify-jwks-cache-and-expiry", "op": "verify", "steps": [
+      { "token": "rs256" }, { "advance": 599, "token": "es256" }, { "advance": 2, "token": "rs256" }
+    ] },
+    { "id": "verify-unknown-kid-cooldown", "op": "verify", "responses": { "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "main" }, { "status": 200, "jwks": "rotated" }] }, "steps": [
+      { "token": "kid-new" }, { "advance": 30, "token": "kid-new" }, { "advance": 1, "token": "kid-new" }, { "token": "kid-new" }
+    ] },
+    { "id": "verify-jwks-failures", "op": "verify", "responses": { "https://issuer.example/jwks.json": [
+      { "status": 500, "json": {} }, { "status": 302, "json": {} }, { "status": 200, "body": "not json" }, { "status": 200, "json": { "keys": "x" } },
+      { "status": 201, "jwks": "main" }, { "status": 200, "jwks": "main" }
+    ] }, "steps": [
+      { "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }
+    ] },
+    { "id": "verify-jwks-unreachable", "op": "verify", "responses": { "https://issuer.example/jwks.json": [] }, "steps": [{ "token": "rs256" }] },
+    { "id": "verify-no-fetch-before-issuer-match", "op": "verify", "steps": [{ "token": "iss-other" }, { "token": "not-jwt" }, { "token": "payload-array" }] },
+    { "id": "verify-discovery", "op": "verify", "env": { "MCP_OAUTH_JWKS_URLS": null }, "responses": {
+      "https://issuer.example/.well-known/oauth-authorization-server": [{ "status": 404, "json": {} }],
+      "https://issuer.example/.well-known/openid-configuration": [{ "status": 200, "json": { "jwks_uri": "HTTPS://ISSUER.example:443/keys" } }],
+      "https://issuer.example/keys": [{ "status": 200, "jwks": "main" }]
+    }, "steps": [{ "token": "rs256" }, { "token": "es256" }] },
+    { "id": "verify-discovery-path-issuer", "op": "verify", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/tenant/", "MCP_OAUTH_JWKS_URLS": null }, "responses": {
+      "https://issuer.example/.well-known/oauth-authorization-server/tenant": [{ "status": 200, "json": { "jwks_uri": "http://issuer.example/keys" } }],
+      "https://issuer.example/.well-known/openid-configuration/tenant": [{ "status": 302, "json": { "jwks_uri": "https://issuer.example/keys" } }],
+      "https://issuer.example/tenant/.well-known/openid-configuration": [{ "status": 200, "json": { "jwks_uri": "https://issuer.example/tenant/keys" } }],
+      "https://issuer.example/tenant/keys": [{ "status": 200, "jwks": "main" }]
+    }, "steps": [{ "token": "tenant-iss" }, { "token": "rs256" }] },
+    { "id": "verify-discovery-failure-retried", "op": "verify", "env": { "MCP_OAUTH_JWKS_URLS": null }, "responses": {
+      "https://issuer.example/.well-known/oauth-authorization-server": [{ "status": 200, "json": [] }, { "status": 200, "json": { "jwks_uri": "https://issuer.example/keys" } }],
+      "https://issuer.example/.well-known/openid-configuration": [{ "status": 200, "body": "null" }],
+      "https://issuer.example/keys": [{ "status": 200, "jwks": "main" }]
+    }, "steps": [{ "token": "rs256" }, { "token": "rs256" }, { "token": "rs256" }] },
+    { "id": "verify-multiple-issuers", "op": "verify", "env": { "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://other.example/,https://issuer.example/", "MCP_OAUTH_JWKS_URLS": "https://other.example/jwks.json,https://issuer.example/jwks.json" }, "steps": [{ "token": "rs256" }, { "token": "iss-other" }] }
+  ]
+}

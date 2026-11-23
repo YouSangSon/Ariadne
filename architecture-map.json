@@ -1109,6 +1109,18 @@
       "layer": "tooling",
       "context": "memory"
     },
+    "contracts/memory/oauth-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "contracts/memory/oauth-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "contracts/memory/oauth-node-v1/material.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
     "contracts/ontology/files-cli-v1/cases.json": {
       "layer": "tooling",
       "context": "ontology"
