@@ -1,0 +1,844 @@
+{
+  "fixture_version": 1,
+  "source_manifest": {
+    "runtime": "v24.22.2",
+    "sources_sha256": {
+      "packages/memory/src/domain/policies/assert-organization-id.ts": "cfd9397cdd1dae5a78efadf771b5a3ab236016951110eda3758bbd852ac89668",
+      "packages/memory/src/domain/policies/memory-content.ts": "30af1693e6534f4cb20004863104b0a69d8ee59fbae1bad6d92d11abf2a9d6cf",
+      "packages/memory/src/application/tools/tool-registry-validation.ts": "ce41b58f8f1bd0bbaeb1f0af5176544e6d3a52447bb0e3de36fc96d4257bd6c7",
+      "packages/memory/src/interfaces/http/middleware/bearer-auth.ts": "3f08e1d8fc60418dee4899d3e58466b9bcea5a789cf07cba964764a1c6f948bb",
+      "packages/memory/src/interfaces/http/middleware/mcp-http-auth.ts": "001fce69cce1c88df89dbae390641ff9764ca3891ea5f0303e8a8511ca0db207",
+      "packages/memory/src/interfaces/http/middleware/oauth-token-auth.ts": "d5b19d14e8b8f901e2b3484bdcf1f370d96527b17bfcba34dd7178c26577f38d",
+      "packages/memory/src/interfaces/http/middleware/organization-resolution.ts": "358af2a7cb59598dbbac3434bf9580c25e712940c5d11fd99d7a99c4b6937519",
+      "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
+      "packages/memory/src/interfaces/http/server.ts": "724a075128970e8e4ff1a913e9df0cc556047d982463e32e79d713c357155f54",
+      "packages/memory/scripts/auth-contract-goldens.ts": "3c53594985bf120c21d8f7ff695999130d0100ff8d896f6afa42d584c532a13f"
+    },
+    "inputs_sha256": "f107df32e68b3d341c8f413709825abca876354fc03416dad91c514bb2d94b7e"
+  },
+  "challenge_metadata_url": "https://memory.example/.well-known/oauth-protected-resource/mcp",
+  "cases": [
+    {
+      "id": "tokens-absent",
+      "tokens": []
+    },
+    {
+      "id": "tokens-empty",
+      "tokens": []
+    },
+    {
+      "id": "tokens-single",
+      "tokens": [
+        {
+          "token": "alpha",
+          "organizationId": null
+        }
+      ]
+    },
+    {
+      "id": "tokens-bound-and-trimmed",
+      "tokens": [
+        {
+          "token": "alpha",
+          "organizationId": null
+        },
+        {
+          "token": "beta",
+          "organizationId": "dev-team"
+        },
+        {
+          "token": "gamma",
+          "organizationId": "finance"
+        }
+      ]
+    },
+    {
+      "id": "tokens-duplicates-kept",
+      "tokens": [
+        {
+          "token": "a",
+          "organizationId": "dev"
+        },
+        {
+          "token": "b",
+          "organizationId": null
+        },
+        {
+          "token": "a",
+          "organizationId": "fin"
+        }
+      ]
+    },
+    {
+      "id": "tokens-whitespace-only",
+      "error": "Invalid MEMORY_API_TOKENS entry: entries must not be blank"
+    },
+    {
+      "id": "tokens-blank-middle",
+      "error": "Invalid MEMORY_API_TOKENS entry: entries must not be blank"
+    },
+    {
+      "id": "tokens-blank-trailing",
+      "error": "Invalid MEMORY_API_TOKENS entry: entries must not be blank"
+    },
+    {
+      "id": "tokens-two-colons",
+      "error": "Invalid MEMORY_API_TOKENS entry: tokens may contain at most one colon"
+    },
+    {
+      "id": "tokens-empty-token",
+      "error": "Invalid MEMORY_API_TOKENS entry: token is empty"
+    },
+    {
+      "id": "tokens-empty-token-after-trim",
+      "error": "Invalid MEMORY_API_TOKENS entry: token is empty"
+    },
+    {
+      "id": "tokens-empty-org",
+      "error": "Invalid MEMORY_API_TOKENS entry: organization id is empty"
+    },
+    {
+      "id": "tokens-blank-org",
+      "error": "Invalid MEMORY_API_TOKENS entry: organization id is empty"
+    },
+    {
+      "id": "tokens-js-whitespace-trimmed",
+      "tokens": [
+        {
+          "token": "tok",
+          "organizationId": null
+        },
+        {
+          "token": "two",
+          "organizationId": "org"
+        }
+      ]
+    },
+    {
+      "id": "tokens-nel-retained",
+      "tokens": [
+        {
+          "token": "tok",
+          "organizationId": "org"
+        }
+      ]
+    },
+    {
+      "id": "tokens-later-error-wins-over-earlier-valid",
+      "error": "Invalid MEMORY_API_TOKENS entry: tokens may contain at most one colon"
+    },
+    {
+      "id": "auth-static-bound",
+      "principal": {
+        "token": "alpha",
+        "organizationId": "dev-team",
+        "authType": "static",
+        "scopes": null
+      },
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-static-unbound",
+      "principal": {
+        "token": "beta",
+        "organizationId": null,
+        "authType": "static",
+        "scopes": null
+      },
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-static-first-match",
+      "principal": {
+        "token": "alpha",
+        "organizationId": "one",
+        "authType": "static",
+        "scopes": null
+      },
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-static-value-trimmed",
+      "principal": {
+        "token": "alpha",
+        "organizationId": null,
+        "authType": "static",
+        "scopes": null
+      },
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-scheme-case-sensitive",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-scheme-needs-space",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-basic-rejected",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-empty-bearer",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-missing-header",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-wrong-token",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-prefix-token",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-no-tokens-no-oauth",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-oauth-bound-trimmed",
+      "principal": {
+        "token": "jwt-1",
+        "organizationId": "org-a",
+        "authType": "oauth",
+        "scopes": [
+          "akasha:read"
+        ]
+      },
+      "verifier_calls": [
+        "jwt-1"
+      ]
+    },
+    {
+      "id": "auth-oauth-unbound",
+      "principal": {
+        "token": "jwt-2",
+        "organizationId": null,
+        "authType": "oauth",
+        "scopes": []
+      },
+      "verifier_calls": [
+        "jwt-2"
+      ]
+    },
+    {
+      "id": "auth-oauth-rejected",
+      "principal": null,
+      "verifier_calls": [
+        "jwt-3"
+      ]
+    },
+    {
+      "id": "auth-static-before-oauth",
+      "principal": {
+        "token": "alpha",
+        "organizationId": "dev-team",
+        "authType": "static",
+        "scopes": null
+      },
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-oauth-not-called-for-empty-bearer",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-oauth-not-called-for-basic",
+      "principal": null,
+      "verifier_calls": []
+    },
+    {
+      "id": "auth-oauth-receives-trimmed-token",
+      "principal": {
+        "token": "jwt-4",
+        "organizationId": null,
+        "authType": "oauth",
+        "scopes": [
+          "akasha:memory"
+        ]
+      },
+      "verifier_calls": [
+        "jwt-4"
+      ]
+    },
+    {
+      "id": "org-none",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-header",
+      "organizationId": "org-a",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-header-trimmed",
+      "organizationId": "org-a",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-header-nel-kept",
+      "organizationId": "org-a",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-header-empty",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must contain non-whitespace text"
+    },
+    {
+      "id": "org-header-blank",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must contain non-whitespace text"
+    },
+    {
+      "id": "org-header-twice",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must be provided at most once"
+    },
+    {
+      "id": "org-header-twice-before-binding",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must be provided at most once"
+    },
+    {
+      "id": "org-body",
+      "organizationId": "org-b",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-body-trimmed",
+      "organizationId": "org-b",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-body-empty",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "organizationId must contain non-whitespace text"
+    },
+    {
+      "id": "org-body-number",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "organizationId must be a string"
+    },
+    {
+      "id": "org-body-null",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "organizationId must be a string"
+    },
+    {
+      "id": "org-body-object",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "organizationId must be a string"
+    },
+    {
+      "id": "org-header-wins-over-body",
+      "organizationId": "org-a",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-header-error-before-body-error",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must contain non-whitespace text"
+    },
+    {
+      "id": "org-bound-only",
+      "organizationId": "dev-team",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-header-same",
+      "organizationId": "dev-team",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-body-same",
+      "organizationId": "dev-team",
+      "conflict": false,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-header-conflict",
+      "organizationId": "dev-team",
+      "conflict": true,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-body-conflict",
+      "organizationId": "dev-team",
+      "conflict": true,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-header-same-body-conflict",
+      "organizationId": "dev-team",
+      "conflict": true,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-case-sensitive",
+      "organizationId": "dev-team",
+      "conflict": true,
+      "validationError": null
+    },
+    {
+      "id": "org-bound-validation-before-conflict",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "x-organization-id must contain non-whitespace text"
+    },
+    {
+      "id": "org-bound-body-type-before-conflict",
+      "organizationId": null,
+      "conflict": false,
+      "validationError": "organizationId must be a string"
+    },
+    {
+      "id": "kind-add-memory",
+      "kind": "write"
+    },
+    {
+      "id": "kind-add-memory-interactive",
+      "kind": "write"
+    },
+    {
+      "id": "kind-start-goal-run",
+      "kind": "write"
+    },
+    {
+      "id": "kind-record-iteration",
+      "kind": "write"
+    },
+    {
+      "id": "kind-complete-goal-run",
+      "kind": "write"
+    },
+    {
+      "id": "kind-abandon-goal-run",
+      "kind": "write"
+    },
+    {
+      "id": "kind-compact-default",
+      "kind": "read"
+    },
+    {
+      "id": "kind-compact-dry-run-true",
+      "kind": "read"
+    },
+    {
+      "id": "kind-compact-dry-run-false",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-compact-dry-run-string-false",
+      "kind": "read"
+    },
+    {
+      "id": "kind-compact-dry-run-zero",
+      "kind": "read"
+    },
+    {
+      "id": "kind-compact-dry-run-null",
+      "kind": "read"
+    },
+    {
+      "id": "kind-reindex",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-unarchive",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-audit-log",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-update",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-delete",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-tag",
+      "kind": "admin"
+    },
+    {
+      "id": "kind-search",
+      "kind": "read"
+    },
+    {
+      "id": "kind-list",
+      "kind": "read"
+    },
+    {
+      "id": "kind-graph",
+      "kind": "read"
+    },
+    {
+      "id": "kind-impact",
+      "kind": "read"
+    },
+    {
+      "id": "kind-context-pack",
+      "kind": "read"
+    },
+    {
+      "id": "kind-roots",
+      "kind": "read"
+    },
+    {
+      "id": "kind-classify",
+      "kind": "read"
+    },
+    {
+      "id": "kind-get-goal",
+      "kind": "read"
+    },
+    {
+      "id": "kind-list-goals",
+      "kind": "read"
+    },
+    {
+      "id": "kind-goal-context",
+      "kind": "read"
+    },
+    {
+      "id": "kind-repeat-attempt",
+      "kind": "read"
+    },
+    {
+      "id": "kind-unknown",
+      "error": "unsupported OAuth scope tool: drop_database"
+    },
+    {
+      "id": "scope-no-auth",
+      "ok": true
+    },
+    {
+      "id": "scope-static-skips",
+      "ok": true
+    },
+    {
+      "id": "scope-static-unknown-tool",
+      "ok": true
+    },
+    {
+      "id": "scope-oauth-unknown-tool",
+      "error": "unsupported OAuth scope tool: drop_database"
+    },
+    {
+      "id": "scope-read-ok",
+      "ok": true
+    },
+    {
+      "id": "scope-read-denied-write",
+      "ok": false,
+      "kind": "write",
+      "challengeScope": "akasha:write",
+      "insufficient_scope_header": null
+    },
+    {
+      "id": "scope-write-allows-write",
+      "ok": true
+    },
+    {
+      "id": "scope-write-denies-read",
+      "ok": false,
+      "kind": "read",
+      "challengeScope": "akasha:read",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read\""
+    },
+    {
+      "id": "scope-admin-allows-all",
+      "ok": true
+    },
+    {
+      "id": "scope-memory-allows-admin",
+      "ok": true
+    },
+    {
+      "id": "scope-write-denied-admin",
+      "ok": false,
+      "kind": "admin",
+      "challengeScope": "akasha:memory",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\""
+    },
+    {
+      "id": "scope-compact-dry-run-read-ok",
+      "ok": true
+    },
+    {
+      "id": "scope-compact-apply-needs-admin",
+      "ok": false,
+      "kind": "admin",
+      "challengeScope": "akasha:admin",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:admin\""
+    },
+    {
+      "id": "scope-missing-scopes",
+      "ok": false,
+      "kind": "read",
+      "challengeScope": "akasha:read",
+      "insufficient_scope_header": null
+    },
+    {
+      "id": "scope-empty-scopes",
+      "ok": false,
+      "kind": "read",
+      "challengeScope": "akasha:memory",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\""
+    },
+    {
+      "id": "scope-unrelated-scope",
+      "ok": false,
+      "kind": "read",
+      "challengeScope": "akasha:read",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read\""
+    },
+    {
+      "id": "scope-challenge-prefers-specific",
+      "ok": false,
+      "kind": "write",
+      "challengeScope": "akasha:write",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:write\""
+    },
+    {
+      "id": "scope-challenge-falls-back-to-memory",
+      "ok": false,
+      "kind": "admin",
+      "challengeScope": "akasha:memory",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\""
+    },
+    {
+      "id": "scope-challenge-unsupported-preferred",
+      "ok": false,
+      "kind": "admin",
+      "challengeScope": "akasha:admin",
+      "insufficient_scope_header": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:admin\""
+    },
+    {
+      "id": "mcp-context-static-unbound",
+      "ok": true
+    },
+    {
+      "id": "mcp-context-bound-match",
+      "ok": true
+    },
+    {
+      "id": "mcp-context-bound-mismatch",
+      "error": "organizationId mismatch: token is bound to a different organization",
+      "www_authenticate": null
+    },
+    {
+      "id": "mcp-context-bound-empty-mismatch",
+      "error": "organizationId mismatch: token is bound to a different organization",
+      "www_authenticate": null
+    },
+    {
+      "id": "mcp-context-bound-non-string-skipped",
+      "ok": true
+    },
+    {
+      "id": "mcp-context-bound-null-skipped",
+      "ok": true
+    },
+    {
+      "id": "mcp-context-scope-denied",
+      "error": "insufficient_scope",
+      "www_authenticate": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\""
+    },
+    {
+      "id": "mcp-context-scope-before-org",
+      "error": "insufficient_scope",
+      "www_authenticate": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:write\""
+    },
+    {
+      "id": "mcp-context-scope-denied-no-config",
+      "error": "insufficient_scope",
+      "www_authenticate": null
+    },
+    {
+      "id": "mcp-service-unbound-passthrough",
+      "input": {
+        "query": "q",
+        "organizationId": " org-x "
+      }
+    },
+    {
+      "id": "mcp-service-unbound-absent",
+      "input": {
+        "query": "q"
+      }
+    },
+    {
+      "id": "mcp-service-bound-injects",
+      "input": {
+        "content": "c",
+        "organizationId": "dev-team"
+      }
+    },
+    {
+      "id": "mcp-service-bound-normalizes-same",
+      "input": {
+        "content": "c",
+        "organizationId": "dev-team"
+      }
+    },
+    {
+      "id": "mcp-service-bound-mismatch",
+      "error": "organizationId mismatch: token is bound to a different organization",
+      "www_authenticate": null
+    },
+    {
+      "id": "mcp-service-bound-blank-mismatch",
+      "error": "organizationId mismatch: token is bound to a different organization",
+      "www_authenticate": null
+    },
+    {
+      "id": "mcp-service-oauth-bound-injects",
+      "input": {
+        "goal": "g",
+        "organizationId": "org-a"
+      }
+    },
+    {
+      "id": "mcp-service-scope-denied",
+      "error": "insufficient_scope",
+      "www_authenticate": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:admin\""
+    },
+    {
+      "id": "mcp-service-compact-apply-denied",
+      "error": "insufficient_scope",
+      "www_authenticate": null
+    },
+    {
+      "id": "www-default",
+      "header": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource\", scope=\"akasha:memory\""
+    },
+    {
+      "id": "www-multiple-scopes",
+      "header": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read akasha:write akasha:admin\""
+    },
+    {
+      "id": "www-empty-scopes",
+      "header": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource\", scope=\"\""
+    },
+    {
+      "id": "www-quoting",
+      "header": "Bearer resource_metadata=\"https://memory.example/a\\\"b\\\\c\", scope=\"x\\\"y z\\\\w\""
+    },
+    {
+      "id": "safe-tokens",
+      "loopback": false,
+      "ok": true
+    },
+    {
+      "id": "safe-oauth",
+      "loopback": false,
+      "ok": true
+    },
+    {
+      "id": "safe-ipv4-loopback",
+      "loopback": true,
+      "ok": true
+    },
+    {
+      "id": "safe-localhost",
+      "loopback": true,
+      "ok": true
+    },
+    {
+      "id": "safe-ipv6-loopback",
+      "loopback": true,
+      "ok": true
+    },
+    {
+      "id": "safe-mapped-loopback",
+      "loopback": true,
+      "ok": true
+    },
+    {
+      "id": "unsafe-any",
+      "loopback": false,
+      "error": "MEMORY_API_TOKENS or OAuth token validation must be set when binding to a non-loopback host (got host=0.0.0.0). Set MEMORY_API_TOKENS=<comma-separated> or configure MCP_OAUTH_AUTHORIZATION_SERVERS + MCP_OAUTH_RESOURCE_URL, or bind to 127.0.0.1 / localhost / ::1 for local dev."
+    },
+    {
+      "id": "unsafe-other-loopback-address",
+      "loopback": false,
+      "error": "MEMORY_API_TOKENS or OAuth token validation must be set when binding to a non-loopback host (got host=127.0.0.2). Set MEMORY_API_TOKENS=<comma-separated> or configure MCP_OAUTH_AUTHORIZATION_SERVERS + MCP_OAUTH_RESOURCE_URL, or bind to 127.0.0.1 / localhost / ::1 for local dev."
+    },
+    {
+      "id": "unsafe-localhost-case",
+      "loopback": false,
+      "error": "MEMORY_API_TOKENS or OAuth token validation must be set when binding to a non-loopback host (got host=LOCALHOST). Set MEMORY_API_TOKENS=<comma-separated> or configure MCP_OAUTH_AUTHORIZATION_SERVERS + MCP_OAUTH_RESOURCE_URL, or bind to 127.0.0.1 / localhost / ::1 for local dev."
+    },
+    {
+      "id": "unsafe-bracketed-ipv6",
+      "loopback": false,
+      "error": "MEMORY_API_TOKENS or OAuth token validation must be set when binding to a non-loopback host (got host=[::1]). Set MEMORY_API_TOKENS=<comma-separated> or configure MCP_OAUTH_AUTHORIZATION_SERVERS + MCP_OAUTH_RESOURCE_URL, or bind to 127.0.0.1 / localhost / ::1 for local dev."
+    },
+    {
+      "id": "unsafe-public-name",
+      "loopback": false,
+      "error": "MEMORY_API_TOKENS or OAuth token validation must be set when binding to a non-loopback host (got host=memory.example). Set MEMORY_API_TOKENS=<comma-separated> or configure MCP_OAUTH_AUTHORIZATION_SERVERS + MCP_OAUTH_RESOURCE_URL, or bind to 127.0.0.1 / localhost / ::1 for local dev."
+    },
+    {
+      "id": "require-org-missing",
+      "error": "listMemory requires organizationId. Bind your bearer token to an org with the `token:org` syntax in MEMORY_API_TOKENS, send the `x-organization-id` header (or `organizationId` in the request body), or opt into the legacy single-tenant org-blind read by setting LEGACY_ANONYMOUS_SEARCH=true in the server's environment."
+    },
+    {
+      "id": "require-org-missing-legacy-unset",
+      "error": "retrieveMemory requires organizationId. Bind your bearer token to an org with the `token:org` syntax in MEMORY_API_TOKENS, send the `x-organization-id` header (or `organizationId` in the request body), or opt into the legacy single-tenant org-blind read by setting LEGACY_ANONYMOUS_SEARCH=true in the server's environment."
+    },
+    {
+      "id": "require-org-legacy-anonymous",
+      "ok": true
+    },
+    {
+      "id": "require-org-empty",
+      "error": "organizationId must contain non-whitespace text"
+    },
+    {
+      "id": "require-org-blank",
+      "error": "organizationId must contain non-whitespace text"
+    },
+    {
+      "id": "require-org-present",
+      "ok": true
+    }
+  ]
+}

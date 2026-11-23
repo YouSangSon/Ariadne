@@ -1101,6 +1101,14 @@
       "layer": "interfaces",
       "context": "extensions"
     },
+    "contracts/memory/auth-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "contracts/memory/auth-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
     "contracts/ontology/files-cli-v1/cases.json": {
       "layer": "tooling",
       "context": "ontology"
@@ -1759,6 +1767,30 @@
     "runtime/go/internal/extensions/domain/strict_json.go": {
       "layer": "domain",
       "context": "extensions"
+    },
+    "runtime/go/internal/memory/application/authenticate.go": {
+      "layer": "application",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/application/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/memory/domain/auth.go": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/domain/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/memory/domain/organization.go": {
+      "layer": "domain",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/domain/scope.go": {
+      "layer": "domain",
+      "context": "memory"
     },
     "runtime/go/internal/ontology/adapters/cli/cli.go": {
       "layer": "infrastructure",
