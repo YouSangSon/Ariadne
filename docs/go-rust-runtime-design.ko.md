@@ -415,9 +415,9 @@ macOS의 [Context CLI 자원 기준선](context-cli-baseline.ko.md)은 고정된
 
 ## 12. 미확인 사항과 다음 작업
 
-G2a의 숫자 계약·순수 계산과 G2b의 실제 subprocess·EOF·취소 연결은 [계약 정본](../contracts/compute/v1/README.md)으로 추적한다. G2b 구현은 [PR13](https://github.com/YouSangSon/Ariadne/pull/13)에 게시했다. 다음 범위는 남은 G1 use case와 G3 Memory·G4 Code·G5 제품 조립이다. Context CLI 외의 G0 성능·자원 검증과 로컬 backup timeout의 원인 확인도 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다. 기존 Node Memory의 조직 binding 보정은 [PR20](https://github.com/YouSangSon/Ariadne/pull/20)이며 Go Memory 이식 완료와 구분한다.
+G2a의 숫자 계약·순수 계산과 G2b의 실제 subprocess·EOF·취소 연결은 [계약 정본](../contracts/compute/v1/README.md)으로 추적한다. G2b 구현은 [PR13](https://github.com/YouSangSon/Ariadne/pull/13)에 게시했다. 다음 범위는 남은 G1 use case와 G3 Memory·G4 Code·G5 제품 조립이다. Context CLI 외의 G0 성능·자원 검증과 로컬 backup timeout의 원인 확인도 남아 있다. 아래 기술 선택은 조사·실험 gate이며 사용자의 기존 정책을 다시 질문할 사유가 아니다. 기존 Node Memory의 조직 binding 보정은 [PR20](https://github.com/YouSangSon/Ariadne/pull/20)이며 Go Memory 이식 완료와 구분한다. G3의 첫 범위인 Go Memory HTTP/MCP 인증·조직 경계는 [go-memory-auth 요구사항](../.harness/reqs/go-memory-auth.yaml)과 `contracts/memory`의 Node 골든으로 추적한다. 저장소 수준 조직 격리, vector·backup·migration, entrypoint 조립은 남아 있다.
 
-- Go MCP SDK의 존재는 확인했지만 현 HTTP/MCP의 OAuth·tool schema·session·오류와의 동등성은 미검증이다.
+- HTTP/MCP 인증 gate와 OAuth 검증은 Node 골든과 대조했다. Go MCP SDK의 존재는 확인했지만 tool schema·session·오류와의 동등성은 미검증이다.
 - SQLite driver/`sqlite-vec`와 transformers 대체 adapter, TS parser 대체 여부는 선정 전이다. native dependency·라이선스·모델 출력 동등성·플랫폼 검사가 끝나기 전 해당 owner의 Node 제거를 약속하지 않는다.
 - 개발 toolchain 기준은 현재 Go 1.27.4·Rust 1.93.0이다. Go 지원 패치 갱신은 [supported-go-toolchain 요구사항](../.harness/reqs/supported-go-toolchain.yaml)으로 추적한다. release runner 가용성, hard RSS 상한과 운영 SLO는 G0의 남은 산출물이다. G2a는 compiler 전역 설치나 CI 권한을 변경하지 않는다.
 - 첫 Rust 집계가 작아서 실익이 없을 수 있다. 다른 계산을 추가하려면 실제 profile 근거와 bounded input 계약이 필요하다.
