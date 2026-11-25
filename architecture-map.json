@@ -1796,6 +1796,34 @@
       "layer": "tooling",
       "context": "validation"
     },
+    "runtime/go/internal/memory/adapters/oauth/config.go": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/adapters/oauth/jose.go": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/adapters/oauth/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/memory/adapters/oauth/url.go": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/adapters/oauth/url_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
+    "runtime/go/internal/memory/adapters/oauth/verifier.go": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/adapters/oauth/verifier_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/memory/application/authenticate.go": {
       "layer": "application",
       "context": "memory"

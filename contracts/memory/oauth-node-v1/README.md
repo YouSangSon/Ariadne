@@ -35,3 +35,12 @@ Node **24.22.2**에서 `packages/memory`의 고정 의존성을 설치한 뒤 �
 - 키 선택: `kid`, `kty`, `alg`, `use`, `key_ops`, `ext`, `crv` 조건을 거친 후보가 정확히 하나여야 한다. 비공개 키, 2048비트 미만 RSA, `verify` 외의 `key_ops`는 거절한다.
 - 토큰: compact JWS 세 부분, 허용 알고리즘, `crit`·`b64` 규칙, 서명, `iss`·`aud` 필수, `exp`·`nbf`의 허용 오차, 선택적 `typ`을 검사한다. base64url은 Node 24의 `atob` 경로를 따른다. 그래서 공백을 무시하고, 길이가 4의 배수일 때 패딩을 받아들이고, `+`·`/`는 거절한다.
 - 결과: `scope`와 `scp`에서 중복 없는 scope 목록을 만든다. 조직 클레임이 있으면 비어 있지 않은 문자열이어야 하고, trim한 값을 쓴다.
+
+## Go 이식과 알려진 차이
+
+Go 구현은 `runtime/go/internal/memory/adapters/oauth`에 있고, `go test -race ./internal/memory/...`가 모든 사례를 재생한다.
+
+- URL: Go는 WHATWG 직렬화를 똑같이 재현할 수 있는 형식만 받는다. 범위는 ASCII 도메인 또는 정식 점 표기 IPv4 host, 선택적 포트, 인코딩이 필요 없는 경로와 query다. IPv6, userinfo, IDNA·퍼센트 인코딩 host, 축약 IPv4, 역슬래시, 인코딩이 필요한 문자는 Node가 받아들여도 `unsupported URL form`으로 시작을 거절한다.
+- 발견 요청: Node는 인가 서버 메타데이터 요청에 시간 제한을 두지 않는다. Go는 JWKS 시간 제한을 같이 적용한다.
+- JWK 키 값: Go는 `n`·`e`·`x`·`y`를 base64url로만 읽는다. Node의 관대한 디코더가 받아들이는 다른 문자는 키 가져오기 실패가 된다.
+- `typ`: Go는 단순 대소문자 변환을 쓰고 JavaScript는 전체 Unicode 변환을 쓴다. ASCII 값에서는 같다.
