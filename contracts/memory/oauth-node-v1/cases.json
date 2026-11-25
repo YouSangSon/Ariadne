@@ -45,6 +45,8 @@
       { "key": "rs", "kid": "ops-duplicate", "members": { "key_ops": ["verify", "verify"] } },
       { "key": "rs", "kid": "ext-string", "members": { "ext": "true" } },
       { "key": "rs", "kid": "ext-false", "members": { "ext": false } },
+      { "key": "rs", "kid": "oth-empty", "members": { "oth": [] } },
+      { "key": "rs", "kid": "oth-null", "members": { "oth": null } },
       { "key": "rs", "kid": "use-sig", "members": { "use": "sig" } },
       { "key": "es256", "kid": "crv-mismatch", "members": { "crv": "P-384" } },
       { "key": "rs_small", "kid": "k-small" },
@@ -86,6 +88,8 @@
     "kid-ops-duplicate": { "key": "rs", "alg": "RS256", "header": { "kid": "ops-duplicate" } },
     "kid-ext-string": { "key": "rs", "alg": "RS256", "header": { "kid": "ext-string" } },
     "kid-ext-false": { "key": "rs", "alg": "RS256", "header": { "kid": "ext-false" } },
+    "kid-oth-empty": { "key": "rs", "alg": "RS256", "header": { "kid": "oth-empty" } },
+    "kid-oth-null": { "key": "rs", "alg": "RS256", "header": { "kid": "oth-null" } },
     "kid-use-sig": { "key": "rs", "alg": "RS256", "header": { "kid": "use-sig" } },
     "kid-crv-mismatch": { "key": "es256", "alg": "ES256", "header": { "kid": "crv-mismatch" } },
     "kid-small-rsa": { "key": "rs_small", "alg": "RS256", "header": { "kid": "k-small" } },
@@ -142,6 +146,7 @@
     "typ-application": { "key": "rs", "alg": "RS256", "header": { "typ": "application/at+jwt" } },
     "typ-jwt": { "key": "rs", "alg": "RS256", "header": { "typ": "JWT" } },
     "typ-number": { "key": "rs", "alg": "RS256", "header": { "typ": 1 } },
+    "typ-dotted-capital-i": { "key": "rs", "alg": "RS256", "header": { "typ": "appl\u0130cation/at+jwt" } },
     "tenant-iss": { "key": "rs", "alg": "RS256", "payload": { "iss": "https://issuer.example/tenant/" } },
     "two-dots": { "raw": "a.b" },
     "five-parts": { "raw": "a.b.c.d.e" },
@@ -215,7 +220,7 @@
     { "id": "verify-jwk-filters", "op": "verify", "responses": { "https://issuer.example/jwks.json": [{ "status": 200, "jwks": "filtered_members" }] }, "steps": [
       { "token": "kid-use-enc" }, { "token": "kid-alg-rs384" }, { "token": "kid-alg-rs256" }, { "token": "kid-ops-sign-verify" },
       { "token": "kid-ops-verify" }, { "token": "kid-ops-sign" }, { "token": "kid-ops-duplicate" }, { "token": "kid-ext-string" },
-      { "token": "kid-ext-false" }, { "token": "kid-use-sig" }, { "token": "kid-crv-mismatch" }, { "token": "kid-small-rsa" }, { "token": "kid-private" }
+      { "token": "kid-ext-false" }, { "token": "kid-oth-empty" }, { "token": "kid-oth-null" }, { "token": "kid-use-sig" }, { "token": "kid-crv-mismatch" }, { "token": "kid-small-rsa" }, { "token": "kid-private" }
     ] },
     { "id": "verify-crit-and-b64", "op": "verify", "steps": [
       { "token": "crit-b64-true" }, { "token": "crit-unknown" }, { "token": "crit-empty" }, { "token": "crit-b64-false" },
@@ -246,7 +251,8 @@
     ] },
     { "id": "verify-custom-organization-claim", "op": "verify", "env": { "MCP_OAUTH_ORGANIZATION_CLAIM": "tenant" }, "steps": [{ "token": "tenant-claim" }, { "token": "org-number" }] },
     { "id": "verify-required-type", "op": "verify", "env": { "MCP_OAUTH_JWT_TYPE": "at+jwt" }, "steps": [
-      { "token": "typ-at-jwt-upper" }, { "token": "typ-application" }, { "token": "typ-jwt" }, { "token": "typ-number" }, { "token": "rs256" }
+      { "token": "typ-at-jwt-upper" }, { "token": "typ-application" }, { "token": "typ-jwt" }, { "token": "typ-number" }, { "token": "typ-dotted-capital-i" },
+      { "token": "rs256" }
     ] },
     { "id": "verify-type-not-required", "op": "verify", "steps": [{ "token": "typ-jwt" }, { "token": "typ-number" }] },
     { "id": "verify-jwks-cache-and-expiry", "op": "verify", "steps": [

@@ -37,11 +37,7 @@ func (v *recordingVerifier) Verify(_ context.Context, token string) (OAuthIdenti
 	}
 	identity := OAuthIdentity{Scopes: v.result.Scopes}
 	if v.result.OrganizationID != nil {
-		organization, ok := domain.ParseOrganizationID(*v.result.OrganizationID)
-		if !ok {
-			panic("fixture verifier returned a blank organization")
-		}
-		identity.Organization = organization
+		identity.Organization = domain.OrganizationID(*v.result.OrganizationID)
 	}
 	return identity, true
 }

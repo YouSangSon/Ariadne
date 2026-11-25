@@ -40,6 +40,6 @@ Node **24.22.2**에서 `packages/memory`의 고정 의존성을 설치한 뒤 �
 - Go 문자열은 UTF-8이다. JSON 본문의 짝 없는 surrogate는 `encoding/json`이 U+FFFD로 바꾸고 Node는 원문을 유지한다. 이 입력은 사례에 넣지 않았다.
 - 서비스 도구 스키마는 `organizationId`를 문자열로만 받는다. 스키마 검증 전에는 도달하지 않는 비문자열 입력은 `mcp_context`에서만 고정한다.
 - Node `normalizeUnresolvedOrganizationId`는 REST 경로에서 도달하지 않으므로 이식하지 않았다.
-- Node가 OAuth 검증 결과의 형태를 런타임에 검사하는 부분은 Go 타입이 대신한다.
+- Node가 OAuth 검증 결과의 형태를 런타임에 검사하는 부분은 Go 타입이 대신한다. 검증기가 돌려준 조직은 Go `Authenticator`가 trim한다. 비어 있으면 Node는 예외를 던지고 Go는 인증을 거절한다.
 - MCP 도구 호출: Node MCP SDK는 도구 스키마를 먼저 적용해 모르는 키를 지우고 boolean이 아닌 `dryRun`을 거절한다. Go `AuthorizeToolCall`은 대소문자만 다른 `organizationId`·`dryRun` 키를 지우고, boolean이 아닌 `compact_memory` `dryRun`을 scope 검사 전에 거절한다. `mcp_context`·`mcp_service` 사례는 스키마를 거치지 않은 Node 함수의 결과라 이 동작을 담지 않는다. 이 동작은 Go 단위 테스트가 고정한다.
 - OAuth JWT 검증, 보호 자원 설정 파싱, HTTP 응답 형식과 검사 순서는 별도 계약이다.

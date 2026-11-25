@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"ariadne/runtime/internal/memory/application"
 	"ariadne/runtime/internal/memory/domain"
@@ -31,15 +32,18 @@ type Verifier struct {
 	issuers []*issuerState
 }
 
-// issuerState caches one issuer's discovered JWKS URL and key set; fetch serializes its network loads.
+// issuerState caches one issuer's discovered JWKS URL and key set. fetch serializes its network loads, and a
+// caller that queued behind a load takes that load's result, failure included, as jose shares a pending fetch.
 type issuerState struct {
-	config     IssuerConfig
-	fetch      sync.Mutex
-	mu         sync.Mutex
-	jwksURL    string
-	keys       []map[string]any
-	fetchedAt  time.Time
-	generation uint64 // successful JWKS loads; zero means not loaded
+	config            IssuerConfig
+	fetch             sync.Mutex
+	mu                sync.Mutex
+	jwksURL           string
+	failedDiscoveries uint64 // a successful discovery sets jwksURL instead
+	keys              []map[string]any
+	fetchedAt         time.Time // zero until a JWKS load succeeds
+	loads             uint64    // finished JWKS loads, failed ones included
+	loadFailed        bool
 }
 
 // NewVerifier never follows redirects and bounds discovery with the JWKS timeout, which Node leaves unbounded.
@@ -104,15 +108,17 @@ func (v *Verifier) findIssuer(iss string) *issuerState {
 	return nil
 }
 
-// jwksURL returns the configured or discovered JWKS URL; only a successful discovery is remembered.
+// jwksURL returns the configured or discovered JWKS URL. Only a successful discovery is remembered; a failed
+// attempt fails just the callers that queued behind it.
 func (v *Verifier) jwksURL(ctx context.Context, issuer *issuerState) (string, bool) {
-	if url := issuer.discovered(); url != "" {
+	url, seen := issuer.discovered()
+	if url != "" {
 		return url, true
 	}
 	issuer.fetch.Lock()
 	defer issuer.fetch.Unlock()
-	if url := issuer.discovered(); url != "" {
-		return url, true
+	if url, failures := issuer.discovered(); url != "" || failures != seen {
+		return url, url != ""
 	}
 	for _, metadataURL := range issuer.config.MetadataURLs {
 		if url, ok := v.discover(ctx, metadataURL); ok {
@@ -122,13 +128,16 @@ func (v *Verifier) jwksURL(ctx context.Context, issuer *issuerState) (string, bo
 			return url, true
 		}
 	}
+	issuer.mu.Lock()
+	issuer.failedDiscoveries++
+	issuer.mu.Unlock()
 	return "", false
 }
 
-func (s *issuerState) discovered() string {
+func (s *issuerState) discovered() (string, uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.jwksURL
+	return s.jwksURL, s.failedDiscoveries
 }
 
 func (v *Verifier) discover(ctx context.Context, metadataURL string) (string, bool) {
@@ -148,10 +157,10 @@ func (v *Verifier) discover(ctx context.Context, metadataURL string) (string, bo
 // selectKey is jose's remote JWK Set: load when unloaded or stale, then refetch once for an unmatched key
 // when the last load is older than the cooldown. Exactly one usable key must remain.
 func (v *Verifier) selectKey(ctx context.Context, issuer *issuerState, jwksURL string, header map[string]any, alg string) (algorithm, any, bool) {
-	keys, fetchedAt, generation := issuer.snapshot()
-	if generation == 0 || !v.now().Before(fetchedAt.Add(jwksMaxAge)) {
+	keys, fetchedAt, loads := issuer.snapshot()
+	if fetchedAt.IsZero() || !v.now().Before(fetchedAt.Add(jwksMaxAge)) {
 		var ok bool
-		if keys, fetchedAt, generation, ok = v.reload(ctx, issuer, jwksURL, generation); !ok {
+		if keys, fetchedAt, loads, ok = v.reload(ctx, issuer, jwksURL, loads); !ok {
 			return algorithm{}, nil, false
 		}
 	}
@@ -162,7 +171,7 @@ func (v *Verifier) selectKey(ctx context.Context, issuer *issuerState, jwksURL s
 	candidates := usableKeys(keys, entry, alg, header)
 	if len(candidates) == 0 && !v.now().Before(fetchedAt.Add(jwksCooldown)) {
 		var ok bool
-		if keys, _, _, ok = v.reload(ctx, issuer, jwksURL, generation); !ok {
+		if keys, _, _, ok = v.reload(ctx, issuer, jwksURL, loads); !ok {
 			return algorithm{}, nil, false
 		}
 		candidates = usableKeys(keys, entry, alg, header)
@@ -187,25 +196,26 @@ func usableKeys(keys []map[string]any, entry algorithm, alg string, header map[s
 func (s *issuerState) snapshot() ([]map[string]any, time.Time, uint64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.keys, s.fetchedAt, s.generation
+	return s.keys, s.fetchedAt, s.loads
 }
 
-// reload fetches the JWK Set unless another caller loaded it after seen; a failed load keeps the old set.
+// reload fetches the JWK Set unless a load finished after seen, whose result it returns; a failed load keeps
+// the old set.
 func (v *Verifier) reload(ctx context.Context, issuer *issuerState, jwksURL string, seen uint64) ([]map[string]any, time.Time, uint64, bool) {
 	issuer.fetch.Lock()
 	defer issuer.fetch.Unlock()
-	if keys, fetchedAt, generation := issuer.snapshot(); generation != seen {
-		return keys, fetchedAt, generation, true
+	if keys, fetchedAt, loads := issuer.snapshot(); loads != seen {
+		return keys, fetchedAt, loads, !issuer.loadFailed // loadFailed changes only under fetch
 	}
 	keys, ok := v.fetchKeys(ctx, jwksURL)
-	if !ok {
-		return nil, time.Time{}, 0, false
-	}
 	issuer.mu.Lock()
 	defer issuer.mu.Unlock()
-	issuer.keys, issuer.fetchedAt = keys, v.now()
-	issuer.generation++
-	return issuer.keys, issuer.fetchedAt, issuer.generation, true
+	issuer.loads++
+	issuer.loadFailed = !ok
+	if ok {
+		issuer.keys, issuer.fetchedAt = keys, v.now()
+	}
+	return issuer.keys, issuer.fetchedAt, issuer.loads, ok
 }
 
 // fetchKeys accepts only a 200 response holding a JSON object whose "keys" is an array of objects.
@@ -228,9 +238,10 @@ func (v *Verifier) fetchKeys(ctx context.Context, jwksURL string) ([]map[string]
 	return keys, true
 }
 
-// get bounds the whole exchange, body included, by the JWKS timeout.
+// get bounds the whole exchange, body included, by the JWKS timeout. Like jose's fetch it ignores the caller's
+// cancellation, because callers queued behind this load take its result.
 func (v *Verifier) get(ctx context.Context, url, accept string) (int, []byte, bool) {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(v.config.JWKSTimeoutMs)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Duration(v.config.JWKSTimeoutMs)*time.Millisecond)
 	defer cancel()
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -255,7 +266,7 @@ func decodeBody(body []byte, target any) error {
 func (v *Verifier) claimsValid(header, claims map[string]any) bool {
 	if v.config.RequiredType != "" {
 		typ, ok := header["typ"].(string)
-		if !ok || normalizeTyp(typ) != normalizeTyp(v.config.RequiredType) {
+		if !ok || !isASCII(typ) || normalizeTyp(typ) != normalizeTyp(v.config.RequiredType) {
 			return false
 		}
 	}
@@ -295,7 +306,12 @@ func audienceMatches(aud any, resource string) bool {
 	return false
 }
 
-// normalizeTyp uses Go's simple case mapping where JavaScript uses full Unicode mapping.
+// isASCII guards normalizeTyp: Go's simple case mapping and JavaScript's full mapping agree only on ASCII,
+// so "İ" would lowercase to "i" in Go but not in Node.
+func isASCII(value string) bool {
+	return !strings.ContainsFunc(value, func(r rune) bool { return r >= utf8.RuneSelf })
+}
+
 func normalizeTyp(value string) string {
 	lower := strings.ToLower(value)
 	if strings.Contains(value, "/") {

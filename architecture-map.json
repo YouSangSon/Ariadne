@@ -1828,6 +1828,10 @@
       "layer": "application",
       "context": "memory"
     },
+    "runtime/go/internal/memory/application/authenticate_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/memory/application/node_contracts_test.go": {
       "layer": "tooling",
       "context": "validation"

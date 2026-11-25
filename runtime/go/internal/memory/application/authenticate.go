@@ -7,6 +7,7 @@ import (
 )
 
 // OAuthIdentity is what a verified access token grants; Organization is zero when the token carries none.
+// Authenticate trims a returned organization and rejects a blank one, as Node normalizes verifier results.
 type OAuthIdentity struct {
 	Organization domain.OrganizationID
 	Scopes       []string
@@ -46,5 +47,11 @@ func (a Authenticator) Authenticate(ctx context.Context, authorization string) (
 	if !verified {
 		return domain.Principal{}, false
 	}
-	return domain.Principal{Token: credential, Organization: identity.Organization, Type: domain.OAuthAuth, Scopes: identity.Scopes}, true
+	principal := domain.Principal{Token: credential, Type: domain.OAuthAuth, Scopes: identity.Scopes}
+	if identity.Organization != "" {
+		if principal.Organization, verified = domain.ParseOrganizationID(string(identity.Organization)); !verified {
+			return domain.Principal{}, false
+		}
+	}
+	return principal, true
 }

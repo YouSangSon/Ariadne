@@ -182,6 +182,9 @@ func importPublicKey(jwk map[string]any, entry algorithm) (crypto.PublicKey, boo
 	}
 	switch entry.kty {
 	case "RSA":
+		if _, multiPrime := jwk["oth"]; multiPrime {
+			return nil, false // WebCrypto refuses any oth member, even an empty or null one
+		}
 		n, okN := jwkBytes(jwk, "n")
 		e, okE := jwkBytes(jwk, "e")
 		exponent := new(big.Int).SetBytes(e)
