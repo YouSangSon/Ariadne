@@ -42,6 +42,7 @@ const SOURCES = [
   "packages/memory/scripts/http-contract-goldens.ts",
 ];
 const CONTEXT_TOOLS = ["list_workspace_roots", "add_memory_interactive", "classify_memory_candidate"];
+const GATE_KEYS = ["organizationid", "dryrun"];
 // Only config.host matters here: a loopback bind enables the MCP Host allowlist. Nothing connects to these values.
 const LOOPBACK_CONFIG = {
   host: "127.0.0.1",
@@ -130,8 +131,14 @@ function parsed(body: Buffer): Json {
 async function observeScenario(scenario: Scenario): Promise<Json> {
   let handled: Json = null;
   const tools = [...TOOL_ROUTES.map(({ name }) => name), ...CONTEXT_TOOLS];
+  // The handler sees the members the gate authorizes on, under any letter case a Go struct decoder would bind.
   const registry = Object.fromEntries(tools.map((tool) => [tool, async (input: Record<string, unknown>) => {
-    handled = { tool, organizationId: (input.organizationId as string | undefined) ?? null };
+    handled = {
+      tool,
+      organizationId: (input.organizationId as string | undefined) ?? null,
+      dryRun: (input.dryRun as boolean | undefined) ?? null,
+      gate_keys: Object.keys(input).filter((key) => GATE_KEYS.includes(key.toLowerCase())).sort(),
+    };
     return handled;
   }]));
   const silent = { info() {}, warn() {}, error() {}, debug() {}, child() { return silent; } };

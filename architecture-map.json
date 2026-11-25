@@ -1848,6 +1848,10 @@
       "layer": "domain",
       "context": "memory"
     },
+    "runtime/go/internal/memory/domain/scope_test.go": {
+      "layer": "tooling",
+      "context": "validation"
+    },
     "runtime/go/internal/ontology/adapters/cli/cli.go": {
       "layer": "infrastructure",
       "context": "ontology"

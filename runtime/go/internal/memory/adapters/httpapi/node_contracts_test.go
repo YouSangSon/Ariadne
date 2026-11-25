@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -127,14 +128,24 @@ func scenarioHandler(t *testing.T, scenario fixtureScenario, handled *any, mcpPa
 		Resource:      resource,
 		Metadata:      metadata,
 		Execute: func(_ context.Context, _ *domain.Principal, tool string, input map[string]json.RawMessage) (any, error) {
-			var organization any
-			if raw, ok := input["organizationId"]; ok {
-				if err := json.Unmarshal(raw, &organization); err != nil {
-					return nil, err
+			observed := map[string]any{"tool": tool, "organizationId": nil, "dryRun": nil}
+			gateKeys := []string{}
+			for key, raw := range input {
+				if slices.Contains([]string{"organizationid", "dryrun"}, strings.ToLower(key)) {
+					gateKeys = append(gateKeys, key)
+				}
+				if key == "organizationId" || key == "dryRun" {
+					var value any
+					if err := json.Unmarshal(raw, &value); err != nil {
+						return nil, err
+					}
+					observed[key] = value
 				}
 			}
-			*handled = map[string]any{"tool": tool, "organizationId": organization}
-			return *handled, nil
+			slices.Sort(gateKeys)
+			observed["gate_keys"] = gateKeys
+			*handled = observed
+			return observed, nil
 		},
 		MCP: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			*mcpPassed = true

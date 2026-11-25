@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -37,7 +38,10 @@ var toolRoutes = map[string]string{
 // LoopbackMCPHosts is the Host allowlist for /mcp when the server binds a loopback address.
 var LoopbackMCPHosts = []string{"localhost", "127.0.0.1", "[::1]"}
 
-var loopbackOrigins = []string{"localhost", "127.0.0.1", "::1"}
+var loopbackOrigins = []string{"localhost", "127.0.0.1", "[::1]"}
+
+// specialSchemes are the WHATWG special schemes whose hosts URL parsing lowercases; file URLs are rejected.
+var specialSchemes = []string{"http", "https", "ws", "wss", "ftp"}
 
 // ToolExecutor runs an authorized tool call; principal is nil when authentication is disabled.
 type ToolExecutor func(ctx context.Context, principal *domain.Principal, tool string, input map[string]json.RawMessage) (any, error)
@@ -136,6 +140,7 @@ func (h handler) serveTool(w http.ResponseWriter, r *http.Request, principal *do
 		h.writeFailure(w, rejected.Status, rejected.Message)
 		return
 	}
+	input = domain.WithoutShadowingFields(input)
 	var bound domain.OrganizationID
 	if principal != nil {
 		bound = principal.Organization
@@ -170,6 +175,11 @@ func (h handler) serveTool(w http.ResponseWriter, r *http.Request, principal *do
 			w.Header().Set("WWW-Authenticate", h.Resource.InsufficientScope(challenge.Scope))
 		}
 		h.writeFailure(w, http.StatusForbidden, "insufficient_scope")
+		return
+	}
+	var invalidInput *domain.ToolInputError
+	if err := domain.CheckDryRun(tool, input); errors.As(err, &invalidInput) {
+		h.writeFailure(w, http.StatusBadRequest, "invalid request body for "+tool+": "+invalidInput.Issue)
 		return
 	}
 	result, err := h.Execute(r.Context(), principal, tool, input)
@@ -236,18 +246,13 @@ func (h handler) serveMCP(w http.ResponseWriter, r *http.Request) {
 	h.MCP.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// hostError mirrors new URL("http://" + host).hostname, which brackets IPv6 and lowercases names.
 func hostError(host string, allowed []string) string {
 	if host == "" {
 		return "Missing Host header"
 	}
-	parsed, err := url.Parse("http://" + host)
-	if err != nil || parsed.Hostname() == "" {
+	hostname, ok := urlHostname("http://" + host)
+	if !ok || hostname == "" {
 		return "Invalid Host header: " + host
-	}
-	hostname := strings.ToLower(parsed.Hostname())
-	if strings.Contains(hostname, ":") {
-		hostname = "[" + hostname + "]"
 	}
 	if !slices.Contains(allowed, hostname) {
 		return "Invalid Host: " + hostname
@@ -259,15 +264,34 @@ func allowedOrigin(origin string) bool {
 	if origin == "" {
 		return true
 	}
-	parsed, err := url.Parse(origin)
-	if err != nil {
-		return false
+	hostname, ok := urlHostname(origin)
+	return ok && slices.Contains(loopbackOrigins, hostname)
+}
+
+// urlHostname returns new URL(raw).hostname, or false where that throws. It fails closed on forms net/url
+// reads differently from WHATWG, such as file URLs and percent-encoded names.
+func urlHostname(raw string) (string, bool) {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Scheme == "" || parsed.Scheme == "file" {
+		return "", false
 	}
-	hostname := strings.ToLower(parsed.Hostname())
-	if address, err := netip.ParseAddr(hostname); err == nil && address.Is6() {
-		hostname = address.String()
+	if port := parsed.Port(); port != "" {
+		if number, err := strconv.Atoi(port); err != nil || number > 65535 {
+			return "", false
+		}
 	}
-	return slices.Contains(loopbackOrigins, hostname)
+	hostname := parsed.Hostname()
+	if strings.HasPrefix(parsed.Host, "[") {
+		address, err := netip.ParseAddr(hostname)
+		if err != nil || address.Zone() != "" {
+			return "", false
+		}
+		return "[" + address.String() + "]", true
+	}
+	if slices.Contains(specialSchemes, parsed.Scheme) {
+		hostname = strings.ToLower(hostname)
+	}
+	return hostname, true
 }
 
 // requestPath mirrors new URL(target, "http://localhost").pathname for origin-form targets.

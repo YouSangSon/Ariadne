@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -100,9 +101,49 @@ func CheckScopes(principal *Principal, tool string, input map[string]json.RawMes
 	return &ScopeChallenge{Kind: kind, Scope: challenge}, nil
 }
 
+// gateFields are the input members authorization reads. Node's object schemas strip unknown members, but
+// encoding/json binds struct fields case-insensitively, so "organizationid" would reach a Go tool as the
+// organizationId the gate never checked.
+var gateFields = []string{"organizationId", "dryRun"}
+
+// WithoutShadowingFields returns input without the members that differ from a gate field only in letter case.
+func WithoutShadowingFields(input map[string]json.RawMessage) map[string]json.RawMessage {
+	kept := maps.Clone(input)
+	maps.DeleteFunc(kept, func(key string, _ json.RawMessage) bool {
+		return slices.ContainsFunc(gateFields, func(field string) bool { return key != field && strings.EqualFold(key, field) })
+	})
+	return kept
+}
+
+// ToolInputError is Node's schema issue for a gate field, as "path: reason".
+type ToolInputError struct{ Issue string }
+
+func (e *ToolInputError) Error() string { return e.Issue }
+
+var jsonTypes = map[byte]string{'n': "null", '"': "string", '[': "array", '{': "object"}
+
+// CheckDryRun requires a boolean compact_memory dryRun, as Node's tool schema does. Without it a Go tool could
+// read null or "false" as an apply that only needed read scope.
+func CheckDryRun(tool string, input map[string]json.RawMessage) error {
+	raw, present := input["dryRun"]
+	if tool != "compact_memory" || !present || string(raw) == "true" || string(raw) == "false" {
+		return nil
+	}
+	received := "number"
+	if name, ok := jsonTypes[raw[0]]; ok {
+		received = name
+	}
+	return &ToolInputError{Issue: "dryRun: Invalid input: expected boolean, received " + received}
+}
+
 // AuthorizeToolCall applies the MCP scope and organization checks and returns the input the tool receives.
-// Tool schemas admit only string organizationId values, so other values are left to schema validation.
+// The Node MCP SDK validates the tool schema first, so the gate fields are checked before the scopes. Tool
+// schemas admit only string organizationId values, so other values are left to schema validation.
 func AuthorizeToolCall(principal Principal, tool string, input map[string]json.RawMessage, resource *ProtectedResource) (map[string]json.RawMessage, error) {
+	input = WithoutShadowingFields(input)
+	if err := CheckDryRun(tool, input); err != nil {
+		return nil, err
+	}
 	challenge, err := CheckScopes(&principal, tool, input, resource)
 	if err != nil {
 		return nil, err
