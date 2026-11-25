@@ -178,8 +178,12 @@ func (h handler) serveTool(w http.ResponseWriter, r *http.Request, principal *do
 		return
 	}
 	var invalidInput *domain.ToolInputError
-	if err := domain.CheckGateFields(tool, input); errors.As(err, &invalidInput) {
+	switch err := domain.CheckGateFields(tool, input); {
+	case errors.As(err, &invalidInput):
 		h.writeFailure(w, http.StatusBadRequest, "invalid request body for "+tool+": "+invalidInput.Issue)
+		return
+	case err != nil:
+		h.internalError(w, tool, err)
 		return
 	}
 	result, err := h.Execute(r.Context(), principal, tool, input)
