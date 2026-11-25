@@ -138,8 +138,23 @@ func CheckGateFields(tool string, input map[string]json.RawMessage) error {
 	if !constrained || !present && !rule.required {
 		return nil
 	}
-	if received := jsonType(raw, present); received != rule.want {
+	received := jsonType(raw, present)
+	if received != rule.want {
 		return &ToolInputError{Issue: rule.field + ": Invalid input: expected " + rule.want + ", received " + received}
+	}
+	if received != "string" {
+		return nil
+	}
+	// Node's organizationId schema is a non-blank string, and OrganizationID("") means no organization in Go.
+	var text string
+	if err := json.Unmarshal(raw, &text); err != nil {
+		return err
+	}
+	switch {
+	case text == "":
+		return &ToolInputError{Issue: rule.field + ": Too small: expected string to have >=1 characters"}
+	case jsTrim(text) == "":
+		return &ToolInputError{Issue: rule.field + ": must contain non-whitespace text"}
 	}
 	return nil
 }

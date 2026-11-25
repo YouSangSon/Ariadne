@@ -37,7 +37,7 @@ Node **24.22.2**에서 `packages/memory`의 고정 의존성을 설치한 뒤 �
 
 - Go 테스트는 `httptest`로 handler를 직접 호출한다. Node처럼 socket을 거치지 않으므로 HTTP/1.0 요청과 Host 생략은 `Request.Host`를 비워 재현한다.
 - 보호 자원 메타데이터 문서와 JWT 검증은 `oauth-node-v1` 계약이 고정한다. 여기서는 OAuth 검증 결과를 stub으로 넣는다.
-- 실행기 입력: Go gate는 권한 판단에 쓰는 필드만 Node 스키마와 같게 검사한다. 대소문자만 다른 `organizationId`·`dryRun` 키를 지우고, `compact_memory`의 `dryRun`은 boolean만, `reindex_memory`의 `organizationId`는 필수 문자열로 받는다. `encoding/json`은 struct 필드를 대소문자 구분 없이 묶으므로, 변형 키가 남으면 gate가 보지 않은 값이 Go 도구에 들어간다. 다른 스키마 규칙은 실행기가 맡는다. 예를 들어 필수 `projectKey`가 있다. 여러 필드가 함께 틀리면 Node는 스키마 순서상 첫 오류를 보고하고, Go gate는 자기 필드의 오류를 보고할 수 있다.
+- 실행기 입력: Go gate는 권한 판단에 쓰는 필드만 Node 스키마와 같게 검사한다. 대소문자만 다른 `organizationId`·`dryRun` 키를 지우고, `compact_memory`의 `dryRun`은 boolean만, `reindex_memory`의 `organizationId`는 비어 있지 않고 공백뿐이 아닌 필수 문자열로 받는다. `encoding/json`은 struct 필드를 대소문자 구분 없이 묶으므로, 변형 키가 남으면 gate가 보지 않은 값이 Go 도구에 들어간다. 다른 스키마 규칙은 실행기가 맡는다. 예를 들어 필수 `projectKey`가 있다. 여러 필드가 함께 틀리면 Node는 스키마 순서상 첫 오류를 보고하고, Go gate는 자기 필드의 오류를 보고할 수 있다.
 - Origin·Host: Go는 `net/url`이 WHATWG와 같게 읽는 형식만 받는다. `file:` Origin, 퍼센트 인코딩·IDNA host, 축약 IPv4, `//`가 없는 special scheme은 Node가 받아들여도 거절한다. Host 거절 메시지는 Node와 다를 수 있지만 상태 코드는 같은 403이다. 예를 들어 `localhost]:80`은 Node에서 `Invalid Host header: localhost]:80`, Go에서 `Invalid Host: localhost]`다. IPv4 대응 IPv6 주소도 표기가 다르다.
 
 ## 조립 전제

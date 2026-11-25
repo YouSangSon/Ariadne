@@ -39,6 +39,10 @@ func TestAuthorizeToolCallAppliesSchemaGateFirst(t *testing.T) {
 			input: `{"projectKey":"p"}`, wantIssue: "organizationId: Invalid input: expected string, received undefined"},
 		{name: "reindex with a null organizationId is a schema error", principal: Principal{Type: StaticAuth}, tool: "reindex_memory",
 			input: `{"projectKey":"p","organizationId":null}`, wantIssue: "organizationId: Invalid input: expected string, received null"},
+		{name: "reindex with an empty organizationId is a schema error", principal: Principal{Type: StaticAuth}, tool: "reindex_memory",
+			input: `{"projectKey":"p","organizationId":""}`, wantIssue: "organizationId: Too small: expected string to have >=1 characters"},
+		{name: "reindex with a JS-whitespace organizationId is a schema error even for a bound token", principal: reader, tool: "reindex_memory",
+			input: `{"projectKey":"p","organizationId":"\u00a0\ufeff\t"}`, wantIssue: "organizationId: must contain non-whitespace text"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
