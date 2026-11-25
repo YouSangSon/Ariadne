@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"maps"
@@ -46,7 +47,7 @@ func RequiredScopeKind(tool string, input map[string]json.RawMessage) (ScopeKind
 	if !known {
 		return 0, errors.New("unsupported OAuth scope tool: " + tool)
 	}
-	if tool == "compact_memory" && string(input["dryRun"]) == "false" {
+	if tool == "compact_memory" && string(bytes.TrimSpace(input["dryRun"])) == "false" {
 		return AdminScope, nil
 	}
 	return kind, nil
@@ -120,20 +121,48 @@ type ToolInputError struct{ Issue string }
 
 func (e *ToolInputError) Error() string { return e.Issue }
 
-var jsonTypes = map[byte]string{'n': "null", '"': "string", '[': "array", '{': "object"}
+// gateFieldRules are Node's tool-schema types for the gate fields a tool constrains.
+var gateFieldRules = map[string]struct {
+	field, want string
+	required    bool
+}{
+	"compact_memory": {"dryRun", "boolean", false},
+	"reindex_memory": {"organizationId", "string", true},
+}
 
-// CheckDryRun requires a boolean compact_memory dryRun, as Node's tool schema does. Without it a Go tool could
-// read null or "false" as an apply that only needed read scope.
-func CheckDryRun(tool string, input map[string]json.RawMessage) error {
-	raw, present := input["dryRun"]
-	if tool != "compact_memory" || !present || string(raw) == "true" || string(raw) == "false" {
+// CheckGateFields applies Node's tool-schema rules for the fields authorization depends on. Without them a Go
+// tool could read null or "false" as an apply that only needed read scope, or reindex outside any organization.
+func CheckGateFields(tool string, input map[string]json.RawMessage) error {
+	rule, constrained := gateFieldRules[tool]
+	raw, present := input[rule.field]
+	if !constrained || !present && !rule.required {
 		return nil
 	}
-	received := "number"
-	if name, ok := jsonTypes[raw[0]]; ok {
-		received = name
+	if received := jsonType(raw, present); received != rule.want {
+		return &ToolInputError{Issue: rule.field + ": Invalid input: expected " + rule.want + ", received " + received}
 	}
-	return &ToolInputError{Issue: "dryRun: Invalid input: expected boolean, received " + received}
+	return nil
+}
+
+// jsonType names a member's JSON type as zod reports it.
+func jsonType(raw json.RawMessage, present bool) string {
+	trimmed := bytes.TrimSpace(raw)
+	if !present || len(trimmed) == 0 {
+		return "undefined"
+	}
+	switch trimmed[0] {
+	case 'n':
+		return "null"
+	case 't', 'f':
+		return "boolean"
+	case '"':
+		return "string"
+	case '[':
+		return "array"
+	case '{':
+		return "object"
+	}
+	return "number"
 }
 
 // AuthorizeToolCall applies the MCP scope and organization checks and returns the input the tool receives.
@@ -141,7 +170,7 @@ func CheckDryRun(tool string, input map[string]json.RawMessage) error {
 // schemas admit only string organizationId values, so other values are left to schema validation.
 func AuthorizeToolCall(principal Principal, tool string, input map[string]json.RawMessage, resource *ProtectedResource) (map[string]json.RawMessage, error) {
 	input = WithoutShadowingFields(input)
-	if err := CheckDryRun(tool, input); err != nil {
+	if err := CheckGateFields(tool, input); err != nil {
 		return nil, err
 	}
 	challenge, err := CheckScopes(&principal, tool, input, resource)

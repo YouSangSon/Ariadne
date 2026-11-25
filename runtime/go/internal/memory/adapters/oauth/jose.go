@@ -180,11 +180,13 @@ func importPublicKey(jwk map[string]any, entry algorithm) (crypto.PublicKey, boo
 	if ops, ok := jwk["key_ops"].([]any); ok && len(ops) != 1 {
 		return nil, false
 	}
+	// WebCrypto refuses any RSA oth member and, for every kty, one that is not a list of objects. Go refuses
+	// every oth member, which is stricter for an EC or OKP key with an empty list.
+	if _, present := jwk["oth"]; present {
+		return nil, false
+	}
 	switch entry.kty {
 	case "RSA":
-		if _, multiPrime := jwk["oth"]; multiPrime {
-			return nil, false // WebCrypto refuses any oth member, even an empty or null one
-		}
 		n, okN := jwkBytes(jwk, "n")
 		e, okE := jwkBytes(jwk, "e")
 		exponent := new(big.Int).SetBytes(e)

@@ -67,6 +67,9 @@
         { "id": "static-compact-dry-run-array", "method": "POST", "target": "/v1/memory/compact", "headers": [["Authorization", "Bearer beta"]], "body": "{\"projectKey\":\"p\",\"dryRun\":[]}" },
         { "id": "static-compact-dry-run-object", "method": "POST", "target": "/v1/memory/compact", "headers": [["Authorization", "Bearer beta"]], "body": "{\"projectKey\":\"p\",\"dryRun\":{}}" },
         { "id": "static-compact-apply", "method": "POST", "target": "/v1/memory/compact", "headers": [["Authorization", "Bearer beta"]], "body": "{\"projectKey\":\"p\",\"dryRun\":false}" },
+        { "id": "static-reindex-unbound-no-org", "method": "POST", "target": "/v1/memory/reindex", "headers": [["Authorization", "Bearer beta"]], "body": "{\"projectKey\":\"p\"}" },
+        { "id": "static-reindex-unbound-null-org", "method": "POST", "target": "/v1/memory/reindex", "headers": [["Authorization", "Bearer beta"]], "body": "{\"projectKey\":\"p\",\"organizationId\":null}" },
+        { "id": "static-reindex-bound-no-org", "method": "POST", "target": "/v1/memory/reindex", "headers": [["Authorization", "Bearer alpha"]], "body": "{\"projectKey\":\"p\"}" },
         { "id": "mcp-no-host-allowlist", "method": "POST", "target": "/mcp", "headers": [["Host", "evil.example"]] },
         { "id": "mcp-query-is-rest", "method": "POST", "target": "/mcp?x=1", "headers": [["Authorization", "Bearer alpha"]], "body": "{}" }
       ]

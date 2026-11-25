@@ -43,6 +43,8 @@ Go 구현은 `runtime/go/internal/memory/adapters/oauth`에 있고, `go test -ra
 - URL: Go는 WHATWG 직렬화를 똑같이 재현할 수 있는 형식만 받는다. 범위는 ASCII 도메인 또는 정식 점 표기 IPv4 host, 선택적 포트, 인코딩이 필요 없는 경로와 query다. IPv6, userinfo, IDNA·퍼센트 인코딩 host, 축약 IPv4, 역슬래시, 인코딩이 필요한 문자는 Node가 받아들여도 `unsupported URL form`으로 시작을 거절한다.
 - 발견 요청: Node는 인가 서버 메타데이터 요청에 시간 제한을 두지 않는다. Go는 JWKS 시간 제한을 같이 적용한다. 발견한 `jwks_uri`가 위 URL 범위 밖이면 Go는 그 발견을 실패로 처리하고, 토큰은 로그 없이 거절된다.
 - 동시 요청: jose는 진행 중인 JWKS 조회를 공유하고, Node는 발견 요청을 요청마다 따로 보낸다. Go는 issuer마다 두 조회를 한 번에 하나만 보낸다. 그동안 기다린 요청은 그 조회 결과를 실패까지 그대로 받는다. 조회는 요청 취소와 상관없이 시간 제한까지 진행한다.
-- JWK 키 값: Go는 `n`·`e`·`x`·`y`를 base64url로만 읽는다. Node의 관대한 디코더가 받아들이는 다른 문자는 키 가져오기 실패가 된다.
-- `typ`: Go는 ASCII가 아닌 `typ`을 거절한다. Go의 단순 대소문자 변환은 JavaScript의 전체 Unicode 변환과 다를 수 있다. 예를 들어 `İ`는 Go에서 `i`가 되지만 Node에서는 그렇지 않다. ASCII 값에서는 Node와 같다.
+- JWK 키 값: Go는 `n`·`e`·`x`·`y`를 base64url 문자열로만 읽는다. Node의 관대한 디코더나 문자열 변환이 받아들이는 다른 값은 키 가져오기 실패가 된다.
+- 그 밖에 Go가 더 엄격한 키 입력: `oth` 멤버가 있으면 키 종류와 상관없이 거절한다. Node는 RSA에서만 모두 거절하고 EC·OKP에서는 객체 목록인 `oth`를 받는다. `priv` 멤버가 있는 키를 거절하고, EC 좌표는 곡선 크기와 길이가 정확히 같아야 한다. JSON 중첩이 10000단계를 넘는 응답과 토큰도 거절한다.
+- 알고리즘: Go는 RS·PS·ES·EdDSA·Ed25519 계열만 검증한다. `MCP_OAUTH_JWT_ALGORITHMS`에 다른 알고리즘(예: ML-DSA)을 넣으면 그 토큰은 거절된다.
+- `typ`: Go는 ASCII가 아닌 `typ`을 거절하고, `MCP_OAUTH_JWT_TYPE`이 ASCII가 아니면 모든 토큰을 거절한다. Go의 단순 대소문자 변환은 JavaScript의 전체 Unicode 변환과 다를 수 있다. 예를 들어 `İ`는 Go에서 `i`가 되지만 Node에서는 그렇지 않다. ASCII 값에서는 Node와 같다.
 - 짝 없는 surrogate: JWT JSON에 짝 없는 `\uD800` 같은 escape가 있으면 Go `encoding/json`은 U+FFFD로 바꾸고 Node는 그대로 둔다. 조직 클레임이 이런 값이면 Node에서 서로 다른 두 조직이 Go에서는 같은 값이 될 수 있다. 인가 서버가 이런 조직 값을 발급하지 않는다는 전제다.

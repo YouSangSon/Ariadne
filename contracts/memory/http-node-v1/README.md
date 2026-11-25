@@ -28,7 +28,7 @@ Node **24.22.2**에서 `packages/memory`의 고정 의존성을 설치한 뒤 �
 - 경로: `req.url` 전체가 정확히 일치해야 한다. query가 붙은 `/mcp?x`는 REST 경로로 처리되어 404다.
 - 본문: 1,000,000바이트까지 받고 넘으면 400이다. 공백뿐인 본문, BOM으로 시작하는 본문, 잘못된 JSON은 `invalid JSON body`다. 빈 본문, 배열, `null`은 `request body must be a JSON object`다.
 - 조직: 토큰 바인딩, `x-organization-id` 헤더, 본문 `organizationId` 순서다. 헤더가 두 번 오면 400이고, 쉼표가 들어간 값 하나는 그대로 조직 하나다. 형식 오류(400)가 바인딩 충돌(403)보다 먼저다.
-- 실행기 입력: Node 도구 스키마는 모르는 키를 지운다. 그래서 `organizationid`처럼 대소문자만 다른 키는 실행기에 닿지 않는다. `compact_memory`의 `dryRun`이 boolean이 아니면 scope 검사 뒤 400 `invalid request body for compact_memory: dryRun: ...`이다.
+- 실행기 입력: Node 도구 스키마는 모르는 키를 지운다. 그래서 `organizationid`처럼 대소문자만 다른 키는 실행기에 닿지 않는다. `compact_memory`의 `dryRun`이 boolean이 아니거나, 조직을 정한 뒤에도 `reindex_memory`에 `organizationId`가 없으면 scope 검사 뒤 400 `invalid request body for <tool>: <field>: ...`이다.
 - scope: OAuth 토큰만 검사한다. 거절은 403 `insufficient_scope`와 필요한 scope를 담은 `WWW-Authenticate`다. `compact_memory`는 `dryRun: false`일 때만 admin이 필요하다.
 - MCP gate: 메서드(405) → 루프백 설정일 때만 Host 허용 목록 → Origin → 인증(401, JSON-RPC `-32001`) 순서다. Host와 Origin의 hostname은 WHATWG `new URL()`로 읽는다. 포트가 65535를 넘거나, scheme이 없거나, IPv6 zone이 있거나, 괄호 안이 IPv6가 아니면 거절한다. host를 소문자로 바꾸는 것은 special scheme뿐이다.
 - 인증이 꺼진 서버는 `Authorization`을 무시하고 헤더나 본문의 조직을 그대로 넘긴다.
@@ -37,8 +37,8 @@ Node **24.22.2**에서 `packages/memory`의 고정 의존성을 설치한 뒤 �
 
 - Go 테스트는 `httptest`로 handler를 직접 호출한다. Node처럼 socket을 거치지 않으므로 HTTP/1.0 요청과 Host 생략은 `Request.Host`를 비워 재현한다.
 - 보호 자원 메타데이터 문서와 JWT 검증은 `oauth-node-v1` 계약이 고정한다. 여기서는 OAuth 검증 결과를 stub으로 넣는다.
-- 실행기 입력: Go는 gate가 읽는 `organizationId`와 `dryRun`만 Node와 같게 검사한다. `encoding/json`은 struct 필드를 대소문자 구분 없이 묶으므로, 대소문자만 다른 키가 남으면 gate가 보지 않은 값이 Go 도구에 들어간다. 다른 필드의 스키마 검증은 실행기가 맡는다.
-- Origin·Host: Go는 `net/url`이 WHATWG와 같게 읽는 형식만 받는다. `file:` Origin, 퍼센트 인코딩·IDNA host, 축약 IPv4, `//`가 없는 special scheme은 Node가 받아들여도 거절한다. 허용 목록 밖 IPv6 Host의 거절 메시지는 IPv4 대응 주소 표기가 Node와 다를 수 있다.
+- 실행기 입력: Go gate는 권한 판단에 쓰는 필드만 Node 스키마와 같게 검사한다. 대소문자만 다른 `organizationId`·`dryRun` 키를 지우고, `compact_memory`의 `dryRun`은 boolean만, `reindex_memory`의 `organizationId`는 필수 문자열로 받는다. `encoding/json`은 struct 필드를 대소문자 구분 없이 묶으므로, 변형 키가 남으면 gate가 보지 않은 값이 Go 도구에 들어간다. 다른 스키마 규칙은 실행기가 맡는다. 예를 들어 필수 `projectKey`가 있다. 여러 필드가 함께 틀리면 Node는 스키마 순서상 첫 오류를 보고하고, Go gate는 자기 필드의 오류를 보고할 수 있다.
+- Origin·Host: Go는 `net/url`이 WHATWG와 같게 읽는 형식만 받는다. `file:` Origin, 퍼센트 인코딩·IDNA host, 축약 IPv4, `//`가 없는 special scheme은 Node가 받아들여도 거절한다. Host 거절 메시지는 Node와 다를 수 있지만 상태 코드는 같은 403이다. 예를 들어 `localhost]:80`은 Node에서 `Invalid Host header: localhost]:80`, Go에서 `Invalid Host: localhost]`다. IPv4 대응 IPv6 주소도 표기가 다르다.
 
 ## 조립 전제
 
@@ -46,5 +46,7 @@ Go handler는 gate만 옮겼다. 진입점을 조립할 때 다음을 지켜야 
 
 - `NewHandler`는 시작 검사를 하지 않는다. Node `startOperatorServer`처럼 진입점이 `domain.CheckBindAuthentication`을 먼저 호출해야 한다.
 - 정적 토큰과 OAuth 검증기가 모두 없는 `Authenticator`는 서버를 연다. Node는 이때 `auth.disabled` 경고를 남기지만 Go handler는 남기지 않는다.
-- `/mcp` 뒤의 MCP adapter는 도구 호출마다 `domain.AuthorizeToolCall`을 호출하고 그 반환 입력을 도구에 넘겨야 한다. gate는 인증만 하고 scope와 조직은 검사하지 않는다.
+- 루프백 주소에 바인딩하면 진입점이 `Options.MCPAllowedHosts = LoopbackMCPHosts`를 넘겨야 한다. 빠뜨리면 Node의 DNS rebinding 방어가 사라진다.
+- `/mcp` 뒤의 MCP adapter는 Node MCP SDK처럼 도구 스키마를 먼저 적용한 뒤, 도구 호출마다 `domain.AuthorizeToolCall`을 호출하고 그 반환 입력을 도구에 넘겨야 한다. gate는 인증만 하고 scope와 조직은 검사하지 않는다.
+- Node는 registry 단위로 scope와 조직을 검사하므로 MCP resource와 prompt가 부르는 도구도 같은 검사를 거친다. Go adapter도 `tools/call`뿐 아니라 resource와 prompt 경로를 같은 검사로 감싸야 한다.
 - `/healthz`, `/readyz`, `/metrics`, rate limit은 옮기지 않았다. 이 경로는 Go에서 인증을 거친다.

@@ -266,7 +266,7 @@ func decodeBody(body []byte, target any) error {
 func (v *Verifier) claimsValid(header, claims map[string]any) bool {
 	if v.config.RequiredType != "" {
 		typ, ok := header["typ"].(string)
-		if !ok || !isASCII(typ) || normalizeTyp(typ) != normalizeTyp(v.config.RequiredType) {
+		if !ok || !isASCII(typ) || !isASCII(v.config.RequiredType) || normalizeTyp(typ) != normalizeTyp(v.config.RequiredType) {
 			return false
 		}
 	}

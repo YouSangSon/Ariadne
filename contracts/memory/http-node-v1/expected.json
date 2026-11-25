@@ -17,7 +17,7 @@
       "packages/memory/src/interfaces/mcp/tool-schemas.ts": "172e8ee22f259cebe71fd4093e1342b58cc5df0b42d6978b14d48de4b2ea7e4b",
       "packages/memory/scripts/http-contract-goldens.ts": "55d1bd1c027aafa08787628a240209eec36b830714d477c975d0fb7c32ad0370"
     },
-    "inputs_sha256": "770762e497da1f6765901d6cf10c7d5f813676e980e505a43ce6b9ed7559e03c"
+    "inputs_sha256": "ab9db7ecf8e566bab302d1286c99baefa88161cd61896635ec8a571e7a23f111"
   },
   "scenarios": [
     {
@@ -891,6 +891,57 @@
             "dryRun": false,
             "gate_keys": [
               "dryRun"
+            ]
+          }
+        },
+        {
+          "id": "static-reindex-unbound-no-org",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "invalid request body for reindex_memory: organizationId: Invalid input: expected string, received undefined"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "static-reindex-unbound-null-org",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "organizationId must be a string"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "static-reindex-bound-no-org",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "reindex_memory",
+              "organizationId": "dev-team",
+              "dryRun": null,
+              "gate_keys": [
+                "organizationId"
+              ]
+            }
+          },
+          "handler": {
+            "tool": "reindex_memory",
+            "organizationId": "dev-team",
+            "dryRun": null,
+            "gate_keys": [
+              "organizationId"
             ]
           }
         },

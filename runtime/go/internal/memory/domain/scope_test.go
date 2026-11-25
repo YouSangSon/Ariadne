@@ -35,6 +35,10 @@ func TestAuthorizeToolCallAppliesSchemaGateFirst(t *testing.T) {
 			input: `{"dryRun":false}`, wantScope: true},
 		{name: "dryRun on another tool is left to its schema", principal: reader, tool: "list_memory",
 			input: `{"dryRun":"x"}`, wantKeys: []string{"dryRun", "organizationId"}},
+		{name: "reindex without organizationId is a schema error even for a bound token", principal: reader, tool: "reindex_memory",
+			input: `{"projectKey":"p"}`, wantIssue: "organizationId: Invalid input: expected string, received undefined"},
+		{name: "reindex with a null organizationId is a schema error", principal: Principal{Type: StaticAuth}, tool: "reindex_memory",
+			input: `{"projectKey":"p","organizationId":null}`, wantIssue: "organizationId: Invalid input: expected string, received null"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -62,5 +66,16 @@ func TestAuthorizeToolCallAppliesSchemaGateFirst(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Callers outside the HTTP handler may pass raw values that json.Unmarshal never produces.
+func TestGateFieldsReadUncanonicalRawValues(t *testing.T) {
+	if kind, err := RequiredScopeKind("compact_memory", map[string]json.RawMessage{"dryRun": json.RawMessage(" false\n")}); err != nil || kind != AdminScope {
+		t.Fatalf("spaced false dryRun needs %v (err %v), want admin", kind, err)
+	}
+	var invalid *ToolInputError
+	if err := CheckGateFields("compact_memory", map[string]json.RawMessage{"dryRun": nil}); !errors.As(err, &invalid) {
+		t.Fatalf("empty dryRun raw value: err = %v, want a tool input error", err)
 	}
 }
