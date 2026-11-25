@@ -12,7 +12,7 @@
       "packages/memory/src/interfaces/http/middleware/organization-resolution.ts": "358af2a7cb59598dbbac3434bf9580c25e712940c5d11fd99d7a99c4b6937519",
       "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
       "packages/memory/src/interfaces/http/server.ts": "724a075128970e8e4ff1a913e9df0cc556047d982463e32e79d713c357155f54",
-      "packages/memory/scripts/auth-contract-goldens.ts": "3c53594985bf120c21d8f7ff695999130d0100ff8d896f6afa42d584c532a13f"
+      "packages/memory/scripts/auth-contract-goldens.ts": "65b539c71b9af4c2796249b2610e6f34e869b29e9ebd18d3bbc2aa5b9d9672a0"
     },
     "inputs_sha256": "f107df32e68b3d341c8f413709825abca876354fc03416dad91c514bb2d94b7e"
   },

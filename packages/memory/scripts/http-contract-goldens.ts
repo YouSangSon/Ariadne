@@ -24,6 +24,8 @@ type Scenario = {
 };
 
 const RUNTIME = "v24.22.2";
+type ServerOptions = NonNullable<Parameters<typeof createOperatorServer>[0]>;
+
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const contract = (name: string) => resolve(repoRoot, "contracts/memory/http-node-v1", name);
 const SOURCES = [
@@ -123,7 +125,7 @@ function parsed(body: Buffer): Json {
   const text = body.toString("utf8");
   try {
     return JSON.parse(text) as Json;
-  } catch {
+  } catch (_error: unknown) {
     return text;
   }
 }
@@ -144,15 +146,15 @@ async function observeScenario(scenario: Scenario): Promise<Json> {
   const silent = { info() {}, warn() {}, error() {}, debug() {}, child() { return silent; } };
   const oauthTokens = scenario.server.oauth_tokens;
   const server = createOperatorServer({
-    registry: registry as never,
-    logger: silent as never,
+    registry: registry as unknown as ServerOptions["registry"],
+    logger: silent as unknown as ServerOptions["logger"],
     bearerTokens: loadBearerTokens({ MEMORY_API_TOKENS: scenario.server.tokens }),
     oauthTokenVerifier: oauthTokens === undefined ? null : {
       verify: async (token: string) => (oauthTokens[token] === undefined ? null : { token, ...oauthTokens[token] }),
     },
     oauthProtectedResource: scenario.server.protected_resource_env === undefined ? null : loadOAuthProtectedResourceConfig(scenario.server.protected_resource_env),
     backgroundQueueMetrics: null,
-    ...(scenario.server.loopback_config ? { config: LOOPBACK_CONFIG as never } : {}),
+    ...(scenario.server.loopback_config ? { config: LOOPBACK_CONFIG as unknown as ServerOptions["config"] } : {}),
   });
   await new Promise<void>((done) => server.listen(0, "127.0.0.1", done));
   try {

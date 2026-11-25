@@ -15,7 +15,7 @@
       "packages/memory/src/interfaces/http/middleware/organization-resolution.ts": "358af2a7cb59598dbbac3434bf9580c25e712940c5d11fd99d7a99c4b6937519",
       "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
       "packages/memory/src/interfaces/mcp/tool-schemas.ts": "172e8ee22f259cebe71fd4093e1342b58cc5df0b42d6978b14d48de4b2ea7e4b",
-      "packages/memory/scripts/http-contract-goldens.ts": "55d1bd1c027aafa08787628a240209eec36b830714d477c975d0fb7c32ad0370"
+      "packages/memory/scripts/http-contract-goldens.ts": "367811f3954481147c34c61675e724864a89845cff4e91089625c400ebcad97b"
     },
     "inputs_sha256": "ab9db7ecf8e566bab302d1286c99baefa88161cd61896635ec8a571e7a23f111"
   },

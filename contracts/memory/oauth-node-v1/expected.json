@@ -6,7 +6,7 @@
       "packages/memory/src/interfaces/http/middleware/oauth-token-auth.ts": "d5b19d14e8b8f901e2b3484bdcf1f370d96527b17bfcba34dd7178c26577f38d",
       "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
       "packages/memory/package-lock.json": "016515a6f1ed1c60c0fd85433d45a316ee79ac1b237890e8e524c08e2a0d4823",
-      "packages/memory/scripts/oauth-contract-goldens.ts": "df2f00f5f67410286cbd7fdb2da4a9ac19d0612dce3077bee6b0d164a7d17bdc"
+      "packages/memory/scripts/oauth-contract-goldens.ts": "77e09f6a3ba245ba663ff38ea10183ca46c4ad3a7bf067a5583d1d2120934e02"
     },
     "inputs_sha256": "0b838dadb7443b7a2379a92468d83faddcbd6e634cc382efabeaa849ef513631",
     "material_sha256": "dba7881797c244b074a54df7731c783eb1063c29b1b96230053b60afa6648023"

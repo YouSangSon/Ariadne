@@ -159,7 +159,7 @@ function observeConfig(env: Record<string, string>): Json {
     const protectedResource = loadOAuthProtectedResourceConfig(env);
     const verifier = loadOAuthTokenVerifierConfig(env, protectedResource);
     return JSON.parse(JSON.stringify({ protected_resource: protectedResource, verifier })) as Json;
-  } catch (error) {
+  } catch (error: unknown) {
     assert.ok(error instanceof Error);
     return { error: error.message };
   }
@@ -185,7 +185,7 @@ async function observeVerify(corpus: Corpus, material: Material, entry: Corpus["
   globalThis.fetch = fixtureFetch as typeof fetch;
   try {
     const env = caseEnv(corpus, entry.env);
-    const verifier = createOAuthTokenVerifier(loadOAuthTokenVerifierConfig(env, loadOAuthProtectedResourceConfig(env)), { fetch: fixtureFetch as never });
+    const verifier = createOAuthTokenVerifier(loadOAuthTokenVerifierConfig(env, loadOAuthProtectedResourceConfig(env)), { fetch: fixtureFetch as typeof fetch });
     assert.ok(verifier, `${entry.id}: OAuth verifier must be configured`);
     clockMs = corpus.now * 1000;
     const steps: Json[] = [];

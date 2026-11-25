@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,6 +30,8 @@ import { assertSafeAuthConfig, isLoopbackHost } from "../src/interfaces/http/ser
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 type Case = { id: string; op: string; [key: string]: Json };
 type AuthInput = { authType: "static" | "oauth"; organizationId?: string; scopes?: string[] } | null;
+type ToolName = Parameters<typeof requiredScopeKindForTool>[0];
+type ToolInput = Record<string, unknown>;
 
 const RUNTIME = "v24.22.2";
 const CHALLENGE_METADATA_URL = "https://memory.example/.well-known/oauth-protected-resource/mcp";
@@ -88,7 +91,7 @@ function bearer(auth: AuthInput): BearerToken | null {
 function headerRecorder() {
   const headers: Record<string, string> = {};
   const res = { setHeader: (name: string, value: string) => { headers[name.toLowerCase()] = value; } };
-  return { headers, res: res as never };
+  return { headers, res: res as unknown as ServerResponse };
 }
 
 async function authenticate(entry: Case): Promise<Json> {
@@ -123,7 +126,7 @@ function resolveOrganization(entry: Case): Json {
   }
   const body = entry.body as Record<string, Json>;
   const auth = entry.auth_organization === null ? null : { token: "t", organizationId: entry.auth_organization as string };
-  const resolved = resolveOrganizationId({ headers, rawHeaders } as never, body.organizationId, auth);
+  const resolved = resolveOrganizationId({ headers, rawHeaders } as unknown as IncomingMessage, body.organizationId, auth);
   return {
     organizationId: resolved.organizationId ?? null,
     conflict: resolved.conflict,
@@ -133,7 +136,7 @@ function resolveOrganization(entry: Case): Json {
 
 function checkScopes(entry: Case): Json {
   const config = challengeConfig(entry.scopes_supported);
-  const check = checkOAuthScopes(bearer(entry.auth as AuthInput), entry.tool as never, entry.input as never, config);
+  const check = checkOAuthScopes(bearer(entry.auth as AuthInput), entry.tool as ToolName, entry.input as ToolInput, config);
   if (check.ok) return { ok: true };
   return {
     ok: false,
@@ -147,9 +150,9 @@ function mcpContext(entry: Case): Json {
   const { headers, res } = headerRecorder();
   const authorize = createMcpToolAuthorizer(bearer(entry.auth as AuthInput)!, challengeConfig(entry.scopes_supported), res);
   try {
-    authorize({ toolName: entry.tool as never, input: entry.input as never });
+    authorize({ toolName: entry.tool as ToolName, input: entry.input as ToolInput });
     return { ok: true };
-  } catch (error) {
+  } catch (error: unknown) {
     return { error: message(error), www_authenticate: headers["www-authenticate"] ?? null };
   }
 }
@@ -157,11 +160,11 @@ function mcpContext(entry: Case): Json {
 async function mcpService(entry: Case): Promise<Json> {
   const { headers, res } = headerRecorder();
   const registry = Object.fromEntries(SERVICE_TOOLS.map((name) => [name, async (input: Json) => input]));
-  const guarded = withAuthenticatedRegistry(registry as never, bearer(entry.auth as AuthInput)!, challengeConfig(entry.scopes_supported), res);
+  const guarded = withAuthenticatedRegistry(registry as unknown as Parameters<typeof withAuthenticatedRegistry>[0], bearer(entry.auth as AuthInput)!, challengeConfig(entry.scopes_supported), res);
   try {
     const handler = (guarded as unknown as Record<string, (input: Json) => Promise<Json>>)[entry.tool as string];
     return { input: await handler(entry.input) };
-  } catch (error) {
+  } catch (error: unknown) {
     return { error: message(error), www_authenticate: headers["www-authenticate"] ?? null };
   }
 }
@@ -169,7 +172,7 @@ async function mcpService(entry: Case): Promise<Json> {
 function attempt(run: () => Json): Json {
   try {
     return run();
-  } catch (error) {
+  } catch (error: unknown) {
     return { error: message(error) };
   }
 }
@@ -186,7 +189,7 @@ async function observe(entry: Case): Promise<Json> {
     case "resolve_organization":
       return resolveOrganization(entry);
     case "scope_kind":
-      return attempt(() => ({ kind: requiredScopeKindForTool(entry.tool as never, entry.input as never) }));
+      return attempt(() => ({ kind: requiredScopeKindForTool(entry.tool as ToolName, entry.input as ToolInput) }));
     case "check_scopes":
       return attempt(() => checkScopes(entry));
     case "mcp_context":
