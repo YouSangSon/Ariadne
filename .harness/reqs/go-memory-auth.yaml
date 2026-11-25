@@ -1,0 +1,109 @@
+schema_version: 1
+kind: harness.requirement
+metadata:
+  req_id: go-memory-auth
+  title: G3a Go Memory HTTP/MCP 인증과 조직 경계
+  status: verified
+  priority: P0
+  owner: go-memory-auth
+  intake_started: 2026-11-23
+  source_doc: docs/go-rust-runtime-design.ko.md
+classification:
+  category: feature
+  confidence: high
+  reason: 기존 Node Memory의 인증과 조직 권한 동작을 Go domain과 application 및 adapter로 옮기고 Node 골든으로 대조한다.
+requirement:
+  user_intent: Go와 Rust 전환을 DDD와 클린 아키텍처 및 모듈 경계를 지키며 TDD로 진행한다.
+  desired_outcome: Go Memory의 HTTP와 MCP 진입점이 같은 입력에서 Node와 같은 인증과 조직 및 scope 판정을 내리고 Node보다 약하지 않다.
+  confirmed_facts:
+    - 기준 main은 79f58dc이며 Node Memory 테스트 125건이 rootless Podman PostgreSQL에서 통과했다.
+    - Node production과 기본 launcher 및 저장소 수준 조직 격리와 MCP 프로토콜 처리는 이 범위에서 바꾸지 않는다.
+functional_contract:
+  acceptance_criteria:
+    - id: AC1
+      priority: P0
+      statement: Node Memory의 정적 토큰과 OAuth 및 조직 결정과 scope와 HTTP 및 MCP gate 계약을 실제 코드에서 생성한 골든으로 고정한다.
+      verification: auth와 oauth 및 http 골든 생성기의 check 모드를 실행한다.
+      passes: true
+    - id: AC2
+      priority: P0
+      statement: Go 구현은 domain과 application 및 adapter 계층 규칙을 지키며 실패하는 테스트를 먼저 둔 뒤 구현한다.
+      verification: Go 아키텍처 검사와 계층별 테스트를 실행한다.
+      passes: true
+    - id: AC3
+      priority: P0
+      statement: 같은 입력에서 Node와 Go의 결과가 모두 일치한다.
+      verification: 세 골든 계약의 모든 사례를 Go 테스트로 재생한다.
+      passes: true
+    - id: AC4
+      priority: P0
+      statement: Go race와 vet 및 아키텍처 검사와 관련 Node 테스트 및 비밀 검사를 통과한다.
+      verification: 최종 diff에서 Go와 Node 게이트 및 gitleaks를 실행한다.
+      passes: true
+    - id: AC5
+      priority: P0
+      statement: 보안 경계 변경이므로 독립 검토를 통과한다.
+      verification: fable-reviewer가 최종 diff를 검토한다.
+      passes: true
+code_mapping:
+  boundary_rules:
+    - 인증과 조직 및 scope 정책은 runtime/go/internal/memory/domain이 소유하고 입출력을 import하지 않는다.
+    - Authenticator와 OAuthVerifier 포트는 application이 소유한다.
+    - net/http gate와 OAuth 설정 및 JWT 검증은 adapters가 소유하고 entrypoint 조립은 이 범위 밖이다.
+verification:
+  verify_gate_required: true
+  verify_gate_reason: 인증과 권한 경계 및 외부 계약 변경이다.
+  commands:
+    - npx --no-install tsx scripts/auth-contract-goldens.ts --check
+    - npx --no-install tsx scripts/oauth-contract-goldens.ts --check
+    - npx --no-install tsx scripts/http-contract-goldens.ts --check
+    - npx --no-install tsc --noEmit
+    - npx --no-install vitest run tests/app tests/mcp/resolve-org.test.ts tests/architecture
+    - go test -race ./...
+    - go vet ./...
+    - go run ./cmd/check-architecture --root ../..
+    - node --test tests/module-boundaries.test.mjs
+    - gitleaks git
+  evidence:
+    - criterion_id: AC1
+      check: Node 24.22.2에서 auth와 oauth 및 http 골든 생성기를 check 모드로 실행
+      result: passed
+      exit_code: 0
+      source_state: 69a71e7과 같은 Node 소스와 계약 파일. 실제 createOperatorServer와 jose 6.2.13 결과
+      artifact: .harness/handoff/go-memory-auth/evidence/final-http-check.log
+    - criterion_id: AC2
+      check: 새 골든 사례로 Go 실패를 먼저 확인한 뒤 구현하고 Go 아키텍처 검사와 루트 모듈 경계 검사 실행
+      result: passed
+      exit_code: 0
+      source_state: 69a71e7. 실패 기록은 red-http.log, oauth-red.log, red-f123.log, r1-red.log이며 커밋 d098a10 단독 Go 테스트와 아키텍처 검사도 통과
+      artifact: .harness/handoff/go-memory-auth/evidence/final-arch.log
+    - criterion_id: AC3
+      check: 세 골든 계약의 모든 사례를 Go 테스트로 재생
+      result: passed
+      exit_code: 0
+      source_state: 69a71e7에서 Go 1.27.4 race 테스트
+      artifact: .harness/handoff/go-memory-auth/evidence/final-race.log
+    - criterion_id: AC4
+      check: Go race와 vet 및 아키텍처 검사, Node tsc와 vitest 20파일 428건, 모듈 경계 13건, gitleaks 8.24.3 작업 트리와 28afc32..HEAD 범위 검사
+      result: passed
+      exit_code: 0
+      source_state: 69a71e7. Node 게이트는 79f58dc 이후 바뀌지 않은 Node 소스와 4a4a900 이후 바뀌지 않은 계약 파일의 결과를 재사용한다. 실제 DB가 필요한 검사는 이 범위에 없다
+      artifact: .harness/handoff/go-memory-auth/evidence/final-vitest.log
+    - criterion_id: AC5
+      check: fable-reviewer 독립 검토 5회. 4차까지의 지적을 고친 4a4a900는 PASS, 남은 R1을 고친 df2293a도 PASS다. 마지막 nit N1은 리뷰어가 제안한 대로 69a71e7에서 실패 시 거절하도록 고쳤다
+      result: passed
+      exit_code: 0
+      source_state: df2293a 판정 PASS와 69a71e7의 N1 반영. Node 차분은 REST 6000건과 18000건, MCP 910건, reindex 80건, OAuth 282건, Origin·Host 약 69만 건에서 Go만 수락한 경우가 문서화된 스키마 전제 밖에서 0건이다
+      artifact: .harness/handoff/go-memory-auth/todo.md
+  notes:
+    - 커밋 불변식에 맞춰 모든 커밋 메시지에 REQ 줄을 더하면서 SHA가 바뀌었다. 커밋별 tree는 같으며 위 SHA는 바뀐 값이다.
+    - 계약과 알려진 차이는 contracts/memory의 auth-node-v1과 oauth-node-v1 및 http-node-v1 README에 기록한다.
+    - 실제 DB가 필요한 검사는 이 범위에 없다. 인증 gate와 검증기는 DB 없이 실행된다.
+audit:
+  must_not_implement:
+    - Node production과 기본 전환 및 provider와 데이터 변경
+    - 저장소 수준 조직 격리와 rate limit 및 MCP 프로토콜 처리
+    - push와 PR 및 merge 게시 전 사용자 승인 생략
+  completion_report_should_include:
+    - 로컬 gate와 독립 검토 및 원격 CI와 게시를 구분한다.
+    - 작업 소유 cache와 임시 파일의 정리 및 보존 근거를 기록한다.

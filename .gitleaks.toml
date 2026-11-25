@@ -72,6 +72,20 @@ regexTarget = "secret"
 paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
 regexes = ["\\A\\QeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\\E\\z"]
 
+[[rules.allowlists]]
+description = "SHA-256 source digests in generated Memory Node contract manifests"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qcontracts/memory/auth-node-v1/expected.json\\E\\z", "\\A\\Qcontracts/memory/http-node-v1/expected.json\\E\\z", "\\A\\Qcontracts/memory/oauth-node-v1/expected.json\\E\\z"]
+regexes = ["\\A[0-9a-f]{64}\\z"]
+
+[[rules.allowlists]]
+description = "Synthetic token names in the Memory OAuth Node contract"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qcontracts/memory/oauth-node-v1/cases.json\\E\\z", "\\A\\Qcontracts/memory/oauth-node-v1/expected.json\\E\\z"]
+regexes = ["\\A\\Qes256-with-rs-kid\\E\\z", "\\A\\Qrs256-no-signature\\E\\z", "\\A\\Qrs256-truncated-signature\\E\\z", "\\A\\Qes256-der-signature\\E\\z", "\\A\\Qrs256-plus-in-signature\\E\\z", "\\A\\Qkid-alg-rs384\\E\\z", "\\A\\Qkid-alg-rs256\\E\\z"]
+
 [[rules]]
 id = "github-pat"
 
@@ -91,6 +105,13 @@ condition = "AND"
 regexTarget = "secret"
 paths = ["\\A\\Qpackages/memory/tests/store/secret-scrub.test.ts\\E\\z"]
 regexes = ["\\A\\QeyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c\\E\\z"]
+
+[[rules.allowlists]]
+description = "Test tokens signed by the generated Memory OAuth Node contract keys"
+condition = "AND"
+regexTarget = "secret"
+paths = ["\\A\\Qcontracts/memory/oauth-node-v1/material.json\\E\\z"]
+regexes = ["\\AeyJ[A-Za-z0-9_.=+/-]+\\z"]
 
 [[rules]]
 id = "private-key"

@@ -1017,6 +1017,18 @@
       "layer": "tooling",
       "context": "memory"
     },
+    "scripts/auth-contract-goldens.ts": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "scripts/oauth-contract-goldens.ts": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "scripts/http-contract-goldens.ts": {
+      "layer": "tooling",
+      "context": "memory"
+    },
     "src/interfaces/operators/backup-encryption.ts": {
       "layer": "interfaces",
       "context": "memory"
