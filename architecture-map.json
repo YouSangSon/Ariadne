@@ -1109,6 +1109,14 @@
       "layer": "tooling",
       "context": "memory"
     },
+    "contracts/memory/http-node-v1/cases.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
+    "contracts/memory/http-node-v1/expected.json": {
+      "layer": "tooling",
+      "context": "memory"
+    },
     "contracts/memory/oauth-node-v1/cases.json": {
       "layer": "tooling",
       "context": "memory"
@@ -1779,6 +1787,14 @@
     "runtime/go/internal/extensions/domain/strict_json.go": {
       "layer": "domain",
       "context": "extensions"
+    },
+    "runtime/go/internal/memory/adapters/httpapi/handler.go": {
+      "layer": "infrastructure",
+      "context": "memory"
+    },
+    "runtime/go/internal/memory/adapters/httpapi/node_contracts_test.go": {
+      "layer": "tooling",
+      "context": "validation"
     },
     "runtime/go/internal/memory/application/authenticate.go": {
       "layer": "application",

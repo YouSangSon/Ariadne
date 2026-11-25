@@ -1,0 +1,1029 @@
+{
+  "fixture_version": 1,
+  "source_manifest": {
+    "runtime": "v24.22.2",
+    "sources_sha256": {
+      "packages/memory/package-lock.json": "016515a6f1ed1c60c0fd85433d45a316ee79ac1b237890e8e524c08e2a0d4823",
+      "packages/memory/src/interfaces/http/server.ts": "724a075128970e8e4ff1a913e9df0cc556047d982463e32e79d713c357155f54",
+      "packages/memory/src/interfaces/http/mcp-http.ts": "59077292ef52bd51f2ba44249e840fb1ccc5cc39b2b03bae10aa3dccc7d10d61",
+      "packages/memory/src/interfaces/http/routes/memory.ts": "5213e21d5db53970e523c0a001cc4bd3ffa4b402124e49ffebe3020cc07a1977",
+      "packages/memory/src/interfaces/http/routes/tool-handler.ts": "552c8b90419fb23ebd31bf2e1dc947389aad8422cff5cfa1cc0b5b5566ee104c",
+      "packages/memory/src/interfaces/http/middleware/bearer-auth.ts": "3f08e1d8fc60418dee4899d3e58466b9bcea5a789cf07cba964764a1c6f948bb",
+      "packages/memory/src/interfaces/http/middleware/envelope.ts": "0f74e07bd21d21abcc5ddd24c8548e062c1884dab7b5a400a01fb8cb4d425cad",
+      "packages/memory/src/interfaces/http/middleware/json-body.ts": "9f87c7e118753240974ba9ce81ebd7ebc66043db35bb2bd395e2a5eb8a31f3d3",
+      "packages/memory/src/interfaces/http/middleware/oauth-token-auth.ts": "d5b19d14e8b8f901e2b3484bdcf1f370d96527b17bfcba34dd7178c26577f38d",
+      "packages/memory/src/interfaces/http/middleware/organization-resolution.ts": "358af2a7cb59598dbbac3434bf9580c25e712940c5d11fd99d7a99c4b6937519",
+      "packages/memory/src/interfaces/http/oauth-protected-resource.ts": "66c106204ad9d8403b841e9c670fc6b01c8cc5d6dfacaf20061c78e6c65997ea",
+      "packages/memory/src/interfaces/mcp/tool-schemas.ts": "172e8ee22f259cebe71fd4093e1342b58cc5df0b42d6978b14d48de4b2ea7e4b",
+      "packages/memory/scripts/http-contract-goldens.ts": "0b11ebdaeece71530b603e037b4cb41d80caf80b299956c5f940849fd476315a"
+    },
+    "inputs_sha256": "65ac689425629330131e3dc141215c10326c3b038db17b6e96ceeb7bbeb87927"
+  },
+  "scenarios": [
+    {
+      "id": "rest-static-and-oauth",
+      "requests": [
+        {
+          "id": "metadata",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "resource": "https://memory.example/mcp",
+            "authorization_servers": [
+              "https://issuer.example/"
+            ],
+            "bearer_methods_supported": [
+              "header"
+            ],
+            "scopes_supported": [
+              "akasha:read",
+              "akasha:write",
+              "akasha:admin"
+            ]
+          },
+          "handler": null
+        },
+        {
+          "id": "metadata-mcp",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "resource": "https://memory.example/mcp",
+            "authorization_servers": [
+              "https://issuer.example/"
+            ],
+            "bearer_methods_supported": [
+              "header"
+            ],
+            "scopes_supported": [
+              "akasha:read",
+              "akasha:write",
+              "akasha:admin"
+            ]
+          },
+          "handler": null
+        },
+        {
+          "id": "metadata-query",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "resource": "https://memory.example/mcp",
+            "authorization_servers": [
+              "https://issuer.example/"
+            ],
+            "bearer_methods_supported": [
+              "header"
+            ],
+            "scopes_supported": [
+              "akasha:read",
+              "akasha:write",
+              "akasha:admin"
+            ]
+          },
+          "handler": null
+        },
+        {
+          "id": "metadata-dot-segment",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "resource": "https://memory.example/mcp",
+            "authorization_servers": [
+              "https://issuer.example/"
+            ],
+            "bearer_methods_supported": [
+              "header"
+            ],
+            "scopes_supported": [
+              "akasha:read",
+              "akasha:write",
+              "akasha:admin"
+            ]
+          },
+          "handler": null
+        },
+        {
+          "id": "metadata-post-needs-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "metadata-other-suffix",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "v1-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read akasha:write akasha:admin\"",
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "v1-wrong-token",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read akasha:write akasha:admin\"",
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "v1-dot-segment-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "v1-uppercase-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "non-v1-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "first-authorization-wins",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read akasha:write akasha:admin\"",
+          "body": {
+            "success": false,
+            "error": {
+              "message": "unauthorized"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "route-query-not-found",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "route-method-not-found",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "route-unknown-not-found",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "bound-token-injects",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "dev-team"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "dev-team"
+          }
+        },
+        {
+          "id": "bound-token-header-conflict",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "organizationId mismatch: token is bound to a different organization"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "bound-token-body-same",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "dev-team"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "dev-team"
+          }
+        },
+        {
+          "id": "unbound-header-org",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "org-x"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "org-x"
+          }
+        },
+        {
+          "id": "unbound-no-org",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": null
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": null
+          }
+        },
+        {
+          "id": "unbound-duplicate-org-header",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "x-organization-id must be provided at most once"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "unbound-comma-org-header",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "a, b"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "a, b"
+          }
+        },
+        {
+          "id": "unbound-empty-org-header",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "x-organization-id must contain non-whitespace text"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "unbound-body-org-number",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "organizationId must be a string"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "latin1-authorization-trim",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "dev-team"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "dev-team"
+          }
+        },
+        {
+          "id": "latin1-org-header",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "orgé"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "orgé"
+          }
+        },
+        {
+          "id": "body-invalid-json",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "invalid JSON body"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-whitespace",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "invalid JSON body"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-empty",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "request body must be a JSON object"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-array",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "request body must be a JSON object"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-null",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "request body must be a JSON object"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-bom",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "invalid JSON body"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-invalid-utf8-in-string",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "org-u"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "org-u"
+          }
+        },
+        {
+          "id": "body-too-large",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "request body exceeds 1 MB"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "body-at-limit",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "dev-team"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "dev-team"
+          }
+        },
+        {
+          "id": "oauth-read-search",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": null
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": null
+          }
+        },
+        {
+          "id": "oauth-read-add-denied",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:write\"",
+          "body": {
+            "success": false,
+            "error": {
+              "message": "insufficient_scope"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "oauth-read-compact-apply-denied",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer error=\"insufficient_scope\", resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:admin\"",
+          "body": {
+            "success": false,
+            "error": {
+              "message": "insufficient_scope"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "oauth-read-compact-dry-run",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "compact_memory",
+              "organizationId": null
+            }
+          },
+          "handler": {
+            "tool": "compact_memory",
+            "organizationId": null
+          }
+        },
+        {
+          "id": "oauth-org-validation-before-scope",
+          "status": 400,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "x-organization-id must contain non-whitespace text"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "oauth-admin-bound-delete",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "delete_memory",
+              "organizationId": "org-a"
+            }
+          },
+          "handler": {
+            "tool": "delete_memory",
+            "organizationId": "org-a"
+          }
+        },
+        {
+          "id": "oauth-conflict-before-scope",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "organizationId mismatch: token is bound to a different organization"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-no-host-allowlist",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:read akasha:write akasha:admin\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-query-is-rest",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        }
+      ]
+    },
+    {
+      "id": "rest-auth-disabled",
+      "requests": [
+        {
+          "id": "open-search",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": null
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": null
+          }
+        },
+        {
+          "id": "open-header-org",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": "org-open"
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": "org-open"
+          }
+        },
+        {
+          "id": "open-ignores-authorization",
+          "status": 200,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": true,
+            "data": {
+              "tool": "search_memory",
+              "organizationId": null
+            }
+          },
+          "handler": {
+            "tool": "search_memory",
+            "organizationId": null
+          }
+        },
+        {
+          "id": "open-metadata-not-configured",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        },
+        {
+          "id": "open-not-found",
+          "status": 404,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "success": false,
+            "error": {
+              "message": "not found"
+            }
+          },
+          "handler": null
+        }
+      ]
+    },
+    {
+      "id": "mcp-loopback-gate",
+      "requests": [
+        {
+          "id": "mcp-put",
+          "status": 405,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Method not allowed"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-patch-before-host",
+          "status": 405,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Method not allowed"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-evil-host",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Invalid Host: evil.example"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-evil-host-with-port",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Invalid Host: evil.example"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-missing-host-http10",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Missing Host header"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-localhost-port",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-uppercase-localhost",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-ipv6-host",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-evil-origin",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Forbidden origin"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-null-origin",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Forbidden origin"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-empty-origin",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-localhost-origin",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-ipv6-origin",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-loopback-lookalike-origin",
+          "status": 403,
+          "content_type": "application/json",
+          "www_authenticate": null,
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32000,
+              "message": "Forbidden origin"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-wrong-token",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-get-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-delete-no-auth",
+          "status": 401,
+          "content_type": "application/json",
+          "www_authenticate": "Bearer resource_metadata=\"https://memory.example/.well-known/oauth-protected-resource/mcp\", scope=\"akasha:memory\"",
+          "body": {
+            "jsonrpc": "2.0",
+            "error": {
+              "code": -32001,
+              "message": "Unauthorized"
+            },
+            "id": null
+          },
+          "handler": null
+        },
+        {
+          "id": "mcp-initialize",
+          "gate_passed": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "fixture_version": 1,
+  "scenarios": [
+    {
+      "id": "rest-static-and-oauth",
+      "server": {
+        "tokens": "alpha:dev-team,beta",
+        "oauth_tokens": {
+          "jwt-read": { "scopes": ["akasha:read"] },
+          "jwt-admin-org": { "organizationId": "org-a", "scopes": ["akasha:admin"] }
+        },
+        "protected_resource_env": {
+          "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/",
+          "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp",
+          "MCP_OAUTH_SCOPES": "akasha:read,akasha:write,akasha:admin"
+        }
+      },
+      "requests": [
+        { "id": "metadata", "method": "GET", "target": "/.well-known/oauth-protected-resource", "headers": [] },
+        { "id": "metadata-mcp", "method": "GET", "target": "/.well-known/oauth-protected-resource/mcp", "headers": [] },
+        { "id": "metadata-query", "method": "GET", "target": "/.well-known/oauth-protected-resource?x=1", "headers": [] },
+        { "id": "metadata-dot-segment", "method": "GET", "target": "/a/../.well-known/oauth-protected-resource", "headers": [] },
+        { "id": "metadata-post-needs-auth", "method": "POST", "target": "/.well-known/oauth-protected-resource", "headers": [] },
+        { "id": "metadata-other-suffix", "method": "GET", "target": "/.well-known/oauth-protected-resource/other", "headers": [] },
+        { "id": "v1-no-auth", "method": "POST", "target": "/v1/memory/search", "headers": [], "body": "{}" },
+        { "id": "v1-wrong-token", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer nope"]], "body": "{}" },
+        { "id": "v1-dot-segment-no-auth", "method": "POST", "target": "/v1/../other", "headers": [] },
+        { "id": "v1-uppercase-no-auth", "method": "POST", "target": "/V1/memory/search", "headers": [] },
+        { "id": "non-v1-no-auth", "method": "POST", "target": "/nope", "headers": [] },
+        { "id": "first-authorization-wins", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer nope"], ["Authorization", "Bearer alpha"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "route-query-not-found", "method": "POST", "target": "/v1/memory/search?x=1", "headers": [["Authorization", "Bearer alpha"]], "body": "{}" },
+        { "id": "route-method-not-found", "method": "GET", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]] },
+        { "id": "route-unknown-not-found", "method": "POST", "target": "/v1/memory/nope", "headers": [["Authorization", "Bearer alpha"]], "body": "{}" },
+        { "id": "bound-token-injects", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "bound-token-header-conflict", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"], ["x-organization-id", "finance"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "bound-token-body-same", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\",\"organizationId\":\" dev-team \"}" },
+        { "id": "unbound-header-org", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["X-Organization-ID", "org-x"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "unbound-no-org", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "unbound-duplicate-org-header", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["x-organization-id", "a"], ["x-organization-id", "a"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "unbound-comma-org-header", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["x-organization-id", "a, b"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "unbound-empty-org-header", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["x-organization-id", ""]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "unbound-body-org-number", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\",\"organizationId\":5}" },
+        { "id": "latin1-authorization-trim", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha "]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "latin1-org-header", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["x-organization-id", "orgé"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "body-invalid-json", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "{query" },
+        { "id": "body-whitespace", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "  " },
+        { "id": "body-empty", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]] },
+        { "id": "body-array", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "[]" },
+        { "id": "body-null", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "null" },
+        { "id": "body-bom", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body": "﻿{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "body-invalid-utf8-in-string", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer beta"], ["x-organization-id", "org-u"]], "body_base64": "eyJxdWVyeSI6InH/IiwicHJvamVjdEtleSI6InAifQ==" },
+        { "id": "body-too-large", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body_repeat": { "text": " ", "count": 1000001 } },
+        { "id": "body-at-limit", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer alpha"]], "body_repeat": { "text": " ", "count": 999970, "suffix": "{\"query\":\"q\",\"projectKey\":\"p\"}" } },
+        { "id": "oauth-read-search", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer jwt-read"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "oauth-read-add-denied", "method": "POST", "target": "/v1/memory", "headers": [["Authorization", "Bearer jwt-read"]], "body": "{\"content\":\"c\",\"kind\":\"fact\",\"projectKey\":\"p\"}" },
+        { "id": "oauth-read-compact-apply-denied", "method": "POST", "target": "/v1/memory/compact", "headers": [["Authorization", "Bearer jwt-read"]], "body": "{\"dryRun\":false,\"projectKey\":\"p\"}" },
+        { "id": "oauth-read-compact-dry-run", "method": "POST", "target": "/v1/memory/compact", "headers": [["Authorization", "Bearer jwt-read"]], "body": "{\"projectKey\":\"p\"}" },
+        { "id": "oauth-org-validation-before-scope", "method": "POST", "target": "/v1/memory", "headers": [["Authorization", "Bearer jwt-read"], ["x-organization-id", " "]], "body": "{\"content\":\"c\",\"kind\":\"fact\",\"projectKey\":\"p\"}" },
+        { "id": "oauth-admin-bound-delete", "method": "POST", "target": "/v1/memory/delete", "headers": [["Authorization", "Bearer jwt-admin-org"]], "body": "{\"memoryId\":1,\"projectKey\":\"p\"}" },
+        { "id": "oauth-conflict-before-scope", "method": "POST", "target": "/v1/memory/delete", "headers": [["Authorization", "Bearer jwt-admin-org"], ["x-organization-id", "other"]], "body": "{\"memoryId\":1,\"projectKey\":\"p\"}" },
+        { "id": "mcp-no-host-allowlist", "method": "POST", "target": "/mcp", "headers": [["Host", "evil.example"]] },
+        { "id": "mcp-query-is-rest", "method": "POST", "target": "/mcp?x=1", "headers": [["Authorization", "Bearer alpha"]], "body": "{}" }
+      ]
+    },
+    {
+      "id": "rest-auth-disabled",
+      "server": { "tokens": "" },
+      "requests": [
+        { "id": "open-search", "method": "POST", "target": "/v1/memory/search", "headers": [], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "open-header-org", "method": "POST", "target": "/v1/memory/search", "headers": [["x-organization-id", " org-open "]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "open-ignores-authorization", "method": "POST", "target": "/v1/memory/search", "headers": [["Authorization", "Bearer anything"]], "body": "{\"query\":\"q\",\"projectKey\":\"p\"}" },
+        { "id": "open-metadata-not-configured", "method": "GET", "target": "/.well-known/oauth-protected-resource", "headers": [] },
+        { "id": "open-not-found", "method": "POST", "target": "/v1/nope", "headers": [], "body": "{}" }
+      ]
+    },
+    {
+      "id": "mcp-loopback-gate",
+      "server": {
+        "tokens": "alpha:dev-team",
+        "loopback_config": true,
+        "protected_resource_env": {
+          "MCP_OAUTH_AUTHORIZATION_SERVERS": "https://issuer.example/",
+          "MCP_OAUTH_RESOURCE_URL": "https://memory.example/mcp"
+        }
+      },
+      "requests": [
+        { "id": "mcp-put", "method": "PUT", "target": "/mcp", "headers": [] },
+        { "id": "mcp-patch-before-host", "method": "PATCH", "target": "/mcp", "headers": [["Host", "evil.example"]] },
+        { "id": "mcp-evil-host", "method": "POST", "target": "/mcp", "headers": [["Host", "evil.example"]] },
+        { "id": "mcp-evil-host-with-port", "method": "POST", "target": "/mcp", "headers": [["Host", "Evil.Example:8080"]] },
+        { "id": "mcp-missing-host-http10", "method": "POST", "target": "/mcp", "headers": [], "http10": true, "omit_host": true },
+        { "id": "mcp-localhost-port", "method": "POST", "target": "/mcp", "headers": [["Host", "localhost:3000"]] },
+        { "id": "mcp-uppercase-localhost", "method": "POST", "target": "/mcp", "headers": [["Host", "LOCALHOST"]] },
+        { "id": "mcp-ipv6-host", "method": "POST", "target": "/mcp", "headers": [["Host", "[::1]:3000"]] },
+        { "id": "mcp-evil-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", "https://evil.example"]] },
+        { "id": "mcp-null-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", "null"]] },
+        { "id": "mcp-empty-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", ""]] },
+        { "id": "mcp-localhost-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", "http://LOCALHOST:5173"]] },
+        { "id": "mcp-ipv6-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", "http://[::1]:5173"]] },
+        { "id": "mcp-loopback-lookalike-origin", "method": "POST", "target": "/mcp", "headers": [["Origin", "http://127.0.0.1.evil.example"]] },
+        { "id": "mcp-wrong-token", "method": "POST", "target": "/mcp", "headers": [["Authorization", "Bearer nope"]] },
+        { "id": "mcp-get-no-auth", "method": "GET", "target": "/mcp", "headers": [] },
+        { "id": "mcp-delete-no-auth", "method": "DELETE", "target": "/mcp", "headers": [] },
+        { "id": "mcp-initialize", "method": "POST", "target": "/mcp", "headers": [["Authorization", "Bearer alpha"], ["Accept", "application/json, text/event-stream"], ["Content-Type", "application/json"]], "body": "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"fixture\",\"version\":\"1\"}}}", "expect_gate_passed": true }
+      ]
+    }
+  ]
+}
